@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MINDJACK.9 | Life RPG</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    margin: 0;
+    background: #080b10;
+    color: #e8edf5;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.app {
+    max-width: 600px;
+    margin: auto;
+    padding: 18px;
+    padding-bottom: 50px;
+}
+
+/* HEADER */
+
+.header {
+    border: 1px solid #263342;
+    background: #0d131b;
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.logo {
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: #66d9ff;
+    font-weight: bold;
+}
+
+.title {
+    font-size: 28px;
+    font-weight: 900;
+    margin-top: 5px;
+}
+
+.subtitle {
+    color: #7e8a99;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+/* PLAYER */
+
+.player {
+    border: 1px solid #263342;
+    background: #0d131b;
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 16px;
+}
+
+.playerTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.level {
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.rank {
+    color: #66d9ff;
+    font-size: 12px;
+    letter-spacing: 2px;
+}
+
+.xpText {
+    text-align: right;
+    font-size: 12px;
+    color: #8895a5;
+}
+
+.bar {
+    height: 12px;
+    background: #18212c;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-top: 12px;
+}
+
+.xpBar {
+    height: 100%;
+    width: 0%;
+    background: #66d9ff;
+    transition: 0.4s;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.stat {
+    background: #111923;
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+}
+
+.statValue {
+    font-size: 19px;
+    font-weight: bold;
+}
+
+.statLabel {
+    color: #748091;
+    font-size: 10px;
+    margin-top: 4px;
+}
+
+/* SECTIONS */
+
+.section {
+    margin-top: 20px;
+}
+
+.sectionTitle {
+    font-size: 17px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.sectionTitle span {
+    color: #66d9ff;
+}
+
+/* MISSIONS */
+
+.mission {
+    background: #0d131b;
+    border: 1px solid #263342;
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 9px;
+}
+
+.missionTop {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.icon {
+    width: 40px;
+    height: 40px;
+    background: #141e29;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.missionInfo {
+    flex: 1;
+}
+
+.missionName {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.reward {
+    color: #66d9ff;
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.completeBtn {
+    width: 100%;
+    margin-top: 12px;
+    border: 0;
+    border-radius: 10px;
+    padding: 11px;
+    background: #182534;
+    color: white;
+    font-weight: bold;
+}
+
+.completeBtn:active {
+    transform: scale(0.98);
+}
+
+.completeBtn.completed {
+    background: #14261f;
+    color: #6ee7a5;
+}
+
+/* QUEST */
+
+.quest {
+    border: 1px solid #33485c;
+    background: #101923;
+    border-radius: 16px;
+    padding: 17px;
+}
+
+.questName {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.questDescription {
+    color: #8895a5;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-top: 7px;
+}
+
+.questReward {
+    margin-top: 12px;
+    color: #66d9ff;
+    font-size: 12px;
+}
+
+/* SYSTEM */
+
+.system {
+    background: #090e14;
+    border: 1px solid #1f2b38;
+    border-radius: 15px;
+    padding: 15px;
+    font-family: monospace;
+    font-size: 12px;
+    color: #708094;
+    line-height: 1.8;
+}
+
+.green {
+    color: #65e6a0;
+}
+
+.blue {
+    color: #66d9ff;
+}
+
+/* BUTTONS */
+
+.reset {
+    margin-top: 25px;
+    width: 100%;
+    padding: 13px;
+    background: transparent;
+    border: 1px solid #493238;
+    color: #cf8793;
+    border-radius: 10px;
+}
+
+/* NOTIFICATION */
+
+#notification {
+    position: fixed;
+    left: 50%;
+    bottom: 25px;
+    transform: translateX(-50%) translateY(100px);
+    background: #e8edf5;
+    color: #080b10;
+    padding: 13px 20px;
+    border-radius: 30px;
+    font-weight: bold;
+    font-size: 13px;
+    transition: 0.3s;
+    z-index: 999;
+}
+
+#notification.show {
+    transform: translateX(-50%) translateY(0);
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- HEADER -->
+
+    <div class="header">
+        <div class="logo">MINDJACK.9 // LIFE OPERATING SYSTEM</div>
+        <div class="title">LIFE RPG</div>
+        <div class="subtitle">Upgrade yourself. Complete missions. Become harder to kill.</div>
+    </div>
+
+    <!-- PLAYER -->
+
+    <div class="player">
+
+        <div class="playerTop">
+
+            <div>
+                <div class="rank" id="rank">INITIATE</div>
+                <div class="level" id="level">LEVEL 1</div>
+            </div>
+
+            <div class="xpText">
+                <span id="xp">0</span> / <span id="nextXP">100</span> XP
+            </div>
+
+        </div>
+
+        <div class="bar">
+            <div class="xpBar" id="xpBar"></div>
+        </div>
+
+        <div class="stats">
+
+            <div class="stat">
+                <div class="statValue" id="coins">0</div>
+                <div class="statLabel">CREDITS</div>
+            </div>
+
+            <div class="stat">
+                <div class="statValue" id="streak">0</div>
+                <div class="statLabel">STREAK</div>
+            </div>
+
+            <div class="stat">
+                <div class="statValue" id="missions">0</div>
+                <div class="statLabel">MISSIONS</div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- DAILY MISSIONS -->
+
+    <div class="section">
+
+        <div class="sectionTitle">
+            DAILY <span>MISSIONS</span>
+        </div>
+
+        <div id="missionsContainer"></div>
+
+    </div>
+
+
+    <!-- MAIN QUEST -->
+
+    <div class="section">
+
+        <div class="sectionTitle">
+            MAIN <span>QUEST</span>
+        </div>
+
+        <div class="quest">
+
+            <div class="questName">
+                ⚡ Build Your Life
+            </div>
+
+            <div class="questDescription">
+                Improve your body, career, money, social life and discipline.
+                Small victories compound into a completely different character.
+            </div>
+
+            <div class="questReward">
+                REWARD: +500 XP
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- SYSTEM -->
+
+    <div class="section">
+
+        <div class="sectionTitle">
+            SYSTEM <span>STATUS</span>
+        </div>
+
+        <div class="system">
+
+            > MINDJACK.9 boot sequence...<br>
+            > Life simulation detected.<br>
+            > Player consciousness: <span class="green">ONLINE</span><br>
+            > Upgrade protocol: <span class="blue">ACTIVE</span><br>
+            > Daily mission system: <span class="green">ONLINE</span><br>
+            > XP progression: <span class="green">ONLINE</span><br>
+            > Potential: <span class="blue">UNDEFINED</span><br>
+            > Status: <span class="green">KEEP MOVING</span>
+
+        </div>
+
+    </div>
+
+
+    <button class="reset" onclick="resetGame()">
+        RESET SAVE DATA
+    </button>
+
+</div>
+
+
+<div id="notification"></div>
+
+
+<script>
+
+/* ============================
+   GAME DATA
+============================ */
+
+const defaultGame = {
+
+    xp: 0,
+
+    level: 1,
+
+    coins: 0,
+
+    streak: 0,
+
+    totalMissions: 0,
+
+    lastDate: "",
+
+    completed: {}
+
+};
+
+
+/* ============================
+   LOAD GAME
+============================ */
+
+let game = JSON.parse(
+    localStorage.getItem("mindjack9")
+) || defaultGame;
+
+
+/* ============================
+   DAILY MISSIONS
+============================ */
+
+const missions = [
+
+    {
+        id: "workout",
+        icon: "🏋️",
+        name: "Physical Training",
+        xp: 50,
+        coins: 20
+    },
+
+    {
+        id: "study",
+        icon: "📚",
+        name: "Study / Skill Building",
+        xp: 50,
+        coins: 20
+    },
+
+    {
+        id: "work",
+        icon: "🛡️",
+        name: "Complete Your Duty",
+        xp: 40,
+        coins: 15
+    },
+
+    {
+        id: "selfcare",
+        icon: "🧼",
+        name: "Self-Care",
+        xp: 30,
+        coins: 10
+    },
+
+    {
+        id: "youtube",
+        icon: "🎬",
+        name: "YouTube / Creative Work",
+        xp: 50,
+        coins: 20
+    },
+
+    {
+        id: "social",
+        icon: "👥",
+        name: "Social XP",
+        xp: 30,
+        coins: 10
+    },
+
+    {
+        id: "discipline",
+        icon: "🧠",
+        name: "Win One Battle Against an Addiction",
+        xp: 50,
+        coins: 25
+    }
+
+];
+
+
+/* ============================
+   DATE SYSTEM
+============================ */
+
+function today() {
+
+    const d = new Date();
+
+    return d.getFullYear() +
+        "-" +
+        String(d.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(d.getDate()).padStart(2, "0");
+
+}
+
+
+function checkNewDay() {
+
+    const todayDate = today();
+
+    if (game.lastDate !== todayDate) {
+
+        game.completed = {};
+
+        game.lastDate = todayDate;
+
+        saveGame();
+
+    }
+
+}
+
+
+/* ============================
+   RENDER
+============================ */
+
+function render() {
+
+    checkNewDay();
+
+    document.getElementById("level").textContent =
+        "LEVEL " + game.level;
+
+    document.getElementById("xp").textContent =
+        game.xp;
+
+    document.getElementById("coins").textContent =
+        game.coins;
+
+    document.getElementById("streak").textContent =
+        game.streak;
+
+    document.getElementById("missions").textContent =
+        game.totalMissions;
+
+
+    const requiredXP =
+        game.level * 100;
+
+    document.getElementById("nextXP").textContent =
+        requiredXP;
+
+
+    const percentage =
+        Math.min(
+            (game.xp / requiredXP) * 100,
+            100
+        );
+
+    document.getElementById("xpBar").style.width =
+        percentage + "%";
+
+
+    document.getElementById("rank").textContent =
+        getRank();
+
+
+    renderMissions();
+
+}
+
+
+/* ============================
+   RANK SYSTEM
+============================ */
+
+function getRank() {
+
+    if (game.level >= 50)
+        return "LEGEND";
+
+    if (game.level >= 30)
+        return "ELITE";
+
+    if (game.level >= 20)
+        return "OPERATIVE";
+
+    if (game.level >= 10)
+        return "VETERAN";
+
+    if (game.level >= 5)
+        return "WARRIOR";
+
+    return "INITIATE";
+
+}
+
+
+/* ============================
+   MISSIONS
+============================ */
+
+function renderMissions() {
+
+    const container =
+        document.getElementById(
+            "missionsContainer"
+        );
+
+    container.innerHTML = "";
+
+
+    missions.forEach(mission => {
+
+        const completed =
+            game.completed[mission.id] === true;
+
+
+        const div =
+            document.createElement("div");
+
+        div.className = "mission";
+
+
+        div.innerHTML = `
+
+            <div class="missionTop">
+
+                <div class="icon">
+                    ${mission.icon}
+                </div>
+
+                <div class="missionInfo">
+
+                    <div class="missionName">
+                        ${mission.name}
+                    </div>
+
+                    <div class="reward">
+                        +${mission.xp} XP
+                        &nbsp; • &nbsp;
+                        +${mission.coins} Credits
+                    </div>
+
+                </div>
+
+            </div>
+
+            <button
+                class="completeBtn ${completed ? "completed" : ""}"
+                onclick="completeMission('${mission.id}')"
+                ${completed ? "disabled" : ""}
+            >
+
+                ${completed ? "✓ COMPLETED" : "COMPLETE MISSION"}
+
+            </button>
+
+        `;
+
+
+        container.appendChild(div);
+
+    });
+
+}
+
+
+/* ============================
+   COMPLETE MISSION
+============================ */
+
+function completeMission(id) {
+
+    if (game.completed[id])
+        return;
+
+
+    const mission =
+        missions.find(m => m.id === id);
+
+
+    if (!mission)
+        return;
+
+
+    game.completed[id] = true;
+
+    game.xp += mission.xp;
+
+    game.coins += mission.coins;
+
+    game.totalMissions++;
+
+
+    checkLevelUp();
+
+    updateStreak();
+
+    saveGame();
+
+    render();
+
+
+    showNotification(
+        "+" + mission.xp +
+        " XP  |  +" +
+        mission.coins +
+        " CREDITS"
+    );
+
+}
+
+
+/* ============================
+   LEVEL UP
+============================ */
+
+function checkLevelUp() {
+
+    let required =
+        game.level * 100;
+
+
+    while (game.xp >= required) {
+
+        game.xp -= required;
+
+        game.level++;
+
+        game.coins += 100;
+
+        required =
+            game.level * 100;
+
+
+        showNotification(
+            "⚡ LEVEL UP! LEVEL " +
+            game.level
+        );
+
+    }
+
+}
+
+
+/* ============================
+   STREAK
+============================ */
+
+function updateStreak() {
+
+    const completedCount =
+        Object.keys(game.completed).length;
+
+
+    if (completedCount === missions.length) {
+
+        game.streak++;
+
+        game.coins += 50;
+
+        showNotification(
+            "🔥 PERFECT DAY! +50 CREDITS"
+        );
+
+    }
+
+}
+
+
+/* ============================
+   SAVE
+============================ */
+
+function saveGame() {
+
+    localStorage.setItem(
+        "mindjack9",
+        JSON.stringify(game)
+    );
+
+}
+
+
+/* ============================
+   RESET
+============================ */
+
+function resetGame() {
+
+    const confirmed =
+        confirm(
+            "Delete all MINDJACK.9 progress?"
+        );
+
+
+    if (!confirmed)
+        return;
+
+
+    localStorage.removeItem(
+        "mindjack9"
+    );
+
+
+    game =
+        JSON.parse(
+            JSON.stringify(defaultGame)
+        );
+
+
+    render();
+
+
+    showNotification(
+        "SYSTEM RESET"
+    );
+
+}
+
+
+/* ============================
+   NOTIFICATION
+============================ */
+
+function showNotification(text) {
+
+    const notification =
+        document.getElementById(
+            "notification"
+        );
+
+
+    notification.textContent =
+        text;
+
+
+    notification.classList.add(
+        "show"
+    );
+
+
+    setTimeout(() => {
+
+        notification.classList.remove(
+            "show"
+        );
+
+    }, 2000);
+
+}
+
+
+/* ============================
+   START SYSTEM
+============================ */
+
+render();
+
+</script>
+
+</body>
+</html>
