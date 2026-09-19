@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MINDJACK.9 | Life RPG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
 <style>
 * {
@@ -11,14 +14,58 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+:root {
+    --bg: #05010f;
+    --bg-panel: #0b0620;
+    --bg-panel-alt: #120a2e;
+    --bg-input: #0a0518;
+    --border: #2b1a54;
+    --neon-cyan: #00fff9;
+    --neon-pink: #ff2079;
+    --neon-purple: #b026ff;
+    --neon-green: #39ff88;
+    --text-primary: #e8e6ff;
+    --text-dim: #8b7fb0;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 14px rgba(0, 255, 249, 0.15), inset 0 0 20px rgba(176, 38, 255, 0.05); }
+    50% { box-shadow: 0 0 22px rgba(0, 255, 249, 0.3), inset 0 0 20px rgba(176, 38, 255, 0.1); }
+}
+
 body {
     margin: 0;
-    background: #080b10;
-    color: #e8edf5;
-    font-family: Arial, Helvetica, sans-serif;
+    min-height: 100vh;
+    background-color: var(--bg);
+    background-image:
+        linear-gradient(rgba(0, 255, 249, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 249, 0.05) 1px, transparent 1px),
+        radial-gradient(circle at 15% 0%, rgba(176, 38, 255, 0.3), transparent 45%),
+        radial-gradient(circle at 85% 100%, rgba(255, 32, 121, 0.25), transparent 45%);
+    background-size: 42px 42px, 42px 42px, cover, cover;
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: 'Share Tech Mono', monospace;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.025) 0px,
+        rgba(255, 255, 255, 0.025) 1px,
+        transparent 2px,
+        transparent 4px
+    );
+    z-index: 1;
 }
 
 .app {
+    position: relative;
+    z-index: 2;
     max-width: 600px;
     margin: auto;
     padding: 18px;
@@ -28,40 +75,50 @@ body {
 /* HEADER */
 
 .header {
-    border: 1px solid #263342;
-    background: #0d131b;
-    border-radius: 18px;
+    border: 1px solid var(--neon-purple);
+    background: var(--bg-panel);
+    border-radius: 4px;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%);
     padding: 20px;
     margin-bottom: 16px;
+    animation: pulseGlow 3s ease-in-out infinite;
 }
 
 .logo {
-    font-size: 13px;
-    letter-spacing: 3px;
-    color: #66d9ff;
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px rgba(0, 255, 249, 0.7);
     font-weight: bold;
 }
 
 .title {
+    font-family: 'Orbitron', sans-serif;
     font-size: 28px;
     font-weight: 900;
-    margin-top: 5px;
+    letter-spacing: 2px;
+    margin-top: 8px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    text-shadow: 2px 0 var(--neon-pink), -2px 0 var(--neon-cyan), 0 0 24px rgba(0, 255, 249, 0.35);
 }
 
 .subtitle {
-    color: #7e8a99;
+    color: var(--text-dim);
     font-size: 13px;
-    margin-top: 5px;
+    margin-top: 6px;
 }
 
 /* PLAYER */
 
 .player {
-    border: 1px solid #263342;
-    background: #0d131b;
-    border-radius: 18px;
+    border: 1px solid var(--neon-cyan);
+    background: var(--bg-panel);
+    border-radius: 4px;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 16px 100%, 0 calc(100% - 16px));
     padding: 18px;
     margin-bottom: 16px;
+    animation: pulseGlow 3s ease-in-out infinite;
 }
 
 .playerTop {
@@ -71,25 +128,30 @@ body {
 }
 
 .level {
-    font-size: 25px;
-    font-weight: bold;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--text-primary);
+    text-shadow: 0 0 12px rgba(255, 32, 121, 0.5);
 }
 
 .rank {
-    color: #66d9ff;
+    color: var(--neon-pink);
+    text-shadow: 0 0 8px rgba(255, 32, 121, 0.6);
     font-size: 12px;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
 }
 
 .xpText {
     text-align: right;
     font-size: 12px;
-    color: #8895a5;
+    color: var(--text-dim);
 }
 
 .bar {
     height: 12px;
-    background: #18212c;
+    background: var(--bg);
+    border: 1px solid var(--border);
     border-radius: 20px;
     overflow: hidden;
     margin-top: 12px;
@@ -98,7 +160,8 @@ body {
 .xpBar {
     height: 100%;
     width: 0%;
-    background: #66d9ff;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+    box-shadow: 0 0 10px rgba(0, 255, 249, 0.7);
     transition: 0.4s;
 }
 
@@ -115,6 +178,7 @@ body {
     display: flex;
     align-items: center;
     gap: 7px;
+    font-family: 'Orbitron', sans-serif;
     font-size: 13px;
     font-weight: bold;
     letter-spacing: 1px;
@@ -122,12 +186,13 @@ body {
 
 .tierScoreText {
     font-size: 11px;
-    color: #8895a5;
+    color: var(--text-dim);
 }
 
 .tierBar {
     margin-top: 8px;
     height: 8px;
+    border: 1px solid var(--border);
 }
 
 .tierBarFill {
@@ -135,7 +200,7 @@ body {
     width: 0%;
     border-radius: 20px;
     transition: 0.4s;
-    background: #8d99a8;
+    background: var(--text-dim);
 }
 
 .stats {
@@ -146,20 +211,25 @@ body {
 }
 
 .stat {
-    background: #111923;
-    border-radius: 12px;
+    background: var(--bg-panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 8px;
     padding: 12px;
     text-align: center;
 }
 
 .statValue {
-    font-size: 19px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
     font-weight: bold;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px rgba(0, 255, 249, 0.5);
 }
 
 .statLabel {
-    color: #748091;
+    color: var(--text-dim);
     font-size: 10px;
+    letter-spacing: 1px;
     margin-top: 4px;
 }
 
@@ -170,21 +240,27 @@ body {
 }
 
 .sectionTitle {
-    font-size: 17px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
     font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
     margin-bottom: 10px;
+    color: var(--text-primary);
 }
 
 .sectionTitle span {
-    color: #66d9ff;
+    color: var(--neon-pink);
+    text-shadow: 0 0 8px rgba(255, 32, 121, 0.6);
 }
 
 /* MISSIONS */
 
 .mission {
-    background: #0d131b;
-    border: 1px solid #263342;
-    border-radius: 15px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--neon-cyan);
+    border-radius: 4px;
     padding: 15px;
     margin-bottom: 9px;
 }
@@ -198,8 +274,9 @@ body {
 .icon {
     width: 40px;
     height: 40px;
-    background: #141e29;
-    border-radius: 10px;
+    background: var(--bg-panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -213,10 +290,12 @@ body {
 .missionName {
     font-weight: bold;
     font-size: 14px;
+    color: var(--text-primary);
 }
 
 .reward {
-    color: #66d9ff;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 6px rgba(0, 255, 249, 0.5);
     font-size: 11px;
     margin-top: 4px;
 }
@@ -224,32 +303,40 @@ body {
 .completeBtn {
     width: 100%;
     margin-top: 12px;
-    border: 0;
-    border-radius: 10px;
+    border: 1px solid var(--neon-cyan);
+    border-radius: 6px;
     padding: 11px;
-    background: #182534;
-    color: white;
+    background: transparent;
+    color: var(--neon-cyan);
+    font-family: 'Share Tech Mono', monospace;
     font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: 0.2s;
 }
 
 .completeBtn:active {
     transform: scale(0.98);
+    box-shadow: 0 0 14px rgba(0, 255, 249, 0.6);
 }
 
 .completeBtn.completed {
-    background: #14261f;
-    color: #6ee7a5;
+    border-color: var(--neon-green);
+    background: rgba(57, 255, 136, 0.08);
+    color: var(--neon-green);
+    text-shadow: 0 0 8px rgba(57, 255, 136, 0.6);
 }
 
 .deleteMissionBtn {
     background: transparent;
     border: 0;
-    color: #cf8793;
+    color: var(--neon-pink);
     font-size: 11px;
     margin-top: 8px;
     padding: 0;
     width: 100%;
     text-align: center;
+    letter-spacing: 1px;
 }
 
 /* ADD MISSION */
@@ -258,23 +345,27 @@ body {
     width: 100%;
     margin-top: 6px;
     padding: 13px;
-    border: 1px dashed #33485c;
-    border-radius: 12px;
+    border: 1px dashed var(--neon-purple);
+    border-radius: 8px;
     background: transparent;
-    color: #66d9ff;
+    color: var(--neon-purple);
+    font-family: 'Share Tech Mono', monospace;
     font-weight: bold;
     font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .addMissionBtn:active {
     transform: scale(0.98);
+    box-shadow: 0 0 14px rgba(176, 38, 255, 0.5);
 }
 
 .addForm {
     display: none;
-    background: #0d131b;
-    border: 1px solid #263342;
-    border-radius: 15px;
+    background: var(--bg-panel);
+    border: 1px solid var(--neon-purple);
+    border-radius: 8px;
     padding: 15px;
     margin-top: 9px;
 }
@@ -286,14 +377,20 @@ body {
 .addForm input {
     width: 100%;
     box-sizing: border-box;
-    background: #111923;
-    border: 1px solid #263342;
-    border-radius: 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
     padding: 11px;
-    color: #e8edf5;
+    color: var(--text-primary);
     font-size: 14px;
     margin-bottom: 8px;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.addForm input:focus {
+    outline: none;
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 8px rgba(0, 255, 249, 0.4);
 }
 
 .addForm .formRow {
@@ -310,39 +407,47 @@ body {
 }
 
 .formButtons button {
-    border: 0;
-    border-radius: 10px;
+    border-radius: 6px;
     padding: 11px;
+    font-family: 'Share Tech Mono', monospace;
     font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .saveMissionBtn {
-    background: #182534;
-    color: #66d9ff;
+    background: transparent;
+    border: 1px solid var(--neon-cyan);
+    color: var(--neon-cyan);
 }
 
 .cancelMissionBtn {
     background: transparent;
-    border: 1px solid #33485c;
-    color: #8895a5;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
 }
 
 /* QUEST */
 
 .quest {
-    border: 1px solid #33485c;
-    background: #101923;
-    border-radius: 16px;
+    border: 1px solid var(--neon-purple);
+    background: var(--bg-panel-alt);
+    border-radius: 4px;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
     padding: 17px;
+    box-shadow: 0 0 16px rgba(176, 38, 255, 0.15);
 }
 
 .questName {
-    font-size: 18px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 17px;
     font-weight: bold;
+    color: var(--text-primary);
+    text-shadow: 0 0 10px rgba(176, 38, 255, 0.5);
 }
 
 .questDescription {
-    color: #8895a5;
+    color: var(--text-dim);
     font-size: 13px;
     line-height: 1.5;
     margin-top: 7px;
@@ -350,29 +455,32 @@ body {
 
 .questReward {
     margin-top: 12px;
-    color: #66d9ff;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 6px rgba(0, 255, 249, 0.5);
     font-size: 12px;
 }
 
 /* SYSTEM */
 
 .system {
-    background: #090e14;
-    border: 1px solid #1f2b38;
-    border-radius: 15px;
+    background: #030109;
+    border: 1px solid var(--border);
+    border-radius: 4px;
     padding: 15px;
-    font-family: monospace;
+    font-family: 'Share Tech Mono', monospace;
     font-size: 12px;
-    color: #708094;
-    line-height: 1.8;
+    color: var(--text-dim);
+    line-height: 1.9;
 }
 
 .green {
-    color: #65e6a0;
+    color: var(--neon-green);
+    text-shadow: 0 0 6px rgba(57, 255, 136, 0.5);
 }
 
 .blue {
-    color: #66d9ff;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 6px rgba(0, 255, 249, 0.5);
 }
 
 /* BUTTONS */
@@ -382,9 +490,16 @@ body {
     width: 100%;
     padding: 13px;
     background: transparent;
-    border: 1px solid #493238;
-    color: #cf8793;
-    border-radius: 10px;
+    border: 1px solid var(--neon-pink);
+    color: var(--neon-pink);
+    border-radius: 6px;
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.reset:active {
+    box-shadow: 0 0 14px rgba(255, 32, 121, 0.5);
 }
 
 /* NOTIFICATION */
@@ -394,12 +509,17 @@ body {
     left: 50%;
     bottom: 25px;
     transform: translateX(-50%) translateY(100px);
-    background: #e8edf5;
-    color: #080b10;
+    background: var(--bg-panel);
+    border: 1px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px rgba(0, 255, 249, 0.6);
+    box-shadow: 0 0 20px rgba(0, 255, 249, 0.4);
     padding: 13px 20px;
     border-radius: 30px;
+    font-family: 'Share Tech Mono', monospace;
     font-weight: bold;
     font-size: 13px;
+    letter-spacing: 1px;
     transition: 0.3s;
     z-index: 999;
 }
@@ -767,6 +887,9 @@ function renderTier() {
     document.getElementById("tierName").style.color =
         tier.color;
 
+    document.getElementById("tierName").style.textShadow =
+        "0 0 8px " + tier.color;
+
     document.getElementById("tierScoreText").textContent =
         tier.isMaxTier ?
             game.totalScore + " SCORE (MAX TIER)" :
@@ -777,6 +900,9 @@ function renderTier() {
 
     document.getElementById("tierBarFill").style.background =
         tier.color;
+
+    document.getElementById("tierBarFill").style.boxShadow =
+        "0 0 10px " + tier.color;
 
 }
 
