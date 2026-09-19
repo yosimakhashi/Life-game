@@ -205,6 +205,92 @@ body {
     color: #6ee7a5;
 }
 
+.deleteMissionBtn {
+    background: transparent;
+    border: 0;
+    color: #cf8793;
+    font-size: 11px;
+    margin-top: 8px;
+    padding: 0;
+    width: 100%;
+    text-align: center;
+}
+
+/* ADD MISSION */
+
+.addMissionBtn {
+    width: 100%;
+    margin-top: 6px;
+    padding: 13px;
+    border: 1px dashed #33485c;
+    border-radius: 12px;
+    background: transparent;
+    color: #66d9ff;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.addMissionBtn:active {
+    transform: scale(0.98);
+}
+
+.addForm {
+    display: none;
+    background: #0d131b;
+    border: 1px solid #263342;
+    border-radius: 15px;
+    padding: 15px;
+    margin-top: 9px;
+}
+
+.addForm.show {
+    display: block;
+}
+
+.addForm input {
+    width: 100%;
+    box-sizing: border-box;
+    background: #111923;
+    border: 1px solid #263342;
+    border-radius: 10px;
+    padding: 11px;
+    color: #e8edf5;
+    font-size: 14px;
+    margin-bottom: 8px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.addForm .formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.addForm .formButtons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.formButtons button {
+    border: 0;
+    border-radius: 10px;
+    padding: 11px;
+    font-weight: bold;
+}
+
+.saveMissionBtn {
+    background: #182534;
+    color: #66d9ff;
+}
+
+.cancelMissionBtn {
+    background: transparent;
+    border: 1px solid #33485c;
+    color: #8895a5;
+}
+
 /* QUEST */
 
 .quest {
@@ -353,6 +439,28 @@ body {
 
         <div id="missionsContainer"></div>
 
+        <button class="addMissionBtn" onclick="toggleAddForm()">
+            + ADD NEW MISSION
+        </button>
+
+        <div class="addForm" id="addForm">
+
+            <input type="text" id="newMissionName" placeholder="Mission name" maxlength="40">
+
+            <div class="formRow">
+                <input type="number" id="newMissionXP" placeholder="XP reward" min="1" value="30">
+                <input type="number" id="newMissionCoins" placeholder="Credits reward" min="0" value="10">
+            </div>
+
+            <input type="text" id="newMissionIcon" placeholder="Icon (emoji, optional)" maxlength="4">
+
+            <div class="formButtons">
+                <button class="cancelMissionBtn" onclick="toggleAddForm()">CANCEL</button>
+                <button class="saveMissionBtn" onclick="addMission()">SAVE MISSION</button>
+            </div>
+
+        </div>
+
     </div>
 
 
@@ -438,7 +546,9 @@ const defaultGame = {
 
     lastDate: "",
 
-    completed: {}
+    completed: {},
+
+    customMissions: []
 
 };
 
@@ -450,6 +560,10 @@ const defaultGame = {
 let game = JSON.parse(
     localStorage.getItem("mindjack9")
 ) || defaultGame;
+
+if (!Array.isArray(game.customMissions)) {
+    game.customMissions = [];
+}
 
 
 /* ============================
@@ -515,6 +629,17 @@ const missions = [
     }
 
 ];
+
+
+/* ============================
+   ALL MISSIONS (default + custom)
+============================ */
+
+function getAllMissions() {
+
+    return missions.concat(game.customMissions);
+
+}
 
 
 /* ============================
@@ -641,7 +766,7 @@ function renderMissions() {
     container.innerHTML = "";
 
 
-    missions.forEach(mission => {
+    getAllMissions().forEach(mission => {
 
         const completed =
             game.completed[mission.id] === true;
@@ -687,12 +812,134 @@ function renderMissions() {
 
             </button>
 
+            ${mission.custom ? `
+                <button class="deleteMissionBtn" onclick="deleteMission('${mission.id}')">
+                    ✕ REMOVE MISSION
+                </button>
+            ` : ""}
+
         `;
 
 
         container.appendChild(div);
 
     });
+
+}
+
+
+/* ============================
+   ADD / REMOVE CUSTOM MISSION
+============================ */
+
+function toggleAddForm() {
+
+    document.getElementById("addForm")
+        .classList.toggle("show");
+
+}
+
+
+function addMission() {
+
+    const nameInput =
+        document.getElementById("newMissionName");
+
+    const xpInput =
+        document.getElementById("newMissionXP");
+
+    const coinsInput =
+        document.getElementById("newMissionCoins");
+
+    const iconInput =
+        document.getElementById("newMissionIcon");
+
+
+    const name = nameInput.value.trim();
+
+    const xp = parseInt(xpInput.value, 10);
+
+    const coins = parseInt(coinsInput.value, 10) || 0;
+
+    const icon = iconInput.value.trim() || "⭐";
+
+
+    if (!name) {
+
+        showNotification("ENTER A MISSION NAME");
+
+        return;
+
+    }
+
+
+    if (!xp || xp < 1) {
+
+        showNotification("ENTER A VALID XP AMOUNT");
+
+        return;
+
+    }
+
+
+    game.customMissions.push({
+
+        id: "custom_" + Date.now(),
+
+        icon: icon,
+
+        name: name,
+
+        xp: xp,
+
+        coins: coins,
+
+        custom: true
+
+    });
+
+
+    saveGame();
+
+    render();
+
+
+    nameInput.value = "";
+
+    xpInput.value = "30";
+
+    coinsInput.value = "10";
+
+    iconInput.value = "";
+
+
+    toggleAddForm();
+
+    showNotification("MISSION ADDED");
+
+}
+
+
+function deleteMission(id) {
+
+    const confirmed =
+        confirm("Remove this mission?");
+
+    if (!confirmed)
+        return;
+
+
+    game.customMissions =
+        game.customMissions.filter(m => m.id !== id);
+
+    delete game.completed[id];
+
+
+    saveGame();
+
+    render();
+
+    showNotification("MISSION REMOVED");
 
 }
 
@@ -708,7 +955,7 @@ function completeMission(id) {
 
 
     const mission =
-        missions.find(m => m.id === id);
+        getAllMissions().find(m => m.id === id);
 
 
     if (!mission)
@@ -785,7 +1032,7 @@ function updateStreak() {
         Object.keys(game.completed).length;
 
 
-    if (completedCount === missions.length) {
+    if (completedCount === getAllMissions().length) {
 
         game.streak++;
 
