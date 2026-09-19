@@ -102,6 +102,42 @@ body {
     transition: 0.4s;
 }
 
+/* TIER */
+
+.tierRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+}
+
+.tierBadge {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.tierScoreText {
+    font-size: 11px;
+    color: #8895a5;
+}
+
+.tierBar {
+    margin-top: 8px;
+    height: 8px;
+}
+
+.tierBarFill {
+    height: 100%;
+    width: 0%;
+    border-radius: 20px;
+    transition: 0.4s;
+    background: #8d99a8;
+}
+
 .stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -407,6 +443,21 @@ body {
             <div class="xpBar" id="xpBar"></div>
         </div>
 
+        <div class="tierRow">
+
+            <div class="tierBadge" id="tierBadge">
+                <span id="tierIcon">🔰</span>
+                <span id="tierName">ROOKIE</span>
+            </div>
+
+            <div class="tierScoreText" id="tierScoreText">0 / 5000</div>
+
+        </div>
+
+        <div class="bar tierBar">
+            <div class="tierBarFill" id="tierBarFill"></div>
+        </div>
+
         <div class="stats">
 
             <div class="stat">
@@ -548,7 +599,11 @@ const defaultGame = {
 
     completed: {},
 
-    customMissions: []
+    customMissions: [],
+
+    totalScore: 0,
+
+    tierIndex: 0
 
 };
 
@@ -563,6 +618,14 @@ let game = JSON.parse(
 
 if (!Array.isArray(game.customMissions)) {
     game.customMissions = [];
+}
+
+if (typeof game.totalScore !== "number") {
+    game.totalScore = 0;
+}
+
+if (typeof game.tierIndex !== "number") {
+    game.tierIndex = 0;
 }
 
 
@@ -638,6 +701,101 @@ const missions = [
 function getAllMissions() {
 
     return missions.concat(game.customMissions);
+
+}
+
+
+/* ============================
+   TIER SYSTEM (CoD Mobile ranked style)
+============================ */
+
+const TIER_SCORE_STEP = 5000;
+
+const tiers = [
+
+    { name: "ROOKIE",    icon: "🔰", color: "#8d99a8" },
+    { name: "BRONZE",    icon: "🥉", color: "#c97b4a" },
+    { name: "SILVER",    icon: "🥈", color: "#c7d0da" },
+    { name: "GOLD",      icon: "🥇", color: "#f2c94c" },
+    { name: "PLATINUM",  icon: "🔷", color: "#7fe8d0" },
+    { name: "DIAMOND",   icon: "💎", color: "#6fd1ff" },
+    { name: "MASTER",    icon: "👑", color: "#c07bff" },
+    { name: "LEGENDARY", icon: "🌟", color: "#ff5f6d" }
+
+];
+
+
+function getTierInfo() {
+
+    const rawIndex =
+        Math.floor(game.totalScore / TIER_SCORE_STEP);
+
+    const index =
+        Math.min(rawIndex, tiers.length - 1);
+
+    const isMaxTier =
+        index === tiers.length - 1;
+
+    const currentFloor = index * TIER_SCORE_STEP;
+
+    const progress = isMaxTier ?
+        100 :
+        ((game.totalScore - currentFloor) / TIER_SCORE_STEP) * 100;
+
+    return {
+        ...tiers[index],
+        index,
+        isMaxTier,
+        currentFloor,
+        nextFloor: currentFloor + TIER_SCORE_STEP,
+        progress
+    };
+
+}
+
+
+function renderTier() {
+
+    const tier = getTierInfo();
+
+    document.getElementById("tierIcon").textContent =
+        tier.icon;
+
+    document.getElementById("tierName").textContent =
+        tier.name;
+
+    document.getElementById("tierName").style.color =
+        tier.color;
+
+    document.getElementById("tierScoreText").textContent =
+        tier.isMaxTier ?
+            game.totalScore + " SCORE (MAX TIER)" :
+            game.totalScore + " / " + tier.nextFloor;
+
+    document.getElementById("tierBarFill").style.width =
+        tier.progress + "%";
+
+    document.getElementById("tierBarFill").style.background =
+        tier.color;
+
+}
+
+
+function checkTierUp() {
+
+    const tier = getTierInfo();
+
+    if (tier.index > game.tierIndex) {
+
+        game.tierIndex = tier.index;
+
+        showNotification(
+            "🏆 TIER UP! " +
+            tier.icon + " " +
+            tier.name
+        );
+
+    }
 
 }
 
@@ -719,6 +877,9 @@ function render() {
 
     document.getElementById("rank").textContent =
         getRank();
+
+
+    renderTier();
 
 
     renderMissions();
@@ -970,8 +1131,12 @@ function completeMission(id) {
 
     game.totalMissions++;
 
+    game.totalScore += mission.xp;
+
 
     checkLevelUp();
+
+    checkTierUp();
 
     updateStreak();
 
