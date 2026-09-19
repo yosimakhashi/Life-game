@@ -24,6 +24,7 @@
     --neon-pink: #ff2079;
     --neon-purple: #b026ff;
     --neon-green: #39ff88;
+    --neon-yellow: #f9f002;
     --text-primary: #e8e6ff;
     --text-dim: #8b7fb0;
 }
@@ -427,6 +428,91 @@ body::before {
     color: var(--text-dim);
 }
 
+/* REWARDS */
+
+.rewardCard {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--neon-yellow);
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 9px;
+}
+
+.rewardTop {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.rewardInfo {
+    flex: 1;
+}
+
+.rewardName {
+    font-weight: bold;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.rewardCost {
+    color: var(--neon-yellow);
+    text-shadow: 0 0 6px rgba(249, 240, 2, 0.5);
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.redeemBtn {
+    width: 100%;
+    margin-top: 12px;
+    border: 1px solid var(--neon-yellow);
+    border-radius: 6px;
+    padding: 11px;
+    background: transparent;
+    color: var(--neon-yellow);
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: 0.2s;
+}
+
+.redeemBtn:active:not(:disabled) {
+    transform: scale(0.98);
+    box-shadow: 0 0 14px rgba(249, 240, 2, 0.5);
+}
+
+.redeemBtn:disabled {
+    opacity: 0.35;
+    border-color: var(--border);
+    color: var(--text-dim);
+}
+
+.redeemedCount {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 8px;
+}
+
+.rewardCard.diva {
+    border-left-color: var(--neon-pink);
+}
+
+.rewardCard.diva.unlocked {
+    box-shadow: 0 0 18px rgba(255, 32, 121, 0.4);
+    animation: pulseGlow 3s ease-in-out infinite;
+}
+
+.rewardCard.diva.unlocked .rewardName {
+    color: var(--neon-pink);
+    text-shadow: 0 0 10px rgba(255, 32, 121, 0.6);
+}
+
+.rewardCard.diva.unlocked .rewardCost {
+    color: var(--neon-pink);
+    text-shadow: 0 0 6px rgba(255, 32, 121, 0.5);
+}
+
 /* QUEST */
 
 .quest {
@@ -635,6 +721,53 @@ body::before {
     </div>
 
 
+    <!-- REWARDS -->
+
+    <div class="section">
+
+        <div class="sectionTitle">
+            UNLOCK <span>REWARDS</span>
+        </div>
+
+        <div class="rewardCard">
+
+            <div class="rewardTop">
+
+                <div class="icon">📚</div>
+
+                <div class="rewardInfo">
+                    <div class="rewardName">Books Completed</div>
+                    <div class="rewardCost" id="bookCountText">0 books • +100 XP each</div>
+                </div>
+
+            </div>
+
+            <button class="redeemBtn" onclick="markBookCompleted()">
+                + MARK BOOK COMPLETED
+            </button>
+
+        </div>
+
+        <div id="rewardsContainer"></div>
+
+        <div class="rewardCard diva" id="divaCard">
+
+            <div class="rewardTop">
+
+                <div class="icon">💃</div>
+
+                <div class="rewardInfo">
+                    <div class="rewardName">Diva Unlocked</div>
+                    <div class="rewardCost" id="divaStatusText">0 / 15000 SCORE</div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
     <!-- MAIN QUEST -->
 
     <div class="section">
@@ -723,7 +856,13 @@ const defaultGame = {
 
     totalScore: 0,
 
-    tierIndex: 0
+    tierIndex: 0,
+
+    booksCompleted: 0,
+
+    rewardsRedeemed: {},
+
+    divaUnlocked: false
 
 };
 
@@ -746,6 +885,18 @@ if (typeof game.totalScore !== "number") {
 
 if (typeof game.tierIndex !== "number") {
     game.tierIndex = 0;
+}
+
+if (typeof game.booksCompleted !== "number") {
+    game.booksCompleted = 0;
+}
+
+if (typeof game.rewardsRedeemed !== "object" || game.rewardsRedeemed === null) {
+    game.rewardsRedeemed = {};
+}
+
+if (typeof game.divaUnlocked !== "boolean") {
+    game.divaUnlocked = false;
 }
 
 
@@ -927,6 +1078,248 @@ function checkTierUp() {
 
 
 /* ============================
+   REWARDS
+============================ */
+
+const BOOK_XP = 100;
+
+const DIVA_SCORE_REQUIREMENT = 15000;
+
+const rewards = [
+
+    { id: "movie", icon: "🎬", name: "Watch a Movie", type: "credits", cost: 2000 },
+
+    { id: "accessory", icon: "🛍️", name: "Buy an Accessory", type: "credits", cost: 10000 },
+
+    { id: "book", icon: "📖", name: "Buy a New Book", type: "books", cost: 2 }
+
+];
+
+
+function markBookCompleted() {
+
+    game.booksCompleted++;
+
+    game.xp += BOOK_XP;
+
+    game.totalScore += BOOK_XP;
+
+
+    checkLevelUp();
+
+    checkTierUp();
+
+    checkDivaUnlock();
+
+    saveGame();
+
+    render();
+
+
+    showNotification(
+        "+" + BOOK_XP +
+        " XP | BOOK #" +
+        game.booksCompleted +
+        " COMPLETED"
+    );
+
+}
+
+
+function getBooksAvailable() {
+
+    const redeemed =
+        game.rewardsRedeemed.book || 0;
+
+    return game.booksCompleted - (redeemed * 2);
+
+}
+
+
+function canRedeem(reward) {
+
+    if (reward.type === "credits")
+        return game.coins >= reward.cost;
+
+    if (reward.type === "books")
+        return getBooksAvailable() >= reward.cost;
+
+    return false;
+
+}
+
+
+function redeemReward(id) {
+
+    const reward =
+        rewards.find(r => r.id === id);
+
+    if (!reward)
+        return;
+
+
+    if (!canRedeem(reward)) {
+
+        showNotification(
+            "NOT ENOUGH " +
+            (reward.type === "books" ? "BOOKS" : "CREDITS")
+        );
+
+        return;
+
+    }
+
+
+    if (reward.type === "credits") {
+        game.coins -= reward.cost;
+    }
+
+    game.rewardsRedeemed[id] =
+        (game.rewardsRedeemed[id] || 0) + 1;
+
+
+    saveGame();
+
+    render();
+
+
+    showNotification(
+        reward.icon + " " +
+        reward.name.toUpperCase() +
+        " REDEEMED"
+    );
+
+}
+
+
+function checkDivaUnlock() {
+
+    if (!game.divaUnlocked && game.totalScore >= DIVA_SCORE_REQUIREMENT) {
+
+        game.divaUnlocked = true;
+
+        showNotification("💃 DIVA UNLOCKED!");
+
+    }
+
+}
+
+
+function renderRewards() {
+
+    document.getElementById("bookCountText").textContent =
+        game.booksCompleted + " books completed • +" + BOOK_XP + " XP each";
+
+
+    const container =
+        document.getElementById("rewardsContainer");
+
+    container.innerHTML = "";
+
+
+    rewards.forEach(reward => {
+
+        const redeemedCount =
+            game.rewardsRedeemed[reward.id] || 0;
+
+        const affordable =
+            canRedeem(reward);
+
+        const costText =
+            reward.type === "credits" ?
+                reward.cost + " CREDITS" :
+                reward.cost + " BOOKS";
+
+        const progressText =
+            reward.type === "books" ?
+                getBooksAvailable() + " / " + reward.cost + " BOOKS READY" :
+                game.coins + " / " + reward.cost + " CREDITS";
+
+
+        const div =
+            document.createElement("div");
+
+        div.className = "rewardCard";
+
+
+        div.innerHTML = `
+
+            <div class="rewardTop">
+
+                <div class="icon">
+                    ${reward.icon}
+                </div>
+
+                <div class="rewardInfo">
+
+                    <div class="rewardName">
+                        ${reward.name}
+                    </div>
+
+                    <div class="rewardCost">
+                        ${progressText}
+                    </div>
+
+                </div>
+
+            </div>
+
+            <button
+                class="redeemBtn"
+                onclick="redeemReward('${reward.id}')"
+                ${affordable ? "" : "disabled"}
+            >
+                REDEEM • ${costText}
+            </button>
+
+            ${redeemedCount > 0 ? `
+                <div class="redeemedCount">
+                    Redeemed ${redeemedCount}×
+                </div>
+            ` : ""}
+
+        `;
+
+
+        container.appendChild(div);
+
+    });
+
+
+    renderDiva();
+
+}
+
+
+function renderDiva() {
+
+    const card =
+        document.getElementById("divaCard");
+
+    const statusText =
+        document.getElementById("divaStatusText");
+
+
+    if (game.divaUnlocked) {
+
+        card.classList.add("unlocked");
+
+        statusText.textContent = "UNLOCKED";
+
+    } else {
+
+        card.classList.remove("unlocked");
+
+        statusText.textContent =
+            Math.min(game.totalScore, DIVA_SCORE_REQUIREMENT) +
+            " / " + DIVA_SCORE_REQUIREMENT + " SCORE";
+
+    }
+
+}
+
+
+/* ============================
    DATE SYSTEM
 ============================ */
 
@@ -1006,6 +1399,9 @@ function render() {
 
 
     renderTier();
+
+
+    renderRewards();
 
 
     renderMissions();
@@ -1263,6 +1659,8 @@ function completeMission(id) {
     checkLevelUp();
 
     checkTierUp();
+
+    checkDivaUnlock();
 
     updateStreak();
 
