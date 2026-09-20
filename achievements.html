@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACHIEVEMENTS | MINDJACK.9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+<style>
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    --bg: #05010f;
+    --bg-panel: #0b0620;
+    --bg-panel-alt: #120a2e;
+    --bg-input: #0a0518;
+    --border: #2b1a54;
+    --neon-cyan: #00fff9;
+    --neon-pink: #ff2079;
+    --neon-purple: #b026ff;
+    --neon-green: #39ff88;
+    --neon-yellow: #f9f002;
+    --text-primary: #e8e6ff;
+    --text-dim: #8b7fb0;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 14px rgba(249, 240, 2, 0.12), inset 0 0 20px rgba(176, 38, 255, 0.05); }
+    50% { box-shadow: 0 0 22px rgba(249, 240, 2, 0.25), inset 0 0 20px rgba(176, 38, 255, 0.1); }
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--bg);
+    background-image:
+        linear-gradient(rgba(0, 255, 249, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 249, 0.05) 1px, transparent 1px),
+        radial-gradient(circle at 15% 0%, rgba(176, 38, 255, 0.3), transparent 45%),
+        radial-gradient(circle at 85% 100%, rgba(255, 32, 121, 0.25), transparent 45%);
+    background-size: 42px 42px, 42px 42px, cover, cover;
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: 'Share Tech Mono', monospace;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.025) 0px,
+        rgba(255, 255, 255, 0.025) 1px,
+        transparent 2px,
+        transparent 4px
+    );
+    z-index: 1;
+}
+
+.app {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+    margin: auto;
+    padding: 18px;
+    padding-bottom: 50px;
+}
+
+.header {
+    position: relative;
+    border: 1px solid var(--neon-yellow);
+    background: var(--bg-panel);
+    border-radius: 4px;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%);
+    padding: 20px;
+    margin-bottom: 16px;
+    animation: pulseGlow 3s ease-in-out infinite;
+}
+
+.backLink {
+    display: inline-block;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.backLink:active {
+    color: var(--neon-yellow);
+}
+
+.logo {
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: var(--neon-yellow);
+    text-shadow: 0 0 8px rgba(249, 240, 2, 0.7);
+    font-weight: bold;
+}
+
+.title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin-top: 8px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    text-shadow: 2px 0 var(--neon-pink), -2px 0 var(--neon-yellow), 0 0 24px rgba(249, 240, 2, 0.3);
+}
+
+.subtitle {
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+.progressSummary {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--neon-yellow);
+    text-shadow: 0 0 6px rgba(249, 240, 2, 0.5);
+    letter-spacing: 1px;
+}
+
+.badgeGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.badge {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--bg-panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    opacity: 0.55;
+}
+
+.badge.unlocked {
+    opacity: 1;
+    border-color: var(--neon-yellow);
+    box-shadow: 0 0 14px rgba(249, 240, 2, 0.2);
+}
+
+.badgeIcon {
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    filter: grayscale(1);
+}
+
+.badge.unlocked .badgeIcon {
+    filter: none;
+    border-color: var(--neon-yellow);
+}
+
+.badgeInfo {
+    flex: 1;
+}
+
+.badgeName {
+    font-weight: bold;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.badge.unlocked .badgeName {
+    color: var(--neon-yellow);
+    text-shadow: 0 0 6px rgba(249, 240, 2, 0.5);
+}
+
+.badgeDesc {
+    color: var(--text-dim);
+    font-size: 11px;
+    margin-top: 3px;
+    line-height: 1.4;
+}
+
+.badgeStatus {
+    font-size: 10px;
+    letter-spacing: 1px;
+    margin-top: 4px;
+    color: var(--text-dim);
+}
+
+.badge.unlocked .badgeStatus {
+    color: var(--neon-green);
+}
+
+.emptyState {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.emptyState a {
+    color: var(--neon-yellow);
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <div class="header">
+        <a class="backLink" href="index.html">&larr; BACK TO LIFE RPG</a>
+        <div class="logo">MINDJACK.9 // MILESTONE LOG</div>
+        <div class="title">Achievements</div>
+        <div class="subtitle">Badges earned along the way.</div>
+        <div class="progressSummary" id="progressSummary"></div>
+    </div>
+
+    <div id="content"></div>
+
+</div>
+
+<script>
+
+const ACHIEVEMENTS = [
+
+    {
+        icon: "🎯",
+        name: "First Steps",
+        description: "Complete your first mission.",
+        check: g => (g.totalMissions || 0) >= 1
+    },
+    {
+        icon: "🔥",
+        name: "On A Roll",
+        description: "Reach a 3-day perfect streak.",
+        check: g => (g.streak || 0) >= 3
+    },
+    {
+        icon: "🔥",
+        name: "Week Warrior",
+        description: "Reach a 7-day perfect streak.",
+        check: g => (g.streak || 0) >= 7
+    },
+    {
+        icon: "⚡",
+        name: "Level 5",
+        description: "Reach player level 5.",
+        check: g => (g.level || 1) >= 5
+    },
+    {
+        icon: "⚡",
+        name: "Level 10",
+        description: "Reach player level 10.",
+        check: g => (g.level || 1) >= 10
+    },
+    {
+        icon: "⚡",
+        name: "Level 25",
+        description: "Reach player level 25.",
+        check: g => (g.level || 1) >= 25
+    },
+    {
+        icon: "🏅",
+        name: "Quest Starter",
+        description: "Complete your first main quest.",
+        check: g => Object.keys(g.questsCompleted || {}).length >= 1
+    },
+    {
+        icon: "🏆",
+        name: "Quest Master",
+        description: "Complete 5 main quests.",
+        check: g => Object.keys(g.questsCompleted || {}).length >= 5
+    },
+    {
+        icon: "📚",
+        name: "Bookworm",
+        description: "Complete 10 books.",
+        check: g => (g.booksCompleted || 0) >= 10
+    },
+    {
+        icon: "💎",
+        name: "Diamond Tier",
+        description: "Reach 25,000 lifetime score.",
+        check: g => (g.totalScore || 0) >= 25000
+    },
+    {
+        icon: "🌟",
+        name: "Legendary",
+        description: "Reach 35,000 lifetime score.",
+        check: g => (g.totalScore || 0) >= 35000
+    },
+    {
+        icon: "💃",
+        name: "Diva",
+        description: "Unlock the Diva reward.",
+        check: g => g.divaUnlocked === true
+    },
+    {
+        icon: "🛍️",
+        name: "Big Spender",
+        description: "Redeem 5 rewards from the shop.",
+        check: g => Object.values(g.rewardsRedeemed || {}).reduce((a, b) => a + b, 0) >= 5
+    },
+    {
+        icon: "🎮",
+        name: "Centurion",
+        description: "Complete 100 missions total.",
+        check: g => (g.totalMissions || 0) >= 100
+    }
+
+];
+
+
+const raw = localStorage.getItem("mindjack9");
+
+const content = document.getElementById("content");
+
+const summaryEl = document.getElementById("progressSummary");
+
+
+if (!raw) {
+
+    content.innerHTML = `
+        <div class="emptyState">
+            NO DATA YET.<br><br>
+            Play a bit on the <a href="index.html">Life RPG</a> page first,
+            then come back to see your achievements.
+        </div>
+    `;
+
+} else {
+
+    const game = JSON.parse(raw);
+
+    const results = ACHIEVEMENTS.map(a => ({
+        ...a,
+        unlocked: a.check(game)
+    }));
+
+    const unlockedCount = results.filter(a => a.unlocked).length;
+
+    summaryEl.textContent =
+        unlockedCount + " / " + ACHIEVEMENTS.length + " UNLOCKED";
+
+
+    const badgesHTML = results.map(a => `
+        <div class="badge ${a.unlocked ? "unlocked" : ""}">
+            <div class="badgeIcon">${a.icon}</div>
+            <div class="badgeInfo">
+                <div class="badgeName">${a.name}</div>
+                <div class="badgeDesc">${a.description}</div>
+                <div class="badgeStatus">${a.unlocked ? "✓ UNLOCKED" : "🔒 LOCKED"}</div>
+            </div>
+        </div>
+    `).join("");
+
+    content.innerHTML = `<div class="badgeGrid">${badgesHTML}</div>`;
+
+}
+
+</script>
+
+</body>
+</html>

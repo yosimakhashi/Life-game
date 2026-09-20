@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STATS | MINDJACK.9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+<style>
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    --bg: #05010f;
+    --bg-panel: #0b0620;
+    --bg-panel-alt: #120a2e;
+    --bg-input: #0a0518;
+    --border: #2b1a54;
+    --neon-cyan: #00fff9;
+    --neon-pink: #ff2079;
+    --neon-purple: #b026ff;
+    --neon-green: #39ff88;
+    --neon-yellow: #f9f002;
+    --text-primary: #e8e6ff;
+    --text-dim: #8b7fb0;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 14px rgba(0, 255, 249, 0.15), inset 0 0 20px rgba(176, 38, 255, 0.05); }
+    50% { box-shadow: 0 0 22px rgba(0, 255, 249, 0.3), inset 0 0 20px rgba(176, 38, 255, 0.1); }
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--bg);
+    background-image:
+        linear-gradient(rgba(0, 255, 249, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 249, 0.05) 1px, transparent 1px),
+        radial-gradient(circle at 15% 0%, rgba(176, 38, 255, 0.3), transparent 45%),
+        radial-gradient(circle at 85% 100%, rgba(255, 32, 121, 0.25), transparent 45%);
+    background-size: 42px 42px, 42px 42px, cover, cover;
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: 'Share Tech Mono', monospace;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.025) 0px,
+        rgba(255, 255, 255, 0.025) 1px,
+        transparent 2px,
+        transparent 4px
+    );
+    z-index: 1;
+}
+
+.app {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+    margin: auto;
+    padding: 18px;
+    padding-bottom: 50px;
+}
+
+.header {
+    position: relative;
+    border: 1px solid var(--neon-cyan);
+    background: var(--bg-panel);
+    border-radius: 4px;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%);
+    padding: 20px;
+    margin-bottom: 16px;
+    animation: pulseGlow 3s ease-in-out infinite;
+}
+
+.backLink {
+    display: inline-block;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.backLink:active {
+    color: var(--neon-cyan);
+}
+
+.logo {
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px rgba(0, 255, 249, 0.7);
+    font-weight: bold;
+}
+
+.title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin-top: 8px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    text-shadow: 2px 0 var(--neon-pink), -2px 0 var(--neon-cyan), 0 0 24px rgba(0, 255, 249, 0.35);
+}
+
+.subtitle {
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+.section {
+    margin-top: 20px;
+}
+
+.sectionTitle {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.sectionTitle span {
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px rgba(0, 255, 249, 0.6);
+}
+
+.statGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.statTile {
+    background: var(--bg-panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+}
+
+.statTile .value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px rgba(0, 255, 249, 0.5);
+}
+
+.statTile .label {
+    color: var(--text-dim);
+    font-size: 10px;
+    letter-spacing: 1px;
+    margin-top: 4px;
+    text-transform: uppercase;
+}
+
+.chartCard {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 12px;
+}
+
+.chartTitle {
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.chartTitle span {
+    color: var(--neon-cyan);
+}
+
+.chartCard.credits .chartTitle span {
+    color: var(--neon-yellow);
+}
+
+svg.chart {
+    width: 100%;
+    height: 140px;
+    display: block;
+    overflow: visible;
+}
+
+.chartAxis {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 6px;
+}
+
+.historyTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.historyTable th {
+    text-align: left;
+    color: var(--text-dim);
+    font-weight: normal;
+    letter-spacing: 1px;
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+    font-size: 10px;
+}
+
+.historyTable td {
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+}
+
+.historyTable tr:last-child td {
+    border-bottom: 0;
+}
+
+.historyTable .today td {
+    color: var(--neon-cyan);
+}
+
+.emptyState {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.emptyState a {
+    color: var(--neon-cyan);
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <div class="header">
+        <a class="backLink" href="index.html">&larr; BACK TO LIFE RPG</a>
+        <div class="logo">MINDJACK.9 // PROGRESS LOG</div>
+        <div class="title">STATS</div>
+        <div class="subtitle">Your progress over time.</div>
+    </div>
+
+    <div id="content"></div>
+
+</div>
+
+<script>
+
+/* ============================
+   TIER LOOKUP (mirrors index.html)
+============================ */
+
+const TIER_SCORE_STEP = 5000;
+
+const tiers = [
+    { name: "ROOKIE",    icon: "🔰", color: "#8d99a8" },
+    { name: "BRONZE",    icon: "🥉", color: "#c97b4a" },
+    { name: "SILVER",    icon: "🥈", color: "#c7d0da" },
+    { name: "GOLD",      icon: "🥇", color: "#f2c94c" },
+    { name: "PLATINUM",  icon: "🔷", color: "#7fe8d0" },
+    { name: "DIAMOND",   icon: "💎", color: "#6fd1ff" },
+    { name: "MASTER",    icon: "👑", color: "#c07bff" },
+    { name: "LEGENDARY", icon: "🌟", color: "#ff5f6d" }
+];
+
+function getTier(score) {
+    const index = Math.min(Math.floor(score / TIER_SCORE_STEP), tiers.length - 1);
+    return tiers[index];
+}
+
+
+/* ============================
+   LOAD DATA
+============================ */
+
+const raw = localStorage.getItem("mindjack9");
+
+const content = document.getElementById("content");
+
+if (!raw) {
+
+    content.innerHTML = `
+        <div class="emptyState">
+            NO DATA YET.<br><br>
+            Play a bit on the <a href="index.html">Life RPG</a> page first,
+            then come back to see your stats.
+        </div>
+    `;
+
+} else {
+
+    const game = JSON.parse(raw);
+
+    const history = Array.isArray(game.history) ? game.history : [];
+
+    const series = history.concat([{
+        date: game.lastDate || "TODAY",
+        score: game.totalScore || 0,
+        coins: game.coins || 0,
+        level: game.level || 1,
+        missions: game.totalMissions || 0,
+        live: true
+    }]);
+
+    const tier = getTier(game.totalScore || 0);
+
+
+    /* STAT TILES */
+
+    const statsHTML = `
+        <div class="section">
+            <div class="sectionTitle">CURRENT <span>STATUS</span></div>
+            <div class="statGrid">
+                <div class="statTile"><div class="value">${game.level || 1}</div><div class="label">Level</div></div>
+                <div class="statTile"><div class="value" style="color:${tier.color}">${tier.icon} ${tier.name}</div><div class="label">Tier</div></div>
+                <div class="statTile"><div class="value">${game.totalScore || 0}</div><div class="label">Lifetime Score</div></div>
+                <div class="statTile"><div class="value">${game.coins || 0}</div><div class="label">Credits</div></div>
+                <div class="statTile"><div class="value">${game.streak || 0}</div><div class="label">Day Streak</div></div>
+                <div class="statTile"><div class="value">${game.totalMissions || 0}</div><div class="label">Missions Done</div></div>
+                <div class="statTile"><div class="value">${game.booksCompleted || 0}</div><div class="label">Books Read</div></div>
+                <div class="statTile"><div class="value">${Object.keys(game.questsCompleted || {}).length}</div><div class="label">Quests Done</div></div>
+            </div>
+        </div>
+    `;
+
+
+    /* CHARTS */
+
+    function buildChart(points, key, color) {
+
+        const w = 560;
+        const h = 130;
+        const pad = 10;
+
+        const values = points.map(p => p[key]);
+        const maxVal = Math.max.apply(null, values.concat([1]));
+        const minVal = Math.min.apply(null, values.concat([0]));
+        const range = (maxVal - minVal) || 1;
+
+        const stepX = points.length > 1 ? (w - pad * 2) / (points.length - 1) : 0;
+
+        const coords = points.map((p, i) => {
+            const x = pad + stepX * i;
+            const y = h - pad - ((p[key] - minVal) / range) * (h - pad * 2);
+            return { x: x, y: y };
+        });
+
+        const pathD = coords.map((c, i) => (i === 0 ? "M" : "L") + c.x.toFixed(1) + "," + c.y.toFixed(1)).join(" ");
+
+        const dots = coords.map((c, i) => {
+            const isLast = i === coords.length - 1;
+            return `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${isLast ? 4 : 2.5}" fill="${color}" />`;
+        }).join("");
+
+        return `
+            <svg class="chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+                <path d="${pathD}" fill="none" stroke="${color}" stroke-width="2" />
+                ${dots}
+            </svg>
+        `;
+
+    }
+
+    const firstDate = series[0] ? series[0].date : "";
+    const lastDate = series[series.length - 1] ? series[series.length - 1].date : "";
+
+    const chartsHTML = `
+        <div class="section">
+            <div class="sectionTitle">SCORE <span>OVER TIME</span></div>
+
+            <div class="chartCard">
+                <div class="chartTitle">LIFETIME <span>SCORE</span></div>
+                ${buildChart(series, "score", "#00fff9")}
+                <div class="chartAxis"><span>${firstDate}</span><span>${lastDate}</span></div>
+            </div>
+
+            <div class="chartCard credits">
+                <div class="chartTitle">CREDITS <span>BALANCE</span></div>
+                ${buildChart(series, "coins", "#f9f002")}
+                <div class="chartAxis"><span>${firstDate}</span><span>${lastDate}</span></div>
+            </div>
+        </div>
+    `;
+
+
+    /* HISTORY TABLE */
+
+    const rows = series.slice().reverse().map(p => `
+        <tr class="${p.live ? "today" : ""}">
+            <td>${p.date}${p.live ? " (today)" : ""}</td>
+            <td>${p.score}</td>
+            <td>${p.coins}</td>
+            <td>${p.level}</td>
+        </tr>
+    `).join("");
+
+    const tableHTML = `
+        <div class="section">
+            <div class="sectionTitle">DAILY <span>LOG</span></div>
+            <table class="historyTable">
+                <thead>
+                    <tr><th>Date</th><th>Score</th><th>Credits</th><th>Lvl</th></tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+
+    content.innerHTML = statsHTML + chartsHTML + tableHTML;
+
+}
+
+</script>
+
+</body>
+</html>
