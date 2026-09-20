@@ -428,6 +428,141 @@ body::before {
     color: var(--text-dim);
 }
 
+/* TASK LOG */
+
+.logLevel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 9px;
+}
+
+.logLevel[data-level="1"] {
+    border-left: 3px solid var(--neon-cyan);
+}
+
+.logLevel[data-level="2"] {
+    border-left: 3px solid var(--neon-purple);
+}
+
+.logLevel[data-level="3"] {
+    border-left: 3px solid var(--neon-pink);
+}
+
+.logLevelHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: var(--text-primary);
+}
+
+.logLevelTotal {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.logEntries {
+    margin-top: 10px;
+}
+
+.logEntry {
+    display: flex;
+    align-items: center;
+    background: var(--bg-panel-alt);
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    font-size: 12px;
+}
+
+.logEntryText {
+    flex: 1;
+    color: var(--text-primary);
+    margin-right: 8px;
+    word-break: break-word;
+}
+
+.logEntryPoints {
+    color: var(--neon-cyan);
+    font-weight: bold;
+    text-shadow: 0 0 6px rgba(0, 255, 249, 0.5);
+    white-space: nowrap;
+}
+
+.logEntryDelete {
+    background: transparent;
+    border: 0;
+    color: var(--neon-pink);
+    margin-left: 10px;
+    font-size: 13px;
+    padding: 0 2px;
+}
+
+.logInputRow {
+    display: grid;
+    grid-template-columns: 1fr 90px;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.logInputRow input {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.logInputRow input:focus {
+    outline: none;
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 8px rgba(0, 255, 249, 0.4);
+}
+
+.logAddBtn {
+    width: 100%;
+    margin-top: 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+.logAddBtn:active {
+    transform: scale(0.98);
+    box-shadow: 0 0 12px rgba(0, 255, 249, 0.4);
+}
+
+.logGrandTotal {
+    text-align: center;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+}
+
+.logGrandTotal span {
+    color: var(--neon-cyan);
+    font-weight: bold;
+    text-shadow: 0 0 6px rgba(0, 255, 249, 0.5);
+}
+
 /* REWARDS */
 
 .rewardCard {
@@ -721,6 +856,81 @@ body::before {
     </div>
 
 
+    <!-- TASK LOG -->
+
+    <div class="section">
+
+        <div class="sectionTitle">
+            TASK <span>LOG</span>
+        </div>
+
+        <div class="logLevel" data-level="1">
+
+            <div class="logLevelHeader">
+                <span class="logLevelName">LEVEL 1</span>
+                <span class="logLevelTotal" id="log1Total">0 PTS</span>
+            </div>
+
+            <div class="logEntries" id="log1Entries"></div>
+
+            <div class="logInputRow">
+                <input type="text" id="log1Text" placeholder="What did you do?" maxlength="60">
+                <input type="number" id="log1Points" placeholder="Points" min="1">
+            </div>
+
+            <button class="logAddBtn" onclick="addLogEntry(1)">
+                + ADD ENTRY
+            </button>
+
+        </div>
+
+        <div class="logLevel" data-level="2">
+
+            <div class="logLevelHeader">
+                <span class="logLevelName">LEVEL 2</span>
+                <span class="logLevelTotal" id="log2Total">0 PTS</span>
+            </div>
+
+            <div class="logEntries" id="log2Entries"></div>
+
+            <div class="logInputRow">
+                <input type="text" id="log2Text" placeholder="What did you do?" maxlength="60">
+                <input type="number" id="log2Points" placeholder="Points" min="1">
+            </div>
+
+            <button class="logAddBtn" onclick="addLogEntry(2)">
+                + ADD ENTRY
+            </button>
+
+        </div>
+
+        <div class="logLevel" data-level="3">
+
+            <div class="logLevelHeader">
+                <span class="logLevelName">LEVEL 3</span>
+                <span class="logLevelTotal" id="log3Total">0 PTS</span>
+            </div>
+
+            <div class="logEntries" id="log3Entries"></div>
+
+            <div class="logInputRow">
+                <input type="text" id="log3Text" placeholder="What did you do?" maxlength="60">
+                <input type="number" id="log3Points" placeholder="Points" min="1">
+            </div>
+
+            <button class="logAddBtn" onclick="addLogEntry(3)">
+                + ADD ENTRY
+            </button>
+
+        </div>
+
+        <div class="logGrandTotal">
+            TOTAL LOGGED: <span id="logGrandTotal">0</span> PTS
+        </div>
+
+    </div>
+
+
     <!-- REWARDS -->
 
     <div class="section">
@@ -862,7 +1072,9 @@ const defaultGame = {
 
     rewardsRedeemed: {},
 
-    divaUnlocked: false
+    divaUnlocked: false,
+
+    levelLog: { level1: [], level2: [], level3: [] }
 
 };
 
@@ -898,6 +1110,16 @@ if (typeof game.rewardsRedeemed !== "object" || game.rewardsRedeemed === null) {
 if (typeof game.divaUnlocked !== "boolean") {
     game.divaUnlocked = false;
 }
+
+if (!game.levelLog || typeof game.levelLog !== "object") {
+    game.levelLog = { level1: [], level2: [], level3: [] };
+}
+
+["level1", "level2", "level3"].forEach(key => {
+    if (!Array.isArray(game.levelLog[key])) {
+        game.levelLog[key] = [];
+    }
+});
 
 
 /* ============================
@@ -1205,6 +1427,163 @@ function checkDivaUnlock() {
 }
 
 
+/* ============================
+   TASK LOG
+============================ */
+
+function addLogEntry(levelNum) {
+
+    const key = "level" + levelNum;
+
+    const textInput =
+        document.getElementById("log" + levelNum + "Text");
+
+    const pointsInput =
+        document.getElementById("log" + levelNum + "Points");
+
+
+    const text = textInput.value.trim();
+
+    const points = parseInt(pointsInput.value, 10);
+
+
+    if (!text) {
+
+        showNotification("ENTER WHAT YOU DID");
+
+        return;
+
+    }
+
+
+    if (!points || points < 1) {
+
+        showNotification("ENTER VALID POINTS");
+
+        return;
+
+    }
+
+
+    game.levelLog[key].push({
+
+        id: "log_" + Date.now(),
+
+        text: text,
+
+        points: points
+
+    });
+
+    game.totalScore += points;
+
+
+    checkTierUp();
+
+    checkDivaUnlock();
+
+    saveGame();
+
+    render();
+
+
+    textInput.value = "";
+
+    pointsInput.value = "";
+
+
+    showNotification(
+        "+" + points +
+        " PTS LOGGED (LEVEL " +
+        levelNum + ")"
+    );
+
+}
+
+
+function deleteLogEntry(levelNum, id) {
+
+    const key = "level" + levelNum;
+
+    const entry =
+        game.levelLog[key].find(e => e.id === id);
+
+    if (!entry)
+        return;
+
+
+    game.levelLog[key] =
+        game.levelLog[key].filter(e => e.id !== id);
+
+    game.totalScore =
+        Math.max(0, game.totalScore - entry.points);
+
+
+    saveGame();
+
+    render();
+
+
+    showNotification("ENTRY REMOVED");
+
+}
+
+
+function renderLevelLog() {
+
+    let grandTotal = 0;
+
+
+    [1, 2, 3].forEach(levelNum => {
+
+        const key = "level" + levelNum;
+
+        const entries = game.levelLog[key];
+
+        const subtotal =
+            entries.reduce((sum, e) => sum + e.points, 0);
+
+        grandTotal += subtotal;
+
+
+        document.getElementById("log" + levelNum + "Total").textContent =
+            subtotal + " PTS";
+
+
+        const container =
+            document.getElementById("log" + levelNum + "Entries");
+
+        container.innerHTML = "";
+
+
+        entries.forEach(entry => {
+
+            const div =
+                document.createElement("div");
+
+            div.className = "logEntry";
+
+
+            div.innerHTML = `
+                <span class="logEntryText">${entry.text}</span>
+                <span class="logEntryPoints">+${entry.points}</span>
+                <button class="logEntryDelete" onclick="deleteLogEntry(${levelNum}, '${entry.id}')">✕</button>
+            `;
+
+
+            container.appendChild(div);
+
+        });
+
+    });
+
+
+    document.getElementById("logGrandTotal").textContent =
+        grandTotal;
+
+}
+
+
 function renderRewards() {
 
     document.getElementById("bookCountText").textContent =
@@ -1399,6 +1778,9 @@ function render() {
 
 
     renderTier();
+
+
+    renderLevelLog();
 
 
     renderRewards();
