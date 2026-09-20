@@ -493,6 +493,15 @@ body::before {
     font-weight: bold;
     text-shadow: 0 0 6px rgba(0, 255, 249, 0.5);
     white-space: nowrap;
+    text-align: right;
+}
+
+.logEntryBonus {
+    display: block;
+    color: var(--text-dim);
+    font-weight: normal;
+    font-size: 10px;
+    text-shadow: none;
 }
 
 .logEntryDelete {
@@ -1431,6 +1440,9 @@ function checkDivaUnlock() {
    TASK LOG
 ============================ */
 
+const LEVEL_BONUS = { 1: 1, 2: 5, 3: 10 };
+
+
 function addLogEntry(levelNum) {
 
     const key = "level" + levelNum;
@@ -1465,19 +1477,26 @@ function addLogEntry(levelNum) {
     }
 
 
+    const bonus = LEVEL_BONUS[levelNum];
+
+    const total = points + bonus;
+
+
     game.levelLog[key].push({
 
         id: "log_" + Date.now(),
 
         text: text,
 
-        points: points
+        points: points,
+
+        bonus: bonus
 
     });
 
-    game.totalScore += points;
+    game.totalScore += total;
 
-    game.coins += points;
+    game.coins += total;
 
 
     checkTierUp();
@@ -1496,7 +1515,8 @@ function addLogEntry(levelNum) {
 
     showNotification(
         "+" + points +
-        " PTS | +" + points +
+        " PTS +" + bonus +
+        " BONUS | +" + total +
         " CREDITS (LEVEL " +
         levelNum + ")"
     );
@@ -1518,11 +1538,14 @@ function deleteLogEntry(levelNum, id) {
     game.levelLog[key] =
         game.levelLog[key].filter(e => e.id !== id);
 
+    const total =
+        entry.points + (entry.bonus || 0);
+
     game.totalScore =
-        Math.max(0, game.totalScore - entry.points);
+        Math.max(0, game.totalScore - total);
 
     game.coins =
-        Math.max(0, game.coins - entry.points);
+        Math.max(0, game.coins - total);
 
 
     saveGame();
@@ -1547,7 +1570,7 @@ function renderLevelLog() {
         const entries = game.levelLog[key];
 
         const subtotal =
-            entries.reduce((sum, e) => sum + e.points, 0);
+            entries.reduce((sum, e) => sum + e.points + (e.bonus || 0), 0);
 
         grandTotal += subtotal;
 
@@ -1564,6 +1587,11 @@ function renderLevelLog() {
 
         entries.forEach(entry => {
 
+            const bonus = entry.bonus || 0;
+
+            const entryTotal = entry.points + bonus;
+
+
             const div =
                 document.createElement("div");
 
@@ -1572,7 +1600,10 @@ function renderLevelLog() {
 
             div.innerHTML = `
                 <span class="logEntryText">${entry.text}</span>
-                <span class="logEntryPoints">+${entry.points}</span>
+                <span class="logEntryPoints">
+                    +${entryTotal}
+                    ${bonus > 0 ? `<span class="logEntryBonus">(${entry.points}+${bonus} bonus)</span>` : ""}
+                </span>
                 <button class="logEntryDelete" onclick="deleteLogEntry(${levelNum}, '${entry.id}')">✕</button>
             `;
 
