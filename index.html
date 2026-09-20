@@ -76,6 +76,7 @@ body::before {
 /* HEADER */
 
 .header {
+    position: relative;
     border: 1px solid var(--neon-purple);
     background: var(--bg-panel);
     border-radius: 4px;
@@ -83,6 +84,28 @@ body::before {
     padding: 20px;
     margin-bottom: 16px;
     animation: pulseGlow 3s ease-in-out infinite;
+}
+
+.soundToggle {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-panel-alt);
+    color: var(--text-primary);
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.soundToggle:active {
+    transform: scale(0.92);
+    box-shadow: 0 0 10px rgba(0, 255, 249, 0.4);
 }
 
 .logo {
@@ -797,6 +820,7 @@ body::before {
     <!-- HEADER -->
 
     <div class="header">
+        <button class="soundToggle" id="soundToggle" onclick="toggleFeedback()">🔊</button>
         <div class="logo">MINDJACK.9 // LIFE OPERATING SYSTEM</div>
         <div class="title">LIFE RPG</div>
         <div class="subtitle">Upgrade yourself. Complete missions. Become harder to kill.</div>
@@ -1137,7 +1161,9 @@ const defaultGame = {
 
     divaUnlocked: false,
 
-    levelLog: { level1: [], level2: [], level3: [] }
+    levelLog: { level1: [], level2: [], level3: [] },
+
+    feedbackEnabled: true
 
 };
 
@@ -1183,6 +1209,242 @@ if (!game.levelLog || typeof game.levelLog !== "object") {
         game.levelLog[key] = [];
     }
 });
+
+if (typeof game.feedbackEnabled !== "boolean") {
+    game.feedbackEnabled = true;
+}
+
+
+/* ============================
+   SOUND + HAPTIC FEEDBACK
+============================ */
+
+let audioCtx = null;
+
+
+function getAudioContext() {
+
+    if (!audioCtx) {
+
+        const AudioContextClass =
+            window.AudioContext || window.webkitAudioContext;
+
+        audioCtx = new AudioContextClass();
+
+    }
+
+    if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
+
+    return audioCtx;
+
+}
+
+
+function playTone(freq, startOffset, duration, type, peakVolume) {
+
+    const ctx = getAudioContext();
+
+    const osc = ctx.createOscillator();
+
+    const gain = ctx.createGain();
+
+
+    osc.type = type || "square";
+
+    osc.frequency.value = freq;
+
+
+    const startTime = ctx.currentTime + (startOffset || 0);
+
+    const endTime = startTime + (duration || 0.12);
+
+
+    gain.gain.setValueAtTime(0, startTime);
+
+    gain.gain.linearRampToValueAtTime(peakVolume || 0.12, startTime + 0.01);
+
+    gain.gain.exponentialRampToValueAtTime(0.001, endTime);
+
+
+    osc.connect(gain);
+
+    gain.connect(ctx.destination);
+
+
+    osc.start(startTime);
+
+    osc.stop(endTime + 0.02);
+
+}
+
+
+function playNoiseBurst(startOffset, duration, peakVolume) {
+
+    const ctx = getAudioContext();
+
+    const len = Math.floor(ctx.sampleRate * (duration || 0.15));
+
+    const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+
+    const data = buffer.getChannelData(0);
+
+
+    for (let i = 0; i < len; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    }
+
+
+    const noise = ctx.createBufferSource();
+
+    noise.buffer = buffer;
+
+
+    const gain = ctx.createGain();
+
+    const startTime = ctx.currentTime + (startOffset || 0);
+
+
+    gain.gain.setValueAtTime(peakVolume || 0.15, startTime);
+
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + (duration || 0.15));
+
+
+    noise.connect(gain);
+
+    gain.connect(ctx.destination);
+
+
+    noise.start(startTime);
+
+}
+
+
+const SOUND_PRESETS = {
+
+    click: () => {
+        playTone(880, 0, 0.04, "square", 0.05);
+    },
+
+    complete: () => {
+        playTone(660, 0, 0.08, "square", 0.11);
+        playTone(880, 0.06, 0.12, "square", 0.11);
+    },
+
+    deduct: () => {
+        playTone(220, 0, 0.1, "sawtooth", 0.11);
+        playTone(140, 0.08, 0.14, "sawtooth", 0.11);
+    },
+
+    redeem: () => {
+        playTone(494, 0, 0.07, "square", 0.11);
+        playTone(740, 0.06, 0.14, "square", 0.12);
+    },
+
+    levelup: () => {
+        playTone(523, 0, 0.08, "square", 0.12);
+        playTone(659, 0.07, 0.08, "square", 0.12);
+        playTone(784, 0.14, 0.08, "square", 0.12);
+        playTone(1046, 0.21, 0.16, "square", 0.13);
+    },
+
+    tierup: () => {
+        playTone(392, 0, 0.1, "sawtooth", 0.12);
+        playTone(587, 0.09, 0.1, "sawtooth", 0.12);
+        playTone(784, 0.18, 0.1, "sawtooth", 0.12);
+        playTone(1175, 0.27, 0.2, "square", 0.14);
+    },
+
+    unlock: () => {
+        playTone(659, 0, 0.09, "square", 0.12);
+        playTone(831, 0.08, 0.09, "square", 0.12);
+        playTone(1046, 0.16, 0.09, "square", 0.12);
+        playTone(1319, 0.25, 0.22, "square", 0.15);
+    },
+
+    reset: () => {
+        playNoiseBurst(0, 0.2, 0.13);
+        playTone(180, 0.05, 0.18, "sawtooth", 0.09);
+    }
+
+};
+
+
+const VIBRATION_PRESETS = {
+
+    click: [10],
+
+    complete: [25],
+
+    deduct: [15],
+
+    redeem: [20, 20, 20],
+
+    levelup: [30, 40, 30],
+
+    tierup: [40, 30, 40, 30, 90],
+
+    unlock: [50, 30, 50, 30, 50, 30, 100],
+
+    reset: [80]
+
+};
+
+
+function triggerFeedback(name) {
+
+    if (!game.feedbackEnabled)
+        return;
+
+
+    const sound = SOUND_PRESETS[name];
+
+    if (sound) {
+
+        try {
+            sound();
+        } catch (e) {
+            // audio unsupported/blocked - fail silently
+        }
+
+    }
+
+
+    if (navigator.vibrate) {
+        navigator.vibrate(VIBRATION_PRESETS[name] || [15]);
+    }
+
+}
+
+
+function toggleFeedback() {
+
+    game.feedbackEnabled = !game.feedbackEnabled;
+
+    saveGame();
+
+    updateSoundToggleUI();
+
+
+    if (game.feedbackEnabled) {
+        triggerFeedback("click");
+    }
+
+}
+
+
+function updateSoundToggleUI() {
+
+    const btn = document.getElementById("soundToggle");
+
+    if (!btn)
+        return;
+
+    btn.textContent =
+        game.feedbackEnabled ? "🔊" : "🔇";
+
+}
 
 
 /* ============================
@@ -1351,6 +1613,8 @@ function checkTierUp() {
 
         game.tierIndex = tier.index;
 
+        triggerFeedback("tierup");
+
         showNotification(
             "🏆 TIER UP! " +
             tier.icon + " " +
@@ -1401,6 +1665,8 @@ function markBookCompleted() {
     render();
 
 
+    triggerFeedback("complete");
+
     showNotification(
         "+" + BOOK_XP +
         " XP | BOOK #" +
@@ -1445,6 +1711,8 @@ function redeemReward(id) {
 
     if (!canRedeem(reward)) {
 
+        triggerFeedback("deduct");
+
         showNotification(
             "NOT ENOUGH " +
             (reward.type === "books" ? "BOOKS" : "CREDITS")
@@ -1468,6 +1736,8 @@ function redeemReward(id) {
     render();
 
 
+    triggerFeedback("redeem");
+
     showNotification(
         reward.icon + " " +
         reward.name.toUpperCase() +
@@ -1482,6 +1752,8 @@ function checkDivaUnlock() {
     if (!game.divaUnlocked && game.totalScore >= DIVA_SCORE_REQUIREMENT) {
 
         game.divaUnlocked = true;
+
+        triggerFeedback("unlock");
 
         showNotification("💃 DIVA UNLOCKED!");
 
@@ -1524,6 +1796,8 @@ function addLogEntry(levelNum, isDeduction) {
 
     if (!text) {
 
+        triggerFeedback("deduct");
+
         showNotification("ENTER WHAT YOU DID");
 
         return;
@@ -1532,6 +1806,8 @@ function addLogEntry(levelNum, isDeduction) {
 
 
     if (!rawPoints || rawPoints < 1) {
+
+        triggerFeedback("deduct");
 
         showNotification("ENTER VALID POINTS");
 
@@ -1590,12 +1866,16 @@ function addLogEntry(levelNum, isDeduction) {
 
     if (isDeduction) {
 
+        triggerFeedback("deduct");
+
         showNotification(
             applied + " PTS DEDUCTED (LEVEL " +
             levelNum + ")"
         );
 
     } else {
+
+        triggerFeedback("complete");
 
         showNotification(
             "+" + points +
@@ -1638,6 +1918,8 @@ function deleteLogEntry(levelNum, id) {
 
     render();
 
+
+    triggerFeedback("click");
 
     showNotification("ENTRY REMOVED");
 
@@ -1870,6 +2152,8 @@ function render() {
 
     checkNewDay();
 
+    updateSoundToggleUI();
+
     document.getElementById("level").textContent =
         "LEVEL " + game.level;
 
@@ -2061,6 +2345,8 @@ function addMission() {
 
     if (!name) {
 
+        triggerFeedback("deduct");
+
         showNotification("ENTER A MISSION NAME");
 
         return;
@@ -2069,6 +2355,8 @@ function addMission() {
 
 
     if (!xp || xp < 1) {
+
+        triggerFeedback("deduct");
 
         showNotification("ENTER A VALID XP AMOUNT");
 
@@ -2110,6 +2398,8 @@ function addMission() {
 
     toggleAddForm();
 
+    triggerFeedback("complete");
+
     showNotification("MISSION ADDED");
 
 }
@@ -2133,6 +2423,8 @@ function deleteMission(id) {
     saveGame();
 
     render();
+
+    triggerFeedback("click");
 
     showNotification("MISSION REMOVED");
 
@@ -2181,6 +2473,8 @@ function completeMission(id) {
     render();
 
 
+    triggerFeedback("complete");
+
     showNotification(
         "+" + mission.xp +
         " XP  |  +" +
@@ -2212,6 +2506,8 @@ function checkLevelUp() {
         required =
             game.level * 100;
 
+
+        triggerFeedback("levelup");
 
         showNotification(
             "⚡ LEVEL UP! LEVEL " +
@@ -2278,6 +2574,10 @@ function resetGame() {
         return;
 
 
+    const wasFeedbackEnabled =
+        game.feedbackEnabled;
+
+
     localStorage.removeItem(
         "mindjack9"
     );
@@ -2288,9 +2588,13 @@ function resetGame() {
             JSON.stringify(defaultGame)
         );
 
+    game.feedbackEnabled = wasFeedbackEnabled;
+
 
     render();
 
+
+    triggerFeedback("reset");
 
     showNotification(
         "SYSTEM RESET"
