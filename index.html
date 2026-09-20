@@ -417,6 +417,27 @@ body::before {
     box-shadow: 0 0 8px rgba(0, 255, 249, 0.4);
 }
 
+.addForm textarea {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 11px;
+    color: var(--text-primary);
+    font-size: 13px;
+    margin-bottom: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    resize: vertical;
+    min-height: 60px;
+}
+
+.addForm textarea:focus {
+    outline: none;
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 8px rgba(0, 255, 249, 0.4);
+}
+
 .addForm .formRow {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -718,7 +739,13 @@ body::before {
     border-radius: 4px;
     clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
     padding: 17px;
+    margin-bottom: 12px;
     box-shadow: 0 0 16px rgba(176, 38, 255, 0.15);
+}
+
+.quest.completed {
+    border-color: var(--neon-green);
+    box-shadow: 0 0 16px rgba(57, 255, 136, 0.15);
 }
 
 .questName {
@@ -741,6 +768,33 @@ body::before {
     color: var(--neon-cyan);
     text-shadow: 0 0 6px rgba(0, 255, 249, 0.5);
     font-size: 12px;
+}
+
+.questCompleteBtn {
+    width: 100%;
+    margin-top: 12px;
+    border: 1px solid var(--neon-purple);
+    border-radius: 6px;
+    padding: 11px;
+    background: transparent;
+    color: var(--neon-purple);
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: 0.2s;
+}
+
+.questCompleteBtn:active {
+    transform: scale(0.98);
+    box-shadow: 0 0 14px rgba(176, 38, 255, 0.6);
+}
+
+.questCompleteBtn.completed {
+    border-color: var(--neon-green);
+    background: rgba(57, 255, 136, 0.08);
+    color: var(--neon-green);
+    text-shadow: 0 0 8px rgba(57, 255, 136, 0.6);
 }
 
 /* SYSTEM */
@@ -1065,27 +1119,36 @@ body::before {
     </div>
 
 
-    <!-- MAIN QUEST -->
+    <!-- MAIN QUESTS -->
 
     <div class="section">
 
         <div class="sectionTitle">
-            MAIN <span>QUEST</span>
+            MAIN <span>QUESTS</span>
         </div>
 
-        <div class="quest">
+        <div id="questsContainer"></div>
 
-            <div class="questName">
-                ⚡ Build Your Life
+        <button class="addMissionBtn" onclick="toggleAddQuestForm()">
+            + ADD NEW QUEST
+        </button>
+
+        <div class="addForm" id="addQuestForm">
+
+            <input type="text" id="newQuestName" placeholder="Quest name" maxlength="40">
+
+            <textarea id="newQuestDescription" placeholder="Quest description" maxlength="200"></textarea>
+
+            <div class="formRow">
+                <input type="number" id="newQuestXP" placeholder="XP reward" min="1" value="500">
+                <input type="number" id="newQuestCoins" placeholder="Credits reward" min="0" value="200">
             </div>
 
-            <div class="questDescription">
-                Improve your body, career, money, social life and discipline.
-                Small victories compound into a completely different character.
-            </div>
+            <input type="text" id="newQuestIcon" placeholder="Icon (emoji, optional)" maxlength="4">
 
-            <div class="questReward">
-                REWARD: +500 XP
+            <div class="formButtons">
+                <button class="cancelMissionBtn" onclick="toggleAddQuestForm()">CANCEL</button>
+                <button class="saveMissionBtn" onclick="addQuest()">SAVE QUEST</button>
             </div>
 
         </div>
@@ -1163,7 +1226,11 @@ const defaultGame = {
 
     levelLog: { level1: [], level2: [], level3: [] },
 
-    feedbackEnabled: true
+    feedbackEnabled: true,
+
+    customQuests: [],
+
+    questsCompleted: {}
 
 };
 
@@ -1212,6 +1279,14 @@ if (!game.levelLog || typeof game.levelLog !== "object") {
 
 if (typeof game.feedbackEnabled !== "boolean") {
     game.feedbackEnabled = true;
+}
+
+if (!Array.isArray(game.customQuests)) {
+    game.customQuests = [];
+}
+
+if (typeof game.questsCompleted !== "object" || game.questsCompleted === null) {
+    game.questsCompleted = {};
 }
 
 
@@ -1519,6 +1594,298 @@ const missions = [
 function getAllMissions() {
 
     return missions.concat(game.customMissions);
+
+}
+
+
+/* ============================
+   MAIN QUESTS
+============================ */
+
+const quests = [
+
+    {
+        id: "build_life",
+        icon: "⚡",
+        name: "Build Your Life",
+        description: "Improve your body, career, money, social life and discipline. Small victories compound into a completely different character.",
+        xp: 500,
+        coins: 200
+    },
+
+    {
+        id: "transform_body",
+        icon: "💪",
+        name: "Transform Your Body",
+        description: "Hit a real fitness goal - a target weight, a strength milestone, or a race. Show up for it consistently.",
+        xp: 600,
+        coins: 250
+    },
+
+    {
+        id: "master_skill",
+        icon: "🎓",
+        name: "Master a Skill",
+        description: "Finish a course, earn a certification, or reach real fluency in something you've been putting off.",
+        xp: 600,
+        coins: 250
+    },
+
+    {
+        id: "break_habit",
+        icon: "🧠",
+        name: "Break a Habit",
+        description: "Quit something that's been holding you back. Track a real streak until it sticks.",
+        xp: 500,
+        coins: 200
+    },
+
+    {
+        id: "no_fap",
+        icon: "🚫",
+        name: "No Fap",
+        description: "Redirect that energy. Build a real streak and stay disciplined.",
+        xp: 500,
+        coins: 200
+    }
+
+];
+
+
+function getAllQuests() {
+
+    return quests.concat(game.customQuests);
+
+}
+
+
+function toggleAddQuestForm() {
+
+    document.getElementById("addQuestForm")
+        .classList.toggle("show");
+
+}
+
+
+function addQuest() {
+
+    const nameInput =
+        document.getElementById("newQuestName");
+
+    const descInput =
+        document.getElementById("newQuestDescription");
+
+    const xpInput =
+        document.getElementById("newQuestXP");
+
+    const coinsInput =
+        document.getElementById("newQuestCoins");
+
+    const iconInput =
+        document.getElementById("newQuestIcon");
+
+
+    const name = nameInput.value.trim();
+
+    const description = descInput.value.trim();
+
+    const xp = parseInt(xpInput.value, 10);
+
+    const coins = parseInt(coinsInput.value, 10) || 0;
+
+    const icon = iconInput.value.trim() || "🏆";
+
+
+    if (!name) {
+
+        triggerFeedback("deduct");
+
+        showNotification("ENTER A QUEST NAME");
+
+        return;
+
+    }
+
+
+    if (!xp || xp < 1) {
+
+        triggerFeedback("deduct");
+
+        showNotification("ENTER A VALID XP AMOUNT");
+
+        return;
+
+    }
+
+
+    game.customQuests.push({
+
+        id: "quest_" + Date.now(),
+
+        icon: icon,
+
+        name: name,
+
+        description: description || "No description set.",
+
+        xp: xp,
+
+        coins: coins,
+
+        custom: true
+
+    });
+
+
+    saveGame();
+
+    render();
+
+
+    nameInput.value = "";
+
+    descInput.value = "";
+
+    xpInput.value = "500";
+
+    coinsInput.value = "200";
+
+    iconInput.value = "";
+
+
+    toggleAddQuestForm();
+
+    triggerFeedback("complete");
+
+    showNotification("QUEST ADDED");
+
+}
+
+
+function deleteQuest(id) {
+
+    const confirmed =
+        confirm("Remove this quest?");
+
+    if (!confirmed)
+        return;
+
+
+    game.customQuests =
+        game.customQuests.filter(q => q.id !== id);
+
+    delete game.questsCompleted[id];
+
+
+    saveGame();
+
+    render();
+
+    triggerFeedback("click");
+
+    showNotification("QUEST REMOVED");
+
+}
+
+
+function completeQuest(id) {
+
+    if (game.questsCompleted[id])
+        return;
+
+
+    const quest =
+        getAllQuests().find(q => q.id === id);
+
+    if (!quest)
+        return;
+
+
+    game.questsCompleted[id] = true;
+
+    game.xp += quest.xp;
+
+    game.coins += quest.coins;
+
+    game.totalScore += quest.xp;
+
+
+    checkLevelUp();
+
+    checkTierUp();
+
+    checkDivaUnlock();
+
+    saveGame();
+
+    render();
+
+
+    triggerFeedback("unlock");
+
+    showNotification(
+        "🏆 QUEST COMPLETE: +" +
+        quest.xp + " XP | +" +
+        quest.coins + " CREDITS"
+    );
+
+}
+
+
+function renderQuests() {
+
+    const container =
+        document.getElementById("questsContainer");
+
+    container.innerHTML = "";
+
+
+    getAllQuests().forEach(quest => {
+
+        const completed =
+            game.questsCompleted[quest.id] === true;
+
+
+        const div =
+            document.createElement("div");
+
+        div.className = "quest" + (completed ? " completed" : "");
+
+
+        div.innerHTML = `
+
+            <div class="questName">
+                ${quest.icon} ${quest.name}
+            </div>
+
+            <div class="questDescription">
+                ${quest.description}
+            </div>
+
+            <div class="questReward">
+                REWARD: +${quest.xp} XP &nbsp;•&nbsp; +${quest.coins} CREDITS
+            </div>
+
+            <button
+                class="questCompleteBtn ${completed ? "completed" : ""}"
+                onclick="completeQuest('${quest.id}')"
+                ${completed ? "disabled" : ""}
+            >
+                ${completed ? "✓ QUEST COMPLETE" : "COMPLETE QUEST"}
+            </button>
+
+            ${quest.custom ? `
+                <button class="deleteMissionBtn" onclick="deleteQuest('${quest.id}')">
+                    ✕ REMOVE QUEST
+                </button>
+            ` : ""}
+
+        `;
+
+
+        container.appendChild(div);
+
+    });
 
 }
 
@@ -2201,6 +2568,9 @@ function render() {
 
 
     renderMissions();
+
+
+    renderQuests();
 
 }
 
