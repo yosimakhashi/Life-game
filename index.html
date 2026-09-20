@@ -822,8 +822,35 @@ body::before {
 
 /* BUTTONS */
 
-.reset {
+.saveActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
     margin-top: 25px;
+}
+
+.exportBtn,
+.importBtn {
+    padding: 13px;
+    background: transparent;
+    border: 1px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    border-radius: 6px;
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+.exportBtn:active,
+.importBtn:active {
+    transform: scale(0.98);
+    box-shadow: 0 0 12px rgba(0, 255, 249, 0.4);
+}
+
+.reset {
+    margin-top: 12px;
     width: 100%;
     padding: 13px;
     background: transparent;
@@ -1180,6 +1207,26 @@ body::before {
     </div>
 
 
+    <div class="saveActions">
+
+        <button class="exportBtn" onclick="exportSave()">
+            ⬇ EXPORT SAVE
+        </button>
+
+        <button class="importBtn" onclick="document.getElementById('importFileInput').click()">
+            ⬆ IMPORT SAVE
+        </button>
+
+    </div>
+
+    <input
+        type="file"
+        id="importFileInput"
+        accept="application/json"
+        style="display:none"
+        onchange="importSave(event)"
+    >
+
     <button class="reset" onclick="resetGame()">
         RESET SAVE DATA
     </button>
@@ -1239,55 +1286,72 @@ const defaultGame = {
    LOAD GAME
 ============================ */
 
+function normalizeGame() {
+
+    if (typeof game !== "object" || game === null) {
+        game = JSON.parse(JSON.stringify(defaultGame));
+    }
+
+    if (!Array.isArray(game.customMissions)) {
+        game.customMissions = [];
+    }
+
+    if (typeof game.totalScore !== "number") {
+        game.totalScore = 0;
+    }
+
+    if (typeof game.tierIndex !== "number") {
+        game.tierIndex = 0;
+    }
+
+    if (typeof game.booksCompleted !== "number") {
+        game.booksCompleted = 0;
+    }
+
+    if (typeof game.rewardsRedeemed !== "object" || game.rewardsRedeemed === null) {
+        game.rewardsRedeemed = {};
+    }
+
+    if (typeof game.divaUnlocked !== "boolean") {
+        game.divaUnlocked = false;
+    }
+
+    if (!game.levelLog || typeof game.levelLog !== "object") {
+        game.levelLog = { level1: [], level2: [], level3: [] };
+    }
+
+    ["level1", "level2", "level3"].forEach(key => {
+        if (!Array.isArray(game.levelLog[key])) {
+            game.levelLog[key] = [];
+        }
+    });
+
+    if (typeof game.feedbackEnabled !== "boolean") {
+        game.feedbackEnabled = true;
+    }
+
+    if (!Array.isArray(game.customQuests)) {
+        game.customQuests = [];
+    }
+
+    if (typeof game.questsCompleted !== "object" || game.questsCompleted === null) {
+        game.questsCompleted = {};
+    }
+
+    for (const key in defaultGame) {
+        if (!(key in game)) {
+            game[key] = defaultGame[key];
+        }
+    }
+
+}
+
+
 let game = JSON.parse(
     localStorage.getItem("mindjack9")
-) || defaultGame;
+) || JSON.parse(JSON.stringify(defaultGame));
 
-if (!Array.isArray(game.customMissions)) {
-    game.customMissions = [];
-}
-
-if (typeof game.totalScore !== "number") {
-    game.totalScore = 0;
-}
-
-if (typeof game.tierIndex !== "number") {
-    game.tierIndex = 0;
-}
-
-if (typeof game.booksCompleted !== "number") {
-    game.booksCompleted = 0;
-}
-
-if (typeof game.rewardsRedeemed !== "object" || game.rewardsRedeemed === null) {
-    game.rewardsRedeemed = {};
-}
-
-if (typeof game.divaUnlocked !== "boolean") {
-    game.divaUnlocked = false;
-}
-
-if (!game.levelLog || typeof game.levelLog !== "object") {
-    game.levelLog = { level1: [], level2: [], level3: [] };
-}
-
-["level1", "level2", "level3"].forEach(key => {
-    if (!Array.isArray(game.levelLog[key])) {
-        game.levelLog[key] = [];
-    }
-});
-
-if (typeof game.feedbackEnabled !== "boolean") {
-    game.feedbackEnabled = true;
-}
-
-if (!Array.isArray(game.customQuests)) {
-    game.customQuests = [];
-}
-
-if (typeof game.questsCompleted !== "object" || game.questsCompleted === null) {
-    game.questsCompleted = {};
-}
+normalizeGame();
 
 
 /* ============================
@@ -2969,6 +3033,111 @@ function resetGame() {
     showNotification(
         "SYSTEM RESET"
     );
+
+}
+
+
+/* ============================
+   EXPORT / IMPORT SAVE
+============================ */
+
+function exportSave() {
+
+    const dataStr =
+        JSON.stringify(game, null, 2);
+
+    const blob =
+        new Blob([dataStr], { type: "application/json" });
+
+    const url =
+        URL.createObjectURL(blob);
+
+    const a =
+        document.createElement("a");
+
+    a.href = url;
+
+    a.download =
+        "mindjack9-save-" + today() + ".json";
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    document.body.removeChild(a);
+
+    URL.revokeObjectURL(url);
+
+
+    triggerFeedback("click");
+
+    showNotification("SAVE EXPORTED");
+
+}
+
+
+function importSave(event) {
+
+    const file = event.target.files[0];
+
+    if (!file)
+        return;
+
+
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+
+        let imported;
+
+        try {
+
+            imported = JSON.parse(e.target.result);
+
+            if (typeof imported !== "object" || imported === null) {
+                throw new Error("Invalid save file");
+            }
+
+        } catch (err) {
+
+            triggerFeedback("deduct");
+
+            showNotification("INVALID SAVE FILE");
+
+            event.target.value = "";
+
+            return;
+
+        }
+
+
+        const confirmed =
+            confirm("Overwrite current progress with this save file?");
+
+        if (!confirmed) {
+            event.target.value = "";
+            return;
+        }
+
+
+        game = imported;
+
+        normalizeGame();
+
+        saveGame();
+
+        render();
+
+
+        triggerFeedback("complete");
+
+        showNotification("SAVE IMPORTED");
+
+        event.target.value = "";
+
+    };
+
+    reader.readAsText(file);
 
 }
 
