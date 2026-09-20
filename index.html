@@ -493,6 +493,25 @@ body::before {
     font-weight: bold;
     text-shadow: 0 0 6px rgba(0, 255, 249, 0.5);
     white-space: nowrap;
+    text-align: right;
+}
+
+.logEntryBonus {
+    display: block;
+    color: var(--text-dim);
+    font-weight: normal;
+    font-size: 10px;
+    text-shadow: none;
+}
+
+.logEntryPoints.negative {
+    color: var(--neon-pink);
+    text-shadow: 0 0 6px rgba(255, 32, 121, 0.5);
+}
+
+.logLevelTotal.negative {
+    color: var(--neon-pink);
+    text-shadow: 0 0 6px rgba(255, 32, 121, 0.5);
 }
 
 .logEntryDelete {
@@ -529,14 +548,19 @@ body::before {
     box-shadow: 0 0 8px rgba(0, 255, 249, 0.4);
 }
 
-.logAddBtn {
+.logButtonRow {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.logAddBtn,
+.logSubtractBtn {
     width: 100%;
-    margin-top: 8px;
-    border: 1px solid var(--border);
     border-radius: 6px;
     padding: 10px;
     background: transparent;
-    color: var(--text-primary);
     font-family: 'Share Tech Mono', monospace;
     font-weight: bold;
     letter-spacing: 1px;
@@ -544,9 +568,24 @@ body::before {
     font-size: 12px;
 }
 
+.logAddBtn {
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+}
+
 .logAddBtn:active {
     transform: scale(0.98);
     box-shadow: 0 0 12px rgba(0, 255, 249, 0.4);
+}
+
+.logSubtractBtn {
+    border: 1px solid var(--neon-pink);
+    color: var(--neon-pink);
+}
+
+.logSubtractBtn:active {
+    transform: scale(0.98);
+    box-shadow: 0 0 12px rgba(255, 32, 121, 0.4);
 }
 
 .logGrandTotal {
@@ -878,9 +917,17 @@ body::before {
                 <input type="number" id="log1Points" placeholder="Points" min="1">
             </div>
 
-            <button class="logAddBtn" onclick="addLogEntry(1)">
-                + ADD ENTRY
-            </button>
+            <div class="logButtonRow">
+
+                <button class="logAddBtn" onclick="addLogEntry(1, false)">
+                    + ADD ENTRY
+                </button>
+
+                <button class="logSubtractBtn" onclick="addLogEntry(1, true)">
+                    − DEDUCT POINTS
+                </button>
+
+            </div>
 
         </div>
 
@@ -898,9 +945,17 @@ body::before {
                 <input type="number" id="log2Points" placeholder="Points" min="1">
             </div>
 
-            <button class="logAddBtn" onclick="addLogEntry(2)">
-                + ADD ENTRY
-            </button>
+            <div class="logButtonRow">
+
+                <button class="logAddBtn" onclick="addLogEntry(2, false)">
+                    + ADD ENTRY
+                </button>
+
+                <button class="logSubtractBtn" onclick="addLogEntry(2, true)">
+                    − DEDUCT POINTS
+                </button>
+
+            </div>
 
         </div>
 
@@ -918,9 +973,17 @@ body::before {
                 <input type="number" id="log3Points" placeholder="Points" min="1">
             </div>
 
-            <button class="logAddBtn" onclick="addLogEntry(3)">
-                + ADD ENTRY
-            </button>
+            <div class="logButtonRow">
+
+                <button class="logAddBtn" onclick="addLogEntry(3, false)">
+                    + ADD ENTRY
+                </button>
+
+                <button class="logSubtractBtn" onclick="addLogEntry(3, true)">
+                    − DEDUCT POINTS
+                </button>
+
+            </div>
 
         </div>
 
@@ -1431,7 +1494,19 @@ function checkDivaUnlock() {
    TASK LOG
 ============================ */
 
-function addLogEntry(levelNum) {
+const LEVEL_BONUS = { 1: 1, 2: 5, 3: 10 };
+
+
+function getEntryEffect(entry) {
+
+    return typeof entry.applied === "number" ?
+        entry.applied :
+        entry.points + (entry.bonus || 0);
+
+}
+
+
+function addLogEntry(levelNum, isDeduction) {
 
     const key = "level" + levelNum;
 
@@ -1444,7 +1519,7 @@ function addLogEntry(levelNum) {
 
     const text = textInput.value.trim();
 
-    const points = parseInt(pointsInput.value, 10);
+    const rawPoints = parseInt(pointsInput.value, 10);
 
 
     if (!text) {
@@ -1456,7 +1531,7 @@ function addLogEntry(levelNum) {
     }
 
 
-    if (!points || points < 1) {
+    if (!rawPoints || rawPoints < 1) {
 
         showNotification("ENTER VALID POINTS");
 
@@ -1465,17 +1540,38 @@ function addLogEntry(levelNum) {
     }
 
 
+    const bonus = isDeduction ? 0 : LEVEL_BONUS[levelNum];
+
+    const points = isDeduction ? -rawPoints : rawPoints;
+
+    const total = points + bonus;
+
+
+    const scoreBefore = game.totalScore;
+
+    game.totalScore =
+        Math.max(0, scoreBefore + total);
+
+    const applied =
+        game.totalScore - scoreBefore;
+
+    game.coins =
+        Math.max(0, game.coins + applied);
+
+
     game.levelLog[key].push({
 
         id: "log_" + Date.now(),
 
         text: text,
 
-        points: points
+        points: points,
+
+        bonus: bonus,
+
+        applied: applied
 
     });
-
-    game.totalScore += points;
 
 
     checkTierUp();
@@ -1492,11 +1588,24 @@ function addLogEntry(levelNum) {
     pointsInput.value = "";
 
 
-    showNotification(
-        "+" + points +
-        " PTS LOGGED (LEVEL " +
-        levelNum + ")"
-    );
+    if (isDeduction) {
+
+        showNotification(
+            applied + " PTS DEDUCTED (LEVEL " +
+            levelNum + ")"
+        );
+
+    } else {
+
+        showNotification(
+            "+" + points +
+            " PTS +" + bonus +
+            " BONUS | +" + total +
+            " CREDITS (LEVEL " +
+            levelNum + ")"
+        );
+
+    }
 
 }
 
@@ -1515,8 +1624,14 @@ function deleteLogEntry(levelNum, id) {
     game.levelLog[key] =
         game.levelLog[key].filter(e => e.id !== id);
 
+    const applied =
+        getEntryEffect(entry);
+
     game.totalScore =
-        Math.max(0, game.totalScore - entry.points);
+        Math.max(0, game.totalScore - applied);
+
+    game.coins =
+        Math.max(0, game.coins - applied);
 
 
     saveGame();
@@ -1541,13 +1656,18 @@ function renderLevelLog() {
         const entries = game.levelLog[key];
 
         const subtotal =
-            entries.reduce((sum, e) => sum + e.points, 0);
+            entries.reduce((sum, e) => sum + getEntryEffect(e), 0);
 
         grandTotal += subtotal;
 
 
-        document.getElementById("log" + levelNum + "Total").textContent =
+        const totalEl =
+            document.getElementById("log" + levelNum + "Total");
+
+        totalEl.textContent =
             subtotal + " PTS";
+
+        totalEl.classList.toggle("negative", subtotal < 0);
 
 
         const container =
@@ -1558,6 +1678,13 @@ function renderLevelLog() {
 
         entries.forEach(entry => {
 
+            const bonus = entry.bonus || 0;
+
+            const entryTotal = getEntryEffect(entry);
+
+            const isNegative = entryTotal < 0;
+
+
             const div =
                 document.createElement("div");
 
@@ -1566,7 +1693,10 @@ function renderLevelLog() {
 
             div.innerHTML = `
                 <span class="logEntryText">${entry.text}</span>
-                <span class="logEntryPoints">+${entry.points}</span>
+                <span class="logEntryPoints ${isNegative ? "negative" : ""}">
+                    ${isNegative ? entryTotal : "+" + entryTotal}
+                    ${bonus > 0 ? `<span class="logEntryBonus">(${entry.points}+${bonus} bonus)</span>` : ""}
+                </span>
                 <button class="logEntryDelete" onclick="deleteLogEntry(${levelNum}, '${entry.id}')">✕</button>
             `;
 
