@@ -297,6 +297,21 @@ body::before {
 const TIER_SCORE_STEP = 5000;
 const TIER_COUNT = 8;
 const DIVA_SCORE_REQUIREMENT = 15000;
+const COLLECTIBLE_IDS = ["warrior", "samurai", "pirate", "fighter", "ninja"];
+const COLLECTIBLE_CREDITS_STEP = 1000;
+
+function ensureCollectiblesOrder() {
+    if (!Array.isArray(game.collectiblesOrder) || game.collectiblesOrder.length !== COLLECTIBLE_IDS.length) {
+        const shuffled = COLLECTIBLE_IDS.slice();
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const temp = shuffled[i];
+            shuffled[i] = shuffled[j];
+            shuffled[j] = temp;
+        }
+        game.collectiblesOrder = shuffled;
+    }
+}
 
 function loadGame() {
     const raw = localStorage.getItem("mindjack9");
@@ -377,6 +392,7 @@ if (!game) {
 
         game.totalScore = (game.totalScore || 0) + op.points;
         game.coins = (game.coins || 0) + op.points;
+        game.creditsEarned = (game.creditsEarned || 0) + op.points;
 
         const newTierIndex = Math.min(Math.floor(game.totalScore / TIER_SCORE_STEP), TIER_COUNT - 1);
         if (newTierIndex > (game.tierIndex || 0)) {
@@ -385,6 +401,12 @@ if (!game) {
 
         if (!game.divaUnlocked && game.totalScore >= DIVA_SCORE_REQUIREMENT) {
             game.divaUnlocked = true;
+        }
+
+        ensureCollectiblesOrder();
+        const newUnlockedCount = Math.min(COLLECTIBLE_IDS.length, Math.floor(game.creditsEarned / COLLECTIBLE_CREDITS_STEP));
+        if (newUnlockedCount > (game.collectiblesUnlockedCount || 0)) {
+            game.collectiblesUnlockedCount = newUnlockedCount;
         }
 
         saveGame(game);

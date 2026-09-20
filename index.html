@@ -137,7 +137,7 @@ body::before {
 
 .navRow {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
     margin-bottom: 16px;
 }
@@ -146,7 +146,7 @@ body::before {
     display: block;
     box-sizing: border-box;
     text-align: center;
-    padding: 12px 6px;
+    padding: 12px 8px;
     border-radius: 8px;
     background: var(--bg-panel);
     text-decoration: none;
@@ -154,7 +154,7 @@ body::before {
     font-weight: bold;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    font-size: 10.5px;
+    font-size: 11.5px;
     line-height: 1.4;
 }
 
@@ -187,6 +187,15 @@ body::before {
 
 .navBtnSideOps:active {
     box-shadow: 0 0 12px rgba(176, 38, 255, 0.4);
+}
+
+.navBtnCollectibles {
+    border: 1px solid var(--neon-green);
+    color: var(--neon-green);
+}
+
+.navBtnCollectibles:active {
+    box-shadow: 0 0 12px rgba(57, 255, 136, 0.4);
 }
 
 /* PLAYER */
@@ -969,6 +978,7 @@ body::before {
         <a class="navBtn navBtnStats" href="stats.html">📊 STATS</a>
         <a class="navBtn navBtnAchievements" href="achievements.html">🏆 ACHIEVEMENTS</a>
         <a class="navBtn navBtnSideOps" href="sideops.html">⚔ SIDE OPS</a>
+        <a class="navBtn navBtnCollectibles" href="collectibles.html">🎴 COLLECTIBLES</a>
     </div>
 
     <!-- PLAYER -->
@@ -1345,7 +1355,13 @@ const defaultGame = {
 
     history: [],
 
-    sideOps: []
+    sideOps: [],
+
+    creditsEarned: 0,
+
+    collectiblesOrder: [],
+
+    collectiblesUnlockedCount: 0
 
 };
 
@@ -1408,6 +1424,18 @@ function normalizeGame() {
 
     if (!Array.isArray(game.sideOps)) {
         game.sideOps = [];
+    }
+
+    if (typeof game.creditsEarned !== "number") {
+        game.creditsEarned = 0;
+    }
+
+    if (!Array.isArray(game.collectiblesOrder)) {
+        game.collectiblesOrder = [];
+    }
+
+    if (typeof game.collectiblesUnlockedCount !== "number") {
+        game.collectiblesUnlockedCount = 0;
     }
 
     for (const key in defaultGame) {
@@ -1943,6 +1971,8 @@ function completeQuest(id) {
 
     game.coins += quest.coins;
 
+    game.creditsEarned += quest.coins;
+
     game.totalScore += quest.xp;
 
 
@@ -1951,6 +1981,8 @@ function completeQuest(id) {
     checkTierUp();
 
     checkDivaUnlock();
+
+    checkCollectibleUnlock();
 
     saveGame();
 
@@ -2166,6 +2198,8 @@ function markBookCompleted() {
 
     checkDivaUnlock();
 
+    checkCollectibleUnlock();
+
     saveGame();
 
     render();
@@ -2269,6 +2303,58 @@ function checkDivaUnlock() {
 
 
 /* ============================
+   COLLECTIBLES
+============================ */
+
+const COLLECTIBLE_IDS = ["warrior", "samurai", "pirate", "fighter", "ninja"];
+
+const COLLECTIBLE_CREDITS_STEP = 1000;
+
+
+function ensureCollectiblesOrder() {
+
+    if (!Array.isArray(game.collectiblesOrder) || game.collectiblesOrder.length !== COLLECTIBLE_IDS.length) {
+
+        const shuffled = COLLECTIBLE_IDS.slice();
+
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const temp = shuffled[i];
+            shuffled[i] = shuffled[j];
+            shuffled[j] = temp;
+        }
+
+        game.collectiblesOrder = shuffled;
+
+    }
+
+}
+
+
+function checkCollectibleUnlock() {
+
+    ensureCollectiblesOrder();
+
+    const unlockedCount =
+        Math.min(
+            COLLECTIBLE_IDS.length,
+            Math.floor(game.creditsEarned / COLLECTIBLE_CREDITS_STEP)
+        );
+
+    if (unlockedCount > game.collectiblesUnlockedCount) {
+
+        game.collectiblesUnlockedCount = unlockedCount;
+
+        triggerFeedback("unlock");
+
+        showNotification("🎴 COLLECTIBLE UNLOCKED! Check your gallery.");
+
+    }
+
+}
+
+
+/* ============================
    TASK LOG
 ============================ */
 
@@ -2340,6 +2426,10 @@ function addLogEntry(levelNum, isDeduction) {
     game.coins =
         Math.max(0, game.coins + applied);
 
+    if (applied > 0) {
+        game.creditsEarned += applied;
+    }
+
 
     game.levelLog[key].push({
 
@@ -2359,6 +2449,8 @@ function addLogEntry(levelNum, isDeduction) {
     checkTierUp();
 
     checkDivaUnlock();
+
+    checkCollectibleUnlock();
 
     saveGame();
 
@@ -2418,6 +2510,10 @@ function deleteLogEntry(levelNum, id) {
 
     game.coins =
         Math.max(0, game.coins - applied);
+
+    if (applied > 0) {
+        game.creditsEarned = Math.max(0, game.creditsEarned - applied);
+    }
 
 
     saveGame();
@@ -2980,6 +3076,8 @@ function completeMission(id) {
 
     game.coins += mission.coins;
 
+    game.creditsEarned += mission.coins;
+
     game.totalMissions++;
 
     game.totalScore += mission.xp;
@@ -2990,6 +3088,8 @@ function completeMission(id) {
     checkTierUp();
 
     checkDivaUnlock();
+
+    checkCollectibleUnlock();
 
     updateStreak();
 
@@ -3027,6 +3127,8 @@ function checkLevelUp() {
         game.level++;
 
         game.coins += 100;
+
+        game.creditsEarned += 100;
 
         required =
             game.level * 100;
