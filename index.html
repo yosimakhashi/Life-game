@@ -1477,6 +1477,8 @@ function addLogEntry(levelNum) {
 
     game.totalScore += points;
 
+    game.coins += points;
+
 
     checkTierUp();
 
@@ -1494,7 +1496,8 @@ function addLogEntry(levelNum) {
 
     showNotification(
         "+" + points +
-        " PTS LOGGED (LEVEL " +
+        " PTS | +" + points +
+        " CREDITS (LEVEL " +
         levelNum + ")"
     );
 
@@ -1517,6 +1520,9 @@ function deleteLogEntry(levelNum, id) {
 
     game.totalScore =
         Math.max(0, game.totalScore - entry.points);
+
+    game.coins =
+        Math.max(0, game.coins - entry.points);
 
 
     saveGame();
