@@ -518,6 +518,98 @@ body::before {
     color: var(--text-dim);
 }
 
+/* SIDE OPS */
+
+.sideOp {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--neon-purple);
+    border-radius: 4px;
+    padding: 13px;
+    margin-bottom: 9px;
+}
+
+.sideOpText {
+    font-weight: bold;
+    font-size: 14px;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.sideOpRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sideOpPointsWrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+}
+
+.sideOpPoints {
+    width: 46px;
+    background: transparent;
+    border: 0;
+    color: var(--neon-cyan);
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: bold;
+    font-size: 13px;
+    text-align: center;
+}
+
+.sideOpPoints:focus {
+    outline: none;
+}
+
+.sideOpPointsLabel {
+    color: var(--text-dim);
+    font-size: 10px;
+    letter-spacing: 1px;
+}
+
+.sideOpCompleteBtn {
+    flex: 1;
+    border: 1px solid var(--neon-cyan);
+    border-radius: 6px;
+    padding: 9px;
+    background: transparent;
+    color: var(--neon-cyan);
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 11px;
+}
+
+.sideOpCompleteBtn:active {
+    transform: scale(0.97);
+    box-shadow: 0 0 10px rgba(0, 255, 249, 0.5);
+}
+
+.sideOpDeleteBtn {
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 9px 12px;
+    background: transparent;
+    color: var(--neon-pink);
+    font-size: 13px;
+}
+
+.sideOpsEmpty {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 12px;
+    padding: 16px 0;
+}
+
 /* TASK LOG */
 
 .logLevel {
@@ -1053,6 +1145,28 @@ body::before {
     </div>
 
 
+    <!-- SIDE OPS -->
+
+    <div class="section">
+
+        <div class="sectionTitle">
+            SIDE <span>OPS</span>
+        </div>
+
+        <div id="sideOpsContainer"></div>
+
+        <div class="logInputRow">
+            <input type="text" id="newSideOpText" placeholder="What needs doing?" maxlength="60">
+            <input type="number" id="newSideOpPoints" placeholder="Points" min="1" value="20">
+        </div>
+
+        <button class="addMissionBtn" onclick="addSideOp()">
+            + ADD SIDE OP
+        </button>
+
+    </div>
+
+
     <!-- TASK LOG -->
 
     <div class="section">
@@ -1332,7 +1446,9 @@ const defaultGame = {
 
     questsCompleted: {},
 
-    history: []
+    history: [],
+
+    sideOps: []
 
 };
 
@@ -1391,6 +1507,10 @@ function normalizeGame() {
 
     if (typeof game.questsCompleted !== "object" || game.questsCompleted === null) {
         game.questsCompleted = {};
+    }
+
+    if (!Array.isArray(game.sideOps)) {
+        game.sideOps = [];
     }
 
     for (const key in defaultGame) {
@@ -1998,6 +2118,204 @@ function renderQuests() {
                     ✕ REMOVE QUEST
                 </button>
             ` : ""}
+
+        `;
+
+
+        container.appendChild(div);
+
+    });
+
+}
+
+
+/* ============================
+   SIDE OPS
+============================ */
+
+function addSideOp() {
+
+    const textInput =
+        document.getElementById("newSideOpText");
+
+    const pointsInput =
+        document.getElementById("newSideOpPoints");
+
+
+    const text = textInput.value.trim();
+
+    const rawPoints = parseInt(pointsInput.value, 10);
+
+    const points = (!rawPoints || rawPoints < 1) ? 1 : rawPoints;
+
+
+    if (!text) {
+
+        triggerFeedback("deduct");
+
+        showNotification("ENTER A TASK");
+
+        return;
+
+    }
+
+
+    game.sideOps.push({
+
+        id: "sideop_" + Date.now(),
+
+        text: text,
+
+        points: points
+
+    });
+
+
+    saveGame();
+
+    render();
+
+
+    textInput.value = "";
+
+    pointsInput.value = "20";
+
+
+    triggerFeedback("click");
+
+    showNotification("SIDE OP ADDED");
+
+}
+
+
+function updateSideOpPoints(id, value) {
+
+    const op =
+        game.sideOps.find(o => o.id === id);
+
+    if (!op)
+        return;
+
+
+    const points = parseInt(value, 10);
+
+    op.points = (!points || points < 1) ? 1 : points;
+
+
+    saveGame();
+
+}
+
+
+function completeSideOp(id) {
+
+    const op =
+        game.sideOps.find(o => o.id === id);
+
+    if (!op)
+        return;
+
+
+    game.sideOps =
+        game.sideOps.filter(o => o.id !== id);
+
+    game.totalScore += op.points;
+
+    game.coins += op.points;
+
+
+    checkTierUp();
+
+    checkDivaUnlock();
+
+    saveGame();
+
+    render();
+
+
+    triggerFeedback("complete");
+
+    showNotification(
+        "+" + op.points +
+        " PTS | +" + op.points +
+        " CREDITS"
+    );
+
+}
+
+
+function deleteSideOp(id) {
+
+    game.sideOps =
+        game.sideOps.filter(o => o.id !== id);
+
+
+    saveGame();
+
+    render();
+
+
+    triggerFeedback("click");
+
+    showNotification("SIDE OP REMOVED");
+
+}
+
+
+function renderSideOps() {
+
+    const container =
+        document.getElementById("sideOpsContainer");
+
+    container.innerHTML = "";
+
+
+    if (game.sideOps.length === 0) {
+
+        container.innerHTML =
+            `<div class="sideOpsEmpty">No pending ops. Add one below.</div>`;
+
+        return;
+
+    }
+
+
+    game.sideOps.forEach(op => {
+
+        const div =
+            document.createElement("div");
+
+        div.className = "sideOp";
+
+
+        div.innerHTML = `
+
+            <div class="sideOpText">
+                ${op.text}
+            </div>
+
+            <div class="sideOpRow">
+
+                <div class="sideOpPointsWrap">
+                    <input
+                        type="number"
+                        class="sideOpPoints"
+                        value="${op.points}"
+                        min="1"
+                        onchange="updateSideOpPoints('${op.id}', this.value)"
+                    >
+                    <span class="sideOpPointsLabel">PTS</span>
+                </div>
+
+                <button class="sideOpCompleteBtn" onclick="completeSideOp('${op.id}')">
+                    ✓ DONE
+                </button>
+
+                <button class="sideOpDeleteBtn" onclick="deleteSideOp('${op.id}')">
+                    ✕
+                </button>
+
+            </div>
 
         `;
 
@@ -2706,6 +3024,9 @@ function render() {
 
 
     renderQuests();
+
+
+    renderSideOps();
 
 }
 
