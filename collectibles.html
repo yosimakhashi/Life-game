@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COLLECTIBLES | MINDJACK.9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+<style>
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    --bg: #05010f;
+    --bg-panel: #0b0620;
+    --bg-panel-alt: #120a2e;
+    --bg-input: #0a0518;
+    --border: #2b1a54;
+    --neon-cyan: #00fff9;
+    --neon-pink: #ff2079;
+    --neon-purple: #b026ff;
+    --neon-green: #39ff88;
+    --neon-yellow: #f9f002;
+    --text-primary: #e8e6ff;
+    --text-dim: #8b7fb0;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 14px rgba(57, 255, 136, 0.15), inset 0 0 20px rgba(176, 38, 255, 0.05); }
+    50% { box-shadow: 0 0 22px rgba(57, 255, 136, 0.3), inset 0 0 20px rgba(176, 38, 255, 0.1); }
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--bg);
+    background-image:
+        linear-gradient(rgba(0, 255, 249, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 249, 0.05) 1px, transparent 1px),
+        radial-gradient(circle at 15% 0%, rgba(176, 38, 255, 0.3), transparent 45%),
+        radial-gradient(circle at 85% 100%, rgba(255, 32, 121, 0.25), transparent 45%);
+    background-size: 42px 42px, 42px 42px, cover, cover;
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: 'Share Tech Mono', monospace;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.025) 0px,
+        rgba(255, 255, 255, 0.025) 1px,
+        transparent 2px,
+        transparent 4px
+    );
+    z-index: 1;
+}
+
+.app {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+    margin: auto;
+    padding: 18px;
+    padding-bottom: 50px;
+}
+
+.header {
+    position: relative;
+    border: 1px solid var(--neon-green);
+    background: var(--bg-panel);
+    border-radius: 4px;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%);
+    padding: 20px;
+    margin-bottom: 16px;
+    animation: pulseGlow 3s ease-in-out infinite;
+}
+
+.backLink {
+    display: inline-block;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.backLink:active {
+    color: var(--neon-green);
+}
+
+.logo {
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: var(--neon-green);
+    text-shadow: 0 0 8px rgba(57, 255, 136, 0.7);
+    font-weight: bold;
+}
+
+.title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin-top: 8px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    text-shadow: 2px 0 var(--neon-pink), -2px 0 var(--neon-green), 0 0 24px rgba(57, 255, 136, 0.35);
+}
+
+.subtitle {
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+.progressWrap {
+    margin-top: 14px;
+}
+
+.progressText {
+    font-size: 12px;
+    color: var(--neon-green);
+    text-shadow: 0 0 6px rgba(57, 255, 136, 0.5);
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+
+.progressBar {
+    height: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+    box-shadow: 0 0 8px rgba(57, 255, 136, 0.6);
+    transition: 0.4s;
+}
+
+.cardGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.card {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--bg-panel-alt);
+    aspect-ratio: 3 / 4;
+}
+
+.card.unlocked {
+    border-color: var(--neon-green);
+    box-shadow: 0 0 18px rgba(57, 255, 136, 0.25);
+}
+
+.card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.cardCaption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 14px;
+    background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+}
+
+.cardTitle {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    font-size: 15px;
+    color: var(--text-primary);
+}
+
+.cardQuote {
+    font-size: 11px;
+    color: var(--neon-green);
+    margin-top: 3px;
+    font-style: italic;
+}
+
+.cardLocked {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--text-dim);
+}
+
+.cardLockedIcon {
+    font-size: 34px;
+    opacity: 0.5;
+}
+
+.cardLockedText {
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.cardLockedHint {
+    font-size: 10px;
+    color: var(--text-dim);
+    opacity: 0.7;
+}
+
+.emptyState {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.emptyState a {
+    color: var(--neon-green);
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <div class="header">
+        <a class="backLink" href="index.html">&larr; BACK TO LIFE RPG</a>
+        <div class="logo">MINDJACK.9 // COLLECTIBLE ARCHIVE</div>
+        <div class="title">Collectibles</div>
+        <div class="subtitle">Earn 1000 credits, unlock a random card.</div>
+        <div class="progressWrap" id="progressWrap"></div>
+    </div>
+
+    <div id="content"></div>
+
+</div>
+
+<script>
+
+const COLLECTIBLE_IDS = ["warrior", "samurai", "pirate", "fighter", "ninja"];
+const COLLECTIBLE_CREDITS_STEP = 1000;
+
+const COLLECTIBLE_META = {
+    warrior: { title: "Not Yet The End", quote: "Discipline builds freedom.", file: "collectibles/warrior.png" },
+    samurai: { title: "Same Scars, Different Sky", quote: "Still a warrior.", file: "collectibles/samurai.png" },
+    pirate:  { title: "Captain's Resolve", quote: "Chart your own course.", file: "collectibles/pirate.png" },
+    fighter: { title: "Pain Pays", quote: "Train. Eat. Study. Improve. Repeat.", file: "collectibles/fighter.png" },
+    ninja:   { title: "Fearless", quote: "In silence, strength resides.", file: "collectibles/ninja.png" }
+};
+
+function ensureCollectiblesOrder(game) {
+    if (!Array.isArray(game.collectiblesOrder) || game.collectiblesOrder.length !== COLLECTIBLE_IDS.length) {
+        const shuffled = COLLECTIBLE_IDS.slice();
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const temp = shuffled[i];
+            shuffled[i] = shuffled[j];
+            shuffled[j] = temp;
+        }
+        game.collectiblesOrder = shuffled;
+    }
+}
+
+const raw = localStorage.getItem("mindjack9");
+const content = document.getElementById("content");
+const progressWrap = document.getElementById("progressWrap");
+
+if (!raw) {
+
+    content.innerHTML = `
+        <div class="emptyState">
+            NO DATA YET.<br><br>
+            Play a bit on the <a href="index.html">Life RPG</a> page first,
+            then come back to check your collectibles.
+        </div>
+    `;
+
+} else {
+
+    const game = JSON.parse(raw);
+
+    ensureCollectiblesOrder(game);
+    localStorage.setItem("mindjack9", JSON.stringify(game));
+
+    const creditsEarned = game.creditsEarned || 0;
+
+    const unlockedCount = Math.min(
+        COLLECTIBLE_IDS.length,
+        Math.floor(creditsEarned / COLLECTIBLE_CREDITS_STEP)
+    );
+
+    const unlockedIds = game.collectiblesOrder.slice(0, unlockedCount);
+
+    const totalNeeded = COLLECTIBLE_IDS.length * COLLECTIBLE_CREDITS_STEP;
+    const progressPct = Math.min(100, (creditsEarned / totalNeeded) * 100);
+
+    progressWrap.innerHTML = `
+        <div class="progressText">${unlockedCount} / ${COLLECTIBLE_IDS.length} UNLOCKED &nbsp;•&nbsp; ${creditsEarned} CREDITS EARNED</div>
+        <div class="progressBar"><div class="progressFill" style="width:${progressPct}%"></div></div>
+    `;
+
+    const cardsHTML = game.collectiblesOrder.map((id, index) => {
+
+        const isUnlocked = index < unlockedCount;
+        const meta = COLLECTIBLE_META[id];
+
+        if (isUnlocked) {
+            return `
+                <div class="card unlocked">
+                    <img src="${meta.file}" alt="${meta.title}">
+                    <div class="cardCaption">
+                        <div class="cardTitle">${meta.title}</div>
+                        <div class="cardQuote">"${meta.quote}"</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        const creditsForThisSlot = (index + 1) * COLLECTIBLE_CREDITS_STEP;
+
+        return `
+            <div class="card">
+                <div class="cardLocked">
+                    <div class="cardLockedIcon">🔒</div>
+                    <div class="cardLockedText">LOCKED</div>
+                    <div class="cardLockedHint">Unlocks at ${creditsForThisSlot} credits earned</div>
+                </div>
+            </div>
+        `;
+
+    }).join("");
+
+    content.innerHTML = `<div class="cardGrid">${cardsHTML}</div>`;
+
+}
+
+</script>
+
+</body>
+</html>
