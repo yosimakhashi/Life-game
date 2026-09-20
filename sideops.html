@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIDE OPS | MINDJACK.9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+<style>
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    --bg: #05010f;
+    --bg-panel: #0b0620;
+    --bg-panel-alt: #120a2e;
+    --bg-input: #0a0518;
+    --border: #2b1a54;
+    --neon-cyan: #00fff9;
+    --neon-pink: #ff2079;
+    --neon-purple: #b026ff;
+    --neon-green: #39ff88;
+    --neon-yellow: #f9f002;
+    --text-primary: #e8e6ff;
+    --text-dim: #8b7fb0;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 14px rgba(176, 38, 255, 0.15), inset 0 0 20px rgba(176, 38, 255, 0.05); }
+    50% { box-shadow: 0 0 22px rgba(176, 38, 255, 0.3), inset 0 0 20px rgba(176, 38, 255, 0.1); }
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--bg);
+    background-image:
+        linear-gradient(rgba(0, 255, 249, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 249, 0.05) 1px, transparent 1px),
+        radial-gradient(circle at 15% 0%, rgba(176, 38, 255, 0.3), transparent 45%),
+        radial-gradient(circle at 85% 100%, rgba(255, 32, 121, 0.25), transparent 45%);
+    background-size: 42px 42px, 42px 42px, cover, cover;
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: 'Share Tech Mono', monospace;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.025) 0px,
+        rgba(255, 255, 255, 0.025) 1px,
+        transparent 2px,
+        transparent 4px
+    );
+    z-index: 1;
+}
+
+.app {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+    margin: auto;
+    padding: 18px;
+    padding-bottom: 50px;
+}
+
+.header {
+    position: relative;
+    border: 1px solid var(--neon-purple);
+    background: var(--bg-panel);
+    border-radius: 4px;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%);
+    padding: 20px;
+    margin-bottom: 16px;
+    animation: pulseGlow 3s ease-in-out infinite;
+}
+
+.backLink {
+    display: inline-block;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.backLink:active {
+    color: var(--neon-purple);
+}
+
+.logo {
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: var(--neon-purple);
+    text-shadow: 0 0 8px rgba(176, 38, 255, 0.7);
+    font-weight: bold;
+}
+
+.title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin-top: 8px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    text-shadow: 2px 0 var(--neon-pink), -2px 0 var(--neon-purple), 0 0 24px rgba(176, 38, 255, 0.35);
+}
+
+.subtitle {
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+.section {
+    margin-top: 20px;
+}
+
+.sideOp {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--neon-purple);
+    border-radius: 4px;
+    padding: 13px;
+    margin-bottom: 9px;
+}
+
+.sideOpText {
+    font-weight: bold;
+    font-size: 14px;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.sideOpRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sideOpPointsWrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+}
+
+.sideOpPoints {
+    width: 46px;
+    background: transparent;
+    border: 0;
+    color: var(--neon-cyan);
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: bold;
+    font-size: 13px;
+    text-align: center;
+}
+
+.sideOpPoints:focus {
+    outline: none;
+}
+
+.sideOpPointsLabel {
+    color: var(--text-dim);
+    font-size: 10px;
+    letter-spacing: 1px;
+}
+
+.sideOpCompleteBtn {
+    flex: 1;
+    border: 1px solid var(--neon-cyan);
+    border-radius: 6px;
+    padding: 9px;
+    background: transparent;
+    color: var(--neon-cyan);
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 11px;
+}
+
+.sideOpCompleteBtn:active {
+    transform: scale(0.97);
+    box-shadow: 0 0 10px rgba(0, 255, 249, 0.5);
+}
+
+.sideOpDeleteBtn {
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 9px 12px;
+    background: transparent;
+    color: var(--neon-pink);
+    font-size: 13px;
+}
+
+.sideOpsEmpty {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 12px;
+    padding: 16px 0;
+}
+
+.addForm {
+    background: var(--bg-panel);
+    border: 1px solid var(--neon-purple);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 9px;
+}
+
+.addForm input {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 11px;
+    color: var(--text-primary);
+    font-size: 14px;
+    margin-bottom: 8px;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.addForm input:focus {
+    outline: none;
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 8px rgba(0, 255, 249, 0.4);
+}
+
+.addOpBtn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 13px;
+    border: 1px dashed var(--neon-purple);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--neon-purple);
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: bold;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.addOpBtn:active {
+    transform: scale(0.98);
+    box-shadow: 0 0 14px rgba(176, 38, 255, 0.5);
+}
+
+.emptyState {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.emptyState a {
+    color: var(--neon-purple);
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <div class="header">
+        <a class="backLink" href="index.html">&larr; BACK TO LIFE RPG</a>
+        <div class="logo">MINDJACK.9 // PENDING OPS QUEUE</div>
+        <div class="title">Side Ops</div>
+        <div class="subtitle">Loose ends. Adjust the payout, clear the queue.</div>
+    </div>
+
+    <div id="content"></div>
+
+</div>
+
+<script>
+
+const TIER_SCORE_STEP = 5000;
+const TIER_COUNT = 8;
+const DIVA_SCORE_REQUIREMENT = 15000;
+
+function loadGame() {
+    const raw = localStorage.getItem("mindjack9");
+    return raw ? JSON.parse(raw) : null;
+}
+
+function saveGame(game) {
+    localStorage.setItem("mindjack9", JSON.stringify(game));
+}
+
+let game = loadGame();
+
+const content = document.getElementById("content");
+
+
+if (!game) {
+
+    content.innerHTML = `
+        <div class="emptyState">
+            NO DATA YET.<br><br>
+            Play a bit on the <a href="index.html">Life RPG</a> page first,
+            then come back to manage your side ops.
+        </div>
+    `;
+
+} else {
+
+    if (!Array.isArray(game.sideOps)) {
+        game.sideOps = [];
+    }
+
+
+    function addSideOp() {
+
+        const textInput = document.getElementById("newSideOpText");
+        const pointsInput = document.getElementById("newSideOpPoints");
+
+        const text = textInput.value.trim();
+        const rawPoints = parseInt(pointsInput.value, 10);
+        const points = (!rawPoints || rawPoints < 1) ? 1 : rawPoints;
+
+        if (!text) {
+            textInput.focus();
+            return;
+        }
+
+        game.sideOps.push({
+            id: "sideop_" + Date.now(),
+            text: text,
+            points: points
+        });
+
+        saveGame(game);
+        render();
+
+    }
+
+
+    function updateSideOpPoints(id, value) {
+
+        const op = game.sideOps.find(o => o.id === id);
+        if (!op) return;
+
+        const points = parseInt(value, 10);
+        op.points = (!points || points < 1) ? 1 : points;
+
+        saveGame(game);
+
+    }
+
+
+    function completeSideOp(id) {
+
+        const op = game.sideOps.find(o => o.id === id);
+        if (!op) return;
+
+        game.sideOps = game.sideOps.filter(o => o.id !== id);
+
+        game.totalScore = (game.totalScore || 0) + op.points;
+        game.coins = (game.coins || 0) + op.points;
+
+        const newTierIndex = Math.min(Math.floor(game.totalScore / TIER_SCORE_STEP), TIER_COUNT - 1);
+        if (newTierIndex > (game.tierIndex || 0)) {
+            game.tierIndex = newTierIndex;
+        }
+
+        if (!game.divaUnlocked && game.totalScore >= DIVA_SCORE_REQUIREMENT) {
+            game.divaUnlocked = true;
+        }
+
+        saveGame(game);
+        render();
+
+    }
+
+
+    function deleteSideOp(id) {
+
+        game.sideOps = game.sideOps.filter(o => o.id !== id);
+
+        saveGame(game);
+        render();
+
+    }
+
+
+    function renderOpsList() {
+
+        if (game.sideOps.length === 0) {
+            return `<div class="sideOpsEmpty">No pending ops. Add one below.</div>`;
+        }
+
+        return game.sideOps.map(op => `
+            <div class="sideOp">
+                <div class="sideOpText">${op.text}</div>
+                <div class="sideOpRow">
+                    <div class="sideOpPointsWrap">
+                        <input
+                            type="number"
+                            class="sideOpPoints"
+                            value="${op.points}"
+                            min="1"
+                            onchange="updateSideOpPoints('${op.id}', this.value)"
+                        >
+                        <span class="sideOpPointsLabel">PTS</span>
+                    </div>
+                    <button class="sideOpCompleteBtn" onclick="completeSideOp('${op.id}')">✓ DONE</button>
+                    <button class="sideOpDeleteBtn" onclick="deleteSideOp('${op.id}')">✕</button>
+                </div>
+            </div>
+        `).join("");
+
+    }
+
+
+    function render() {
+
+        content.innerHTML = `
+            <div class="section">
+                <div id="opsContainer">${renderOpsList()}</div>
+
+                <div class="addForm">
+                    <input type="text" id="newSideOpText" placeholder="What needs doing?" maxlength="60">
+                    <input type="number" id="newSideOpPoints" placeholder="Points" min="1" value="20">
+                </div>
+
+                <button class="addOpBtn" onclick="addSideOp()">+ ADD SIDE OP</button>
+            </div>
+        `;
+
+    }
+
+
+    // expose functions used by inline onclick/onchange handlers
+    window.addSideOp = addSideOp;
+    window.updateSideOpPoints = updateSideOpPoints;
+    window.completeSideOp = completeSideOp;
+    window.deleteSideOp = deleteSideOp;
+
+    render();
+
+}
+
+</script>
+
+</body>
+</html>

@@ -137,8 +137,8 @@ body::before {
 
 .navRow {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
     margin-bottom: 16px;
 }
 
@@ -146,15 +146,16 @@ body::before {
     display: block;
     box-sizing: border-box;
     text-align: center;
-    padding: 13px;
+    padding: 12px 6px;
     border-radius: 8px;
     background: var(--bg-panel);
     text-decoration: none;
     font-family: 'Share Tech Mono', monospace;
     font-weight: bold;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
-    font-size: 12px;
+    font-size: 10.5px;
+    line-height: 1.4;
 }
 
 .navBtn:active {
@@ -177,6 +178,15 @@ body::before {
 
 .navBtnAchievements:active {
     box-shadow: 0 0 12px rgba(249, 240, 2, 0.4);
+}
+
+.navBtnSideOps {
+    border: 1px solid var(--neon-purple);
+    color: var(--neon-purple);
+}
+
+.navBtnSideOps:active {
+    box-shadow: 0 0 12px rgba(176, 38, 255, 0.4);
 }
 
 /* PLAYER */
@@ -958,6 +968,7 @@ body::before {
     <div class="navRow">
         <a class="navBtn navBtnStats" href="stats.html">📊 STATS</a>
         <a class="navBtn navBtnAchievements" href="achievements.html">🏆 ACHIEVEMENTS</a>
+        <a class="navBtn navBtnSideOps" href="sideops.html">⚔ SIDE OPS</a>
     </div>
 
     <!-- PLAYER -->
@@ -1332,7 +1343,9 @@ const defaultGame = {
 
     questsCompleted: {},
 
-    history: []
+    history: [],
+
+    sideOps: []
 
 };
 
@@ -1391,6 +1404,10 @@ function normalizeGame() {
 
     if (typeof game.questsCompleted !== "object" || game.questsCompleted === null) {
         game.questsCompleted = {};
+    }
+
+    if (!Array.isArray(game.sideOps)) {
+        game.sideOps = [];
     }
 
     for (const key in defaultGame) {
@@ -2007,6 +2024,9 @@ function renderQuests() {
     });
 
 }
+
+
+/* Side Ops now live on their own page - see sideops.html */
 
 
 /* ============================
