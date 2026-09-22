@@ -2914,12 +2914,12 @@ function renderMissions() {
             </div>
 
             <button
-                class="completeBtn ${locked ? "completed" : ""}"
+                class="completeBtn ${completedToday ? "completed" : ""}"
                 onclick="completeMission('${mission.id}')"
                 ${locked ? "disabled" : ""}
             >
 
-                ${locked ? "✓ COMPLETED" : "COMPLETE MISSION"}
+                ${completedToday ? "✓ COMPLETED" : "COMPLETE MISSION"}
 
             </button>
 
@@ -3076,8 +3076,23 @@ function completeMission(id) {
         return;
 
 
-    if (game.completed[id] && !mission.repeatable)
-        return;
+    if (game.completed[id]) {
+
+        if (!mission.repeatable)
+            return;
+
+        const confirmed =
+            confirm(
+                "Complete \"" + mission.name +
+                "\" again for +" + mission.xp +
+                " XP / +" + mission.coins +
+                " Credits?"
+            );
+
+        if (!confirmed)
+            return;
+
+    }
 
 
     game.completed[id] = true;
