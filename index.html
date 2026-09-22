@@ -1706,7 +1706,8 @@ const missions = [
         icon: "📚",
         name: "Study / Skill Building",
         xp: 50,
-        coins: 20
+        coins: 20,
+        repeatable: true
     },
 
     {
@@ -1714,7 +1715,8 @@ const missions = [
         icon: "🛡️",
         name: "Complete Your Duty",
         xp: 40,
-        coins: 15
+        coins: 15,
+        repeatable: true
     },
 
     {
@@ -1722,7 +1724,8 @@ const missions = [
         icon: "🧼",
         name: "Self-Care",
         xp: 30,
-        coins: 10
+        coins: 10,
+        repeatable: true
     },
 
     {
@@ -1730,7 +1733,8 @@ const missions = [
         icon: "🎬",
         name: "YouTube / Creative Work",
         xp: 50,
-        coins: 20
+        coins: 20,
+        repeatable: true
     },
 
     {
@@ -1738,7 +1742,8 @@ const missions = [
         icon: "👥",
         name: "Social XP",
         xp: 30,
-        coins: 10
+        coins: 10,
+        repeatable: true
     },
 
     {
@@ -1746,7 +1751,8 @@ const missions = [
         icon: "🧠",
         name: "Win One Battle Against an Addiction",
         xp: 50,
-        coins: 25
+        coins: 25,
+        repeatable: true
     }
 
 ];
@@ -2908,12 +2914,12 @@ function renderMissions() {
             </div>
 
             <button
-                class="completeBtn ${locked ? "completed" : ""}"
+                class="completeBtn ${completedToday ? "completed" : ""}"
                 onclick="completeMission('${mission.id}')"
                 ${locked ? "disabled" : ""}
             >
 
-                ${locked ? "✓ COMPLETED" : "COMPLETE MISSION"}
+                ${completedToday ? "✓ COMPLETED" : "COMPLETE MISSION"}
 
             </button>
 
@@ -3070,8 +3076,23 @@ function completeMission(id) {
         return;
 
 
-    if (game.completed[id] && !mission.repeatable)
-        return;
+    if (game.completed[id]) {
+
+        if (!mission.repeatable)
+            return;
+
+        const confirmed =
+            confirm(
+                "Complete \"" + mission.name +
+                "\" again for +" + mission.xp +
+                " XP / +" + mission.coins +
+                " Credits?"
+            );
+
+        if (!confirmed)
+            return;
+
+    }
 
 
     game.completed[id] = true;
