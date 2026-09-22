@@ -1697,7 +1697,8 @@ const missions = [
         icon: "🏋️",
         name: "Physical Training",
         xp: 50,
-        coins: 20
+        coins: 20,
+        repeatable: true
     },
 
     {
@@ -2868,8 +2869,11 @@ function renderMissions() {
 
     getAllMissions().forEach(mission => {
 
-        const completed =
+        const completedToday =
             game.completed[mission.id] === true;
+
+        const locked =
+            completedToday && !mission.repeatable;
 
 
         const div =
@@ -2896,6 +2900,7 @@ function renderMissions() {
                         +${mission.xp} XP
                         &nbsp; • &nbsp;
                         +${mission.coins} Credits
+                        ${mission.repeatable ? "&nbsp; • &nbsp; ♻ REPEATABLE" : ""}
                     </div>
 
                 </div>
@@ -2903,12 +2908,12 @@ function renderMissions() {
             </div>
 
             <button
-                class="completeBtn ${completed ? "completed" : ""}"
+                class="completeBtn ${locked ? "completed" : ""}"
                 onclick="completeMission('${mission.id}')"
-                ${completed ? "disabled" : ""}
+                ${locked ? "disabled" : ""}
             >
 
-                ${completed ? "✓ COMPLETED" : "COMPLETE MISSION"}
+                ${locked ? "✓ COMPLETED" : "COMPLETE MISSION"}
 
             </button>
 
@@ -3058,15 +3063,14 @@ function deleteMission(id) {
 
 function completeMission(id) {
 
-    if (game.completed[id])
-        return;
-
-
     const mission =
         getAllMissions().find(m => m.id === id);
 
-
     if (!mission)
+        return;
+
+
+    if (game.completed[id] && !mission.repeatable)
         return;
 
 
