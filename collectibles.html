@@ -258,7 +258,7 @@ body::before {
 
 <script>
 
-const COLLECTIBLE_IDS = ["warrior", "samurai", "pirate", "fighter", "ninja"];
+const COLLECTIBLE_IDS = ["warrior", "samurai", "pirate", "fighter", "ninja", "scarlet", "violet", "jade"];
 const COLLECTIBLE_CREDITS_STEP = 1000;
 
 const COLLECTIBLE_META = {
@@ -266,7 +266,10 @@ const COLLECTIBLE_META = {
     samurai: { title: "Same Scars, Different Sky", quote: "Still a warrior.", file: "collectibles/samurai.png" },
     pirate:  { title: "Captain's Resolve", quote: "Chart your own course.", file: "collectibles/pirate.png" },
     fighter: { title: "Pain Pays", quote: "Train. Eat. Study. Improve. Repeat.", file: "collectibles/fighter.png" },
-    ninja:   { title: "Fearless", quote: "In silence, strength resides.", file: "collectibles/ninja.png" }
+    ninja:   { title: "Fearless", quote: "In silence, strength resides.", file: "collectibles/ninja.png" },
+    scarlet: { title: "Scarlet Flame", quote: "Own every room you enter.", file: "collectibles/scarlet.jpg" },
+    violet:  { title: "Forest Muse", quote: "Wild, free, unstoppable.", file: "collectibles/violet.jpg" },
+    jade:    { title: "Playful Reign", quote: "Joy is the ultimate flex.", file: "collectibles/jade.jpg" }
 };
 
 function ensureCollectiblesOrder(game) {
