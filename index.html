@@ -108,12 +108,34 @@ body::before {
     box-shadow: 0 0 10px rgba(0, 255, 249, 0.4);
 }
 
+.planLink {
+    position: absolute;
+    top: 14px;
+    right: 56px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-panel-alt);
+    font-size: 15px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.planLink:active {
+    transform: scale(0.92);
+    box-shadow: 0 0 10px rgba(57, 255, 136, 0.4);
+}
+
 .logo {
     font-size: 12px;
     letter-spacing: 4px;
     color: var(--neon-cyan);
     text-shadow: 0 0 8px rgba(0, 255, 249, 0.7);
     font-weight: bold;
+    padding-right: 82px;
 }
 
 .title {
@@ -1026,6 +1048,7 @@ body::before {
 
     <div class="header">
         <button class="soundToggle" id="soundToggle" onclick="toggleFeedback()">🔊</button>
+        <a class="planLink" href="plan.html" title="The Plan">📋</a>
         <div class="logo">MINDJACK.9 // LIFE OPERATING SYSTEM</div>
         <div class="title">LIFE RPG</div>
         <div class="subtitle">Upgrade yourself. Complete missions. Become harder to kill.</div>

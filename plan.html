@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE PLAN | MINDJACK.9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+<style>
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    --fc-bg: #0a0c09;
+    --fc-panel: #121510;
+    --fc-panel-alt: #181c15;
+    --fc-input: #0d100c;
+    --fc-border: #2f362a;
+    --fc-green: #9caf88;
+    --fc-green-dim: #6f7d62;
+    --fc-amber: #c08a3e;
+    --fc-soap: #d98f9a;
+    --fc-text: #d8d5c8;
+    --fc-dim: #7c806f;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--fc-bg);
+    background-image:
+        radial-gradient(ellipse at 50% 0%, rgba(156, 175, 136, 0.12), transparent 60%),
+        radial-gradient(ellipse at 20% 90%, rgba(192, 138, 62, 0.10), transparent 55%),
+        linear-gradient(180deg, #0f120d 0%, #0a0c09 60%, #070806 100%);
+    background-attachment: fixed;
+    color: var(--fc-text);
+    font-family: 'Share Tech Mono', monospace;
+}
+
+/* film grain */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.5;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+}
+
+/* vignette */
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.75) 100%);
+}
+
+.app {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+    margin: auto;
+    padding: 18px;
+    padding-bottom: 60px;
+}
+
+.header {
+    border: 1px solid var(--fc-border);
+    border-left: 3px solid var(--fc-soap);
+    background: var(--fc-panel);
+    padding: 20px;
+    margin-bottom: 18px;
+    box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.6);
+}
+
+.backLink {
+    display: inline-block;
+    color: var(--fc-dim);
+    text-decoration: none;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.backLink:active {
+    color: var(--fc-green);
+}
+
+.logo {
+    font-size: 11px;
+    letter-spacing: 5px;
+    color: var(--fc-green-dim);
+    text-transform: uppercase;
+}
+
+.title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    margin-top: 6px;
+    text-transform: uppercase;
+    color: var(--fc-text);
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.8), 0 0 30px rgba(156, 175, 136, 0.15);
+}
+
+.subtitle {
+    color: var(--fc-dim);
+    font-size: 12px;
+    margin-top: 8px;
+    line-height: 1.6;
+    letter-spacing: 1px;
+}
+
+.rule {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--fc-border);
+    font-family: 'Oswald', sans-serif;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--fc-soap);
+}
+
+/* ADD FORM */
+
+.addForm {
+    background: var(--fc-panel);
+    border: 1px solid var(--fc-border);
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.addForm input {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--fc-input);
+    border: 1px solid var(--fc-border);
+    padding: 12px;
+    color: var(--fc-text);
+    font-size: 14px;
+    margin-bottom: 8px;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.addForm input:focus {
+    outline: none;
+    border-color: var(--fc-green);
+}
+
+.dateRow {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.dayChips {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.dayChip {
+    flex: 1;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid var(--fc-border);
+    color: var(--fc-dim);
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.dayChip.active {
+    border-color: var(--fc-green);
+    color: var(--fc-green);
+    background: rgba(156, 175, 136, 0.08);
+}
+
+.addBtn {
+    width: 100%;
+    margin-top: 6px;
+    padding: 13px;
+    background: transparent;
+    border: 1px solid var(--fc-soap);
+    color: var(--fc-soap);
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+.addBtn:active {
+    transform: scale(0.99);
+    background: rgba(217, 143, 154, 0.1);
+}
+
+/* SECTIONS */
+
+.section {
+    margin-bottom: 22px;
+}
+
+.sectionTitle {
+    font-family: 'Oswald', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--fc-green);
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--fc-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.sectionCount {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--fc-dim);
+}
+
+.section.overdue .sectionTitle {
+    color: var(--fc-amber);
+}
+
+/* TASK */
+
+.task {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--fc-panel);
+    border: 1px solid var(--fc-border);
+    padding: 13px;
+    margin-bottom: 8px;
+}
+
+.task.done {
+    opacity: 0.55;
+    border-color: #23291e;
+}
+
+.checkbox {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border: 1px solid var(--fc-green-dim);
+    background: transparent;
+    color: var(--fc-green);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.task.done .checkbox {
+    border-color: var(--fc-green);
+    background: rgba(156, 175, 136, 0.15);
+}
+
+.checkbox:active {
+    transform: scale(0.9);
+}
+
+.taskBody {
+    flex: 1;
+    min-width: 0;
+}
+
+.taskText {
+    font-size: 14px;
+    color: var(--fc-text);
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+.task.done .taskText {
+    text-decoration: line-through;
+    color: var(--fc-dim);
+}
+
+.taskMeta {
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--fc-dim);
+    margin-top: 4px;
+    text-transform: uppercase;
+}
+
+.taskMeta .earned {
+    color: var(--fc-green);
+}
+
+.taskMeta .late {
+    color: var(--fc-amber);
+}
+
+.taskDelete {
+    flex-shrink: 0;
+    background: transparent;
+    border: 0;
+    color: var(--fc-dim);
+    font-size: 14px;
+    padding: 0 2px;
+}
+
+.taskDelete:active {
+    color: var(--fc-soap);
+}
+
+.emptyNote {
+    color: var(--fc-dim);
+    font-size: 12px;
+    padding: 10px 0;
+    letter-spacing: 1px;
+}
+
+.emptyState {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--fc-dim);
+    font-size: 13px;
+    line-height: 1.8;
+    letter-spacing: 1px;
+}
+
+.emptyState a {
+    color: var(--fc-green);
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <div class="header">
+        <a class="backLink" href="index.html">&larr; Back to Life RPG</a>
+        <div class="logo">MINDJACK.9 // NIGHT SHIFT</div>
+        <div class="title">The Plan</div>
+        <div class="subtitle">Decide tonight what tomorrow looks like. Then show up for it.</div>
+        <div class="rule" id="ruleLine">Rule one: write it down. Rule two: do it the day you said.</div>
+    </div>
+
+    <div id="content"></div>
+
+</div>
+
+<script>
+
+const TASK_POINTS = 10;
+
+const TIER_SCORE_STEP = 5000;
+const TIER_COUNT = 8;
+const DIVA_SCORE_REQUIREMENT = 15000;
+
+
+function toDateString(d) {
+    return d.getFullYear() +
+        "-" + String(d.getMonth() + 1).padStart(2, "0") +
+        "-" + String(d.getDate()).padStart(2, "0");
+}
+
+function today() {
+    return toDateString(new Date());
+}
+
+function tomorrow() {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return toDateString(d);
+}
+
+function prettyDate(dateStr) {
+    if (dateStr === today()) return "Today";
+    if (dateStr === tomorrow()) return "Tomorrow";
+    return dateStr;
+}
+
+
+function loadGame() {
+    const raw = localStorage.getItem("mindjack9");
+    return raw ? JSON.parse(raw) : null;
+}
+
+function saveGame(game) {
+    localStorage.setItem("mindjack9", JSON.stringify(game));
+}
+
+
+let game = loadGame();
+
+const content = document.getElementById("content");
+
+
+if (!game) {
+
+    content.innerHTML = `
+        <div class="emptyState">
+            NO DATA YET.<br><br>
+            Play a bit on the <a href="index.html">Life RPG</a> page first,
+            then come back to plan your day.
+        </div>
+    `;
+
+} else {
+
+    if (!Array.isArray(game.plannedTasks)) {
+        game.plannedTasks = [];
+    }
+
+    let selectedDate = tomorrow();
+
+
+    function awardPoints(amount) {
+
+        game.totalScore = Math.max(0, (game.totalScore || 0) + amount);
+        game.coins = Math.max(0, (game.coins || 0) + amount);
+
+        if (amount > 0) {
+            game.creditsEarned = (game.creditsEarned || 0) + amount;
+        }
+
+        const newTierIndex = Math.min(
+            Math.floor(game.totalScore / TIER_SCORE_STEP),
+            TIER_COUNT - 1
+        );
+
+        if (newTierIndex > (game.tierIndex || 0)) {
+            game.tierIndex = newTierIndex;
+        }
+
+        if (!game.divaUnlocked && game.totalScore >= DIVA_SCORE_REQUIREMENT) {
+            game.divaUnlocked = true;
+        }
+
+    }
+
+
+    function addTask() {
+
+        const input = document.getElementById("newTaskText");
+        const text = input.value.trim();
+
+        if (!text) {
+            input.focus();
+            return;
+        }
+
+        game.plannedTasks.push({
+            id: "task_" + Date.now(),
+            text: text,
+            date: selectedDate,
+            done: false,
+            awarded: false
+        });
+
+        saveGame(game);
+        render();
+
+    }
+
+
+    function toggleTask(id) {
+
+        const task = game.plannedTasks.find(t => t.id === id);
+        if (!task) return;
+
+        if (!task.done) {
+
+            task.done = true;
+
+            if (task.date === today()) {
+                awardPoints(TASK_POINTS);
+                task.awarded = true;
+            }
+
+        } else {
+
+            task.done = false;
+
+            if (task.awarded) {
+                awardPoints(-TASK_POINTS);
+                task.awarded = false;
+            }
+
+        }
+
+        saveGame(game);
+        render();
+
+    }
+
+
+    function deleteTask(id) {
+
+        const task = game.plannedTasks.find(t => t.id === id);
+
+        if (task && task.awarded) {
+            awardPoints(-TASK_POINTS);
+        }
+
+        game.plannedTasks = game.plannedTasks.filter(t => t.id !== id);
+
+        saveGame(game);
+        render();
+
+    }
+
+
+    function pickDate(which) {
+        selectedDate = which === "today" ? today() : tomorrow();
+        render();
+    }
+
+
+    function taskHTML(task) {
+
+        const isToday = task.date === today();
+        const isOverdue = !task.done && task.date < today();
+
+        let meta;
+
+        if (task.done) {
+            meta = task.awarded ?
+                `<span class="earned">✓ Earned +${TASK_POINTS} pts</span>` :
+                `<span class="late">Cleared - no points (off-day)</span>`;
+        } else if (isToday) {
+            meta = `Worth +${TASK_POINTS} pts today`;
+        } else if (isOverdue) {
+            meta = `<span class="late">Missed ${task.date} - no points left</span>`;
+        } else {
+            meta = `Scheduled ${prettyDate(task.date)} - +${TASK_POINTS} pts on the day`;
+        }
+
+        return `
+            <div class="task ${task.done ? "done" : ""}">
+                <button class="checkbox" onclick="toggleTask('${task.id}')">${task.done ? "✓" : ""}</button>
+                <div class="taskBody">
+                    <div class="taskText">${task.text}</div>
+                    <div class="taskMeta">${meta}</div>
+                </div>
+                <button class="taskDelete" onclick="deleteTask('${task.id}')">✕</button>
+            </div>
+        `;
+
+    }
+
+
+    function sectionHTML(title, tasks, extraClass) {
+
+        if (tasks.length === 0) return "";
+
+        const doneCount = tasks.filter(t => t.done).length;
+
+        return `
+            <div class="section ${extraClass || ""}">
+                <div class="sectionTitle">
+                    <span>${title}</span>
+                    <span class="sectionCount">${doneCount} / ${tasks.length}</span>
+                </div>
+                ${tasks.map(taskHTML).join("")}
+            </div>
+        `;
+
+    }
+
+
+    function render() {
+
+        const t = today();
+        const tm = tomorrow();
+
+        const overdue = game.plannedTasks.filter(x => !x.done && x.date < t);
+        const todays = game.plannedTasks.filter(x => x.date === t);
+        const tomorrows = game.plannedTasks.filter(x => x.date === tm);
+        const upcoming = game.plannedTasks.filter(x => x.date > tm);
+        const pastDone = game.plannedTasks.filter(x => x.done && x.date < t);
+
+        const anyTasks = game.plannedTasks.length > 0;
+
+        content.innerHTML = `
+
+            <div class="addForm">
+
+                <input type="text" id="newTaskText" placeholder="What are you doing about it?" maxlength="80">
+
+                <div class="dayChips">
+                    <button class="dayChip ${selectedDate === t ? "active" : ""}" onclick="pickDate('today')">Today</button>
+                    <button class="dayChip ${selectedDate === tm ? "active" : ""}" onclick="pickDate('tomorrow')">Tomorrow</button>
+                </div>
+
+                <button class="addBtn" onclick="addTask()">Add to the plan</button>
+
+            </div>
+
+            ${sectionHTML("Overdue", overdue, "overdue")}
+            ${sectionHTML("Today", todays)}
+            ${sectionHTML("Tomorrow", tomorrows)}
+            ${sectionHTML("Upcoming", upcoming)}
+            ${sectionHTML("Done & gone", pastDone)}
+
+            ${anyTasks ? "" : `<div class="emptyNote">Nothing scheduled. Write the first line above.</div>`}
+
+        `;
+
+    }
+
+
+    window.addTask = addTask;
+    window.toggleTask = toggleTask;
+    window.deleteTask = deleteTask;
+    window.pickDate = pickDate;
+
+    render();
+
+}
+
+</script>
+
+</body>
+</html>
