@@ -344,7 +344,24 @@ if (!game) {
     }
 
 
+    function refreshGame() {
+
+        const latest = loadGame();
+
+        if (latest) {
+            game = latest;
+        }
+
+        if (!Array.isArray(game.sideOps)) {
+            game.sideOps = [];
+        }
+
+    }
+
+
     function addSideOp() {
+
+        refreshGame();
 
         const textInput = document.getElementById("newSideOpText");
         const pointsInput = document.getElementById("newSideOpPoints");
@@ -372,6 +389,8 @@ if (!game) {
 
     function updateSideOpPoints(id, value) {
 
+        refreshGame();
+
         const op = game.sideOps.find(o => o.id === id);
         if (!op) return;
 
@@ -384,6 +403,8 @@ if (!game) {
 
 
     function completeSideOp(id) {
+
+        refreshGame();
 
         const op = game.sideOps.find(o => o.id === id);
         if (!op) return;
@@ -416,6 +437,8 @@ if (!game) {
 
 
     function deleteSideOp(id) {
+
+        refreshGame();
 
         game.sideOps = game.sideOps.filter(o => o.id !== id);
 

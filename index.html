@@ -3598,6 +3598,37 @@ function showNotification(text) {
 
 render();
 
+
+/* ============================
+   DAY ROLLOVER WATCH
+============================ */
+
+// render() is what triggers checkNewDay(), so a tab left open across
+// midnight would otherwise keep showing yesterday's completed missions.
+// Only re-render when the date actually changed, so in-progress typing
+// isn't wiped.
+
+function refreshIfNewDay() {
+
+    if (game.lastDate !== today()) {
+        render();
+    }
+
+}
+
+
+setInterval(refreshIfNewDay, 60000);
+
+window.addEventListener("focus", refreshIfNewDay);
+
+document.addEventListener("visibilitychange", function () {
+
+    if (!document.hidden) {
+        refreshIfNewDay();
+    }
+
+});
+
 </script>
 
 </body>

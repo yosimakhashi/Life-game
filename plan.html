@@ -431,6 +431,25 @@ if (!game) {
     let selectedDate = tomorrow();
 
 
+    // Other pages write the whole save object back too, so re-read the
+    // latest state right before mutating - otherwise this page's snapshot
+    // (taken at load) would clobber anything changed since, including the
+    // daily mission reset.
+    function refreshGame() {
+
+        const latest = loadGame();
+
+        if (latest) {
+            game = latest;
+        }
+
+        if (!Array.isArray(game.plannedTasks)) {
+            game.plannedTasks = [];
+        }
+
+    }
+
+
     function awardPoints(amount) {
 
         game.totalScore = Math.max(0, (game.totalScore || 0) + amount);
@@ -458,6 +477,8 @@ if (!game) {
 
     function addTask() {
 
+        refreshGame();
+
         const input = document.getElementById("newTaskText");
         const text = input.value.trim();
 
@@ -481,6 +502,8 @@ if (!game) {
 
 
     function toggleTask(id) {
+
+        refreshGame();
 
         const task = game.plannedTasks.find(t => t.id === id);
         if (!task) return;
@@ -512,6 +535,8 @@ if (!game) {
 
 
     function deleteTask(id) {
+
+        refreshGame();
 
         const task = game.plannedTasks.find(t => t.id === id);
 
