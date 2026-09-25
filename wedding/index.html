@@ -182,8 +182,8 @@ footer { text-align: center; color: var(--dim); font-size: 12px; padding: 24px 0
 
 <header>
     <div class="eyebrow">Our Wedding Planner</div>
-    <h1 id="coupleNames">Partner <span class="amp">&amp;</span> Partner</h1>
-    <div class="date" id="weddingDateText">Set your wedding date in Settings</div>
+    <h1 id="coupleNames">Asif <span class="amp">&amp;</span> Alfiya</h1>
+    <div class="date" id="weddingDateText">Engagement and wedding dates not fixed yet</div>
     <div class="countdown" id="countdown"></div>
 </header>
 
@@ -369,10 +369,10 @@ footer { text-align: center; color: var(--dim); font-size: 12px; padding: 24px 0
     <div class="card">
         <h2>Our details</h2>
         <form class="add" id="settingsForm" autocomplete="off" style="flex-direction:column; align-items:stretch">
-            <label class="muted">Partner 1 name <input name="p1" style="width:100%"></label>
-            <label class="muted">Partner 2 name <input name="p2" style="width:100%"></label>
-            <label class="muted">Engagement date <input name="engagementDate" type="date" style="width:100%"></label>
-            <label class="muted">Wedding date <input name="weddingDate" type="date" style="width:100%"></label>
+            <label class="muted">Groom's name <input name="p1" style="width:100%"></label>
+            <label class="muted">Bride's name <input name="p2" style="width:100%"></label>
+            <label class="muted">Engagement date (leave empty until it's fixed) <input name="engagementDate" type="date" style="width:100%"></label>
+            <label class="muted">Wedding date (leave empty until it's fixed) <input name="weddingDate" type="date" style="width:100%"></label>
             <label class="muted">Total budget <input name="budget" type="number" min="0" step="any" style="width:100%"></label>
             <label class="muted">Currency symbol <input name="currency" maxlength="4" style="width:100%"></label>
             <button class="btn" type="submit">Save details</button>
@@ -498,7 +498,7 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 
 
 function freshState() {
     return {
-        settings: { p1: "", p2: "", engagementDate: "", weddingDate: "", budget: 0, currency: "₹" },
+        settings: { p1: "Asif", p2: "Alfiya", engagementDate: "", weddingDate: "", budget: 0, currency: "₹" },
         guests: [],
         tasks: PHASES.flatMap(p => p.tasks.map(text => ({ id: uid(), phase: p.id, text, done: false }))),
         remember: DEFAULT_REMEMBER.map(text => ({ id: uid(), text, done: false })),
@@ -542,8 +542,13 @@ function daysUntil(d) {
 /* ---------------- header ---------------- */
 function renderHeader() {
     const s = state.settings;
-    $("#coupleNames").innerHTML = `${esc(s.p1 || "Partner")} <span class="amp">&amp;</span> ${esc(s.p2 || "Partner")}`;
-    $("#weddingDateText").textContent = s.weddingDate ? formatDate(s.weddingDate) : "Set your wedding date in Settings";
+    $("#coupleNames").innerHTML = `${esc(s.p1 || "Asif")} <span class="amp">&amp;</span> ${esc(s.p2 || "Alfiya")}`;
+    const dateLines = [];
+    if (s.engagementDate) dateLines.push("Engagement: " + formatDate(s.engagementDate));
+    if (s.weddingDate) dateLines.push("Wedding: " + formatDate(s.weddingDate));
+    if (!s.engagementDate && !s.weddingDate) dateLines.push("Engagement and wedding dates not fixed yet");
+    else if (!s.weddingDate) dateLines.push("Wedding date not fixed yet");
+    $("#weddingDateText").textContent = dateLines.join(" · ");
 
     const boxes = [];
     const eng = daysUntil(s.engagementDate);
