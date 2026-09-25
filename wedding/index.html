@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wedding Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+    --bg: #fbf7f2;
+    --panel: #ffffff;
+    --panel-alt: #f6efe6;
+    --border: #eadfd2;
+    --text: #3b2f2a;
+    --dim: #8a7a70;
+    --rose: #c8707e;
+    --rose-soft: #f6e1e4;
+    --gold: #b8914d;
+    --gold-soft: #f3e8d3;
+    --green: #5f8f6b;
+    --green-soft: #e2efe4;
+    --red: #b5524a;
+    --shadow: 0 2px 10px rgba(80, 50, 30, 0.06);
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.45;
+}
+
+h1, h2, h3 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 600; margin: 0; }
+
+.wrap { max-width: 980px; margin: 0 auto; padding: 0 16px 60px; }
+
+/* ---------- header ---------- */
+header {
+    text-align: center;
+    padding: 34px 16px 20px;
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(200, 112, 126, 0.16), transparent 70%),
+        radial-gradient(ellipse at 90% 100%, rgba(184, 145, 77, 0.12), transparent 60%);
+}
+header .eyebrow { letter-spacing: 0.25em; text-transform: uppercase; font-size: 11px; color: var(--gold); }
+header h1 { font-size: clamp(32px, 7vw, 52px); margin: 6px 0 2px; color: var(--text); }
+header h1 .amp { color: var(--rose); font-style: italic; padding: 0 8px; }
+header .date { color: var(--dim); font-size: 14px; }
+.countdown { display: inline-flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; justify-content: center; }
+.countdown div {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 8px 14px; min-width: 74px; box-shadow: var(--shadow);
+}
+.countdown b { display: block; font-family: 'Cormorant Garamond', serif; font-size: 28px; color: var(--rose); line-height: 1.1; }
+.countdown span { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.1em; }
+
+/* ---------- tabs ---------- */
+nav.tabs {
+    position: sticky; top: 0; z-index: 5;
+    display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none;
+    padding: 10px 16px; background: rgba(251, 247, 242, 0.94); backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--border);
+    justify-content: safe center;
+}
+nav.tabs::-webkit-scrollbar { display: none; }
+nav.tabs button {
+    flex: none; border: 0; background: transparent; color: var(--dim);
+    font: 500 14px 'Inter', sans-serif; padding: 8px 14px; border-radius: 999px; cursor: pointer;
+}
+nav.tabs button.active { background: var(--rose); color: #fff; }
+nav.tabs button:not(.active):hover { background: var(--rose-soft); color: var(--text); }
+
+section.view { display: none; padding-top: 22px; }
+section.view.active { display: block; }
+
+/* ---------- panels ---------- */
+.card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px; margin-bottom: 16px; box-shadow: var(--shadow);
+}
+.card h2 { font-size: 26px; margin-bottom: 4px; }
+.card h3 { font-size: 21px; }
+.muted { color: var(--dim); font-size: 13px; }
+
+.grid { display: grid; gap: 12px; }
+.grid.stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.stat { background: var(--panel-alt); border-radius: 12px; padding: 14px; }
+.stat b { display: block; font-family: 'Cormorant Garamond', serif; font-size: 30px; line-height: 1.1; }
+.stat span { font-size: 12px; color: var(--dim); }
+
+.bar { height: 8px; background: var(--panel-alt); border-radius: 999px; overflow: hidden; margin-top: 8px; }
+.bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--rose), var(--gold)); border-radius: 999px; transition: width .3s; }
+
+/* ---------- forms ---------- */
+form.add { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+input, select, textarea {
+    font: 14px 'Inter', sans-serif; color: var(--text);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 9px;
+    padding: 9px 11px; min-width: 0;
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--rose-soft); border-color: var(--rose); }
+form.add input, form.add select { flex: 1 1 140px; }
+form.add input.grow { flex: 3 1 220px; }
+textarea { width: 100%; min-height: 220px; resize: vertical; }
+
+.btn {
+    border: 0; border-radius: 9px; padding: 9px 16px; cursor: pointer;
+    font: 600 14px 'Inter', sans-serif; background: var(--rose); color: #fff;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn.gold { background: var(--gold); }
+.btn.danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
+.icon-btn {
+    border: 0; background: transparent; color: var(--dim); cursor: pointer;
+    font-size: 17px; padding: 2px 6px; border-radius: 6px; line-height: 1;
+}
+.icon-btn:hover { color: var(--red); background: var(--rose-soft); }
+
+/* ---------- lists ---------- */
+ul.checklist { list-style: none; padding: 0; margin: 10px 0 0; }
+ul.checklist li {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 4px; border-bottom: 1px dashed var(--border);
+}
+ul.checklist li:last-child { border-bottom: 0; }
+ul.checklist li.done .txt { text-decoration: line-through; color: var(--dim); }
+ul.checklist .txt { flex: 1; }
+ul.checklist .when { font-size: 12px; color: var(--gold); font-weight: 600; min-width: 58px; }
+input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--rose); flex: none; cursor: pointer; }
+
+.phase-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.phase-head .count { font-size: 13px; color: var(--dim); }
+details.phase > summary { list-style: none; cursor: pointer; }
+details.phase > summary::-webkit-details-marker { display: none; }
+details.phase > summary h3::before { content: "▸ "; color: var(--rose); font-size: 16px; }
+details.phase[open] > summary h3::before { content: "▾ "; }
+
+/* ---------- table ---------- */
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+.toolbar input { flex: 2 1 180px; }
+.toolbar select { flex: 1 1 120px; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-weight: 600; font-size: 12px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 6px; border-bottom: 1px solid var(--border); }
+td { padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+td select, td input { padding: 5px 7px; font-size: 13px; }
+td input.num { width: 90px; }
+tr:last-child td { border-bottom: 0; }
+.pill { display: inline-block; font-size: 12px; padding: 2px 9px; border-radius: 999px; background: var(--panel-alt); }
+.pill.yes { background: var(--green-soft); color: var(--green); }
+.pill.no { background: var(--rose-soft); color: var(--red); }
+.empty { text-align: center; color: var(--dim); padding: 22px 0; font-style: italic; }
+
+.over { color: var(--red); }
+.ok { color: var(--green); }
+
+.two-col { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 760px) { .two-col { grid-template-columns: 1fr 1fr; } }
+
+/* ---------- mobile table: stack rows ---------- */
+@media (max-width: 640px) {
+    table.stack thead { display: none; }
+    table.stack tr { display: block; border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; margin-bottom: 10px; }
+    table.stack td { display: flex; justify-content: space-between; align-items: center; gap: 10px; border: 0; padding: 4px 0; }
+    table.stack td::before { content: attr(data-label); font-size: 12px; color: var(--dim); }
+    table.stack td:first-child { font-weight: 600; }
+}
+
+footer { text-align: center; color: var(--dim); font-size: 12px; padding: 24px 0 0; }
+</style>
+</head>
+<body>
+
+<header>
+    <div class="eyebrow">Our Wedding Planner</div>
+    <h1 id="coupleNames">Asif <span class="amp">&amp;</span> Alfiya</h1>
+    <div class="date" id="weddingDateText">Engagement and wedding dates not fixed yet</div>
+    <div class="countdown" id="countdown"></div>
+</header>
+
+<nav class="tabs" id="tabs">
+    <button data-tab="overview" class="active">Overview</button>
+    <button data-tab="guests">Guests</button>
+    <button data-tab="checklist">Checklist</button>
+    <button data-tab="dayof">Wedding Day</button>
+    <button data-tab="budget">Budget</button>
+    <button data-tab="notes">Notes</button>
+    <button data-tab="settings">Settings</button>
+</nav>
+
+<div class="wrap">
+
+<!-- ================= OVERVIEW ================= -->
+<section class="view active" id="view-overview">
+    <div class="card">
+        <h2>At a glance</h2>
+        <div class="grid stats" id="overviewStats" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+        <h2>Preparation progress</h2>
+        <p class="muted">Every stage, from before the engagement through to after the wedding.</p>
+        <div id="overviewPhases"></div>
+    </div>
+    <div class="card">
+        <h2>Up next</h2>
+        <p class="muted">The next unfinished tasks, in order.</p>
+        <ul class="checklist" id="overviewNext"></ul>
+    </div>
+</section>
+
+<!-- ================= GUESTS ================= -->
+<section class="view" id="view-guests">
+    <div class="card">
+        <h2>Guest list</h2>
+        <p class="muted">Everyone you need to invite. Track whether the invitation went out and whether they replied.</p>
+        <div class="grid stats" id="guestStats" style="margin-top:12px"></div>
+
+        <form class="add" id="guestForm" autocomplete="off">
+            <input class="grow" name="name" placeholder="Guest or family name" required>
+            <select name="side">
+                <option value="Bride">Bride's side</option>
+                <option value="Groom">Groom's side</option>
+                <option value="Both">Both</option>
+            </select>
+            <select name="group">
+                <option>Family</option>
+                <option>Relatives</option>
+                <option>Friends</option>
+                <option>Work</option>
+                <option>Neighbours</option>
+                <option>Other</option>
+            </select>
+            <input name="count" type="number" min="1" value="1" title="Number of people" placeholder="People">
+            <input name="phone" placeholder="Phone (optional)">
+            <select name="event">
+                <option value="Both">Engagement + Wedding</option>
+                <option value="Wedding">Wedding only</option>
+                <option value="Engagement">Engagement only</option>
+            </select>
+            <button class="btn" type="submit">Add guest</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="toolbar">
+            <input id="guestSearch" placeholder="Search names…">
+            <select id="guestFilterSide">
+                <option value="">All sides</option>
+                <option>Bride</option><option>Groom</option><option>Both</option>
+            </select>
+            <select id="guestFilterRsvp">
+                <option value="">All replies</option>
+                <option value="pending">Pending</option>
+                <option value="yes">Coming</option>
+                <option value="no">Not coming</option>
+            </select>
+            <button class="btn ghost" type="button" id="guestExport">Export CSV</button>
+        </div>
+        <div class="table-wrap">
+            <table class="stack">
+                <thead><tr><th>Name</th><th>Side</th><th>Group</th><th>People</th><th>Event</th><th>Phone</th><th>Invited</th><th>Reply</th><th></th></tr></thead>
+                <tbody id="guestRows"></tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- ================= CHECKLIST ================= -->
+<section class="view" id="view-checklist">
+    <div class="card">
+        <h2>Preparation checklist</h2>
+        <p class="muted">Split into stages. The list comes filled with common tasks. Tick them off, delete the ones you don't need, or add your own.</p>
+    </div>
+    <div id="phaseList"></div>
+</section>
+
+<!-- ================= WEDDING DAY ================= -->
+<section class="view" id="view-dayof">
+    <div class="two-col">
+        <div class="card">
+            <h2>Don't forget!</h2>
+            <p class="muted">Things to remember and carry on the wedding day.</p>
+            <div class="bar"><i id="remBar"></i></div>
+            <ul class="checklist" id="remList"></ul>
+            <form class="add" id="remForm" autocomplete="off">
+                <input class="grow" name="text" placeholder="Add something to remember…" required>
+                <button class="btn" type="submit">Add</button>
+            </form>
+        </div>
+        <div class="card">
+            <h2>Day timeline</h2>
+            <p class="muted">The plan for the day, hour by hour.</p>
+            <ul class="checklist" id="timeList"></ul>
+            <form class="add" id="timeForm" autocomplete="off">
+                <input name="time" type="time" required style="flex:0 1 120px">
+                <input class="grow" name="text" placeholder="What happens" required>
+                <button class="btn" type="submit">Add</button>
+            </form>
+        </div>
+    </div>
+    <div class="card">
+        <h2>Important contacts</h2>
+        <p class="muted">Who to call on the day: venue, caterer, photographer, driver, family coordinators.</p>
+        <div class="table-wrap">
+            <table class="stack">
+                <thead><tr><th>Name</th><th>Role</th><th>Phone</th><th></th></tr></thead>
+                <tbody id="contactRows"></tbody>
+            </table>
+        </div>
+        <form class="add" id="contactForm" autocomplete="off">
+            <input name="name" placeholder="Name" required>
+            <input name="role" placeholder="Role (e.g. Photographer)">
+            <input name="phone" placeholder="Phone">
+            <button class="btn" type="submit">Add contact</button>
+        </form>
+    </div>
+</section>
+
+<!-- ================= BUDGET ================= -->
+<section class="view" id="view-budget">
+    <div class="card">
+        <h2>Budget</h2>
+        <p class="muted">Set the total budget in Settings. Add every expense with its cost and how much you've paid.</p>
+        <div class="grid stats" id="budgetStats" style="margin-top:12px"></div>
+        <div class="bar"><i id="budgetBar"></i></div>
+        <form class="add" id="budgetForm" autocomplete="off">
+            <input class="grow" name="item" placeholder="Expense (e.g. Venue, Catering)" required>
+            <select name="stage">
+                <option>Engagement</option>
+                <option selected>Wedding</option>
+                <option>After wedding</option>
+            </select>
+            <input name="vendor" placeholder="Vendor (optional)">
+            <input name="cost" type="number" min="0" step="any" placeholder="Total cost" required>
+            <input name="paid" type="number" min="0" step="any" placeholder="Paid so far">
+            <button class="btn" type="submit">Add</button>
+        </form>
+    </div>
+    <div class="card">
+        <div class="table-wrap">
+            <table class="stack">
+                <thead><tr><th>Expense</th><th>Stage</th><th>Vendor</th><th>Cost</th><th>Paid</th><th>Due</th><th></th></tr></thead>
+                <tbody id="budgetRows"></tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- ================= NOTES ================= -->
+<section class="view" id="view-notes">
+    <div class="card">
+        <h2>Notes &amp; ideas</h2>
+        <p class="muted">Decor ideas, menu thoughts, gift ideas, anything. Saves as you type.</p>
+        <textarea id="notesBox" placeholder="Write anything here…"></textarea>
+    </div>
+</section>
+
+<!-- ================= SETTINGS ================= -->
+<section class="view" id="view-settings">
+    <div class="card">
+        <h2>Our details</h2>
+        <form class="add" id="settingsForm" autocomplete="off" style="flex-direction:column; align-items:stretch">
+            <label class="muted">Groom's name <input name="p1" style="width:100%"></label>
+            <label class="muted">Bride's name <input name="p2" style="width:100%"></label>
+            <label class="muted">Engagement date (leave empty until it's fixed) <input name="engagementDate" type="date" style="width:100%"></label>
+            <label class="muted">Wedding date (leave empty until it's fixed) <input name="weddingDate" type="date" style="width:100%"></label>
+            <label class="muted">Total budget <input name="budget" type="number" min="0" step="any" style="width:100%"></label>
+            <label class="muted">Currency symbol <input name="currency" maxlength="4" style="width:100%"></label>
+            <button class="btn" type="submit">Save details</button>
+        </form>
+    </div>
+    <div class="card">
+        <h2>Backup</h2>
+        <p class="muted">Everything is saved in this browser only. Download a backup file now and then, and use it to move your plan to another phone or computer.</p>
+        <div class="toolbar">
+            <button class="btn gold" type="button" id="backupBtn">Download backup</button>
+            <label class="btn ghost" style="display:inline-block">Restore backup
+                <input type="file" id="restoreInput" accept="application/json" hidden>
+            </label>
+            <button class="btn danger" type="button" id="resetBtn">Start over</button>
+        </div>
+    </div>
+</section>
+
+<footer>Made with love. Your data stays on this device.</footer>
+</div>
+
+<script>
+const STORAGE_KEY = "weddingPlanner";
+
+const PHASES = [
+    { id: "pre", name: "Before the engagement", tasks: [
+        "Talk to both families about the match and plans",
+        "Agree on an overall budget for engagement and wedding",
+        "Fix the engagement date",
+        "Choose the engagement venue (home, hall or restaurant)",
+        "Buy the engagement ring(s)",
+        "Make the engagement guest list",
+        "Invite close family and friends to the engagement",
+        "Plan outfits for both partners",
+        "Book photographer for the engagement",
+        "Arrange food / catering for the engagement",
+        "Buy sweets and gifts for the other family",
+        "Arrange decoration and flowers",
+    ]},
+    { id: "eng", name: "Engagement day", tasks: [
+        "Keep the ring(s) safe and ready",
+        "Get dressed and ready on time",
+        "Confirm the photographer has arrived",
+        "Check food and drinks are set up",
+        "Welcome guests and elders",
+        "Ring ceremony",
+        "Exchange gifts and sweets between families",
+        "Take family photos",
+        "Thank the guests",
+    ]},
+    { id: "post", name: "After engagement: wedding preparation", tasks: [
+        "Fix the wedding date together with both families",
+        "Book the wedding venue",
+        "Finalise the wedding guest list",
+        "Design and print / send invitations",
+        "Book caterer and choose the menu",
+        "Book photographer and videographer",
+        "Book decorator and flowers",
+        "Book music / DJ / band",
+        "Buy wedding outfits and shoes",
+        "Buy jewellery",
+        "Book makeup and hair artist",
+        "Buy wedding rings",
+        "Arrange transport for the couple and family",
+        "Book hotel rooms for out-of-town guests",
+        "Prepare marriage registration documents",
+        "Plan pre-wedding functions (mehndi, haldi, sangeet, etc.)",
+        "Book the honeymoon",
+        "Buy return gifts for guests",
+        "Collect RSVPs and give a final head count to the caterer",
+        "Call all vendors to confirm one week before",
+        "Pay advances and note balance amounts",
+        "Pack a wedding-day emergency kit",
+    ]},
+    { id: "day", name: "Wedding day", tasks: [
+        "Eat a proper breakfast",
+        "Hand the rings to a trusted person",
+        "Give the day's timeline to family coordinators",
+        "Get ready: makeup, hair, outfit",
+        "Confirm photographer and videographer are on site",
+        "Check decoration, stage and seating",
+        "Ceremony",
+        "Sign the marriage register / documents",
+        "Family and group photos",
+        "Reception and dinner",
+        "Pay vendors their remaining balance (or assign someone)",
+        "Collect gifts and envelopes safely",
+    ]},
+    { id: "after", name: "After the wedding", tasks: [
+        "Send thank-you messages to guests",
+        "Return rented items (outfits, decor, etc.)",
+        "Settle any remaining vendor payments",
+        "Collect photos and video from the photographer",
+        "Register the marriage / get the certificate",
+        "Update documents (ID, bank, passport) if needed",
+        "Clean and store the wedding outfits",
+        "Record gifts received",
+        "Enjoy the honeymoon!",
+    ]},
+];
+
+const DEFAULT_REMEMBER = [
+    "Wedding rings", "Outfits, shoes and accessories", "Jewellery",
+    "ID cards and marriage documents", "Cash / envelopes for vendors and gifts",
+    "Phone and charger / power bank", "Makeup touch-up kit and perfume",
+    "Emergency kit: safety pins, needle & thread, painkillers, plasters",
+    "Tissues and handkerchief", "Vendor contact list",
+    "Gifts for family members", "Water bottles and snacks",
+    "Speech / vows (if any)", "Umbrella (just in case)",
+];
+
+const DEFAULT_TIMELINE = [
+    ["08:00", "Wake up and breakfast"],
+    ["10:00", "Makeup and getting ready"],
+    ["13:00", "Photographer arrives"],
+    ["16:00", "Guests arrive"],
+    ["17:00", "Ceremony"],
+    ["19:00", "Reception and dinner"],
+    ["22:00", "Farewell"],
+];
+
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+function freshState() {
+    return {
+        settings: { p1: "Asif", p2: "Alfiya", engagementDate: "", weddingDate: "", budget: 0, currency: "₹" },
+        guests: [],
+        tasks: PHASES.flatMap(p => p.tasks.map(text => ({ id: uid(), phase: p.id, text, done: false }))),
+        remember: DEFAULT_REMEMBER.map(text => ({ id: uid(), text, done: false })),
+        timeline: DEFAULT_TIMELINE.map(([time, text]) => ({ id: uid(), time, text })),
+        contacts: [],
+        budget: [],
+        notes: "",
+    };
+}
+
+function load() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return Object.assign(freshState(), JSON.parse(raw));
+    } catch (e) { /* storage unavailable or corrupt: start fresh */ }
+    return freshState();
+}
+
+let state = load();
+
+function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+}
+
+const $ = sel => document.querySelector(sel);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const money = n => state.settings.currency + (Number(n) || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
+const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
+
+function formatDate(d) {
+    if (!d) return "";
+    return new Date(d + "T00:00:00").toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+}
+
+function daysUntil(d) {
+    if (!d) return null;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    return Math.round((new Date(d + "T00:00:00") - today) / 86400000);
+}
+
+/* ---------------- header ---------------- */
+function renderHeader() {
+    const s = state.settings;
+    $("#coupleNames").innerHTML = `${esc(s.p1 || "Asif")} <span class="amp">&amp;</span> ${esc(s.p2 || "Alfiya")}`;
+    const dateLines = [];
+    if (s.engagementDate) dateLines.push("Engagement: " + formatDate(s.engagementDate));
+    if (s.weddingDate) dateLines.push("Wedding: " + formatDate(s.weddingDate));
+    if (!s.engagementDate && !s.weddingDate) dateLines.push("Engagement and wedding dates not fixed yet");
+    else if (!s.weddingDate) dateLines.push("Wedding date not fixed yet");
+    $("#weddingDateText").textContent = dateLines.join(" · ");
+
+    const boxes = [];
+    const eng = daysUntil(s.engagementDate);
+    const wed = daysUntil(s.weddingDate);
+    if (eng !== null && eng >= 0) boxes.push(`<div><b>${eng}</b><span>days to engagement</span></div>`);
+    if (wed !== null) {
+        if (wed > 0) boxes.push(`<div><b>${wed}</b><span>days to wedding</span></div>`);
+        else if (wed === 0) boxes.push(`<div><b>Today!</b><span>wedding day</span></div>`);
+        else boxes.push(`<div><b>${-wed}</b><span>days married</span></div>`);
+    }
+    $("#countdown").innerHTML = boxes.join("");
+}
+
+/* ---------------- overview ---------------- */
+function guestTotals() {
+    const g = state.guests;
+    const people = arr => arr.reduce((n, x) => n + (Number(x.count) || 1), 0);
+    return {
+        entries: g.length,
+        people: people(g),
+        invited: people(g.filter(x => x.invited)),
+        yes: people(g.filter(x => x.rsvp === "yes")),
+        no: people(g.filter(x => x.rsvp === "no")),
+        pending: people(g.filter(x => x.rsvp === "pending")),
+    };
+}
+
+function renderOverview() {
+    const gt = guestTotals();
+    const done = state.tasks.filter(t => t.done).length;
+    const spent = state.budget.reduce((n, b) => n + (Number(b.cost) || 0), 0);
+    $("#overviewStats").innerHTML = `
+        <div class="stat"><b>${gt.people}</b><span>people on the guest list</span></div>
+        <div class="stat"><b>${gt.yes}</b><span>confirmed coming</span></div>
+        <div class="stat"><b>${done}/${state.tasks.length}</b><span>tasks done</span></div>
+        <div class="stat"><b>${money(spent)}</b><span>planned spend${state.settings.budget ? " of " + money(state.settings.budget) : ""}</span></div>`;
+
+    $("#overviewPhases").innerHTML = PHASES.map(p => {
+        const ts = state.tasks.filter(t => t.phase === p.id);
+        const d = ts.filter(t => t.done).length;
+        return `<div style="margin-top:14px">
+            <div class="phase-head"><strong>${esc(p.name)}</strong><span class="count">${d}/${ts.length}</span></div>
+            <div class="bar"><i style="width:${pct(d, ts.length)}%"></i></div></div>`;
+    }).join("");
+
+    const next = state.tasks.filter(t => !t.done).slice(0, 6);
+    $("#overviewNext").innerHTML = next.length
+        ? next.map(t => `<li><input type="checkbox" data-act="toggleTask" data-id="${t.id}"><span class="txt">${esc(t.text)}</span><span class="muted">${esc(PHASES.find(p => p.id === t.phase)?.name)}</span></li>`).join("")
+        : `<li class="empty">Everything is done. Congratulations!</li>`;
+}
+
+/* ---------------- guests ---------------- */
+function renderGuests() {
+    const gt = guestTotals();
+    $("#guestStats").innerHTML = `
+        <div class="stat"><b>${gt.people}</b><span>total people (${gt.entries} entries)</span></div>
+        <div class="stat"><b>${gt.invited}</b><span>invitations sent</span></div>
+        <div class="stat"><b>${gt.yes}</b><span>coming</span></div>
+        <div class="stat"><b>${gt.pending}</b><span>waiting for reply</span></div>
+        <div class="stat"><b>${gt.no}</b><span>not coming</span></div>`;
+
+    const q = $("#guestSearch").value.trim().toLowerCase();
+    const side = $("#guestFilterSide").value;
+    const rsvp = $("#guestFilterRsvp").value;
+    const rows = state.guests.filter(g =>
+        (!q || g.name.toLowerCase().includes(q)) &&
+        (!side || g.side === side) &&
+        (!rsvp || g.rsvp === rsvp));
+
+    if (!rows.length) {
+        $("#guestRows").innerHTML = `<tr><td colspan="9" class="empty">${state.guests.length ? "No guests match the filters." : "No guests yet. Add your first one above."}</td></tr>`;
+        return;
+    }
+    $("#guestRows").innerHTML = rows.map(g => `<tr>
+        <td data-label="Name">${esc(g.name)}</td>
+        <td data-label="Side">${esc(g.side)}</td>
+        <td data-label="Group">${esc(g.group)}</td>
+        <td data-label="People"><input class="num" type="number" min="1" value="${esc(g.count)}" data-act="guestField" data-field="count" data-id="${g.id}" style="width:64px"></td>
+        <td data-label="Event">${esc(g.event === "Both" ? "Both" : g.event)}</td>
+        <td data-label="Phone">${g.phone ? `<a href="tel:${esc(g.phone)}">${esc(g.phone)}</a>` : "–"}</td>
+        <td data-label="Invited"><input type="checkbox" ${g.invited ? "checked" : ""} data-act="guestInvited" data-id="${g.id}"></td>
+        <td data-label="Reply"><select data-act="guestField" data-field="rsvp" data-id="${g.id}">
+            <option value="pending" ${g.rsvp === "pending" ? "selected" : ""}>Pending</option>
+            <option value="yes" ${g.rsvp === "yes" ? "selected" : ""}>Coming</option>
+            <option value="no" ${g.rsvp === "no" ? "selected" : ""}>Not coming</option>
+        </select></td>
+        <td><button class="icon-btn" title="Remove" data-act="delGuest" data-id="${g.id}">✕</button></td>
+    </tr>`).join("");
+}
+
+function exportGuestsCsv() {
+    const head = ["Name", "Side", "Group", "People", "Event", "Phone", "Invited", "Reply"];
+    const cell = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const lines = [head.map(cell).join(",")].concat(state.guests.map(g =>
+        [g.name, g.side, g.group, g.count, g.event, g.phone, g.invited ? "Yes" : "No", g.rsvp].map(cell).join(",")));
+    download("guest-list.csv", lines.join("\n"), "text/csv");
+}
+
+/* ---------------- checklist ---------------- */
+const openPhases = new Set(["pre"]);
+
+function renderChecklist() {
+    $("#phaseList").innerHTML = PHASES.map(p => {
+        const ts = state.tasks.filter(t => t.phase === p.id);
+        const d = ts.filter(t => t.done).length;
+        return `<details class="card phase" data-phase="${p.id}" ${openPhases.has(p.id) ? "open" : ""}>
+            <summary><div class="phase-head"><h3>${esc(p.name)}</h3><span class="count">${d} of ${ts.length} done</span></div>
+            <div class="bar"><i style="width:${pct(d, ts.length)}%"></i></div></summary>
+            <ul class="checklist">${ts.map(t => `<li class="${t.done ? "done" : ""}">
+                <input type="checkbox" ${t.done ? "checked" : ""} data-act="toggleTask" data-id="${t.id}">
+                <span class="txt">${esc(t.text)}</span>
+                <button class="icon-btn" title="Remove" data-act="delTask" data-id="${t.id}">✕</button></li>`).join("")
+                || `<li class="empty">No tasks here yet.</li>`}</ul>
+            <form class="add" data-phase-form="${p.id}" autocomplete="off">
+                <input class="grow" name="text" placeholder="Add a task…" required>
+                <button class="btn" type="submit">Add</button>
+            </form>
+        </details>`;
+    }).join("");
+}
+
+/* ---------------- wedding day ---------------- */
+function renderDayOf() {
+    const r = state.remember;
+    $("#remBar").style.width = pct(r.filter(x => x.done).length, r.length) + "%";
+    $("#remList").innerHTML = r.map(x => `<li class="${x.done ? "done" : ""}">
+        <input type="checkbox" ${x.done ? "checked" : ""} data-act="toggleRem" data-id="${x.id}">
+        <span class="txt">${esc(x.text)}</span>
+        <button class="icon-btn" title="Remove" data-act="delRem" data-id="${x.id}">✕</button></li>`).join("")
+        || `<li class="empty">Nothing yet.</li>`;
+
+    const tl = [...state.timeline].sort((a, b) => a.time.localeCompare(b.time));
+    $("#timeList").innerHTML = tl.map(x => `<li>
+        <span class="when">${esc(x.time)}</span><span class="txt">${esc(x.text)}</span>
+        <button class="icon-btn" title="Remove" data-act="delTime" data-id="${x.id}">✕</button></li>`).join("")
+        || `<li class="empty">No timeline yet.</li>`;
+
+    $("#contactRows").innerHTML = state.contacts.map(c => `<tr>
+        <td data-label="Name">${esc(c.name)}</td>
+        <td data-label="Role">${esc(c.role) || "–"}</td>
+        <td data-label="Phone">${c.phone ? `<a href="tel:${esc(c.phone)}">${esc(c.phone)}</a>` : "–"}</td>
+        <td><button class="icon-btn" title="Remove" data-act="delContact" data-id="${c.id}">✕</button></td></tr>`).join("")
+        || `<tr><td colspan="4" class="empty">No contacts yet.</td></tr>`;
+}
+
+/* ---------------- budget ---------------- */
+function renderBudget() {
+    const total = Number(state.settings.budget) || 0;
+    const cost = state.budget.reduce((n, b) => n + (Number(b.cost) || 0), 0);
+    const paid = state.budget.reduce((n, b) => n + (Number(b.paid) || 0), 0);
+    const left = total - cost;
+    $("#budgetStats").innerHTML = `
+        <div class="stat"><b>${money(total)}</b><span>total budget</span></div>
+        <div class="stat"><b>${money(cost)}</b><span>planned spend</span></div>
+        <div class="stat"><b>${money(paid)}</b><span>already paid</span></div>
+        <div class="stat"><b class="${left < 0 ? "over" : "ok"}">${money(Math.abs(left))}</b><span>${left < 0 ? "over budget" : "left to spend"}</span></div>`;
+    $("#budgetBar").style.width = Math.min(100, pct(cost, total)) + "%";
+
+    $("#budgetRows").innerHTML = state.budget.map(b => {
+        const due = (Number(b.cost) || 0) - (Number(b.paid) || 0);
+        return `<tr>
+        <td data-label="Expense">${esc(b.item)}</td>
+        <td data-label="Stage">${esc(b.stage)}</td>
+        <td data-label="Vendor">${esc(b.vendor) || "–"}</td>
+        <td data-label="Cost"><input class="num" type="number" min="0" step="any" value="${esc(b.cost)}" data-act="budgetField" data-field="cost" data-id="${b.id}"></td>
+        <td data-label="Paid"><input class="num" type="number" min="0" step="any" value="${esc(b.paid)}" data-act="budgetField" data-field="paid" data-id="${b.id}"></td>
+        <td data-label="Due">${due > 0 ? `<span class="pill no">${money(due)}</span>` : `<span class="pill yes">Paid</span>`}</td>
+        <td><button class="icon-btn" title="Remove" data-act="delBudget" data-id="${b.id}">✕</button></td></tr>`;
+    }).join("") || `<tr><td colspan="7" class="empty">No expenses yet.</td></tr>`;
+}
+
+/* ---------------- settings ---------------- */
+function fillSettings() {
+    const f = $("#settingsForm");
+    for (const k of ["p1", "p2", "engagementDate", "weddingDate", "budget", "currency"]) f.elements[k].value = state.settings[k] ?? "";
+}
+
+function renderAll() {
+    renderHeader();
+    renderOverview();
+    renderGuests();
+    renderChecklist();
+    renderDayOf();
+    renderBudget();
+    $("#notesBox").value = state.notes;
+}
+
+function commit() { save(); renderAll(); }
+
+function download(name, text, type) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type }));
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/* ---------------- events ---------------- */
+$("#tabs").addEventListener("click", e => {
+    const btn = e.target.closest("button[data-tab]");
+    if (!btn) return;
+    document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("active", b === btn));
+    document.querySelectorAll("section.view").forEach(v => v.classList.toggle("active", v.id === "view-" + btn.dataset.tab));
+    try { sessionStorage.setItem("weddingTab", btn.dataset.tab); } catch (e) { /* ignore */ }
+});
+
+const byId = (list, id) => state[list].find(x => x.id === id);
+const removeFrom = (list, id) => { state[list] = state[list].filter(x => x.id !== id); };
+
+document.addEventListener("click", e => {
+    const el = e.target.closest("[data-act]");
+    if (!el) return;
+    const id = el.dataset.id;
+    switch (el.dataset.act) {
+        case "toggleTask": byId("tasks", id).done = el.checked; break;
+        case "delTask": removeFrom("tasks", id); break;
+        case "toggleRem": byId("remember", id).done = el.checked; break;
+        case "delRem": removeFrom("remember", id); break;
+        case "delTime": removeFrom("timeline", id); break;
+        case "delContact": removeFrom("contacts", id); break;
+        case "guestInvited": byId("guests", id).invited = el.checked; break;
+        case "delGuest":
+            if (!confirm(`Remove ${byId("guests", id).name} from the guest list?`)) return;
+            removeFrom("guests", id); break;
+        case "delBudget": removeFrom("budget", id); break;
+        default: return;
+    }
+    commit();
+});
+
+document.addEventListener("change", e => {
+    const el = e.target;
+    if (el.dataset.act === "guestField") byId("guests", el.dataset.id)[el.dataset.field] = el.value;
+    else if (el.dataset.act === "budgetField") byId("budget", el.dataset.id)[el.dataset.field] = Number(el.value) || 0;
+    else return;
+    commit();
+});
+
+// Remember which checklist stages are expanded across re-renders.
+document.addEventListener("toggle", e => {
+    const d = e.target;
+    if (!d.matches?.("details.phase")) return;
+    d.open ? openPhases.add(d.dataset.phase) : openPhases.delete(d.dataset.phase);
+}, true);
+
+document.addEventListener("submit", e => {
+    const f = e.target;
+    const phase = f.dataset.phaseForm;
+    if (!phase) return;
+    e.preventDefault();
+    state.tasks.push({ id: uid(), phase, text: f.elements.text.value.trim(), done: false });
+    commit();
+    document.querySelector(`[data-phase-form="${phase}"] input`).focus();
+});
+
+function onSubmit(sel, handler) {
+    $(sel).addEventListener("submit", e => {
+        e.preventDefault();
+        const f = e.target;
+        const v = Object.fromEntries(new FormData(f));
+        handler(v);
+        commit();
+        f.reset();
+        f.querySelector("input")?.focus();
+    });
+}
+
+onSubmit("#guestForm", v => state.guests.push({
+    id: uid(), name: v.name.trim(), side: v.side, group: v.group, count: Math.max(1, Number(v.count) || 1),
+    phone: v.phone.trim(), event: v.event, invited: false, rsvp: "pending",
+}));
+onSubmit("#remForm", v => state.remember.push({ id: uid(), text: v.text.trim(), done: false }));
+onSubmit("#timeForm", v => state.timeline.push({ id: uid(), time: v.time, text: v.text.trim() }));
+onSubmit("#contactForm", v => state.contacts.push({ id: uid(), name: v.name.trim(), role: v.role.trim(), phone: v.phone.trim() }));
+onSubmit("#budgetForm", v => state.budget.push({
+    id: uid(), item: v.item.trim(), stage: v.stage, vendor: v.vendor.trim(), cost: Number(v.cost) || 0, paid: Number(v.paid) || 0,
+}));
+
+$("#settingsForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const v = Object.fromEntries(new FormData(e.target));
+    state.settings = { ...state.settings, ...v, p1: v.p1.trim(), p2: v.p2.trim(), budget: Number(v.budget) || 0, currency: v.currency.trim() };
+    commit();
+    alert("Saved!");
+});
+
+["#guestSearch", "#guestFilterSide", "#guestFilterRsvp"].forEach(s => $(s).addEventListener("input", renderGuests));
+$("#guestExport").addEventListener("click", exportGuestsCsv);
+
+let notesTimer;
+$("#notesBox").addEventListener("input", e => {
+    clearTimeout(notesTimer);
+    notesTimer = setTimeout(() => { state.notes = e.target.value; save(); }, 300);
+});
+
+$("#backupBtn").addEventListener("click", () =>
+    download("wedding-planner-backup.json", JSON.stringify(state, null, 2), "application/json"));
+
+$("#restoreInput").addEventListener("change", async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+        const data = JSON.parse(await file.text());
+        if (!data || !Array.isArray(data.guests) || !Array.isArray(data.tasks)) throw new Error("bad file");
+        state = Object.assign(freshState(), data);
+        commit();
+        fillSettings();
+        alert("Backup restored.");
+    } catch (err) {
+        alert("That file doesn't look like a wedding planner backup.");
+    }
+    e.target.value = "";
+});
+
+$("#resetBtn").addEventListener("click", () => {
+    if (!confirm("Delete everything and start over? Download a backup first if you want to keep it.")) return;
+    state = freshState();
+    commit();
+    fillSettings();
+});
+
+/* ---------------- boot ---------------- */
+fillSettings();
+renderAll();
+try {
+    const tab = sessionStorage.getItem("weddingTab");
+    if (tab) document.querySelector(`#tabs button[data-tab="${tab}"]`)?.click();
+} catch (e) { /* ignore */ }
+setInterval(renderHeader, 60000);
+</script>
+</body>
+</html>
