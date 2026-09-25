@@ -175,6 +175,25 @@ tr:last-child td { border-bottom: 0; }
     table.stack td:first-child { font-weight: 600; }
 }
 
+/* ---------- guest event toggles ---------- */
+.evpick { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; flex: 1 1 100%; font-size: 14px; }
+.evpick label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+form.add .evpick input { flex: none; }
+button.pill.toggle {
+    border: 1px solid var(--border); background: transparent; color: var(--dim);
+    font: 12px 'Inter', sans-serif; cursor: pointer; margin: 1px 0;
+}
+button.pill.toggle.on { background: var(--gold-soft); border-color: var(--gold); color: var(--text); }
+
+/* ---------- vakku guide ---------- */
+.grid.guide { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 16px; }
+.grid.guide .card { margin: 0; }
+.card h3.do { color: var(--green); }
+.card h3.dont { color: var(--red); }
+.card h3.think { color: var(--gold); }
+ul.tips { margin: 10px 0 0; padding-left: 20px; }
+ul.tips li { margin-bottom: 7px; }
+
 footer { text-align: center; color: var(--dim); font-size: 12px; padding: 24px 0 0; }
 </style>
 </head>
@@ -189,6 +208,7 @@ footer { text-align: center; color: var(--dim); font-size: 12px; padding: 24px 0
 
 <nav class="tabs" id="tabs">
     <button data-tab="overview" class="active">Overview</button>
+    <button data-tab="vakku">Vakku Urappikkal</button>
     <button data-tab="guests">Guests</button>
     <button data-tab="checklist">Checklist</button>
     <button data-tab="dayof">Wedding Day</button>
@@ -217,6 +237,77 @@ footer { text-align: center; color: var(--dim); font-size: 12px; padding: 24px 0
     </div>
 </section>
 
+<!-- ================= VAKKU URAPPIKKAL ================= -->
+<section class="view" id="view-vakku">
+    <div class="card">
+        <h2>Vakku Urappikkal</h2>
+        <p class="muted">The elders of both families meet and give their word: you both agree and the marriage is confirmed. Plan the visit here.</p>
+        <p id="vakkuDateText" style="margin:12px 0 0; font-weight:600"></p>
+        <div class="grid stats" id="vakkuStats" style="margin-top:12px"></div>
+        <p class="muted" style="margin-top:12px">To invite someone, add them in the <b>Guests</b> tab and tick <b>Vakku Urappikkal</b>.</p>
+    </div>
+
+    <div id="vakkuPhase"></div>
+
+    <div class="grid guide">
+        <div class="card">
+            <h3 class="do">What to do</h3>
+            <ul class="tips">
+                <li>Have the house, seating and food ready at least an hour before they arrive.</li>
+                <li>Greet the elders first and welcome everyone warmly at the door.</li>
+                <li>Serve water or tea soon after guests sit down.</li>
+                <li>Let the elders lead the talk. Your family's chosen elder speaks for your side.</li>
+                <li>Listen more than you speak, and stay calm and respectful.</li>
+                <li>Dress neatly and modestly. The whole family should look well put together.</li>
+                <li>Give one person charge of the food and another charge of looking after guests.</li>
+                <li>Write down everything that is agreed: dates, next steps, who does what.</li>
+                <li>Thank every guest before they leave, and see the elders off to their vehicles.</li>
+                <li>Call the relatives you invited afterwards and thank them for coming.</li>
+            </ul>
+        </div>
+        <div class="card">
+            <h3 class="dont">What not to do</h3>
+            <ul class="tips">
+                <li>Don't ask for or discuss dowry. It hurts relations, and in India it is illegal.</li>
+                <li>Don't argue or bargain in front of guests. Talk about disagreements privately later.</li>
+                <li>Don't raise old family issues or sensitive topics.</li>
+                <li>Don't promise dates, expenses or arrangements your family hasn't agreed on yet.</li>
+                <li>Don't invite too many people. Keep it to close family and respected elders.</li>
+                <li>Don't overspend on food or decoration. Save for the engagement and wedding.</li>
+                <li>Don't stay on your phone while the elders are talking.</li>
+                <li>Don't leave guests sitting alone or waiting without food and drinks.</li>
+                <li>Don't post photos online until both families are happy with it.</li>
+            </ul>
+        </div>
+        <div class="card">
+            <h3 class="think">Things to consider</h3>
+            <ul class="tips">
+                <li><b>How many people:</b> how many are coming from their side, and whether your space fits them plus your own guests.</li>
+                <li><b>Time of visit:</b> a morning or evening visit needs tea and snacks, while lunch or dinner time needs a full meal.</li>
+                <li><b>Elderly guests:</b> comfortable chairs, and sugar-free or light food options for those with health needs.</li>
+                <li><b>Prayer time:</b> if the visit overlaps with prayer, keep a clean space ready.</li>
+                <li><b>Gifts:</b> check with your family beforehand whether sweets, fruits or gifts are exchanged.</li>
+                <li><b>Weather and parking:</b> keep a plan for rain and space for vehicles.</li>
+                <li><b>Budget:</b> decide in advance how much to spend on this event.</li>
+                <li><b>You two:</b> Asif and Alfiya should agree between yourselves first on what you both want.</li>
+            </ul>
+        </div>
+        <div class="card">
+            <h3 class="think">Topics that may come up</h3>
+            <ul class="tips">
+                <li>Date for the engagement</li>
+                <li>Rough time frame or date for the nikah / wedding</li>
+                <li>Where the wedding will be held and roughly how many guests</li>
+                <li>Customs and traditions each family follows</li>
+                <li>Mahr and other arrangements, discussed respectfully by the elders</li>
+                <li>Who will take care of which arrangements</li>
+                <li>The next meeting or visit</li>
+            </ul>
+            <p class="muted" style="margin-top:10px">Talk these over in your family before the visit, so everyone gives the same answer.</p>
+        </div>
+    </div>
+</section>
+
 <!-- ================= GUESTS ================= -->
 <section class="view" id="view-guests">
     <div class="card">
@@ -241,11 +332,11 @@ footer { text-align: center; color: var(--dim); font-size: 12px; padding: 24px 0
             </select>
             <input name="count" type="number" min="1" value="1" title="Number of people" placeholder="People">
             <input name="phone" placeholder="Phone (optional)">
-            <select name="event">
-                <option value="Both">Engagement + Wedding</option>
-                <option value="Wedding">Wedding only</option>
-                <option value="Engagement">Engagement only</option>
-            </select>
+            <div class="evpick"><span class="muted">Invite to:</span>
+                <label><input type="checkbox" name="ev" value="vakku"> Vakku Urappikkal</label>
+                <label><input type="checkbox" name="ev" value="engagement" checked> Engagement</label>
+                <label><input type="checkbox" name="ev" value="wedding" checked> Wedding</label>
+            </div>
             <button class="btn" type="submit">Add guest</button>
         </form>
     </div>
@@ -257,6 +348,12 @@ footer { text-align: center; color: var(--dim); font-size: 12px; padding: 24px 0
                 <option value="">All sides</option>
                 <option>Bride</option><option>Groom</option><option>Both</option>
             </select>
+            <select id="guestFilterEvent">
+                <option value="">All events</option>
+                <option value="vakku">Vakku Urappikkal</option>
+                <option value="engagement">Engagement</option>
+                <option value="wedding">Wedding</option>
+            </select>
             <select id="guestFilterRsvp">
                 <option value="">All replies</option>
                 <option value="pending">Pending</option>
@@ -267,7 +364,7 @@ footer { text-align: center; color: var(--dim); font-size: 12px; padding: 24px 0
         </div>
         <div class="table-wrap">
             <table class="stack">
-                <thead><tr><th>Name</th><th>Side</th><th>Group</th><th>People</th><th>Event</th><th>Phone</th><th>Invited</th><th>Reply</th><th></th></tr></thead>
+                <thead><tr><th>Name</th><th>Side</th><th>Group</th><th>People</th><th>Invited to</th><th>Phone</th><th>Invited</th><th>Reply</th><th></th></tr></thead>
                 <tbody id="guestRows"></tbody>
             </table>
         </div>
@@ -335,6 +432,7 @@ footer { text-align: center; color: var(--dim); font-size: 12px; padding: 24px 0
         <form class="add" id="budgetForm" autocomplete="off">
             <input class="grow" name="item" placeholder="Expense (e.g. Venue, Catering)" required>
             <select name="stage">
+                <option>Vakku Urappikkal</option>
                 <option>Engagement</option>
                 <option selected>Wedding</option>
                 <option>After wedding</option>
@@ -371,6 +469,7 @@ footer { text-align: center; color: var(--dim); font-size: 12px; padding: 24px 0
         <form class="add" id="settingsForm" autocomplete="off" style="flex-direction:column; align-items:stretch">
             <label class="muted">Groom's name <input name="p1" style="width:100%"></label>
             <label class="muted">Bride's name <input name="p2" style="width:100%"></label>
+            <label class="muted">Vakku Urappikkal date (leave empty until it's fixed) <input name="vakkuDate" type="date" style="width:100%"></label>
             <label class="muted">Engagement date (leave empty until it's fixed) <input name="engagementDate" type="date" style="width:100%"></label>
             <label class="muted">Wedding date (leave empty until it's fixed) <input name="weddingDate" type="date" style="width:100%"></label>
             <label class="muted">Total budget <input name="budget" type="number" min="0" step="any" style="width:100%"></label>
@@ -397,7 +496,36 @@ footer { text-align: center; color: var(--dim); font-size: 12px; padding: 24px 0
 <script>
 const STORAGE_KEY = "weddingPlanner";
 
+const EVENTS = [
+    { id: "vakku", name: "Vakku Urappikkal" },
+    { id: "engagement", name: "Engagement" },
+    { id: "wedding", name: "Wedding" },
+];
+
 const PHASES = [
+    { id: "vakku", name: "Vakku Urappikkal (giving word)", tasks: [
+        "Fix the date and time with the other family",
+        "Ask how many people are coming from their side",
+        "Decide which of our relatives and elders to invite",
+        "Invite our people personally (call the elders, don't just message)",
+        "Choose an elder to speak for our family",
+        "Talk as a family beforehand about what we want to agree on",
+        "Asif and Alfiya agree between themselves on what they both want",
+        "Plan the menu (tea and snacks, or a full meal)",
+        "Order sweets, snacks and fruits",
+        "Arrange enough chairs, plates, glasses and drinking water",
+        "Clean and arrange the house and seating area",
+        "Keep comfortable seating for elderly guests",
+        "Arrange parking space",
+        "Keep a clean space ready for prayer, if needed",
+        "Decide outfits for the family",
+        "Assign someone to welcome guests at the door",
+        "Assign someone in charge of serving food",
+        "Ask the other family if they are okay with photos",
+        "Write down everything agreed (dates, next steps)",
+        "Thank everyone and see the guests off",
+        "Share the agreed decisions with close family",
+    ]},
     { id: "pre", name: "Before the engagement", tasks: [
         "Talk to both families about the match and plans",
         "Agree on an overall budget for engagement and wedding",
@@ -498,7 +626,7 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 
 
 function freshState() {
     return {
-        settings: { p1: "Asif", p2: "Alfiya", engagementDate: "", weddingDate: "", budget: 0, currency: "₹" },
+        settings: { p1: "Asif", p2: "Alfiya", vakkuDate: "", engagementDate: "", weddingDate: "", budget: 0, currency: "₹" },
         guests: [],
         tasks: PHASES.flatMap(p => p.tasks.map(text => ({ id: uid(), phase: p.id, text, done: false }))),
         remember: DEFAULT_REMEMBER.map(text => ({ id: uid(), text, done: false })),
@@ -506,13 +634,32 @@ function freshState() {
         contacts: [],
         budget: [],
         notes: "",
+        seededPhases: PHASES.map(p => p.id),
     };
+}
+
+// Bring a plan saved by an older version of this page up to date.
+function upgrade(data) {
+    const s = Object.assign(freshState(), data);
+    s.settings = Object.assign(freshState().settings, data.settings);
+    s.guests.forEach(g => {
+        if (!Array.isArray(g.events)) {
+            g.events = g.event === "Wedding" ? ["wedding"] : g.event === "Engagement" ? ["engagement"] : ["engagement", "wedding"];
+        }
+        delete g.event;
+    });
+    // Add the default tasks of any checklist stage added since the plan was saved.
+    const seeded = data.seededPhases || ["pre", "eng", "post", "day", "after"];
+    PHASES.filter(p => !seeded.includes(p.id)).forEach(p =>
+        s.tasks.push(...p.tasks.map(text => ({ id: uid(), phase: p.id, text, done: false }))));
+    s.seededPhases = PHASES.map(p => p.id);
+    return s;
 }
 
 function load() {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) return Object.assign(freshState(), JSON.parse(raw));
+        if (raw) return upgrade(JSON.parse(raw));
     } catch (e) { /* storage unavailable or corrupt: start fresh */ }
     return freshState();
 }
@@ -543,17 +690,22 @@ function daysUntil(d) {
 function renderHeader() {
     const s = state.settings;
     $("#coupleNames").innerHTML = `${esc(s.p1 || "Asif")} <span class="amp">&amp;</span> ${esc(s.p2 || "Alfiya")}`;
-    const dateLines = [];
-    if (s.engagementDate) dateLines.push("Engagement: " + formatDate(s.engagementDate));
-    if (s.weddingDate) dateLines.push("Wedding: " + formatDate(s.weddingDate));
-    if (!s.engagementDate && !s.weddingDate) dateLines.push("Engagement and wedding dates not fixed yet");
-    else if (!s.weddingDate) dateLines.push("Wedding date not fixed yet");
-    $("#weddingDateText").textContent = dateLines.join(" · ");
+    const dated = EVENTS.filter(ev => s[ev.id + "Date"]);
+    const undated = EVENTS.filter(ev => !s[ev.id + "Date"]).map(ev => ev.name);
+    const lines = dated.map(ev => ev.name + ": " + formatDate(s[ev.id + "Date"]));
+    if (undated.length) {
+        const names = undated.length > 1 ? undated.slice(0, -1).join(", ") + " and " + undated.at(-1) : undated[0];
+        lines.push(names + (undated.length > 1 ? " dates" : " date") + " not fixed yet");
+    }
+    $("#weddingDateText").textContent = lines.join(" · ");
 
     const boxes = [];
-    const eng = daysUntil(s.engagementDate);
+    for (const [key, label] of [["vakkuDate", "Vakku Urappikkal"], ["engagementDate", "engagement"]]) {
+        const n = daysUntil(s[key]);
+        if (n === null || n < 0) continue;
+        boxes.push(n === 0 ? `<div><b>Today!</b><span>${label}</span></div>` : `<div><b>${n}</b><span>days to ${label}</span></div>`);
+    }
     const wed = daysUntil(s.weddingDate);
-    if (eng !== null && eng >= 0) boxes.push(`<div><b>${eng}</b><span>days to engagement</span></div>`);
     if (wed !== null) {
         if (wed > 0) boxes.push(`<div><b>${wed}</b><span>days to wedding</span></div>`);
         else if (wed === 0) boxes.push(`<div><b>Today!</b><span>wedding day</span></div>`);
@@ -563,8 +715,8 @@ function renderHeader() {
 }
 
 /* ---------------- overview ---------------- */
-function guestTotals() {
-    const g = state.guests;
+function guestTotals(eventId) {
+    const g = eventId ? state.guests.filter(x => x.events.includes(eventId)) : state.guests;
     const people = arr => arr.reduce((n, x) => n + (Number(x.count) || 1), 0);
     return {
         entries: g.length,
@@ -594,7 +746,8 @@ function renderOverview() {
             <div class="bar"><i style="width:${pct(d, ts.length)}%"></i></div></div>`;
     }).join("");
 
-    const next = state.tasks.filter(t => !t.done).slice(0, 6);
+    const stageOrder = t => PHASES.findIndex(p => p.id === t.phase);
+    const next = state.tasks.filter(t => !t.done).sort((a, b) => stageOrder(a) - stageOrder(b)).slice(0, 6);
     $("#overviewNext").innerHTML = next.length
         ? next.map(t => `<li><input type="checkbox" data-act="toggleTask" data-id="${t.id}"><span class="txt">${esc(t.text)}</span><span class="muted">${esc(PHASES.find(p => p.id === t.phase)?.name)}</span></li>`).join("")
         : `<li class="empty">Everything is done. Congratulations!</li>`;
@@ -613,9 +766,11 @@ function renderGuests() {
     const q = $("#guestSearch").value.trim().toLowerCase();
     const side = $("#guestFilterSide").value;
     const rsvp = $("#guestFilterRsvp").value;
+    const ev = $("#guestFilterEvent").value;
     const rows = state.guests.filter(g =>
         (!q || g.name.toLowerCase().includes(q)) &&
         (!side || g.side === side) &&
+        (!ev || g.events.includes(ev)) &&
         (!rsvp || g.rsvp === rsvp));
 
     if (!rows.length) {
@@ -627,7 +782,7 @@ function renderGuests() {
         <td data-label="Side">${esc(g.side)}</td>
         <td data-label="Group">${esc(g.group)}</td>
         <td data-label="People"><input class="num" type="number" min="1" value="${esc(g.count)}" data-act="guestField" data-field="count" data-id="${g.id}" style="width:64px"></td>
-        <td data-label="Event">${esc(g.event === "Both" ? "Both" : g.event)}</td>
+        <td data-label="Invited to">${EVENTS.map(e => `<button type="button" class="pill toggle ${g.events.includes(e.id) ? "on" : ""}" title="Tap to change" data-act="guestEvent" data-ev="${e.id}" data-id="${g.id}">${e.name}</button>`).join(" ")}</td>
         <td data-label="Phone">${g.phone ? `<a href="tel:${esc(g.phone)}">${esc(g.phone)}</a>` : "–"}</td>
         <td data-label="Invited"><input type="checkbox" ${g.invited ? "checked" : ""} data-act="guestInvited" data-id="${g.id}"></td>
         <td data-label="Reply"><select data-act="guestField" data-field="rsvp" data-id="${g.id}">
@@ -640,21 +795,20 @@ function renderGuests() {
 }
 
 function exportGuestsCsv() {
-    const head = ["Name", "Side", "Group", "People", "Event", "Phone", "Invited", "Reply"];
+    const head = ["Name", "Side", "Group", "People", "Invited to", "Phone", "Invited", "Reply"];
     const cell = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const lines = [head.map(cell).join(",")].concat(state.guests.map(g =>
-        [g.name, g.side, g.group, g.count, g.event, g.phone, g.invited ? "Yes" : "No", g.rsvp].map(cell).join(",")));
+        [g.name, g.side, g.group, g.count, EVENTS.filter(e => g.events.includes(e.id)).map(e => e.name).join(" + "), g.phone, g.invited ? "Yes" : "No", g.rsvp].map(cell).join(",")));
     download("guest-list.csv", lines.join("\n"), "text/csv");
 }
 
 /* ---------------- checklist ---------------- */
 const openPhases = new Set(["pre"]);
 
-function renderChecklist() {
-    $("#phaseList").innerHTML = PHASES.map(p => {
+function phaseCard(p, open) {
         const ts = state.tasks.filter(t => t.phase === p.id);
         const d = ts.filter(t => t.done).length;
-        return `<details class="card phase" data-phase="${p.id}" ${openPhases.has(p.id) ? "open" : ""}>
+        return `<details class="card phase" data-phase="${p.id}" ${open ? "open" : ""}>
             <summary><div class="phase-head"><h3>${esc(p.name)}</h3><span class="count">${d} of ${ts.length} done</span></div>
             <div class="bar"><i style="width:${pct(d, ts.length)}%"></i></div></summary>
             <ul class="checklist">${ts.map(t => `<li class="${t.done ? "done" : ""}">
@@ -667,7 +821,27 @@ function renderChecklist() {
                 <button class="btn" type="submit">Add</button>
             </form>
         </details>`;
-    }).join("");
+}
+
+function renderChecklist() {
+    $("#phaseList").innerHTML = PHASES.map(p => phaseCard(p, openPhases.has(p.id))).join("");
+}
+
+/* ---------------- vakku urappikkal ---------------- */
+function renderVakku() {
+    const d = state.settings.vakkuDate;
+    const n = daysUntil(d);
+    $("#vakkuDateText").textContent = d
+        ? formatDate(d) + (n > 0 ? ` (in ${n} day${n === 1 ? "" : "s"})` : n === 0 ? " (today!)" : "")
+        : "Date not fixed yet. Add it in Settings when it's decided.";
+    const gt = guestTotals("vakku");
+    const ts = state.tasks.filter(t => t.phase === "vakku");
+    $("#vakkuStats").innerHTML = `
+        <div class="stat"><b>${gt.people}</b><span>of our people invited</span></div>
+        <div class="stat"><b>${gt.invited}</b><span>invitations done</span></div>
+        <div class="stat"><b>${gt.yes}</b><span>confirmed coming</span></div>
+        <div class="stat"><b>${ts.filter(t => t.done).length}/${ts.length}</b><span>tasks done</span></div>`;
+    $("#vakkuPhase").innerHTML = phaseCard(PHASES.find(p => p.id === "vakku"), true);
 }
 
 /* ---------------- wedding day ---------------- */
@@ -723,7 +897,7 @@ function renderBudget() {
 /* ---------------- settings ---------------- */
 function fillSettings() {
     const f = $("#settingsForm");
-    for (const k of ["p1", "p2", "engagementDate", "weddingDate", "budget", "currency"]) f.elements[k].value = state.settings[k] ?? "";
+    for (const k of ["p1", "p2", "vakkuDate", "engagementDate", "weddingDate", "budget", "currency"]) f.elements[k].value = state.settings[k] ?? "";
 }
 
 function renderAll() {
@@ -731,6 +905,7 @@ function renderAll() {
     renderOverview();
     renderGuests();
     renderChecklist();
+    renderVakku();
     renderDayOf();
     renderBudget();
     $("#notesBox").value = state.notes;
@@ -769,6 +944,11 @@ document.addEventListener("click", e => {
         case "delRem": removeFrom("remember", id); break;
         case "delTime": removeFrom("timeline", id); break;
         case "delContact": removeFrom("contacts", id); break;
+        case "guestEvent": {
+            const g = byId("guests", id), ev = el.dataset.ev;
+            g.events = g.events.includes(ev) ? g.events.filter(x => x !== ev) : [...g.events, ev];
+            break;
+        }
         case "guestInvited": byId("guests", id).invited = el.checked; break;
         case "delGuest":
             if (!confirm(`Remove ${byId("guests", id).name} from the guest list?`)) return;
@@ -790,7 +970,7 @@ document.addEventListener("change", e => {
 // Remember which checklist stages are expanded across re-renders.
 document.addEventListener("toggle", e => {
     const d = e.target;
-    if (!d.matches?.("details.phase")) return;
+    if (!d.matches?.("#phaseList details.phase")) return;
     d.open ? openPhases.add(d.dataset.phase) : openPhases.delete(d.dataset.phase);
 }, true);
 
@@ -799,26 +979,27 @@ document.addEventListener("submit", e => {
     const phase = f.dataset.phaseForm;
     if (!phase) return;
     e.preventDefault();
+    const section = f.closest("section").id; // read before re-render detaches the form
     state.tasks.push({ id: uid(), phase, text: f.elements.text.value.trim(), done: false });
     commit();
-    document.querySelector(`[data-phase-form="${phase}"] input`).focus();
+    document.querySelector(`#${section} [data-phase-form="${phase}"] input`).focus();
 });
 
 function onSubmit(sel, handler) {
     $(sel).addEventListener("submit", e => {
         e.preventDefault();
         const f = e.target;
-        const v = Object.fromEntries(new FormData(f));
-        handler(v);
+        const data = new FormData(f);
+        handler(Object.fromEntries(data), data);
         commit();
         f.reset();
         f.querySelector("input")?.focus();
     });
 }
 
-onSubmit("#guestForm", v => state.guests.push({
+onSubmit("#guestForm", (v, f) => state.guests.push({
     id: uid(), name: v.name.trim(), side: v.side, group: v.group, count: Math.max(1, Number(v.count) || 1),
-    phone: v.phone.trim(), event: v.event, invited: false, rsvp: "pending",
+    phone: v.phone.trim(), events: f.getAll("ev"), invited: false, rsvp: "pending",
 }));
 onSubmit("#remForm", v => state.remember.push({ id: uid(), text: v.text.trim(), done: false }));
 onSubmit("#timeForm", v => state.timeline.push({ id: uid(), time: v.time, text: v.text.trim() }));
@@ -835,7 +1016,7 @@ $("#settingsForm").addEventListener("submit", e => {
     alert("Saved!");
 });
 
-["#guestSearch", "#guestFilterSide", "#guestFilterRsvp"].forEach(s => $(s).addEventListener("input", renderGuests));
+["#guestSearch", "#guestFilterSide", "#guestFilterEvent", "#guestFilterRsvp"].forEach(s => $(s).addEventListener("input", renderGuests));
 $("#guestExport").addEventListener("click", exportGuestsCsv);
 
 let notesTimer;
@@ -853,7 +1034,7 @@ $("#restoreInput").addEventListener("change", async e => {
     try {
         const data = JSON.parse(await file.text());
         if (!data || !Array.isArray(data.guests) || !Array.isArray(data.tasks)) throw new Error("bad file");
-        state = Object.assign(freshState(), data);
+        state = upgrade(data);
         commit();
         fillSettings();
         alert("Backup restored.");
