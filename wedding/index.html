@@ -635,7 +635,30 @@ function freshState() {
         budget: [],
         notes: "",
         seededPhases: PHASES.map(p => p.id),
+        appliedUpdates: [],
     };
+}
+
+// Details added to everyone's plan once, whether it's new or already saved.
+const PLAN_UPDATES = [
+    { id: "vakku-date-and-catering", apply(s) {
+        if (!s.settings.vakkuDate) s.settings.vakkuDate = "2026-10-04";
+        const fixDate = s.tasks.find(t => t.phase === "vakku" && t.text === "Fix the date and time with the other family");
+        if (fixDate) fixDate.done = true;
+        s.budget.push({
+            id: uid(), item: "Catering & event management (food, chairs, decoration)",
+            stage: "Vakku Urappikkal", vendor: "", cost: 32000, paid: 0,
+        });
+    }},
+];
+
+function applyUpdates(s) {
+    for (const u of PLAN_UPDATES) {
+        if (s.appliedUpdates.includes(u.id)) continue;
+        u.apply(s);
+        s.appliedUpdates.push(u.id);
+    }
+    return s;
 }
 
 // Bring a plan saved by an older version of this page up to date.
@@ -653,7 +676,7 @@ function upgrade(data) {
     PHASES.filter(p => !seeded.includes(p.id)).forEach(p =>
         s.tasks.push(...p.tasks.map(text => ({ id: uid(), phase: p.id, text, done: false }))));
     s.seededPhases = PHASES.map(p => p.id);
-    return s;
+    return applyUpdates(s);
 }
 
 function load() {
@@ -661,7 +684,7 @@ function load() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) return upgrade(JSON.parse(raw));
     } catch (e) { /* storage unavailable or corrupt: start fresh */ }
-    return freshState();
+    return applyUpdates(freshState());
 }
 
 let state = load();
@@ -878,7 +901,9 @@ function renderBudget() {
         <div class="stat"><b>${money(total)}</b><span>total budget</span></div>
         <div class="stat"><b>${money(cost)}</b><span>planned spend</span></div>
         <div class="stat"><b>${money(paid)}</b><span>already paid</span></div>
-        <div class="stat"><b class="${left < 0 ? "over" : "ok"}">${money(Math.abs(left))}</b><span>${left < 0 ? "over budget" : "left to spend"}</span></div>`;
+        ${total
+            ? `<div class="stat"><b class="${left < 0 ? "over" : "ok"}">${money(Math.abs(left))}</b><span>${left < 0 ? "over budget" : "left to spend"}</span></div>`
+            : `<div class="stat"><b>–</b><span>set your total budget in Settings</span></div>`}`;
     $("#budgetBar").style.width = Math.min(100, pct(cost, total)) + "%";
 
     $("#budgetRows").innerHTML = state.budget.map(b => {
@@ -1046,7 +1071,7 @@ $("#restoreInput").addEventListener("change", async e => {
 
 $("#resetBtn").addEventListener("click", () => {
     if (!confirm("Delete everything and start over? Download a backup first if you want to keep it.")) return;
-    state = freshState();
+    state = applyUpdates(freshState());
     commit();
     fillSettings();
 });
