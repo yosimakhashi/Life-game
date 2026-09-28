@@ -6,7 +6,7 @@
 <title>COLLECTIBLES | MINDJACK.9</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
 * {
@@ -15,23 +15,23 @@
 }
 
 :root {
-    --bg: #05010f;
-    --bg-panel: #0b0620;
-    --bg-panel-alt: #120a2e;
-    --bg-input: #0a0518;
-    --border: #2b1a54;
-    --neon-cyan: #00fff9;
-    --neon-pink: #ff2079;
-    --neon-purple: #b026ff;
-    --neon-green: #39ff88;
-    --neon-yellow: #f9f002;
-    --text-primary: #e8e6ff;
-    --text-dim: #8b7fb0;
+    --bg: #ded2b6;
+    --bg-panel: #f4ecda;
+    --bg-panel-alt: #e9dec5;
+    --bg-input: #faf4e6;
+    --border: #c3b18f;
+    --ink-blue: #2c4a6b;
+    --stamp-red: #b03a2e;
+    --ink-plum: #6d4c6b;
+    --ink-green: #4a6741;
+    --ink-ochre: #a87a2e;
+    --text-primary: #2b2620;
+    --text-dim: #7d7160;
 }
 
 @keyframes pulseGlow {
-    0%, 100% { box-shadow: 0 0 14px rgba(57, 255, 136, 0.15), inset 0 0 20px rgba(176, 38, 255, 0.05); }
-    50% { box-shadow: 0 0 22px rgba(57, 255, 136, 0.3), inset 0 0 20px rgba(176, 38, 255, 0.1); }
+    0%, 100% { box-shadow: 0 1px 3px rgba(43, 38, 32, 0.16); }
+    50% { box-shadow: 0 2px 7px rgba(43, 38, 32, 0.22); }
 }
 
 body {
@@ -39,14 +39,11 @@ body {
     min-height: 100vh;
     background-color: var(--bg);
     background-image:
-        linear-gradient(rgba(0, 255, 249, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 255, 249, 0.05) 1px, transparent 1px),
-        radial-gradient(circle at 15% 0%, rgba(176, 38, 255, 0.3), transparent 45%),
-        radial-gradient(circle at 85% 100%, rgba(255, 32, 121, 0.25), transparent 45%);
-    background-size: 42px 42px, 42px 42px, cover, cover;
+        radial-gradient(ellipse at 20% 10%, rgba(255, 250, 235, 0.55), transparent 55%),
+        radial-gradient(ellipse at 85% 90%, rgba(160, 130, 90, 0.18), transparent 50%);
     background-attachment: fixed;
     color: var(--text-primary);
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
 }
 
 body::before {
@@ -54,14 +51,10 @@ body::before {
     position: fixed;
     inset: 0;
     pointer-events: none;
-    background: repeating-linear-gradient(
-        to bottom,
-        rgba(255, 255, 255, 0.025) 0px,
-        rgba(255, 255, 255, 0.025) 1px,
-        transparent 2px,
-        transparent 4px
-    );
     z-index: 1;
+    opacity: 0.35;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.25'/%3E%3C/svg%3E");
+    mix-blend-mode: multiply;
 }
 
 .app {
@@ -75,10 +68,9 @@ body::before {
 
 .header {
     position: relative;
-    border: 1px solid var(--neon-green);
+    border: 1px solid var(--ink-green);
     background: var(--bg-panel);
     border-radius: 4px;
-    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%);
     padding: 20px;
     margin-bottom: 16px;
     animation: pulseGlow 3s ease-in-out infinite;
@@ -94,26 +86,26 @@ body::before {
 }
 
 .backLink:active {
-    color: var(--neon-green);
+    color: var(--ink-green);
 }
 
 .logo {
     font-size: 12px;
     letter-spacing: 4px;
-    color: var(--neon-green);
-    text-shadow: 0 0 8px rgba(57, 255, 136, 0.7);
+    color: var(--ink-green);
+    text-shadow: none;
     font-weight: bold;
 }
 
 .title {
-    font-family: 'Orbitron', sans-serif;
+    font-family: 'Special Elite', 'Courier New', serif;
     font-size: 26px;
     font-weight: 900;
     letter-spacing: 2px;
     margin-top: 8px;
     text-transform: uppercase;
     color: var(--text-primary);
-    text-shadow: 2px 0 var(--neon-pink), -2px 0 var(--neon-green), 0 0 24px rgba(57, 255, 136, 0.35);
+    text-shadow: 1px 1px 0 rgba(43, 38, 32, 0.18);
 }
 
 .subtitle {
@@ -128,8 +120,8 @@ body::before {
 
 .progressText {
     font-size: 12px;
-    color: var(--neon-green);
-    text-shadow: 0 0 6px rgba(57, 255, 136, 0.5);
+    color: var(--ink-green);
+    text-shadow: none;
     letter-spacing: 1px;
     margin-bottom: 6px;
 }
@@ -144,8 +136,8 @@ body::before {
 
 .progressFill {
     height: 100%;
-    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
-    box-shadow: 0 0 8px rgba(57, 255, 136, 0.6);
+    background: linear-gradient(90deg, var(--ink-blue), var(--ink-green));
+    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
     transition: 0.4s;
 }
 
@@ -165,8 +157,8 @@ body::before {
 }
 
 .card.unlocked {
-    border-color: var(--neon-green);
-    box-shadow: 0 0 18px rgba(57, 255, 136, 0.25);
+    border-color: var(--ink-green);
+    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
 }
 
 .card img {
@@ -186,15 +178,15 @@ body::before {
 }
 
 .cardTitle {
-    font-family: 'Orbitron', sans-serif;
+    font-family: 'Special Elite', 'Courier New', serif;
     font-weight: bold;
     font-size: 15px;
-    color: var(--text-primary);
+    color: #f4ecda;
 }
 
 .cardQuote {
     font-size: 11px;
-    color: var(--neon-green);
+    color: #d8ccae;
     margin-top: 3px;
     font-style: italic;
 }
@@ -235,8 +227,74 @@ body::before {
 }
 
 .emptyState a {
-    color: var(--neon-green);
+    color: var(--ink-green);
 }
+
+/* --- ANALOG PAPER --- */
+
+.header,
+.player,
+.mission,
+.quest,
+.rewardCard,
+.logLevel,
+.sideOp,
+.stat,
+.statTile,
+.chartCard,
+.card,
+.badge,
+.addForm {
+    box-shadow: 0 1px 3px rgba(43, 38, 32, 0.14), 0 6px 14px rgba(43, 38, 32, 0.06);
+}
+
+/* faint ruled lines, like a notebook page */
+.header,
+.player {
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 27px,
+        rgba(44, 74, 107, 0.07) 27px,
+        rgba(44, 74, 107, 0.07) 28px
+    );
+}
+
+/* red margin rule down the left of the header */
+.header {
+    border-left: 3px double var(--stamp-red);
+}
+
+.subtitle,
+.questDescription,
+.badgeDesc {
+    font-family: 'Caveat', cursive;
+    font-size: 17px;
+    line-height: 1.4;
+}
+
+.cardQuote {
+    font-family: 'Caveat', cursive;
+    font-size: 16px;
+    line-height: 1.3;
+    color: #d8ccae;
+}
+
+/* completed things get rubber-stamped */
+.completeBtn.completed,
+.questCompleteBtn.completed {
+    border: 2px solid var(--stamp-red);
+    color: var(--stamp-red);
+    background: transparent;
+    transform: rotate(-0.6deg);
+    letter-spacing: 3px;
+    box-shadow: none;
+}
+
+.badge.unlocked {
+    border: 1px solid var(--stamp-red);
+}
+
 </style>
 </head>
 
