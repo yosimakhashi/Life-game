@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REWARDS | MINDJACK.9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    --bg: #ded2b6;
+    --bg-panel: #f4ecda;
+    --bg-panel-alt: #e9dec5;
+    --bg-input: #faf4e6;
+    --border: #c3b18f;
+    --ink-blue: #2c4a6b;
+    --stamp-red: #b03a2e;
+    --ink-plum: #6d4c6b;
+    --ink-green: #4a6741;
+    --ink-ochre: #a87a2e;
+    --text-primary: #2b2620;
+    --text-dim: #7d7160;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 1px 3px rgba(43, 38, 32, 0.16); }
+    50% { box-shadow: 0 2px 7px rgba(43, 38, 32, 0.22); }
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--bg);
+    background-image:
+        radial-gradient(ellipse at 20% 10%, rgba(255, 250, 235, 0.55), transparent 55%),
+        radial-gradient(ellipse at 85% 90%, rgba(160, 130, 90, 0.18), transparent 50%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: 'Courier Prime', 'Courier New', monospace;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.35;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.25'/%3E%3C/svg%3E");
+    mix-blend-mode: multiply;
+}
+
+.app {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+    margin: auto;
+    padding: 18px;
+    padding-bottom: 50px;
+}
+
+.header {
+    position: relative;
+    border: 1px solid var(--border);
+    border-left: 3px double var(--stamp-red);
+    background: var(--bg-panel);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(43, 38, 32, 0.14), 0 6px 14px rgba(43, 38, 32, 0.06);
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 27px,
+        rgba(44, 74, 107, 0.07) 27px,
+        rgba(44, 74, 107, 0.07) 28px
+    );
+}
+
+.backLink {
+    display: inline-block;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.backLink:active {
+    color: var(--ink-blue);
+}
+
+.logo {
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: var(--ink-blue);
+    font-weight: bold;
+}
+
+.title {
+    font-family: 'Special Elite', 'Courier New', serif;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin-top: 8px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    text-shadow: 1px 1px 0 rgba(43, 38, 32, 0.18);
+}
+
+.subtitle {
+    color: var(--text-dim);
+    font-family: 'Caveat', cursive;
+    font-size: 17px;
+    margin-top: 6px;
+}
+
+.section {
+    margin-top: 20px;
+}
+
+.sectionTitle {
+    font-family: 'Special Elite', 'Courier New', serif;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.sectionTitle span {
+    color: var(--ink-ochre);
+}
+
+.rewardCard {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--ink-ochre);
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 9px;
+    box-shadow: 0 1px 3px rgba(43, 38, 32, 0.14), 0 6px 14px rgba(43, 38, 32, 0.06);
+}
+
+.rewardTop {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.icon {
+    width: 40px;
+    height: 40px;
+    background: var(--bg-panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.rewardInfo {
+    flex: 1;
+}
+
+.rewardName {
+    font-weight: bold;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.rewardCost {
+    color: var(--ink-ochre);
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.redeemBtn {
+    width: 100%;
+    margin-top: 12px;
+    border: 1px solid var(--ink-ochre);
+    border-radius: 6px;
+    padding: 11px;
+    background: transparent;
+    color: var(--ink-ochre);
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: 0.2s;
+}
+
+.redeemBtn:active:not(:disabled) {
+    transform: scale(0.98);
+    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+}
+
+.redeemBtn:disabled {
+    opacity: 0.4;
+    border-color: var(--border);
+    color: var(--text-dim);
+}
+
+.redeemedCount {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 8px;
+}
+
+.rewardCard.diva {
+    border-left-color: var(--stamp-red);
+}
+
+.rewardCard.diva.unlocked {
+    border: 2px solid var(--stamp-red);
+    animation: pulseGlow 3s ease-in-out infinite;
+}
+
+.rewardCard.diva.unlocked .rewardName,
+.rewardCard.diva.unlocked .rewardCost {
+    color: var(--stamp-red);
+}
+
+.emptyState {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.emptyState a {
+    color: var(--ink-blue);
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <div class="header">
+        <a class="backLink" href="index.html">&larr; BACK TO LIFE RPG</a>
+        <div class="logo">MINDJACK.9 // LEDGER</div>
+        <div class="title">Rewards</div>
+        <div class="subtitle">Spend what you've earned.</div>
+    </div>
+
+    <div id="content"></div>
+
+</div>
+
+<script>
+
+const BOOK_XP = 100;
+const DIVA_SCORE_REQUIREMENT = 15000;
+const TIER_SCORE_STEP = 5000;
+const TIER_COUNT = 8;
+const COLLECTIBLE_IDS = ["warrior", "samurai", "pirate", "fighter", "ninja", "scarlet", "violet", "jade"];
+const COLLECTIBLE_CREDITS_STEP = 1000;
+
+const rewards = [
+    { id: "movie", icon: "🎬", name: "Watch a Movie", type: "credits", cost: 2000 },
+    { id: "accessory", icon: "🛍️", name: "Buy an Accessory", type: "credits", cost: 10000 },
+    { id: "book", icon: "📖", name: "Buy a New Book", type: "books", cost: 2 }
+];
+
+
+function loadGame() {
+    const raw = localStorage.getItem("mindjack9");
+    return raw ? JSON.parse(raw) : null;
+}
+
+function saveGame(g) {
+    localStorage.setItem("mindjack9", JSON.stringify(g));
+}
+
+
+let game = loadGame();
+
+const content = document.getElementById("content");
+
+
+if (!game) {
+
+    content.innerHTML = `
+        <div class="emptyState">
+            NO DATA YET.<br><br>
+            Play a bit on the <a href="index.html">Life RPG</a> page first,
+            then come back to spend your credits.
+        </div>
+    `;
+
+} else {
+
+    // Other pages write the whole save back too, so re-read the latest
+    // state right before mutating it.
+    function refreshGame() {
+
+        const latest = loadGame();
+
+        if (latest) {
+            game = latest;
+        }
+
+        if (typeof game.rewardsRedeemed !== "object" || game.rewardsRedeemed === null) {
+            game.rewardsRedeemed = {};
+        }
+
+        if (typeof game.booksCompleted !== "number") {
+            game.booksCompleted = 0;
+        }
+
+    }
+
+
+    function applyProgressSideEffects() {
+
+        let required = game.level * 100;
+
+        while (game.xp >= required) {
+            game.xp -= required;
+            game.level++;
+            game.coins += 100;
+            game.creditsEarned = (game.creditsEarned || 0) + 100;
+            required = game.level * 100;
+        }
+
+        const newTierIndex = Math.min(
+            Math.floor(game.totalScore / TIER_SCORE_STEP),
+            TIER_COUNT - 1
+        );
+
+        if (newTierIndex > (game.tierIndex || 0)) {
+            game.tierIndex = newTierIndex;
+        }
+
+        if (!game.divaUnlocked && game.totalScore >= DIVA_SCORE_REQUIREMENT) {
+            game.divaUnlocked = true;
+        }
+
+        const unlocked = Math.min(
+            COLLECTIBLE_IDS.length,
+            Math.floor((game.creditsEarned || 0) / COLLECTIBLE_CREDITS_STEP)
+        );
+
+        if (unlocked > (game.collectiblesUnlockedCount || 0)) {
+            game.collectiblesUnlockedCount = unlocked;
+        }
+
+    }
+
+
+    function markBookCompleted() {
+
+        refreshGame();
+
+        game.booksCompleted++;
+        game.xp += BOOK_XP;
+        game.totalScore += BOOK_XP;
+
+        applyProgressSideEffects();
+
+        saveGame(game);
+        render();
+
+    }
+
+
+    function getBooksAvailable() {
+        const redeemed = game.rewardsRedeemed.book || 0;
+        return game.booksCompleted - (redeemed * 2);
+    }
+
+
+    function canRedeem(reward) {
+
+        if (reward.type === "credits")
+            return game.coins >= reward.cost;
+
+        if (reward.type === "books")
+            return getBooksAvailable() >= reward.cost;
+
+        return false;
+
+    }
+
+
+    function redeemReward(id) {
+
+        refreshGame();
+
+        const reward = rewards.find(r => r.id === id);
+
+        if (!reward || !canRedeem(reward))
+            return;
+
+        if (reward.type === "credits") {
+            game.coins -= reward.cost;
+        }
+
+        game.rewardsRedeemed[id] = (game.rewardsRedeemed[id] || 0) + 1;
+
+        saveGame(game);
+        render();
+
+    }
+
+
+    function render() {
+
+        const cards = rewards.map(reward => {
+
+            const redeemedCount = game.rewardsRedeemed[reward.id] || 0;
+            const affordable = canRedeem(reward);
+
+            const costText = reward.type === "credits" ?
+                reward.cost + " CREDITS" :
+                reward.cost + " BOOKS";
+
+            const progressText = reward.type === "books" ?
+                getBooksAvailable() + " / " + reward.cost + " BOOKS READY" :
+                game.coins + " / " + reward.cost + " CREDITS";
+
+            return `
+                <div class="rewardCard">
+                    <div class="rewardTop">
+                        <div class="icon">${reward.icon}</div>
+                        <div class="rewardInfo">
+                            <div class="rewardName">${reward.name}</div>
+                            <div class="rewardCost">${progressText}</div>
+                        </div>
+                    </div>
+                    <button class="redeemBtn" onclick="redeemReward('${reward.id}')" ${affordable ? "" : "disabled"}>
+                        REDEEM • ${costText}
+                    </button>
+                    ${redeemedCount > 0 ? `<div class="redeemedCount">Redeemed ${redeemedCount}×</div>` : ""}
+                </div>
+            `;
+
+        }).join("");
+
+        const divaUnlocked = game.divaUnlocked === true;
+
+        const divaStatus = divaUnlocked ?
+            "UNLOCKED" :
+            Math.min(game.totalScore, DIVA_SCORE_REQUIREMENT) + " / " + DIVA_SCORE_REQUIREMENT + " SCORE";
+
+        content.innerHTML = `
+
+            <div class="section">
+
+                <div class="sectionTitle">UNLOCK <span>REWARDS</span></div>
+
+                <div class="rewardCard">
+                    <div class="rewardTop">
+                        <div class="icon">📚</div>
+                        <div class="rewardInfo">
+                            <div class="rewardName">Books Completed</div>
+                            <div class="rewardCost">${game.booksCompleted || 0} books completed • +${BOOK_XP} XP each</div>
+                        </div>
+                    </div>
+                    <button class="redeemBtn" onclick="markBookCompleted()">
+                        + MARK BOOK COMPLETED
+                    </button>
+                </div>
+
+                ${cards}
+
+                <div class="rewardCard diva ${divaUnlocked ? "unlocked" : ""}">
+                    <div class="rewardTop">
+                        <div class="icon">💃</div>
+                        <div class="rewardInfo">
+                            <div class="rewardName">Diva Unlocked</div>
+                            <div class="rewardCost">${divaStatus}</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    window.markBookCompleted = markBookCompleted;
+    window.redeemReward = redeemReward;
+
+    render();
+
+}
+
+</script>
+
+</body>
+</html>
