@@ -4,9 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>THE PLAN | MINDJACK.9</title>
+<meta name="theme-color" content="#070b18">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
 * {
@@ -14,18 +15,21 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+/* Star chart: an old celestial atlas. You are plotting a course,
+   not filling in a form. Variable names are kept from the previous
+   theme so the rest of the sheet needs no edits. */
 :root {
-    --fc-bg: #0a0c09;
-    --fc-panel: #121510;
-    --fc-panel-alt: #181c15;
-    --fc-input: #0d100c;
-    --fc-border: #2f362a;
-    --fc-green: #9caf88;
-    --fc-green-dim: #6f7d62;
-    --fc-amber: #c08a3e;
-    --fc-soap: #d98f9a;
-    --fc-text: #d8d5c8;
-    --fc-dim: #7c806f;
+    --fc-bg: #070b18;
+    --fc-panel: #0e1428;
+    --fc-panel-alt: #131b33;
+    --fc-input: #0a0f20;
+    --fc-border: #2a3455;
+    --fc-green: #7fb7c9;
+    --fc-green-dim: #4d7686;
+    --fc-amber: #c9a227;
+    --fc-soap: #b9a0d6;
+    --fc-text: #e6e3d6;
+    --fc-dim: #7f89a8;
 }
 
 body {
@@ -33,23 +37,38 @@ body {
     min-height: 100vh;
     background-color: var(--fc-bg);
     background-image:
-        radial-gradient(ellipse at 50% 0%, rgba(156, 175, 136, 0.12), transparent 60%),
-        radial-gradient(ellipse at 20% 90%, rgba(192, 138, 62, 0.10), transparent 55%),
-        linear-gradient(180deg, #0f120d 0%, #0a0c09 60%, #070806 100%);
+        radial-gradient(ellipse at 50% 0%, rgba(127, 183, 201, 0.13), transparent 60%),
+        radial-gradient(ellipse at 18% 88%, rgba(185, 160, 214, 0.12), transparent 55%),
+        radial-gradient(ellipse at 88% 30%, rgba(201, 162, 39, 0.08), transparent 50%),
+        linear-gradient(180deg, #0b1124 0%, #070b18 60%, #04060f 100%);
     background-attachment: fixed;
     color: var(--fc-text);
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'IBM Plex Mono', monospace;
 }
 
-/* film grain */
+/* starfield: fixed so the sky stays put while the page scrolls */
 body::before {
     content: "";
     position: fixed;
     inset: 0;
     pointer-events: none;
     z-index: 1;
-    opacity: 0.5;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+    opacity: 0.85;
+    background-image:
+        radial-gradient(1.4px 1.4px at 12% 18%, rgba(230, 227, 214, 0.95), transparent),
+        radial-gradient(1.2px 1.2px at 27% 62%, rgba(230, 227, 214, 0.75), transparent),
+        radial-gradient(1.7px 1.7px at 41% 9%, rgba(201, 162, 39, 0.85), transparent),
+        radial-gradient(1.1px 1.1px at 56% 44%, rgba(230, 227, 214, 0.70), transparent),
+        radial-gradient(1.5px 1.5px at 68% 77%, rgba(127, 183, 201, 0.85), transparent),
+        radial-gradient(1.2px 1.2px at 82% 26%, rgba(230, 227, 214, 0.80), transparent),
+        radial-gradient(1.6px 1.6px at 91% 58%, rgba(185, 160, 214, 0.75), transparent),
+        radial-gradient(1.1px 1.1px at 8% 81%, rgba(230, 227, 214, 0.65), transparent),
+        radial-gradient(1.3px 1.3px at 35% 92%, rgba(230, 227, 214, 0.70), transparent),
+        radial-gradient(1.5px 1.5px at 74% 6%, rgba(230, 227, 214, 0.80), transparent),
+        radial-gradient(1.1px 1.1px at 49% 70%, rgba(127, 183, 201, 0.60), transparent),
+        radial-gradient(1.2px 1.2px at 19% 40%, rgba(230, 227, 214, 0.60), transparent);
+    background-size: 420px 420px;
+    background-repeat: repeat;
 }
 
 /* vignette */
@@ -59,7 +78,7 @@ body::after {
     inset: 0;
     pointer-events: none;
     z-index: 1;
-    background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.75) 100%);
+    background: radial-gradient(ellipse at center, transparent 52%, rgba(2, 4, 10, 0.78) 100%);
 }
 
 .app {
@@ -102,14 +121,16 @@ body::after {
 }
 
 .title {
-    font-family: 'Oswald', sans-serif;
-    font-size: 34px;
+    font-family: 'Cormorant Garamond', serif;
+    /* Cormorant sets smaller than Oswald did at the same px, so the
+       display sizes are nudged up to keep the same presence */
+    font-size: 40px;
     font-weight: 700;
     letter-spacing: 4px;
     margin-top: 6px;
     text-transform: uppercase;
     color: var(--fc-text);
-    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.8), 0 0 30px rgba(156, 175, 136, 0.15);
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.8), 0 0 34px rgba(127, 183, 201, 0.22);
 }
 
 .subtitle {
@@ -124,8 +145,9 @@ body::after {
     margin-top: 14px;
     padding-top: 12px;
     border-top: 1px solid var(--fc-border);
-    font-family: 'Oswald', sans-serif;
-    font-size: 12px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px;
+    font-weight: 600;
     letter-spacing: 2px;
     text-transform: uppercase;
     color: var(--fc-soap);
@@ -149,7 +171,7 @@ body::after {
     color: var(--fc-text);
     font-size: 14px;
     margin-bottom: 8px;
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'IBM Plex Mono', monospace;
 }
 
 .addForm input:focus {
@@ -176,7 +198,7 @@ body::after {
     background: transparent;
     border: 1px solid var(--fc-border);
     color: var(--fc-dim);
-    font-family: 'Oswald', sans-serif;
+    font-family: 'Cormorant Garamond', serif;
     font-size: 11px;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -185,7 +207,7 @@ body::after {
 .dayChip.active {
     border-color: var(--fc-green);
     color: var(--fc-green);
-    background: rgba(156, 175, 136, 0.08);
+    background: rgba(127, 183, 201, 0.10);
 }
 
 .addBtn {
@@ -195,7 +217,7 @@ body::after {
     background: transparent;
     border: 1px solid var(--fc-soap);
     color: var(--fc-soap);
-    font-family: 'Oswald', sans-serif;
+    font-family: 'Cormorant Garamond', serif;
     font-weight: 600;
     font-size: 13px;
     letter-spacing: 3px;
@@ -204,7 +226,7 @@ body::after {
 
 .addBtn:active {
     transform: scale(0.99);
-    background: rgba(217, 143, 154, 0.1);
+    background: rgba(185, 160, 214, 0.12);
 }
 
 /* SECTIONS */
@@ -214,7 +236,7 @@ body::after {
 }
 
 .sectionTitle {
-    font-family: 'Oswald', sans-serif;
+    font-family: 'Cormorant Garamond', serif;
     font-size: 15px;
     font-weight: 600;
     letter-spacing: 4px;
@@ -229,7 +251,7 @@ body::after {
 }
 
 .sectionCount {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'IBM Plex Mono', monospace;
     font-size: 11px;
     letter-spacing: 1px;
     color: var(--fc-dim);
@@ -274,7 +296,7 @@ body::after {
 
 .task.done .checkbox {
     border-color: var(--fc-green);
-    background: rgba(156, 175, 136, 0.15);
+    background: rgba(127, 183, 201, 0.18);
 }
 
 .checkbox:active {
@@ -361,7 +383,7 @@ body::after {
     padding: 10px 12px;
     color: var(--fc-text);
     font-size: 13px;
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'IBM Plex Mono', monospace;
     margin-bottom: 14px;
 }
 
@@ -375,7 +397,7 @@ body::after {
 }
 
 .traitGroupName {
-    font-family: 'Oswald', sans-serif;
+    font-family: 'Cormorant Garamond', serif;
     font-size: 11px;
     letter-spacing: 3px;
     text-transform: uppercase;
@@ -431,14 +453,14 @@ body::after {
     border: 1px solid var(--fc-soap);
     color: var(--fc-soap);
     padding: 7px 9px;
-    font-family: 'Oswald', sans-serif;
+    font-family: 'Cormorant Garamond', serif;
     font-size: 12px;
     letter-spacing: 1px;
 }
 
 .traitPlus:active {
     transform: scale(0.94);
-    background: rgba(217, 143, 154, 0.12);
+    background: rgba(185, 160, 214, 0.14);
 }
 
 </style>
@@ -450,10 +472,10 @@ body::after {
 
     <div class="header">
         <a class="backLink" href="index.html">&larr; Back to Life RPG</a>
-        <div class="logo">MINDJACK.9 // NIGHT SHIFT</div>
+        <div class="logo">MINDJACK.9 // STAR CHART</div>
         <div class="title">The Plan</div>
         <div class="subtitle">Decide tonight what tomorrow looks like. Then show up for it.</div>
-        <div class="rule" id="ruleLine">Rule one: write it down. Rule two: do it the day you said.</div>
+        <div class="rule" id="ruleLine">Plot the course before you sail it. Then hold the heading.</div>
     </div>
 
     <div id="content"></div>
