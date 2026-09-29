@@ -346,6 +346,101 @@ body::after {
 .emptyState a {
     color: var(--fc-green);
 }
+
+/* PERSONALITY TRAITS */
+
+.section.traits .sectionTitle {
+    color: var(--fc-soap);
+}
+
+.traitFilter {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--fc-input);
+    border: 1px solid var(--fc-border);
+    padding: 10px 12px;
+    color: var(--fc-text);
+    font-size: 13px;
+    font-family: 'Share Tech Mono', monospace;
+    margin-bottom: 14px;
+}
+
+.traitFilter:focus {
+    outline: none;
+    border-color: var(--fc-green);
+}
+
+.traitGroup {
+    margin-bottom: 16px;
+}
+
+.traitGroupName {
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--fc-green-dim);
+    margin-bottom: 7px;
+}
+
+.traitRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--fc-panel);
+    border: 1px solid var(--fc-border);
+    border-left: 2px solid transparent;
+    padding: 9px 11px;
+    margin-bottom: 5px;
+}
+
+.traitRow.gained {
+    border-left-color: var(--fc-green);
+}
+
+.traitIcon {
+    flex-shrink: 0;
+    font-size: 15px;
+    width: 20px;
+    text-align: center;
+}
+
+.traitName {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    color: var(--fc-text);
+}
+
+.traitScore {
+    flex-shrink: 0;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--fc-dim);
+    text-transform: uppercase;
+}
+
+.traitRow.gained .traitScore b {
+    color: var(--fc-green);
+}
+
+.traitPlus {
+    flex-shrink: 0;
+    min-width: 44px;
+    background: transparent;
+    border: 1px solid var(--fc-soap);
+    color: var(--fc-soap);
+    padding: 7px 9px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+.traitPlus:active {
+    transform: scale(0.94);
+    background: rgba(217, 143, 154, 0.12);
+}
+
 </style>
 </head>
 
@@ -429,6 +524,8 @@ if (!game) {
     }
 
     let selectedDate = tomorrow();
+
+    let traitFilter = "";
 
 
     // Other pages write the whole save object back too, so re-read the
@@ -610,6 +707,219 @@ if (!game) {
     }
 
 
+
+    /* ---------------- PERSONALITY TRAITS ---------------- */
+
+    const TRAIT_POINTS = 5;
+
+    const TRAIT_GROUPS = [
+        {
+            name: "Drive & Discipline",
+            traits: [
+                { id: "discipline",   icon: "🎯", name: "Discipline" },
+                { id: "grit",         icon: "🪨", name: "Grit" },
+                { id: "focus",        icon: "🔍", name: "Focus" },
+                { id: "consistency",  icon: "🔁", name: "Consistency" },
+                { id: "patience",     icon: "⏳", name: "Patience" },
+                { id: "initiative",   icon: "🚀", name: "Initiative" },
+                { id: "ambition",     icon: "🧗", name: "Ambition" },
+                { id: "selfcontrol",  icon: "🛑", name: "Self-Control" }
+            ]
+        },
+        {
+            name: "Courage & Confidence",
+            traits: [
+                { id: "courage",      icon: "🦁", name: "Courage" },
+                { id: "assertiveness",icon: "📣", name: "Assertiveness" },
+                { id: "confidence",   icon: "💪", name: "Confidence" },
+                { id: "boldness",     icon: "⚡", name: "Boldness" },
+                { id: "decisiveness", icon: "⚖️", name: "Decisiveness" },
+                { id: "composure",    icon: "🧊", name: "Composure" },
+                { id: "independence", icon: "🗝️", name: "Independence" },
+                { id: "resilience",   icon: "🛡️", name: "Resilience" }
+            ]
+        },
+        {
+            name: "Charisma & Social",
+            traits: [
+                { id: "charisma",     icon: "✨", name: "Charisma" },
+                { id: "charm",        icon: "🎭", name: "Charm" },
+                { id: "humor",        icon: "😄", name: "Humour" },
+                { id: "warmth",       icon: "🔥", name: "Warmth" },
+                { id: "sociability",  icon: "🫂", name: "Sociability" },
+                { id: "presence",     icon: "👑", name: "Presence" },
+                { id: "persuasion",   icon: "🗣️", name: "Persuasion" },
+                { id: "listening",    icon: "👂", name: "Listening" }
+            ]
+        },
+        {
+            name: "Character & Integrity",
+            traits: [
+                { id: "honesty",      icon: "📖", name: "Honesty" },
+                { id: "integrity",    icon: "⚓", name: "Integrity" },
+                { id: "loyalty",      icon: "🤝", name: "Loyalty" },
+                { id: "humility",     icon: "🌱", name: "Humility" },
+                { id: "accountability",icon: "🪞", name: "Accountability" },
+                { id: "fairness",     icon: "⚗️", name: "Fairness" },
+                { id: "reliability",  icon: "📌", name: "Reliability" },
+                { id: "respect",      icon: "🎖️", name: "Respect" }
+            ]
+        },
+        {
+            name: "Heart & Empathy",
+            traits: [
+                { id: "empathy",      icon: "💗", name: "Empathy" },
+                { id: "kindness",     icon: "🤲", name: "Kindness" },
+                { id: "compassion",   icon: "🕊️", name: "Compassion" },
+                { id: "generosity",   icon: "🎁", name: "Generosity" },
+                { id: "forgiveness",  icon: "🌤️", name: "Forgiveness" },
+                { id: "gratitude",    icon: "🙏", name: "Gratitude" },
+                { id: "affection",    icon: "💞", name: "Affection" },
+                { id: "service",      icon: "🧺", name: "Service" }
+            ]
+        },
+        {
+            name: "Mind & Craft",
+            traits: [
+                { id: "curiosity",    icon: "🔭", name: "Curiosity" },
+                { id: "creativity",   icon: "🎨", name: "Creativity" },
+                { id: "adaptability", icon: "🌊", name: "Adaptability" },
+                { id: "resourcefulness", icon: "🧰", name: "Resourcefulness" },
+                { id: "judgment",     icon: "🧠", name: "Judgement" },
+                { id: "strategy",     icon: "♟️", name: "Strategy" },
+                { id: "learning",     icon: "📚", name: "Learning" },
+                { id: "perspective",  icon: "🌐", name: "Perspective" }
+            ]
+        },
+        {
+            name: "Spirit & Joy",
+            traits: [
+                { id: "optimism",     icon: "☀️", name: "Optimism" },
+                { id: "calm",         icon: "🌙", name: "Calm" },
+                { id: "playfulness",  icon: "🎈", name: "Playfulness" },
+                { id: "zest",         icon: "🎇", name: "Zest" },
+                { id: "mindfulness",  icon: "🧘", name: "Mindfulness" },
+                { id: "purpose",      icon: "🧭", name: "Purpose" },
+                { id: "wonder",       icon: "🌌", name: "Wonder" },
+                { id: "hope",         icon: "🌈", name: "Hope" }
+            ]
+        }
+    ];
+
+
+    function ensureTraits() {
+
+        if (typeof game.traits !== "object" || game.traits === null) {
+            game.traits = {};
+        }
+
+        if (typeof game.traitsToday !== "object" || game.traitsToday === null) {
+            game.traitsToday = { date: today(), gains: {} };
+        }
+
+        // today's tally is per-day; roll it over when the date changes.
+        // Persist immediately, otherwise the stale tally sits in storage
+        // until the next write and other pages would read it as current.
+        if (game.traitsToday.date !== today()) {
+            game.traitsToday = { date: today(), gains: {} };
+            saveGame(game);
+        }
+
+        if (typeof game.traitsToday.gains !== "object" || game.traitsToday.gains === null) {
+            game.traitsToday.gains = {};
+        }
+
+    }
+
+
+    function addTraitPoint(id) {
+
+        refreshGame();
+        ensureTraits();
+
+        game.traits[id] = (game.traits[id] || 0) + TRAIT_POINTS;
+        game.traitsToday.gains[id] = (game.traitsToday.gains[id] || 0) + TRAIT_POINTS;
+
+        saveGame(game);
+        render();
+
+    }
+
+
+    function traitsHTML() {
+
+        ensureTraits();
+
+        const gains = game.traitsToday.gains;
+
+        const todayTotal = Object.keys(gains)
+            .reduce((sum, k) => sum + gains[k], 0);
+
+        const touched = Object.keys(gains).length;
+
+        const groups = TRAIT_GROUPS.map(group => `
+            <div class="traitGroup">
+                <div class="traitGroupName">${group.name}</div>
+                ${group.traits.map(tr => {
+                    const gained = gains[tr.id] || 0;
+                    const total = game.traits[tr.id] || 0;
+                    return `
+                        <div class="traitRow ${gained ? "gained" : ""}" data-name="${tr.name.toLowerCase()}">
+                            <span class="traitIcon">${tr.icon}</span>
+                            <span class="traitName">${tr.name}</span>
+                            <span class="traitScore">${gained ? `<b>+${gained}</b> today · ` : ""}${total} total</span>
+                            <button class="traitPlus" onclick="addTraitPoint('${tr.id}')">+${TRAIT_POINTS}</button>
+                        </div>
+                    `;
+                }).join("")}
+            </div>
+        `).join("");
+
+        return `
+            <div class="section traits">
+
+                <div class="sectionTitle">
+                    <span>Personality</span>
+                    <span class="sectionCount">${todayTotal ? "+" + todayTotal + " today across " + touched : "nothing yet today"}</span>
+                </div>
+
+                <input type="text" id="traitFilter" class="traitFilter" placeholder="Filter traits...">
+
+                ${groups}
+
+            </div>
+        `;
+
+    }
+
+
+    function wireTraitFilter() {
+
+        const box = document.getElementById("traitFilter");
+        if (!box) return;
+
+        box.value = traitFilter;
+
+        box.addEventListener("input", function () {
+
+            traitFilter = box.value.trim().toLowerCase();
+
+            document.querySelectorAll(".traitRow").forEach(row => {
+                const match = !traitFilter || row.dataset.name.indexOf(traitFilter) !== -1;
+                row.style.display = match ? "" : "none";
+            });
+
+            document.querySelectorAll(".traitGroup").forEach(g => {
+                const anyVisible = Array.from(g.querySelectorAll(".traitRow"))
+                    .some(r => r.style.display !== "none");
+                g.style.display = anyVisible ? "" : "none";
+            });
+
+        });
+
+    }
+
+
     function render() {
 
         const t = today();
@@ -646,7 +956,11 @@ if (!game) {
 
             ${anyTasks ? "" : `<div class="emptyNote">Nothing scheduled. Write the first line above.</div>`}
 
+            ${traitsHTML()}
+
         `;
+
+        wireTraitFilter();
 
     }
 
@@ -655,6 +969,7 @@ if (!game) {
     window.toggleTask = toggleTask;
     window.deleteTask = deleteTask;
     window.pickDate = pickDate;
+    window.addTraitPoint = addTraitPoint;
 
     render();
 
