@@ -6,7 +6,7 @@
 <title>THE PLAN | MINDJACK.9</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Spectral:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
 
 <style>
 * {
@@ -15,30 +15,30 @@
 }
 
 :root {
-    --fc-bg: #0a0c09;
-    --fc-panel: #121510;
-    --fc-panel-alt: #181c15;
-    --fc-input: #0d100c;
-    --fc-border: #2f362a;
-    --fc-green: #9caf88;
-    --fc-green-dim: #6f7d62;
-    --fc-amber: #c08a3e;
-    --fc-soap: #d98f9a;
-    --fc-text: #d8d5c8;
-    --fc-dim: #7c806f;
+    --myth-bg: #0d1026;
+    --myth-panel: #171b36;
+    --myth-panel-alt: #1d2240;
+    --myth-input: #11142c;
+    --myth-border: #353a63;
+    --myth-gold: #c9a227;
+    --myth-gold-dim: #8a6a3b;
+    --myth-ember: #c2703a;
+    --myth-violet: #a288d9;
+    --myth-text: #e8e2d4;
+    --myth-dim: #8d92b5;
 }
 
 body {
     margin: 0;
     min-height: 100vh;
-    background-color: var(--fc-bg);
+    background-color: var(--myth-bg);
     background-image:
-        radial-gradient(ellipse at 50% 0%, rgba(156, 175, 136, 0.12), transparent 60%),
-        radial-gradient(ellipse at 20% 90%, rgba(192, 138, 62, 0.10), transparent 55%),
-        linear-gradient(180deg, #0f120d 0%, #0a0c09 60%, #070806 100%);
+        radial-gradient(ellipse at 50% 0%, rgba(201, 162, 39, 0.16), transparent 55%),
+        radial-gradient(ellipse at 15% 85%, rgba(162, 136, 217, 0.16), transparent 50%),
+        linear-gradient(180deg, #141936 0%, #0d1026 55%, #070914 100%);
     background-attachment: fixed;
-    color: var(--fc-text);
-    font-family: 'Share Tech Mono', monospace;
+    color: var(--myth-text);
+    font-family: 'Spectral', Georgia, serif;
 }
 
 /* film grain */
@@ -49,7 +49,14 @@ body::before {
     pointer-events: none;
     z-index: 1;
     opacity: 0.5;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+    background-image:
+        radial-gradient(1px 1px at 12% 18%, rgba(232, 226, 212, 0.9), transparent),
+        radial-gradient(1px 1px at 78% 9%, rgba(232, 226, 212, 0.7), transparent),
+        radial-gradient(1.4px 1.4px at 33% 44%, rgba(201, 162, 39, 0.8), transparent),
+        radial-gradient(1px 1px at 88% 62%, rgba(232, 226, 212, 0.65), transparent),
+        radial-gradient(1px 1px at 55% 77%, rgba(232, 226, 212, 0.6), transparent),
+        radial-gradient(1.2px 1.2px at 22% 91%, rgba(162, 136, 217, 0.8), transparent),
+        radial-gradient(1px 1px at 66% 31%, rgba(232, 226, 212, 0.55), transparent);
 }
 
 /* vignette */
@@ -59,7 +66,7 @@ body::after {
     inset: 0;
     pointer-events: none;
     z-index: 1;
-    background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.75) 100%);
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(4, 6, 16, 0.85) 100%);
 }
 
 .app {
@@ -72,9 +79,9 @@ body::after {
 }
 
 .header {
-    border: 1px solid var(--fc-border);
-    border-left: 3px solid var(--fc-soap);
-    background: var(--fc-panel);
+    border: 1px solid var(--myth-border);
+    border-left: 3px solid var(--myth-violet);
+    background: var(--myth-panel);
     padding: 20px;
     margin-bottom: 18px;
     box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.6);
@@ -82,7 +89,7 @@ body::after {
 
 .backLink {
     display: inline-block;
-    color: var(--fc-dim);
+    color: var(--myth-dim);
     text-decoration: none;
     font-size: 11px;
     letter-spacing: 2px;
@@ -91,29 +98,29 @@ body::after {
 }
 
 .backLink:active {
-    color: var(--fc-green);
+    color: var(--myth-gold);
 }
 
 .logo {
     font-size: 11px;
     letter-spacing: 5px;
-    color: var(--fc-green-dim);
+    color: var(--myth-gold-dim);
     text-transform: uppercase;
 }
 
 .title {
-    font-family: 'Oswald', sans-serif;
+    font-family: 'Cinzel', serif;
     font-size: 34px;
     font-weight: 700;
     letter-spacing: 4px;
     margin-top: 6px;
     text-transform: uppercase;
-    color: var(--fc-text);
+    color: var(--myth-text);
     text-shadow: 0 2px 0 rgba(0, 0, 0, 0.8), 0 0 30px rgba(156, 175, 136, 0.15);
 }
 
 .subtitle {
-    color: var(--fc-dim);
+    color: var(--myth-dim);
     font-size: 12px;
     margin-top: 8px;
     line-height: 1.6;
@@ -123,19 +130,19 @@ body::after {
 .rule {
     margin-top: 14px;
     padding-top: 12px;
-    border-top: 1px solid var(--fc-border);
-    font-family: 'Oswald', sans-serif;
+    border-top: 1px solid var(--myth-border);
+    font-family: 'Cinzel', serif;
     font-size: 12px;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: var(--fc-soap);
+    color: var(--myth-violet);
 }
 
 /* ADD FORM */
 
 .addForm {
-    background: var(--fc-panel);
-    border: 1px solid var(--fc-border);
+    background: var(--myth-panel);
+    border: 1px solid var(--myth-border);
     padding: 15px;
     margin-bottom: 20px;
 }
@@ -143,18 +150,18 @@ body::after {
 .addForm input {
     width: 100%;
     box-sizing: border-box;
-    background: var(--fc-input);
-    border: 1px solid var(--fc-border);
+    background: var(--myth-input);
+    border: 1px solid var(--myth-border);
     padding: 12px;
-    color: var(--fc-text);
+    color: var(--myth-text);
     font-size: 14px;
     margin-bottom: 8px;
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'Spectral', Georgia, serif;
 }
 
 .addForm input:focus {
     outline: none;
-    border-color: var(--fc-green);
+    border-color: var(--myth-gold);
 }
 
 .dateRow {
@@ -174,17 +181,17 @@ body::after {
     flex: 1;
     padding: 8px;
     background: transparent;
-    border: 1px solid var(--fc-border);
-    color: var(--fc-dim);
-    font-family: 'Oswald', sans-serif;
+    border: 1px solid var(--myth-border);
+    color: var(--myth-dim);
+    font-family: 'Cinzel', serif;
     font-size: 11px;
     letter-spacing: 1px;
     text-transform: uppercase;
 }
 
 .dayChip.active {
-    border-color: var(--fc-green);
-    color: var(--fc-green);
+    border-color: var(--myth-gold);
+    color: var(--myth-gold);
     background: rgba(156, 175, 136, 0.08);
 }
 
@@ -193,9 +200,9 @@ body::after {
     margin-top: 6px;
     padding: 13px;
     background: transparent;
-    border: 1px solid var(--fc-soap);
-    color: var(--fc-soap);
-    font-family: 'Oswald', sans-serif;
+    border: 1px solid var(--myth-violet);
+    color: var(--myth-violet);
+    font-family: 'Cinzel', serif;
     font-weight: 600;
     font-size: 13px;
     letter-spacing: 3px;
@@ -214,29 +221,29 @@ body::after {
 }
 
 .sectionTitle {
-    font-family: 'Oswald', sans-serif;
+    font-family: 'Cinzel', serif;
     font-size: 15px;
     font-weight: 600;
     letter-spacing: 4px;
     text-transform: uppercase;
-    color: var(--fc-green);
+    color: var(--myth-gold);
     padding-bottom: 8px;
     margin-bottom: 10px;
-    border-bottom: 1px solid var(--fc-border);
+    border-bottom: 1px solid var(--myth-border);
     display: flex;
     justify-content: space-between;
     align-items: baseline;
 }
 
 .sectionCount {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'Spectral', Georgia, serif;
     font-size: 11px;
     letter-spacing: 1px;
-    color: var(--fc-dim);
+    color: var(--myth-dim);
 }
 
 .section.overdue .sectionTitle {
-    color: var(--fc-amber);
+    color: var(--myth-ember);
 }
 
 /* TASK */
@@ -245,8 +252,8 @@ body::after {
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    background: var(--fc-panel);
-    border: 1px solid var(--fc-border);
+    background: var(--myth-panel);
+    border: 1px solid var(--myth-border);
     padding: 13px;
     margin-bottom: 8px;
 }
@@ -260,9 +267,9 @@ body::after {
     flex-shrink: 0;
     width: 24px;
     height: 24px;
-    border: 1px solid var(--fc-green-dim);
+    border: 1px solid var(--myth-gold-dim);
     background: transparent;
-    color: var(--fc-green);
+    color: var(--myth-gold);
     font-size: 14px;
     line-height: 1;
     padding: 0;
@@ -273,7 +280,7 @@ body::after {
 }
 
 .task.done .checkbox {
-    border-color: var(--fc-green);
+    border-color: var(--myth-gold);
     background: rgba(156, 175, 136, 0.15);
 }
 
@@ -288,47 +295,47 @@ body::after {
 
 .taskText {
     font-size: 14px;
-    color: var(--fc-text);
+    color: var(--myth-text);
     word-break: break-word;
     line-height: 1.4;
 }
 
 .task.done .taskText {
     text-decoration: line-through;
-    color: var(--fc-dim);
+    color: var(--myth-dim);
 }
 
 .taskMeta {
     font-size: 10px;
     letter-spacing: 1px;
-    color: var(--fc-dim);
+    color: var(--myth-dim);
     margin-top: 4px;
     text-transform: uppercase;
 }
 
 .taskMeta .earned {
-    color: var(--fc-green);
+    color: var(--myth-gold);
 }
 
 .taskMeta .late {
-    color: var(--fc-amber);
+    color: var(--myth-ember);
 }
 
 .taskDelete {
     flex-shrink: 0;
     background: transparent;
     border: 0;
-    color: var(--fc-dim);
+    color: var(--myth-dim);
     font-size: 14px;
     padding: 0 2px;
 }
 
 .taskDelete:active {
-    color: var(--fc-soap);
+    color: var(--myth-violet);
 }
 
 .emptyNote {
-    color: var(--fc-dim);
+    color: var(--myth-dim);
     font-size: 12px;
     padding: 10px 0;
     letter-spacing: 1px;
@@ -337,37 +344,37 @@ body::after {
 .emptyState {
     text-align: center;
     padding: 50px 20px;
-    color: var(--fc-dim);
+    color: var(--myth-dim);
     font-size: 13px;
     line-height: 1.8;
     letter-spacing: 1px;
 }
 
 .emptyState a {
-    color: var(--fc-green);
+    color: var(--myth-gold);
 }
 
 /* PERSONALITY TRAITS */
 
 .section.traits .sectionTitle {
-    color: var(--fc-soap);
+    color: var(--myth-violet);
 }
 
 .traitFilter {
     width: 100%;
     box-sizing: border-box;
-    background: var(--fc-input);
-    border: 1px solid var(--fc-border);
+    background: var(--myth-input);
+    border: 1px solid var(--myth-border);
     padding: 10px 12px;
-    color: var(--fc-text);
+    color: var(--myth-text);
     font-size: 13px;
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'Spectral', Georgia, serif;
     margin-bottom: 14px;
 }
 
 .traitFilter:focus {
     outline: none;
-    border-color: var(--fc-green);
+    border-color: var(--myth-gold);
 }
 
 .traitGroup {
@@ -375,11 +382,11 @@ body::after {
 }
 
 .traitGroupName {
-    font-family: 'Oswald', sans-serif;
+    font-family: 'Cinzel', serif;
     font-size: 11px;
     letter-spacing: 3px;
     text-transform: uppercase;
-    color: var(--fc-green-dim);
+    color: var(--myth-gold-dim);
     margin-bottom: 7px;
 }
 
@@ -387,15 +394,15 @@ body::after {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: var(--fc-panel);
-    border: 1px solid var(--fc-border);
+    background: var(--myth-panel);
+    border: 1px solid var(--myth-border);
     border-left: 2px solid transparent;
     padding: 9px 11px;
     margin-bottom: 5px;
 }
 
 .traitRow.gained {
-    border-left-color: var(--fc-green);
+    border-left-color: var(--myth-gold);
 }
 
 .traitIcon {
@@ -409,29 +416,29 @@ body::after {
     flex: 1;
     min-width: 0;
     font-size: 13px;
-    color: var(--fc-text);
+    color: var(--myth-text);
 }
 
 .traitScore {
     flex-shrink: 0;
     font-size: 10px;
     letter-spacing: 1px;
-    color: var(--fc-dim);
+    color: var(--myth-dim);
     text-transform: uppercase;
 }
 
 .traitRow.gained .traitScore b {
-    color: var(--fc-green);
+    color: var(--myth-gold);
 }
 
 .traitPlus {
     flex-shrink: 0;
     min-width: 44px;
     background: transparent;
-    border: 1px solid var(--fc-soap);
-    color: var(--fc-soap);
+    border: 1px solid var(--myth-violet);
+    color: var(--myth-violet);
     padding: 7px 9px;
-    font-family: 'Oswald', sans-serif;
+    font-family: 'Cinzel', serif;
     font-size: 12px;
     letter-spacing: 1px;
 }
@@ -441,19 +448,154 @@ body::after {
     background: rgba(217, 143, 154, 0.12);
 }
 
+
+/* MYTHIC FIGURE BACKDROP */
+
+.figure {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.42;
+}
+
+.figure svg {
+    /* sized off the shorter axis so the whole silhouette stays on screen,
+       wings and all, on a phone as well as a desktop */
+    height: min(94vh, 125vw, 900px);
+    width: auto;
+    display: block;
+}
+
 </style>
 </head>
 
 <body>
 
+<div class="figure" aria-hidden="true">
+<svg viewBox="0 0 600 900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mythPlume" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8e2d4" stop-opacity="0.55"/>
+      <stop offset="55%" stop-color="#a288d9" stop-opacity="0.42"/>
+      <stop offset="100%" stop-color="#c9a227" stop-opacity="0.30"/>
+    </linearGradient>
+    <linearGradient id="mythRobe" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8e2d4" stop-opacity="0.60"/>
+      <stop offset="45%" stop-color="#a288d9" stop-opacity="0.34"/>
+      <stop offset="100%" stop-color="#0d1026" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="mythGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#c9a227" stop-opacity="0.26"/>
+      <stop offset="70%" stop-color="#a288d9" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#0d1026" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- halo glow -->
+  <circle cx="300" cy="400" r="210" fill="url(#mythGlow)"/>
+  <circle cx="300" cy="398" r="92" fill="none" stroke="#c9a227" stroke-opacity="0.55" stroke-width="2.5"/>
+  <circle cx="300" cy="398" r="112" fill="none" stroke="#c9a227" stroke-opacity="0.20" stroke-width="1.2"/>
+
+  <!-- wings -->
+  <g fill="url(#mythPlume)" stroke="#e8e2d4" stroke-opacity="0.16" stroke-width="1">
+      <path d="M 278.0 458.0 Q 267.3 483.1 271.9 515.7 Q 283.2 484.8 278.0 458.0 Z"/>
+      <path d="M 258.9 421.9 Q 242.4 456.1 241.6 502.1 Q 259.8 459.9 258.9 421.9 Z"/>
+      <path d="M 240.1 388.2 Q 215.8 430.0 206.9 487.9 Q 234.4 436.2 240.1 388.2 Z"/>
+      <path d="M 221.5 356.7 Q 188.0 404.1 168.7 471.9 Q 207.5 413.0 221.5 356.7 Z"/>
+      <path d="M 203.1 327.4 Q 159.5 378.0 128.3 452.9 Q 179.4 389.8 203.1 327.4 Z"/>
+      <path d="M 185.0 300.5 Q 131.0 351.4 87.2 430.3 Q 151.0 366.4 185.0 300.5 Z"/>
+      <path d="M 167.1 275.8 Q 103.3 324.2 47.1 403.7 Q 122.9 342.5 167.1 275.8 Z"/>
+      <path d="M 149.5 253.5 Q 77.2 296.6 9.5 373.5 Q 95.8 318.3 149.5 253.5 Z"/>
+      <path d="M 132.1 233.4 Q 53.2 268.9 -24.0 340.3 Q 70.4 294.0 132.1 233.4 Z"/>
+      <path d="M 114.9 215.5 Q 36.5 239.3 -42.5 299.9 Q 51.7 267.7 114.9 215.5 Z"/>
+      <path d="M 98.0 200.0 Q 29.0 209.5 -41.1 256.2 Q 41.8 241.0 98.0 200.0 Z"/>
+      <path d="M 322.0 458.0 Q 332.7 483.1 328.1 515.7 Q 316.8 484.8 322.0 458.0 Z "/>
+      <path d="M 341.1 421.9 Q 357.6 456.1 358.4 502.1 Q 340.2 459.9 341.1 421.9 Z "/>
+      <path d="M 359.9 388.2 Q 384.2 430.0 393.1 487.9 Q 365.6 436.2 359.9 388.2 Z "/>
+      <path d="M 378.5 356.7 Q 412.0 404.1 431.3 471.9 Q 392.5 413.0 378.5 356.7 Z "/>
+      <path d="M 396.9 327.4 Q 440.5 378.0 471.7 452.9 Q 420.6 389.8 396.9 327.4 Z "/>
+      <path d="M 415.0 300.5 Q 469.0 351.4 512.8 430.3 Q 449.0 366.4 415.0 300.5 Z "/>
+      <path d="M 432.9 275.8 Q 496.7 324.2 552.9 403.7 Q 477.1 342.5 432.9 275.8 Z "/>
+      <path d="M 450.5 253.5 Q 522.8 296.6 590.5 373.5 Q 504.2 318.3 450.5 253.5 Z "/>
+      <path d="M 467.9 233.4 Q 546.8 268.9 624.0 340.3 Q 529.6 294.0 467.9 233.4 Z "/>
+      <path d="M 485.1 215.5 Q 563.5 239.3 642.5 299.9 Q 548.3 267.7 485.1 215.5 Z "/>
+      <path d="M 502.0 200.0 Q 571.0 209.5 641.1 256.2 Q 558.2 241.0 502.0 200.0 Z "/>
+  </g>
+  <g fill="url(#mythPlume)" fill-opacity="0.75" stroke="#c9a227" stroke-opacity="0.18" stroke-width="1">
+      <path d="M 282.0 438.0 Q 272.4 451.9 276.1 471.5 Q 286.2 454.3 282.0 438.0 Z"/>
+      <path d="M 261.2 403.7 Q 248.4 418.8 249.2 442.4 Q 263.2 423.4 261.2 403.7 Z"/>
+      <path d="M 240.8 371.9 Q 224.2 387.6 221.3 414.6 Q 239.7 394.6 240.8 371.9 Z"/>
+      <path d="M 220.7 342.5 Q 200.2 358.1 192.5 388.0 Q 215.9 367.8 220.7 342.5 Z"/>
+      <path d="M 201.0 315.5 Q 176.2 330.2 163.2 362.1 Q 191.8 342.8 201.0 315.5 Z"/>
+      <path d="M 181.7 291.0 Q 152.6 303.9 133.7 337.0 Q 167.5 319.4 181.7 291.0 Z"/>
+      <path d="M 162.8 268.9 Q 129.5 279.2 104.1 312.3 Q 143.2 297.7 162.8 268.9 Z"/>
+      <path d="M 144.2 249.2 Q 107.0 256.0 74.8 288.1 Q 119.0 277.4 144.2 249.2 Z"/>
+      <path d="M 126.0 232.0 Q 85.2 234.4 46.3 264.2 Q 95.0 258.6 126.0 232.0 Z"/>
+      <path d="M 318.0 438.0 Q 327.6 451.9 323.9 471.5 Q 313.8 454.3 318.0 438.0 Z "/>
+      <path d="M 338.8 403.7 Q 351.6 418.8 350.8 442.4 Q 336.8 423.4 338.8 403.7 Z "/>
+      <path d="M 359.2 371.9 Q 375.8 387.6 378.7 414.6 Q 360.3 394.6 359.2 371.9 Z "/>
+      <path d="M 379.3 342.5 Q 399.8 358.1 407.5 388.0 Q 384.1 367.8 379.3 342.5 Z "/>
+      <path d="M 399.0 315.5 Q 423.8 330.2 436.8 362.1 Q 408.2 342.8 399.0 315.5 Z "/>
+      <path d="M 418.3 291.0 Q 447.4 303.9 466.3 337.0 Q 432.5 319.4 418.3 291.0 Z "/>
+      <path d="M 437.2 268.9 Q 470.5 279.2 495.9 312.3 Q 456.8 297.7 437.2 268.9 Z "/>
+      <path d="M 455.8 249.2 Q 493.0 256.0 525.2 288.1 Q 481.0 277.4 455.8 249.2 Z "/>
+      <path d="M 474.0 232.0 Q 514.8 234.4 553.7 264.2 Q 505.0 258.6 474.0 232.0 Z "/>
+  </g>
+
+  <!-- crest plume -->
+  <path fill="#c2703a" fill-opacity="0.65" d="M300 336 C286 302 288 272 302 246 C318 272 318 304 304 336 Z"/>
+
+  <!-- helm -->
+  <path fill="#e8e2d4" fill-opacity="0.80" d="M268 412
+    C266 366 282 336 300 336 C318 336 334 366 332 412
+    C323 402 312 397 300 397 C288 397 277 402 268 412 Z"/>
+  <path fill="#c9a227" fill-opacity="0.55" d="M268 412 C277 402 288 397 300 397 C312 397 323 402 332 412 L330 424 C321 414 311 409 300 409 C289 409 279 414 270 424 Z"/>
+
+  <!-- face -->
+  <path fill="#e8e2d4" fill-opacity="0.42" d="M274 410
+    C283 402 292 398 300 398 C308 398 317 402 326 410
+    C326 448 315 474 300 474 C285 474 274 448 274 410 Z"/>
+
+  <!-- robe -->
+  <path fill="url(#mythRobe)" d="M300 472
+    C274 472 255 488 249 514 L232 588 L216 690 L200 900 L400 900
+    L384 690 L368 588 L351 514 C345 488 326 472 300 472 Z"/>
+
+  <!-- drapery folds -->
+  <g stroke="#e8e2d4" stroke-opacity="0.20" stroke-width="1.4" fill="none">
+    <path d="M281 524 L268 900"/>
+    <path d="M300 520 L300 900"/>
+    <path d="M319 524 L332 900"/>
+    <path d="M259 570 L240 900"/>
+    <path d="M341 570 L360 900"/>
+  </g>
+
+  <!-- sash -->
+  <path fill="#c2703a" fill-opacity="0.42" d="M252 536
+    C288 558 312 558 348 536 L352 566
+    C314 590 286 590 248 566 Z"/>
+
+  <!-- spear -->
+  <g fill="#c9a227" fill-opacity="0.60">
+    <path d="M478 214 L466 268 L478 322 L490 268 Z"/>
+    <rect x="475" y="318" width="6" height="582"/>
+    <rect x="464" y="332" width="28" height="5"/>
+  </g>
+</svg>
+</div>
+
 <div class="app">
 
     <div class="header">
         <a class="backLink" href="index.html">&larr; Back to Life RPG</a>
-        <div class="logo">MINDJACK.9 // NIGHT SHIFT</div>
+        <div class="logo">MINDJACK.9 // THE VIGIL</div>
         <div class="title">The Plan</div>
         <div class="subtitle">Decide tonight what tomorrow looks like. Then show up for it.</div>
-        <div class="rule" id="ruleLine">Rule one: write it down. Rule two: do it the day you said.</div>
+        <div class="rule" id="ruleLine">Speak the oath tonight. Keep it tomorrow. That is the whole rite.</div>
     </div>
 
     <div id="content"></div>
