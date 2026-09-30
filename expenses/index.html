@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#2f7d6d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -190,7 +190,7 @@ h2.section { font-size: 1.15rem; margin: 26px 4px 10px; }
 }
 .sheet-back.open { display: flex; }
 .sheet {
-    background: var(--bg); width: 100%; max-width: 560px; max-height: 94vh; overflow-y: auto;
+    background: var(--bg); width: 100%; max-width: 560px; max-height: 94vh; max-height: 94dvh; overflow-y: auto;
     border-radius: 24px 24px 0 0; padding: 18px 16px calc(20px + env(safe-area-inset-bottom));
     animation: up .22s ease-out;
 }
@@ -256,6 +256,11 @@ h2.section { font-size: 1.15rem; margin: 26px 4px 10px; }
 .error:empty { display: none; }
 .help { color: var(--dim); font-size: 0.9rem; margin: 6px 4px; }
 
+.warn-box {
+    display: none; margin-top: 14px; background: var(--bad-soft); color: var(--bad);
+    border: 2px solid var(--bad); border-radius: 14px; padding: 12px 14px; font-weight: 600;
+}
+
 /* toast */
 .toast {
     position: fixed; left: 50%; transform: translateX(-50%);
@@ -273,6 +278,7 @@ h2.section { font-size: 1.15rem; margin: 26px 4px 10px; }
 <body>
 
 <div class="wrap">
+    <div class="warn-box" id="warn"></div>
     <div class="topbar">
         <h1 data-t="title"></h1>
         <button class="lang-btn" id="langBtn"></button>
@@ -377,6 +383,10 @@ h2.section { font-size: 1.15rem; margin: 26px 4px 10px; }
 <div class="toast" id="toast"><span id="toastMsg"></span><button id="toastUndo" data-t="undo"></button></div>
 
 <script>
+window.onerror = function (msg) {
+    var w = document.getElementById('warn');
+    if (w) { w.textContent = '⚠️ Error: ' + msg + ' — please send a screenshot of this to your son.'; w.style.display = 'block'; }
+};
 (function () {
 'use strict';
 
@@ -416,7 +426,7 @@ const WORDS = {
         homeScreenHelp: 'In the browser menu (⋮ or the Share button), tap “Add to Home screen”. Then it opens like an app.',
         close: 'Close', total: 'Total', items: '{n} items', item: '1 item',
         shareHead: 'Expenses for {m}', shareTotal: 'Total',
-        storageFail: 'Could not save! Please check that the browser is not in private mode.'
+        storageFail: 'This browser is not allowing the app to save. Open the link in normal Chrome (not an Incognito tab), and in Chrome Settings → Site settings → “On-device site data”, make sure saving is allowed.'
     },
     ml: {
         title: 'എന്റെ ചെലവുകൾ', langSwitch: 'English',
@@ -450,7 +460,7 @@ const WORDS = {
         homeScreenHelp: 'ബ്രൗസർ മെനുവിൽ (⋮ അല്ലെങ്കിൽ Share) “Add to Home screen” അമർത്തുക. പിന്നെ ആപ്പ് പോലെ തുറക്കാം.',
         close: 'അടയ്ക്കുക', total: 'ആകെ', items: '{n} എണ്ണം', item: '1 എണ്ണം',
         shareHead: '{m} – ചെലവുകൾ', shareTotal: 'ആകെ',
-        storageFail: 'സേവ് ആയില്ല! ബ്രൗസർ private mode-ൽ അല്ലെന്ന് നോക്കുക.'
+        storageFail: 'ഈ ബ്രൗസർ സേവ് ചെയ്യാൻ അനുവദിക്കുന്നില്ല. ലിങ്ക് സാധാരണ Chrome-ൽ തുറക്കുക (Incognito അല്ല). Chrome Settings → Site settings → “On-device site data” അനുവദിച്ചിട്ടുണ്ടെന്ന് നോക്കുക.'
     }
 };
 
@@ -472,7 +482,8 @@ const CATS = [
     { id: 'kids',     e: '🧒', color: '#e05a47', en: 'Children & School',  ml: 'കുട്ടികൾ, സ്കൂൾ' },
     { id: 'other',    e: '📦', color: '#95a5a6', en: 'Other',              ml: 'മറ്റുള്ളവ' }
 ];
-const CAT = Object.fromEntries(CATS.map(c => [c.id, c]));
+const CAT = {};
+CATS.forEach(c => { CAT[c.id] = c; });
 
 /* ---------- storage ---------- */
 function load() {
@@ -485,8 +496,26 @@ function load() {
 let state = load();
 
 function save() {
-    try { localStorage.setItem(STORE, JSON.stringify(state)); return true; }
-    catch (e) { toast(t('storageFail')); return false; }
+    const json = JSON.stringify(state);
+    try {
+        localStorage.setItem(STORE, json);
+        if (localStorage.getItem(STORE) === json) return true;
+    } catch (e) { /* fall through */ }
+    showWarning();
+    alert(t('storageFail'));
+    return false;
+}
+function storageWorks() {
+    try {
+        localStorage.setItem(STORE + '.test', '1');
+        const ok = localStorage.getItem(STORE + '.test') === '1';
+        localStorage.removeItem(STORE + '.test');
+        return ok;
+    } catch (e) { return false; }
+}
+function showWarning() {
+    $('warn').textContent = '⚠️ ' + t('storageFail');
+    $('warn').style.display = 'block';
 }
 // Ask the browser not to clear our data when space runs low.
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
@@ -692,15 +721,25 @@ function openEdit(id) {
     $('deleteEdit').style.display = item ? 'block' : 'none';
     $('editErr').textContent = '';
     paintEdit();
-    $('editBack').classList.add('open');
-    document.body.style.overflow = 'hidden';
+    openSheet('editBack');
     if (!item) setTimeout(() => $('amountIn').focus(), 250);
 }
 
-function closeSheet(id) {
+function openSheet(id) {
+    $(id).classList.add('open');
+    document.body.style.overflow = 'hidden';
+    try { history.pushState({ sheet: id }, ''); } catch (e) { /* ignore */ }
+}
+function hideSheet(id) {
     $(id).classList.remove('open');
     document.body.style.overflow = '';
 }
+function closeSheet(id) {
+    hideSheet(id);
+    if (history.state && history.state.sheet) history.back();
+}
+// Android Back button: close the open popup rather than leaving the app
+window.addEventListener('popstate', () => { hideSheet('editBack'); hideSheet('setBack'); });
 
 $('dayPick').querySelector('[data-day=today]').onclick = () => { selDate = todayIso(); paintEdit(); };
 $('dayPick').querySelector('[data-day=yesterday]').onclick = () => { selDate = yesterdayIso(); paintEdit(); };
@@ -741,7 +780,7 @@ $('deleteEdit').onclick = () => {
 
 $('cancelEdit').onclick = () => closeSheet('editBack');
 $('editBack').onclick = e => { if (e.target === $('editBack')) closeSheet('editBack'); };
-$('amountIn').onkeydown = e => { if (e.key === 'Enter') $('amountIn').blur(); };
+$('amountIn').onkeydown = e => { if (e.key === 'Enter') { $('amountIn').blur(); if (selCat) $('saveEdit').click(); } };
 $('noteIn').onkeydown = e => { if (e.key === 'Enter') $('saveEdit').click(); };
 
 /* ---------- toast ---------- */
@@ -758,8 +797,7 @@ function toast(msg, undo) {
 /* ---------- settings ---------- */
 function openSettings() {
     $('budgetIn').value = state.budget ? String(state.budget) : '';
-    $('setBack').classList.add('open');
-    document.body.style.overflow = 'hidden';
+    openSheet('setBack');
 }
 $('settingsBtn').onclick = openSettings;
 $('closeSet').onclick = () => closeSheet('setBack');
@@ -784,7 +822,7 @@ function download(name, text, type) {
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 }
 $('exportBtn').onclick = () => {
-    download('expenses-backup-' + todayIso() + '.json', JSON.stringify({ app: 'my-expenses', version: 1, ...state }, null, 1), 'application/json');
+    download('expenses-backup-' + todayIso() + '.json', JSON.stringify({ app: 'my-expenses', version: 1, items: state.items, budget: state.budget, lang: state.lang }, null, 1), 'application/json');
 };
 $('csvBtn').onclick = () => {
     const rows = [['Date', 'Category', 'Amount', 'Note']].concat(
@@ -855,6 +893,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) { $(
 renderWords();
 buildCatGrid();
 render();
+if (!storageWorks()) showWarning();
 })();
 </script>
 </body>
