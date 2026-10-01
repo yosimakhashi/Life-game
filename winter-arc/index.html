@@ -412,7 +412,9 @@ function renderTrials() {
   const t = today();
   const who = el("div", { class: "today-total" },
     el("span", { class: "label" }, `checking in as ${state.me.alias}`),
-    el("button", { type: "button", class: "btn ghost", style: "padding:6px 12px;font-size:13px", onclick: logout }, "Not you? Switch"));
+    el("span", { style: "display:flex;gap:8px" },
+      el("button", { type: "button", class: "btn ghost", style: "padding:6px 12px;font-size:13px", "aria-pressed": soundOn ? "true" : "false", onclick: toggleSound }, soundOn ? "Sound on" : "Sound off"),
+      el("button", { type: "button", class: "btn ghost", style: "padding:6px 12px;font-size:13px", onclick: logout }, "Not you? Switch")));
   const practice = t < state.config.start;
   const editable = practice ? [t] : [t, addDays(t, -1)].filter(inArc);
   if (!editable.length) { body.replaceChildren(el("div", { class: "notice" }, "The arc has ended. The ledger is sealed. Look to the throne for the victor.")); return; }
@@ -548,6 +550,64 @@ function queueWrite(fn) {
   return writeChain;
 }
 
+/* ---------- sound + haptics ---------- */
+const SOUND_KEY = "winterArc.sound";
+let soundOn = lsGet(SOUND_KEY) !== "off";
+let audioCtx = null;
+function ctx() {
+  if (!audioCtx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; audioCtx = new AC(); }
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+function tone(ac, { type = "sine", freq, to, start = 0, dur = .3, vol = .2, filter }) {
+  const t0 = ac.currentTime + start, o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t0); if (to) o.frequency.exponentialRampToValueAtTime(to, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + .015); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  let node = o;
+  if (filter) { const f = ac.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = filter; o.connect(f); node = f; }
+  node.connect(g).connect(ac.destination); o.start(t0); o.stop(t0 + dur + .05);
+}
+function noise(ac, { start = 0, dur = .35, vol = .25, freq = 6000, q = 8 }) {
+  const t0 = ac.currentTime + start, len = Math.floor(ac.sampleRate * dur), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+  for (let k = 0; k < len; k++) d[k] = (Math.random() * 2 - 1) * (1 - k / len);
+  const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+  src.buffer = buf; f.type = "bandpass"; f.Q.value = q; f.frequency.setValueAtTime(freq * .6, t0); f.frequency.exponentialRampToValueAtTime(freq * 1.4, t0 + dur);
+  g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  src.connect(f).connect(g).connect(ac.destination); src.start(t0);
+}
+const SOUNDS = {
+  // a blade leaving its sheath
+  conquer(ac) { noise(ac, { dur: .45, vol: .35 }); tone(ac, { type: "triangle", freq: 1760, start: .03, dur: .6, vol: .08 }); tone(ac, { type: "sine", freq: 2637, start: .03, dur: .5, vol: .05 }); tone(ac, { type: "sine", freq: 110, to: 55, dur: .25, vol: .3 }); },
+  // a dull thud
+  undo(ac) { tone(ac, { type: "sine", freq: 160, to: 60, dur: .22, vol: .35 }); },
+  // war horn for a perfect night
+  perfect(ac) {
+    [[110, 0], [165, 0], [220, .35], [330, .35]].forEach(([f, st]) => tone(ac, { type: "sawtooth", freq: f, start: .25 + st, dur: 1.4, vol: .07, filter: 900 }));
+    tone(ac, { type: "sine", freq: 55, start: .25, dur: 1.8, vol: .25 });
+  },
+};
+function play(name) { if (!soundOn) return; try { const ac = ctx(); if (ac) SOUNDS[name](ac); } catch {} }
+
+// Android vibrates through navigator.vibrate; iPhone (iOS 18+) gives a tap when a hidden switch is toggled.
+const iosHaptic = (() => {
+  const label = document.createElement("label"), input = document.createElement("input");
+  input.type = "checkbox"; input.setAttribute("switch", ""); label.append(input);
+  label.style.cssText = "position:fixed;left:-9999px;width:1px;height:1px;overflow:hidden;";
+  label.setAttribute("aria-hidden", "true"); document.body.append(label);
+  return () => label.click();
+})();
+function buzz(pattern) {
+  if (navigator.vibrate) { try { navigator.vibrate(pattern); return; } catch {} }
+  const taps = Array.isArray(pattern) ? Math.ceil(pattern.length / 2) : 1;
+  for (let k = 0; k < taps; k++) setTimeout(iosHaptic, k * 120);
+}
+function feedback(kind) {
+  if (kind === "conquer") { buzz([35, 40, 70]); play("conquer"); }
+  else if (kind === "perfect") { buzz([60, 60, 60, 60, 220]); play("conquer"); play("perfect"); }
+  else { buzz(20); play("undo"); }
+}
+function toggleSound() { soundOn = !soundOn; lsSet(SOUND_KEY, soundOn ? "on" : "off"); if (soundOn) play("conquer"); renderTrials(); }
+
 function toggleTask(day, i) {
   if (!state.me) return;
   const t = today();
@@ -560,6 +620,7 @@ function toggleTask(day, i) {
   const patch = { t: arr, at: new Date().toISOString() };
   state.me = { ...state.me, days: { ...days, [day]: { ...entry, ...patch } } };
   renderTrials();
+  feedback(!arr[i] ? "undo" : arr.every(Boolean) ? "perfect" : "conquer");
   if (arr[i]) toast(practice ? `Practice: ${state.config.tasks[i].name} conquered` : `+100 · ${state.config.tasks[i].name} conquered`);
   const card = document.querySelectorAll(".trial")[i]; if (card && arr[i]) card.classList.add("pop");
   queueWrite(() => backend.patchDay(state.me.id, day, patch));
