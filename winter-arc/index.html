@@ -385,7 +385,17 @@ function renderTrials() {
   const who = el("div", { class: "today-total" },
     el("span", { class: "label" }, `checking in as ${state.me.alias}`),
     el("button", { type: "button", class: "btn ghost", style: "padding:6px 12px;font-size:13px", onclick: logout }, "Not you? Switch"));
-  if (t < state.config.start) { body.replaceChildren(el("div", { style: "display:flex;flex-direction:column;gap:14px" }, modeNotice(), who, el("div", { class: "notice" }, `The arc begins on ${fmtDay(state.config.start)}. Your four trials will appear here that morning, ready to tick. Sharpen your sword.`))); return; }
+  if (t < state.config.start) {
+    const preview = el("div", { class: "trials" }, state.config.tasks.slice(0, 4).map(task =>
+      el("button", { type: "button", class: "trial", disabled: true, title: "Unlocks on " + fmtDay(state.config.start) },
+        el("span", { class: "box", "aria-hidden": "true" }),
+        el("span", {}, el("span", { class: "t-name" }, task.name), el("span", { class: "t-desc" }, task.desc)),
+        el("span", { class: "pts" }, "+100"))));
+    body.replaceChildren(el("div", { style: "display:flex;flex-direction:column;gap:14px" }, modeNotice(), who,
+      el("div", { class: "notice" }, `These are your four trials. They unlock for ticking on ${fmtDay(state.config.start)}, when the arc begins. Sharpen your sword.`),
+      preview));
+    return;
+  }
   const editable = [t, addDays(t, -1)].filter(inArc);
   if (!editable.length) { body.replaceChildren(el("div", { class: "notice" }, "The arc has ended. The ledger is sealed. Look to the throne for the victor.")); return; }
   if (!editable.includes(state.viewDay)) state.viewDay = editable[0];
