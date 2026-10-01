@@ -80,22 +80,50 @@ section.scroll > h2 .label { font-size: 13px; font-weight: 500; }
 .empty { text-align: center; padding: 18px; color: var(--frost-dim); }
 
 /* Trials */
-.trials { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.trials { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 560px) { .trials { grid-template-columns: 1fr; } }
-.trial { text-align: left; display: grid; grid-template-columns: 30px minmax(0,1fr) auto; gap: 10px; align-items: center; background: var(--night-2); border: 1px solid var(--stone-line); border-radius: 4px; padding: 12px; cursor: pointer; transition: border-color .15s, background .15s; }
-.trial:hover:not(:disabled) { border-color: var(--ice); }
-.trial:disabled { cursor: not-allowed; opacity: .55; }
-.trial .box { width: 26px; height: 26px; border: 2px solid var(--frost-dim); border-radius: 3px; display: grid; place-items: center; font-family: var(--font-display); color: var(--night); }
-.trial.done { border-color: color-mix(in srgb, var(--ice) 60%, var(--stone-line)); background: color-mix(in srgb, var(--ice) 10%, var(--night-2)); }
-.trial.done .box { background: var(--ice); border-color: var(--ice); }
-.trial .t-name { font-family: var(--font-display); font-size: 15px; display: block; }
-.trial .t-desc { font-size: 14px; color: var(--frost-dim); display: block; }
-.trial .pts { font-family: var(--font-label); color: var(--gold); letter-spacing: .06em; font-size: 14px; }
+.trial { position: relative; overflow: hidden; isolation: isolate; text-align: left; cursor: pointer;
+  display: grid; grid-template-columns: 58px minmax(0,1fr); gap: 14px; align-items: center; min-height: 104px; padding: 16px 16px 16px 14px;
+  background: linear-gradient(155deg, #1c2733 0%, #121a23 55%, #0b1016 100%);
+  border: 1px solid #33414f; border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), inset 0 -18px 30px rgba(0,0,0,.35), 0 6px 18px rgba(0,0,0,.35);
+  transition: transform .12s ease, border-color .2s, box-shadow .25s, background .25s; }
+.trial::before { content: attr(data-num); position: absolute; right: 10px; bottom: -22px; z-index: -1;
+  font-family: var(--font-display); font-weight: 900; font-size: 96px; line-height: 1; color: rgba(223,233,239,.05); letter-spacing: -.02em; }
+.trial::after { content: ""; position: absolute; inset: 0; z-index: -1; opacity: 0; transition: opacity .3s;
+  background: radial-gradient(circle at 0% 50%, rgba(143,195,220,.28), transparent 60%); }
+.trial:hover:not(:disabled) { border-color: var(--gold-dim); transform: translateY(-2px); }
+.trial:active:not(:disabled) { transform: scale(.98); }
+.trial:disabled { cursor: not-allowed; }
+.trial .crest { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 35% 30%, #2b3a48, #0e141b 70%); border: 2px solid var(--gold-dim);
+  box-shadow: inset 0 0 0 3px #0b1016, 0 0 0 1px rgba(201,162,74,.25); color: var(--gold); transition: all .25s; }
+.trial .crest svg { width: 28px; height: 28px; }
+.trial .t-name { font-family: var(--font-display); font-weight: 900; font-size: 17px; letter-spacing: .05em; text-transform: uppercase; display: block; line-height: 1.2; }
+.trial .t-desc { font-size: 15px; color: var(--frost-dim); display: block; margin-top: 2px; }
+.trial .pts { display: inline-block; margin-top: 8px; font-family: var(--font-label); font-weight: 700; color: var(--gold); letter-spacing: .14em; font-size: 13px;
+  border: 1px solid var(--gold-dim); padding: 1px 8px; border-radius: 2px; }
+.trial .stamp { position: absolute; right: 12px; top: 10px; font-family: var(--font-display); font-weight: 900; font-size: 12px; letter-spacing: .2em;
+  color: var(--ice); border: 2px solid var(--ice); padding: 3px 8px; transform: rotate(8deg) scale(1.6); opacity: 0; transition: all .25s cubic-bezier(.2,1.6,.4,1); }
+.trial.done { border-color: var(--ice); background: linear-gradient(155deg, #1d3444 0%, #13222e 55%, #0b1016 100%);
+  box-shadow: 0 0 0 1px rgba(143,195,220,.45), 0 0 26px rgba(143,195,220,.22), inset 0 1px 0 rgba(255,255,255,.08); }
+.trial.done::after { opacity: 1; }
+.trial.done .crest { background: radial-gradient(circle at 35% 30%, #e9f5fb, #8fc3dc 70%); border-color: var(--frost); color: #0b1016; box-shadow: 0 0 18px rgba(143,195,220,.6); }
+.trial.done .stamp { opacity: 1; transform: rotate(8deg) scale(1); }
+.trial.done .pts { background: var(--gold); color: #17120a; border-color: var(--gold); }
+.trial.pop { animation: pop .35s ease; }
+@keyframes pop { 40% { transform: scale(1.03); } }
+.meter { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.meter i { height: 8px; border-radius: 1px; background: #26323e; transform: skewX(-20deg); }
+.meter i.on { background: linear-gradient(90deg, var(--gold), #f0d58a); box-shadow: 0 0 10px rgba(201,162,74,.5); }
+.perfect { text-align: center; font-family: var(--font-display); font-weight: 900; letter-spacing: .18em; color: var(--gold); font-size: 15px;
+  padding: 10px; border: 1px solid var(--gold-dim); background: rgba(201,162,74,.08); }
+.practice { font-family: var(--font-display); letter-spacing: .1em; font-size: 13px; color: #17120a; background: var(--gold); padding: 6px 10px; text-align: center; }
 .daytabs { display: flex; gap: 6px; flex-wrap: wrap; }
 .daytabs button { background: transparent; border: 1px solid var(--stone-line); border-radius: 3px; padding: 6px 12px; cursor: pointer; font-family: var(--font-label); letter-spacing: .08em; color: var(--frost-dim); }
 .daytabs button[aria-pressed="true"] { border-color: var(--ice); color: var(--frost); background: var(--night-2); }
 .today-total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.today-total b { font-family: var(--font-display); font-size: 28px; color: var(--gold); font-variant-numeric: tabular-nums; }
+.today-total b { font-family: var(--font-display); font-size: 32px; font-weight: 900; color: var(--gold); font-variant-numeric: tabular-nums; }
 textarea, input[type=text], input[type=date], select { width: 100%; background: var(--night); border: 1px solid var(--stone-line); border-radius: 3px; padding: 9px 10px; }
 textarea { resize: vertical; min-height: 56px; }
 .field { display: flex; flex-direction: column; gap: 6px; }
@@ -165,7 +193,7 @@ footer { text-align: center; color: var(--frost-dim); font-size: 13px; }
 
   <section class="scroll" aria-labelledby="h-trials" id="trialsSection">
     <h2 id="h-trials">Your Four Trials <span class="label">100 points each</span></h2>
-    <p class="muted" style="margin:0;font-size:15px">How to check in: when you finish a trial, tap its card. It turns blue with a tick and adds 100 points. Tap it again if you tapped by mistake. You can mark tonight and last night, nothing older.</p>
+    <p class="muted" style="margin:0;font-size:15px">How to check in: when you finish a trial, tap its card. It lights up, gets stamped CONQUERED and adds 100 points. Tap it again if you tapped by mistake. You can mark tonight and last night, nothing older.</p>
     <div id="trialsBody"><div class="empty">Opening the gates…</div></div>
   </section>
 
@@ -385,38 +413,25 @@ function renderTrials() {
   const who = el("div", { class: "today-total" },
     el("span", { class: "label" }, `checking in as ${state.me.alias}`),
     el("button", { type: "button", class: "btn ghost", style: "padding:6px 12px;font-size:13px", onclick: logout }, "Not you? Switch"));
-  if (t < state.config.start) {
-    const preview = el("div", { class: "trials" }, state.config.tasks.slice(0, 4).map(task =>
-      el("button", { type: "button", class: "trial", disabled: true, title: "Unlocks on " + fmtDay(state.config.start) },
-        el("span", { class: "box", "aria-hidden": "true" }),
-        el("span", {}, el("span", { class: "t-name" }, task.name), el("span", { class: "t-desc" }, task.desc)),
-        el("span", { class: "pts" }, "+100"))));
-    body.replaceChildren(el("div", { style: "display:flex;flex-direction:column;gap:14px" }, modeNotice(), who,
-      el("div", { class: "notice" }, `These are your four trials. They unlock for ticking on ${fmtDay(state.config.start)}, when the arc begins. Sharpen your sword.`),
-      preview));
-    return;
-  }
-  const editable = [t, addDays(t, -1)].filter(inArc);
+  const practice = t < state.config.start;
+  const editable = practice ? [t] : [t, addDays(t, -1)].filter(inArc);
   if (!editable.length) { body.replaceChildren(el("div", { class: "notice" }, "The arc has ended. The ledger is sealed. Look to the throne for the victor.")); return; }
   if (!editable.includes(state.viewDay)) state.viewDay = editable[0];
   const day = state.viewDay;
   const entry = (state.me.days || {})[day] || {};
   const done = [0, 1, 2, 3].map(i => !!(entry.t || [])[i]);
 
-  const tabs = el("div", { class: "daytabs", role: "group", "aria-label": "Which night" },
+  const tabs = practice ? el("div", { class: "practice" }, `PRACTICE ROUND · TONIGHT DOESN'T COUNT · THE ARC BEGINS ${fmtDay(state.config.start).toUpperCase()}`)
+    : el("div", { class: "daytabs", role: "group", "aria-label": "Which night" },
     editable.map(d => el("button", { type: "button", "aria-pressed": d === day ? "true" : "false",
       onclick: () => { state.viewDay = d; renderTrials(); } }, d === t ? "tonight · " + fmtDay(d) : "last night · " + fmtDay(d))));
 
-  const grid = el("div", { class: "trials" }, state.config.tasks.slice(0, 4).map((task, i) =>
-    el("button", { type: "button", class: "trial" + (done[i] ? " done" : ""), "aria-pressed": done[i] ? "true" : "false",
-      onclick: () => toggleTask(day, i) },
-      el("span", { class: "box", "aria-hidden": "true" }, done[i] ? "✓" : ""),
-      el("span", {}, el("span", { class: "t-name" }, task.name), el("span", { class: "t-desc" }, task.desc)),
-      el("span", { class: "pts" }, "+100"))));
-
+  const grid = el("div", { class: "trials" }, state.config.tasks.slice(0, 4).map((task, i) => trialCard(task, i, done[i], day)));
+  const meter = el("div", { class: "meter", "aria-hidden": "true" }, done.map(d => el("i", { class: d ? "on" : "" })));
+  const perfect = done.every(Boolean) ? el("div", { class: "perfect" }, practice ? "ALL FOUR CONQUERED · NOW DO IT FOR REAL" : "PERFECT NIGHT · THE REALM KNEELS") : null;
   const points = done.filter(Boolean).length * 100;
   const total = el("div", { class: "today-total" },
-    el("span", { class: "label" }, day === t ? "points earned tonight" : "points earned last night"),
+    el("span", { class: "label" }, practice ? "practice points (not counted)" : day === t ? "points earned tonight" : "points earned last night"),
     el("b", {}, `${points} / 400`));
 
   const note = el("textarea", { id: "proofNote", maxlength: "280", placeholder: "Your raven: what did you actually do? e.g. read PSC pages 40–50, 50 squats at 7am" });
@@ -432,8 +447,25 @@ function renderTrials() {
   }
   const s = stats(state.me);
   body.replaceChildren(el("div", { style: "display:flex;flex-direction:column;gap:14px" },
-    modeNotice(), who, tabs, grid, total, noteField,
+    modeNotice(), who, tabs, grid, meter, total, perfect, noteField,
     el("div", { class: "label" }, `your ledger · ${s.total.toLocaleString()} points · ${s.perfect} perfect nights`), cal));
+}
+
+const ICONS = [
+  '<path d="M4 5.5C7 4 9.5 4 12 6c2.5-2 5-2 8-.5V19c-3-1.5-5.5-1.5-8 .5-2.5-2-5-2-8-.5z"/><path d="M12 6v13.5"/>',
+  '<path d="M14.5 3.5 20.5 3.5 20.5 9.5 10 20 4 14z"/><path d="M4 20l3-3M7 11l6 6"/>',
+  '<path d="M12 3 20 6v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+  '<circle cx="12" cy="13" r="4"/><path d="M12 3v3M4.9 6.9l2.1 2.1M19.1 6.9 17 9M2 17h20M5 21h14"/>',
+];
+const NUMERALS = ["I", "II", "III", "IV"];
+function trialCard(task, i, isDone, day) {
+  const crest = el("span", { class: "crest", "aria-hidden": "true" });
+  crest.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[i] || ICONS[0]}</svg>`;
+  return el("button", { type: "button", class: "trial" + (isDone ? " done" : ""), "data-num": NUMERALS[i], "aria-pressed": isDone ? "true" : "false",
+    onclick: (e) => { toggleTask(day, i); } },
+    crest,
+    el("span", {}, el("span", { class: "t-name" }, task.name), el("span", { class: "t-desc" }, task.desc), el("span", { class: "pts" }, "+100 POINTS")),
+    el("span", { class: "stamp", "aria-hidden": "true" }, "CONQUERED"));
 }
 
 function joinForm() {
@@ -494,7 +526,7 @@ function renderRavens() {
   ul.replaceChildren(...list.slice(0, 12).map(({ w, d, e }) => {
     const c = countOf(e);
     return el("li", {},
-      el("span", {}, el("b", {}, w.alias || "A warrior"), ` — ${c}/4 trials for ${fmtDay(d)} (${c * 100} points)`),
+      el("span", {}, el("b", {}, w.alias || "A warrior"), inArc(d) ? ` — ${c}/4 trials for ${fmtDay(d)} (${c * 100} points)` : ` — ${c}/4 trials in the practice round`),
       el("span", { class: "when" }, "sent " + new Date(e.at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })),
       e.note ? el("span", { class: "note" }, "“" + e.note + "”") : null);
   }));
@@ -519,7 +551,8 @@ function queueWrite(fn) {
 function toggleTask(day, i) {
   if (!state.me) return;
   const t = today();
-  if (day !== t && day !== addDays(t, -1)) { toast("That night is sealed."); return; }
+  const practice = t < state.config.start;
+  if (practice ? day !== t : (day !== t && day !== addDays(t, -1))) { toast("That night is sealed."); return; }
   const days = state.me.days || {};
   const entry = days[day] || {};
   const arr = [0, 1, 2, 3].map(k => !!(entry.t || [])[k]);
@@ -527,7 +560,8 @@ function toggleTask(day, i) {
   const patch = { t: arr, at: new Date().toISOString() };
   state.me = { ...state.me, days: { ...days, [day]: { ...entry, ...patch } } };
   renderTrials();
-  if (arr[i]) toast(`+100 · ${state.config.tasks[i].name}`);
+  if (arr[i]) toast(practice ? `Practice: ${state.config.tasks[i].name} conquered` : `+100 · ${state.config.tasks[i].name} conquered`);
+  const card = document.querySelectorAll(".trial")[i]; if (card && arr[i]) card.classList.add("pop");
   queueWrite(() => backend.patchDay(state.me.id, day, patch));
 }
 
