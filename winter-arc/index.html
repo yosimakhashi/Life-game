@@ -77,6 +77,14 @@ section.scroll > h2 .label { font-size: 13px; font-weight: 500; }
 .score { text-align: right; font-variant-numeric: tabular-nums; }
 .score b { font-family: var(--font-display); font-size: 24px; display: block; line-height: 1.1; }
 .score small { color: var(--frost-dim); font-size: 13px; }
+.reign { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
+@media (max-width: 560px) { .reign { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+.stat { background: var(--night-2); border: 1px solid var(--stone-line); border-radius: 4px; padding: 12px; display: flex; flex-direction: column; gap: 2px; }
+.stat b { font-family: var(--font-display); font-weight: 900; font-size: 26px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat.gold { border-color: var(--gold-dim); } .stat.gold b { color: var(--gold); }
+.rankline { display: flex; align-items: center; gap: 14px; }
+.rankline .who { flex: 1; }
+.backup { display: flex; gap: 10px; flex-wrap: wrap; }
 .empty { text-align: center; padding: 18px; color: var(--frost-dim); }
 
 /* Trials */
@@ -176,7 +184,7 @@ footer { text-align: center; color: var(--frost-dim); font-size: 13px; }
   <header class="hero">
     <div class="words">WINTER IS COMING</div>
     <h1>The Winter Arc</h1>
-    <div class="label" id="range">the long night · 30 nights · oct 2 – oct 31</div>
+    <div class="label" id="range">the long night · 90 nights · oct 2 – dec 30</div>
     <div class="progress" aria-hidden="true"><i id="progressBar" style="width:0%"></i></div>
     <div class="daybar">
       <span>night <b id="dayNum">–</b> of <b id="dayTotal">–</b></span>
@@ -186,9 +194,8 @@ footer { text-align: center; color: var(--frost-dim); font-size: 13px; }
   </header>
 
   <section class="scroll" aria-labelledby="h-standings">
-    <h2 id="h-standings">The Iron Throne <span class="label">standings</span></h2>
-    <div class="board" id="board"><div class="empty">Summoning the bannermen…</div></div>
-    <div class="legend"><span></span>last 7 nights, darker = fewer trials <span class="lvl4"></span> all four done</div>
+    <h2 id="h-standings">Your Reign <span class="label">the iron throne</span></h2>
+    <div id="board"><div class="empty">Opening the ledger…</div></div>
   </section>
 
   <section class="scroll" aria-labelledby="h-trials" id="trialsSection">
@@ -200,7 +207,7 @@ footer { text-align: center; color: var(--frost-dim); font-size: 13px; }
   <section class="scroll" aria-labelledby="h-oath">
     <h2 id="h-oath">The Oath of the Arc</h2>
     <div class="featured" id="featured"></div>
-    <p class="oath">Night gathers, and now my arc begins. It shall not end until the thirtieth night.
+    <p class="oath">Night gathers, and now my arc begins. It shall not end until the ninetieth night.
       I shall mark no deed I have not done. I shall claim no point I have not earned.
       I am the sword in the darkness, the alarm that wakes before dawn, the shield that guards me from my own excuses.
       I pledge my honour to this arc, for this night and all the nights to come.</p>
@@ -210,11 +217,11 @@ footer { text-align: center; color: var(--frost-dim); font-size: 13px; }
     <h2 id="h-laws">Laws of the Realm <span class="label">honesty</span></h2>
     <ol class="laws">
       <li><b>Mark only what is done.</b> A trial half-finished is a trial not finished. Tick it when it is complete, never before.</li>
-      <li><b>The ledger is sealed after one night.</b> You can mark today and yesterday. Older nights are locked, so no one rewrites history.</li>
-      <li><b>Leave proof in your raven.</b> Write a line about what you did: the distance, the pages, the time. Your brothers read every raven.</li>
-      <li><b>Any brother may ask for proof.</b> A screenshot, a photo, a step count. Refusing to show it is a confession.</li>
+      <li><b>The ledger is sealed after one night.</b> You can mark today and yesterday. Older nights are locked, so you can't rewrite history.</li>
+      <li><b>Leave proof in your chronicle.</b> Write a line about what you did: the pages, the squats, the time you woke. Future you will read it.</li>
+      <li><b>No one is watching but you.</b> That is the whole test. A tick you didn't earn only robs the person ticking it.</li>
       <li><b>Missing a night is no shame. Lying about it is.</b> Zero points with honour beats 400 points stolen.</li>
-      <li><b>The Hand of the King judges disputes.</b> The keeper of this site may strip points that cannot be proven.</li>
+      <li><b>A broken streak is not a broken arc.</b> Miss a night, mark it honestly, and rise the next morning. Ninety nights is a war, not a battle.</li>
     </ol>
     <div class="quotes">
       <blockquote><p>“Words are wind.”</p><cite>— a saying of Westeros. Only the trials you finish count.</cite></blockquote>
@@ -222,13 +229,27 @@ footer { text-align: center; color: var(--frost-dim); font-size: 13px; }
       <blockquote><p>“A Lannister always pays his debts.”</p><cite>— Tyrion Lannister. Every point is a debt to yourself. Pay it in sweat, not in ticks.</cite></blockquote>
       <blockquote><p>“The North remembers.”</p><cite>— House Stark. So does this ledger. Every check-in is timestamped.</cite></blockquote>
       <blockquote><p>“Never forget what you are. The rest of the world will not.”</p><cite>— Tyrion Lannister. Be the one who did the work.</cite></blockquote>
-      <blockquote><p>“Fear cuts deeper than swords.”</p><cite>— Syrio Forel. Fear of losing is no reason to cheat.</cite></blockquote>
+      <blockquote><p>“Fear cuts deeper than swords.”</p><cite>— Syrio Forel. Fear of a broken streak is no reason to lie.</cite></blockquote>
     </div>
   </section>
 
   <section class="scroll" aria-labelledby="h-ravens">
-    <h2 id="h-ravens">Ravens from the Wall <span class="label">latest check-ins</span></h2>
-    <ul class="ravens" id="ravens"><li class="muted">No ravens yet. The first check-in will appear here.</li></ul>
+    <h2 id="h-ravens">Your Chronicle <span class="label">latest check-ins</span></h2>
+    <ul class="ravens" id="ravens"><li class="muted">No entries yet. Your first check-in will appear here.</li></ul>
+  </section>
+
+  <section class="scroll" aria-labelledby="h-backup">
+    <h2 id="h-backup">Guard Your Ledger <span class="label">backup</span></h2>
+    <p class="muted" style="margin:0;font-size:15px">Your progress lives only in this browser on this phone. Clearing browser data, private browsing or a new phone will lose it. Copy a backup now and then and keep it in your notes. Paste it back here to restore.</p>
+    <div class="backup">
+      <button class="btn" type="button" id="copyBackup">Copy backup</button>
+      <button class="btn ghost" type="button" id="showRestore">Restore from backup</button>
+    </div>
+    <div id="restoreBox" class="field" hidden>
+      <label class="label" for="restoreText">paste your backup</label>
+      <textarea id="restoreText" placeholder="Paste the backup text here"></textarea>
+      <div><button class="btn" type="button" id="doRestore">Restore</button></div>
+    </div>
   </section>
 
 
@@ -237,14 +258,11 @@ footer { text-align: center; color: var(--frost-dim); font-size: 13px; }
 <div class="toast" id="toast" hidden></div>
 
 
-<script src="firebase-config.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 /* ---------- the challenge: edit these to change trials or dates ---------- */
 const CONFIG = {
   start: "2026-10-02",
-  end: "2026-10-31",
+  end: "2026-12-30",
   tasks: [
     { name: "The Maester's Study", desc: "Read 10 pages of PSC" },
     { name: "Train like the Watch", desc: "50 squats" },
@@ -279,7 +297,7 @@ const lsGet = (k) => { try { return store && store.getItem(k); } catch { return 
 const lsSet = (k, v) => { try { store && (v == null ? store.removeItem(k) : store.setItem(k, v)); } catch {} };
 
 const state = { config: CONFIG, warriors: [], me: null, myId: lsGet(ME_KEY), loaded: false, viewDay: null,
-  mode: "local", mode2: "join", join: { alias: "", house: "stark", pin: "", sworn: false }, login: { id: "", pin: "" } };
+  mode: "local", mode2: "join", join: { alias: "", house: "stark", sworn: false } };
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, attrs = {}, ...kids) => {
@@ -301,35 +319,8 @@ const today = () => ymd(new Date());
 const fmtDay = (s) => parse(s).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 const inArc = (s) => s >= state.config.start && s <= state.config.end;
 
-/* ---------- PIN hashing (keeps PINs out of plain sight in the database) ---------- */
-async function hashPin(id, pin) {
-  const text = "winter-arc:" + id + ":" + pin;
-  try {
-    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-    return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, "0")).join("");
-  } catch {
-    let h = 5381; for (const ch of text) h = ((h << 5) + h + ch.charCodeAt(0)) >>> 0; return "djb2-" + h.toString(16);
-  }
-}
-
-/* ---------- storage: Firebase when configured, this device otherwise ---------- */
+/* ---------- storage: this device (localStorage) ---------- */
 const backend = (() => {
-  const cfg = window.FIREBASE_CONFIG;
-  if (cfg && cfg.projectId && window.firebase) {
-    try {
-      firebase.initializeApp(cfg);
-      const col = firebase.firestore().collection("warriors");
-      return {
-        mode: "shared",
-        subscribe(cb, onErr) { return col.onSnapshot(s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))), onErr); },
-        create(id, doc) { return col.doc(id).set(doc); },
-        patchDay(id, day, patch) {
-          const upd = {}; for (const [k, v] of Object.entries(patch)) upd[`days.${day}.${k}`] = v;
-          return col.doc(id).update(upd);
-        },
-      };
-    } catch (e) { console.error(e); }
-  }
   const read = () => { try { return JSON.parse(lsGet(LOCAL_KEY) || "{}"); } catch { return {}; } };
   let listener = null;
   const emit = () => listener && listener(Object.entries(read()).map(([id, d]) => ({ id, ...d })));
@@ -381,40 +372,42 @@ function sigil(houseKey) {
 function renderBoard() {
   const board = $("board");
   if (!state.loaded) return;
-  const ws = state.warriors.map(w => ({ w, s: stats(w) })).sort((a, b) => b.s.total - a.s.total || b.s.streak - a.s.streak);
-  if (!ws.length) { board.replaceChildren(el("div", { class: "empty" }, "The throne is empty. Swear the oath below to claim the first seat.")); return; }
-  const t = today();
-  board.replaceChildren(...ws.map(({ w, s }, i) => {
-    const h = HOUSES[w.house] || HOUSES.stark;
-    const dots = el("div", { class: "dots", "aria-label": "last 7 nights" });
-    for (let k = 6; k >= 0; k--) { const d = addDays(t, -k); const c = countOf((w.days || {})[d]); dots.append(el("span", { class: c ? "lvl" + c : "", title: `${fmtDay(d)}: ${c}/4` })); }
-    return el("div", { class: "row" + (i === 0 && s.total > 0 ? " first" : "") },
-      el("div", { class: "rank" }, i + 1),
-      sigil(w.house),
-      el("div", { class: "who" },
-        el("span", { class: "name" }, w.alias || "A nameless warrior", w.id === state.myId ? el("span", { class: "label" }, "  · you") : null),
-        el("span", { class: "meta" }, `House ${h.name} · ${s.streak} perfect night${s.streak === 1 ? "" : "s"} in a row · ${s.perfect} perfect total`),
-        dots),
-      el("div", { class: "score" }, el("b", {}, s.total.toLocaleString()), el("small", {}, `+${s.todayPoints} today`)));
-  }));
+  const w = state.me;
+  if (!w) { board.replaceChildren(el("div", { class: "empty" }, "The throne is empty. Swear the oath below to claim it.")); return; }
+  const s = stats(w), h = HOUSES[w.house] || HOUSES.stark;
+  const { start, end } = state.config, t = today();
+  const totalNights = diffDays(start, end) + 1;
+  let best = 0, run = 0, nightsSoFar = 0;
+  for (let d = start; d <= end && d <= t; d = addDays(d, 1)) {
+    nightsSoFar++;
+    if (countOf((w.days || {})[d]) === 4) { run++; best = Math.max(best, run); } else run = 0;
+  }
+  const possible = nightsSoFar * 400;
+  const pct = possible ? Math.round(s.total / possible * 100) : 0;
+  const dots = el("div", { class: "dots", "aria-label": "last 7 nights" });
+  for (let k = 6; k >= 0; k--) { const d = addDays(t, -k); const c = countOf((w.days || {})[d]); dots.append(el("span", { class: c ? "lvl" + c : "", title: `${fmtDay(d)}: ${c}/4` })); }
+  board.replaceChildren(el("div", { style: "display:flex;flex-direction:column;gap:14px" },
+    el("div", { class: "rankline" }, sigil(w.house),
+      el("div", { class: "who" }, el("span", { class: "name" }, w.alias), el("span", { class: "meta" }, `House ${h.name} · ${h.words}`), dots)),
+    el("div", { class: "reign" },
+      el("div", { class: "stat gold" }, el("span", { class: "label" }, "points"), el("b", {}, s.total.toLocaleString()), el("span", { class: "muted", style: "font-size:13px" }, `of ${(totalNights * 400).toLocaleString()}`)),
+      el("div", { class: "stat" }, el("span", { class: "label" }, "streak"), el("b", {}, s.streak), el("span", { class: "muted", style: "font-size:13px" }, `best ${best}`)),
+      el("div", { class: "stat" }, el("span", { class: "label" }, "perfect nights"), el("b", {}, s.perfect), el("span", { class: "muted", style: "font-size:13px" }, `of ${totalNights}`)),
+      el("div", { class: "stat" }, el("span", { class: "label" }, "honour"), el("b", {}, pct + "%"), el("span", { class: "muted", style: "font-size:13px" }, "of points possible so far")))));
 }
 
-function modeNotice() {
-  return state.mode === "local"
-    ? el("div", { class: "notice" }, "Practice mode: scores are saved only on this device. The keeper of this site still needs to connect the shared database so friends see each other.")
-    : null;
-}
+function modeNotice() { return null; }
 
 function renderTrials() {
   const body = $("trialsBody");
   if (!state.loaded) return;
-  if (!state.me) { body.replaceChildren(modeNotice() || "", state.mode2 === "login" ? loginForm() : joinForm()); return; }
+  if (!state.me) { body.replaceChildren(modeNotice() || "", joinForm()); return; }
   const t = today();
   const who = el("div", { class: "today-total" },
-    el("span", { class: "label" }, `checking in as ${state.me.alias}`),
+    el("span", { class: "label" }, `${state.me.alias} of House ${(HOUSES[state.me.house] || HOUSES.stark).name}`),
     el("span", { style: "display:flex;gap:8px" },
       el("button", { type: "button", class: "btn ghost", style: "padding:6px 12px;font-size:13px", "aria-pressed": soundOn ? "true" : "false", onclick: toggleSound }, soundOn ? "Sound on" : "Sound off"),
-      el("button", { type: "button", class: "btn ghost", style: "padding:6px 12px;font-size:13px", onclick: logout }, "Not you? Switch")));
+    ));
   const practice = t < state.config.start;
   const editable = practice ? [t] : [t, addDays(t, -1)].filter(inArc);
   if (!editable.length) { body.replaceChildren(el("div", { class: "notice" }, "The arc has ended. The ledger is sealed. Look to the throne for the victor.")); return; }
@@ -439,7 +432,7 @@ function renderTrials() {
   const note = el("textarea", { id: "proofNote", maxlength: "280", placeholder: "Your raven: what did you actually do? e.g. read PSC pages 40–50, 50 squats at 7am" });
   note.value = entry.note || "";
   note.addEventListener("input", () => scheduleNote(day, note.value));
-  const noteField = el("div", { class: "field" }, el("label", { class: "label", for: "proofNote" }, "proof for your brothers (optional, but honest)"), note);
+  const noteField = el("div", { class: "field" }, el("label", { class: "label", for: "proofNote" }, "proof for your chronicle (optional, but honest)"), note);
 
   const cal = el("div", { class: "cal", "aria-label": "Your nights" });
   const { start, end } = state.config;
@@ -473,11 +466,9 @@ function trialCard(task, i, isDone, day) {
 function joinForm() {
   const j = state.join;
   const alias = el("input", { type: "text", id: "alias", maxlength: "24", placeholder: "e.g. Jon of the Gym", value: j.alias });
-  const pin = el("input", { type: "text", id: "pin", inputmode: "numeric", maxlength: "4", placeholder: "4 digits, keep it secret", value: j.pin, autocomplete: "off" });
   const btn = el("button", { class: "btn", type: "button" }, "Swear the oath and join");
-  const update = () => { btn.disabled = !(j.alias.trim() && /^\d{4}$/.test(j.pin) && j.sworn); };
+  const update = () => { btn.disabled = !(j.alias.trim() && j.sworn); };
   alias.addEventListener("input", () => { j.alias = alias.value; update(); });
-  pin.addEventListener("input", () => { pin.value = pin.value.replace(/\D/g, ""); j.pin = pin.value; update(); });
   const houses = el("div", { class: "houses", role: "group", "aria-label": "Choose your house" },
     Object.entries(HOUSES).map(([k, h]) => el("button", { type: "button", class: "house", "aria-pressed": j.house === k ? "true" : "false",
       onclick: (e) => { j.house = k; e.currentTarget.parentElement.querySelectorAll(".house").forEach(b => b.setAttribute("aria-pressed", b === e.currentTarget ? "true" : "false")); } },
@@ -487,36 +478,11 @@ function joinForm() {
   btn.addEventListener("click", joinArc);
   update();
   return el("div", { style: "display:flex;flex-direction:column;gap:14px" },
-    el("p", { style: "margin:0" }, "Claim your seat. Pick a name, a secret PIN and a house, then swear to mark only what you have done."),
+    el("p", { style: "margin:0" }, "Claim the throne. Pick a name and a house, then swear to mark only what you have done."),
     el("div", { class: "field" }, el("label", { class: "label", for: "alias" }, "your name in the realm"), alias),
-    el("div", { class: "field" }, el("label", { class: "label", for: "pin" }, "your pin (to check in from another phone)"), pin),
     el("div", { class: "field" }, el("span", { class: "label" }, "your house"), houses),
     el("label", { class: "oath-check", for: "sworn" }, sworn, el("span", {}, "I swear on my house that every trial I mark will be one I truly completed. If I lie, let my name be struck from the throne.")),
-    el("div", { style: "display:flex;gap:10px;flex-wrap:wrap" }, btn,
-      state.warriors.length ? el("button", { class: "btn ghost", type: "button", onclick: () => { state.mode2 = "login"; renderTrials(); } }, "I already joined") : null));
-}
-
-function loginForm() {
-  const l = state.login;
-  const sel = el("select", { id: "loginWho" }, el("option", { value: "" }, "Choose your name"),
-    state.warriors.map(w => el("option", { value: w.id }, `${w.alias} · House ${(HOUSES[w.house] || HOUSES.stark).name}`)));
-  sel.value = l.id;
-  const pin = el("input", { type: "text", id: "loginPin", inputmode: "numeric", maxlength: "4", placeholder: "your 4-digit pin", autocomplete: "off" });
-  const btn = el("button", { class: "btn", type: "button" }, "Return to the Wall");
-  sel.addEventListener("change", () => { l.id = sel.value; });
-  pin.addEventListener("input", () => { pin.value = pin.value.replace(/\D/g, ""); l.pin = pin.value; });
-  btn.addEventListener("click", async () => {
-    const w = state.warriors.find(x => x.id === l.id);
-    if (!w) { toast("Choose your name first."); return; }
-    if (await hashPin(w.id, l.pin) !== w.pinHash) { toast("Wrong PIN. Only the true warrior may check in."); return; }
-    setMe(w.id);
-  });
-  return el("div", { style: "display:flex;flex-direction:column;gap:14px" },
-    el("p", { style: "margin:0" }, "Joined on another phone? Pick your name and enter your PIN."),
-    el("div", { class: "field" }, el("label", { class: "label", for: "loginWho" }, "who are you"), sel),
-    el("div", { class: "field" }, el("label", { class: "label", for: "loginPin" }, "pin"), pin),
-    el("div", { style: "display:flex;gap:10px;flex-wrap:wrap" }, btn,
-      el("button", { class: "btn ghost", type: "button", onclick: () => { state.mode2 = "join"; renderTrials(); } }, "I'm new, let me join")));
+    el("div", {}, btn));
 }
 
 function renderRavens() {
@@ -524,11 +490,11 @@ function renderRavens() {
   for (const w of state.warriors) for (const [d, e] of Object.entries(w.days || {})) if (e && e.at) list.push({ w, d, e });
   list.sort((a, b) => (b.e.at || "").localeCompare(a.e.at || ""));
   const ul = $("ravens");
-  if (!list.length) { ul.replaceChildren(el("li", { class: "muted" }, "No ravens yet. The first check-in will appear here.")); return; }
+  if (!list.length) { ul.replaceChildren(el("li", { class: "muted" }, "No entries yet. Your first check-in will appear here.")); return; }
   ul.replaceChildren(...list.slice(0, 12).map(({ w, d, e }) => {
     const c = countOf(e);
     return el("li", {},
-      el("span", {}, el("b", {}, w.alias || "A warrior"), inArc(d) ? ` — ${c}/4 trials for ${fmtDay(d)} (${c * 100} points)` : ` — ${c}/4 trials in the practice round`),
+      el("span", {}, inArc(d) ? `${c}/4 trials for ${fmtDay(d)} (${c * 100} points)` : `${c}/4 trials in the practice round`),
       el("span", { class: "when" }, "sent " + new Date(e.at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })),
       e.note ? el("span", { class: "note" }, "“" + e.note + "”") : null);
   }));
@@ -542,7 +508,6 @@ function setMe(id) {
   state.me = state.warriors.find(w => w.id === id) || null;
   renderAll();
 }
-function logout() { state.myId = null; state.me = null; lsSet(ME_KEY, null); state.mode2 = "login"; renderAll(); }
 
 let writeChain = Promise.resolve();
 function queueWrite(fn) {
@@ -640,24 +605,37 @@ function scheduleNote(day, text) {
 
 async function joinArc() {
   const j = state.join;
-  if (!j.alias.trim() || !/^\d{4}$/.test(j.pin) || !j.sworn) return;
-  const taken = state.warriors.some(w => (w.alias || "").toLowerCase() === j.alias.trim().toLowerCase());
-  if (taken) { toast("That name is already taken. If it's you, tap “I already joined”."); return; }
+  if (!j.alias.trim() || !j.sworn) return;
   const id = "w" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-  const doc = { alias: j.alias.trim().slice(0, 24), house: j.house, pinHash: await hashPin(id, j.pin), oathAt: new Date().toISOString(), days: {} };
+  const doc = { alias: j.alias.trim().slice(0, 24), house: j.house, oathAt: new Date().toISOString(), days: {} };
   state.warriors = [...state.warriors, { id, ...doc }];
   setMe(id);
   queueWrite(() => backend.create(id, doc).then(() => toast(`Welcome, ${doc.alias} of House ${HOUSES[doc.house].name}.`)));
 }
 
+/* ---------- backup ---------- */
+$("copyBackup").addEventListener("click", async () => {
+  const text = "WINTERARC:" + btoa(unescape(encodeURIComponent(lsGet(LOCAL_KEY) || "{}")));
+  try { await navigator.clipboard.writeText(text); toast("Backup copied. Paste it into your notes."); }
+  catch { $("restoreBox").hidden = false; $("restoreText").value = text; $("restoreText").select(); toast("Copy the selected text and keep it safe."); }
+});
+$("showRestore").addEventListener("click", () => { $("restoreBox").hidden = !$("restoreBox").hidden; });
+$("doRestore").addEventListener("click", () => {
+  try {
+    const raw = $("restoreText").value.trim().replace(/^WINTERARC:/, "");
+    const data = JSON.parse(decodeURIComponent(escape(atob(raw))));
+    if (!data || typeof data !== "object" || !Object.keys(data).length) throw new Error("empty");
+    lsSet(LOCAL_KEY, JSON.stringify(data)); lsSet(ME_KEY, Object.keys(data)[0]);
+    toast("Ledger restored."); setTimeout(() => location.reload(), 600);
+  } catch { toast("That backup text isn't valid. Copy the whole thing, starting with WINTERARC:"); }
+});
+
 /* ---------- boot ---------- */
 renderHero();
 backend.subscribe((list) => {
   state.warriors = list;
-  if (state.myId) {
-    const mine = list.find(w => w.id === state.myId);
-    if (mine) state.me = mine;
-  }
+  const mine = list.find(w => w.id === state.myId) || list[0];
+  if (mine) { state.me = mine; state.myId = mine.id; }
   state.loaded = true;
   renderAll();
 }, (err) => {
