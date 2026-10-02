@@ -108,6 +108,7 @@ section.scroll > h2 .label { font-size: 13px; font-weight: 500; }
   box-shadow: inset 0 0 0 3px #0b1016, 0 0 0 1px rgba(201,162,74,.25); color: var(--gold); transition: all .25s; }
 .trial .crest svg { width: 28px; height: 28px; }
 .trial .t-name { font-family: var(--font-display); font-weight: 900; font-size: 17px; letter-spacing: .05em; text-transform: uppercase; display: block; line-height: 1.2; }
+.trial.done .t-name { padding-right: 104px; } .trial.half .t-name { padding-right: 56px; }
 .trial .t-desc { font-size: 15px; color: var(--frost-dim); display: block; margin-top: 2px; }
 .trial .pts { display: inline-block; margin-top: 8px; font-family: var(--font-label); font-weight: 700; color: var(--gold); letter-spacing: .14em; font-size: 13px;
   border: 1px solid var(--gold-dim); padding: 1px 8px; border-radius: 2px; }
@@ -121,6 +122,18 @@ section.scroll > h2 .label { font-size: 13px; font-weight: 500; }
 .trial.done .pts { background: var(--gold); color: #17120a; border-color: var(--gold); }
 .trial.pop { animation: pop .35s ease; }
 @keyframes pop { 40% { transform: scale(1.03); } }
+.trial-wrap { position: relative; display: grid; }
+.half-btn { position: absolute; right: 10px; bottom: 10px; z-index: 2; cursor: pointer;
+  font-family: var(--font-label); font-weight: 700; font-size: 12px; letter-spacing: .1em;
+  background: rgba(10,14,19,.7); color: var(--frost-dim); border: 1px dashed var(--stone-line); border-radius: 2px; padding: 4px 8px; }
+.half-btn:hover { color: var(--gold); border-color: var(--gold-dim); }
+.half-btn[aria-pressed="true"] { color: #17120a; background: var(--gold); border: 1px solid var(--gold); }
+.trial.half { border-color: var(--gold-dim); background: linear-gradient(155deg, #2a2618 0%, #17150f 55%, #0b1016 100%);
+  box-shadow: 0 0 0 1px rgba(201,162,74,.35), 0 0 18px rgba(201,162,74,.15); }
+.trial.half .crest { background: linear-gradient(90deg, #e9d59a 50%, #1a2430 50%); border-color: var(--gold); color: #0b1016; }
+.trial.half .stamp { opacity: 1; transform: rotate(8deg) scale(1); color: var(--gold); border-color: var(--gold); }
+.trial.half .pts { border-style: dashed; }
+.meter i.half { background: linear-gradient(90deg, var(--gold) 50%, #26323e 50%); }
 .meter { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .meter i { height: 8px; border-radius: 1px; background: #26323e; transform: skewX(-20deg); }
 .meter i.on { background: linear-gradient(90deg, var(--gold), #f0d58a); box-shadow: 0 0 10px rgba(201,162,74,.5); }
@@ -200,7 +213,7 @@ footer { text-align: center; color: var(--frost-dim); font-size: 13px; }
 
   <section class="scroll" aria-labelledby="h-trials" id="trialsSection">
     <h2 id="h-trials">Your Four Trials <span class="label">100 points each</span></h2>
-    <p class="muted" style="margin:0;font-size:15px">How to check in: when you finish a trial, tap its card. It lights up, gets stamped CONQUERED and adds 100 points. Tap it again if you tapped by mistake. You can mark tonight and last night, nothing older.</p>
+    <p class="muted" style="margin:0;font-size:15px">How to check in: when you finish a trial, tap its card. It lights up, gets stamped CONQUERED and adds 100 points. Only partly managed it? Tap the small ½ button on the card for 50 points. Tap it again if you tapped by mistake. You can mark tonight and last night, nothing older.</p>
     <div id="trialsBody"><div class="empty">Opening the gates…</div></div>
   </section>
 
@@ -335,7 +348,10 @@ const backend = (() => {
 state.mode = backend.mode;
 
 /* ---------- scoring ---------- */
-function countOf(entry) { return entry && Array.isArray(entry.t) ? entry.t.slice(0, 4).filter(Boolean).length : 0; }
+const valOf = (v) => v === true ? 1 : typeof v === "number" ? Math.max(0, Math.min(1, v)) : 0;
+const valsOf = (entry) => [0, 1, 2, 3].map(i => valOf(((entry && entry.t) || [])[i]));
+function countOf(entry) { return valsOf(entry).reduce((a, b) => a + b, 0); }
+const lvlOf = (c) => c ? "lvl" + Math.max(1, Math.floor(c)) : "";
 function stats(w) {
   const days = w.days || {};
   let total = 0, perfect = 0;
@@ -385,7 +401,7 @@ function renderBoard() {
   const possible = nightsSoFar * 400;
   const pct = possible ? Math.round(s.total / possible * 100) : 0;
   const dots = el("div", { class: "dots", "aria-label": "last 7 nights" });
-  for (let k = 6; k >= 0; k--) { const d = addDays(t, -k); const c = countOf((w.days || {})[d]); dots.append(el("span", { class: c ? "lvl" + c : "", title: `${fmtDay(d)}: ${c}/4` })); }
+  for (let k = 6; k >= 0; k--) { const d = addDays(t, -k); const c = countOf((w.days || {})[d]); dots.append(el("span", { class: lvlOf(c), title: `${fmtDay(d)}: ${c}/4` })); }
   board.replaceChildren(el("div", { style: "display:flex;flex-direction:column;gap:14px" },
     el("div", { class: "rankline" }, sigil(w.house),
       el("div", { class: "who" }, el("span", { class: "name" }, w.alias), el("span", { class: "meta" }, `House ${h.name} · ${h.words}`), dots)),
@@ -414,7 +430,7 @@ function renderTrials() {
   if (!editable.includes(state.viewDay)) state.viewDay = editable[0];
   const day = state.viewDay;
   const entry = (state.me.days || {})[day] || {};
-  const done = [0, 1, 2, 3].map(i => !!(entry.t || [])[i]);
+  const done = valsOf(entry);
 
   const tabs = practice ? el("div", { class: "practice" }, `PRACTICE ROUND · TONIGHT DOESN'T COUNT · THE ARC BEGINS ${fmtDay(state.config.start).toUpperCase()}`)
     : el("div", { class: "daytabs", role: "group", "aria-label": "Which night" },
@@ -422,9 +438,9 @@ function renderTrials() {
       onclick: () => { state.viewDay = d; renderTrials(); } }, d === t ? "tonight · " + fmtDay(d) : "last night · " + fmtDay(d))));
 
   const grid = el("div", { class: "trials" }, state.config.tasks.slice(0, 4).map((task, i) => trialCard(task, i, done[i], day)));
-  const meter = el("div", { class: "meter", "aria-hidden": "true" }, done.map(d => el("i", { class: d ? "on" : "" })));
-  const perfect = done.every(Boolean) ? el("div", { class: "perfect" }, practice ? "ALL FOUR CONQUERED · NOW DO IT FOR REAL" : "PERFECT NIGHT · THE REALM KNEELS") : null;
-  const points = done.filter(Boolean).length * 100;
+  const meter = el("div", { class: "meter", "aria-hidden": "true" }, done.map(d => el("i", { class: d === 1 ? "on" : d ? "half" : "" })));
+  const perfect = done.every(v => v === 1) ? el("div", { class: "perfect" }, practice ? "ALL FOUR CONQUERED · NOW DO IT FOR REAL" : "PERFECT NIGHT · THE REALM KNEELS") : null;
+  const points = done.reduce((a, b) => a + b, 0) * 100;
   const total = el("div", { class: "today-total" },
     el("span", { class: "label" }, practice ? "practice points (not counted)" : day === t ? "points earned tonight" : "points earned last night"),
     el("b", {}, `${points} / 400`));
@@ -438,7 +454,7 @@ function renderTrials() {
   const { start, end } = state.config;
   for (let d = start; d <= end; d = addDays(d, 1)) {
     const c = countOf((state.me.days || {})[d]);
-    cal.append(el("span", { class: (d > t ? "future" : c ? "lvl" + c : "") + (d === t ? " today" : ""), title: `${fmtDay(d)}: ${c}/4` }));
+    cal.append(el("span", { class: (d > t ? "future" : lvlOf(c)) + (d === t ? " today" : ""), title: `${fmtDay(d)}: ${c}/4` }));
   }
   const s = stats(state.me);
   body.replaceChildren(el("div", { style: "display:flex;flex-direction:column;gap:14px" },
@@ -453,14 +469,20 @@ const ICONS = [
   '<circle cx="12" cy="13" r="4"/><path d="M12 3v3M4.9 6.9l2.1 2.1M19.1 6.9 17 9M2 17h20M5 21h14"/>',
 ];
 const NUMERALS = ["I", "II", "III", "IV"];
-function trialCard(task, i, isDone, day) {
+function trialCard(task, i, v, day) {
   const crest = el("span", { class: "crest", "aria-hidden": "true" });
   crest.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[i] || ICONS[0]}</svg>`;
-  return el("button", { type: "button", class: "trial" + (isDone ? " done" : ""), "data-num": NUMERALS[i], "aria-pressed": isDone ? "true" : "false",
-    onclick: (e) => { toggleTask(day, i); } },
-    crest,
-    el("span", {}, el("span", { class: "t-name" }, task.name), el("span", { class: "t-desc" }, task.desc), el("span", { class: "pts" }, "+100 POINTS")),
-    el("span", { class: "stamp", "aria-hidden": "true" }, "CONQUERED"));
+  const state_ = v === 1 ? " done" : v ? " half" : "";
+  return el("div", { class: "trial-wrap" },
+    el("button", { type: "button", class: "trial" + state_, "data-num": NUMERALS[i], "aria-pressed": v === 1 ? "true" : "false",
+      "aria-label": `${task.name}: ${task.desc}. ${v === 1 ? "Done, 100 points" : v ? "Half done, 50 points" : "Not done"}`,
+      onclick: () => setTask(day, i, v === 1 ? 0 : 1) },
+      crest,
+      el("span", {}, el("span", { class: "t-name" }, task.name), el("span", { class: "t-desc" }, task.desc),
+        el("span", { class: "pts" }, v === 0.5 ? "+50 POINTS" : "+100 POINTS")),
+      el("span", { class: "stamp", "aria-hidden": "true" }, v === 0.5 ? "HALF" : "CONQUERED")),
+    el("button", { type: "button", class: "half-btn", "aria-pressed": v === 0.5 ? "true" : "false",
+      title: "Partly done: 50 points", onclick: () => setTask(day, i, v === 0.5 ? 0 : 0.5) }, "½ · 50"));
 }
 
 function joinForm() {
@@ -544,6 +566,7 @@ const SOUNDS = {
   // a blade leaving its sheath
   conquer(ac) { noise(ac, { dur: .45, vol: .35 }); tone(ac, { type: "triangle", freq: 1760, start: .03, dur: .6, vol: .08 }); tone(ac, { type: "sine", freq: 2637, start: .03, dur: .5, vol: .05 }); tone(ac, { type: "sine", freq: 110, to: 55, dur: .25, vol: .3 }); },
   // a dull thud
+  half(ac) { noise(ac, { dur: .25, vol: .18 }); tone(ac, { type: "triangle", freq: 880, start: .02, dur: .35, vol: .06 }); },
   undo(ac) { tone(ac, { type: "sine", freq: 160, to: 60, dur: .22, vol: .35 }); },
   // war horn for a perfect night
   perfect(ac) {
@@ -568,26 +591,29 @@ function buzz(pattern) {
 }
 function feedback(kind) {
   if (kind === "conquer") { buzz([35, 40, 70]); play("conquer"); }
+  else if (kind === "half") { buzz(35); play("half"); }
   else if (kind === "perfect") { buzz([60, 60, 60, 60, 220]); play("conquer"); play("perfect"); }
   else { buzz(20); play("undo"); }
 }
 function toggleSound() { soundOn = !soundOn; lsSet(SOUND_KEY, soundOn ? "on" : "off"); if (soundOn) play("conquer"); renderTrials(); }
 
-function toggleTask(day, i) {
+function setTask(day, i, value) {
   if (!state.me) return;
   const t = today();
   const practice = t < state.config.start;
   if (practice ? day !== t : (day !== t && day !== addDays(t, -1))) { toast("That night is sealed."); return; }
   const days = state.me.days || {};
   const entry = days[day] || {};
-  const arr = [0, 1, 2, 3].map(k => !!(entry.t || [])[k]);
-  arr[i] = !arr[i];
+  const arr = valsOf(entry);
+  arr[i] = value;
   const patch = { t: arr, at: new Date().toISOString() };
   state.me = { ...state.me, days: { ...days, [day]: { ...entry, ...patch } } };
   renderTrials();
-  feedback(!arr[i] ? "undo" : arr.every(Boolean) ? "perfect" : "conquer");
-  if (arr[i]) toast(practice ? `Practice: ${state.config.tasks[i].name} conquered` : `+100 · ${state.config.tasks[i].name} conquered`);
-  const card = document.querySelectorAll(".trial")[i]; if (card && arr[i]) card.classList.add("pop");
+  const name = state.config.tasks[i].name;
+  feedback(!value ? "undo" : value < 1 ? "half" : arr.every(v => v === 1) ? "perfect" : "conquer");
+  if (value === 1) toast(practice ? `Practice: ${name} conquered` : `+100 · ${name} conquered`);
+  else if (value) toast(practice ? `Practice: ${name} half done` : `+50 · ${name} half done. Tomorrow, the full 100.`);
+  const card = document.querySelectorAll(".trial")[i]; if (card && value) card.classList.add("pop");
   queueWrite(() => backend.patchDay(state.me.id, day, patch));
 }
 
@@ -597,7 +623,7 @@ function scheduleNote(day, text) {
   noteTimer = setTimeout(() => {
     const days = state.me.days || {};
     const entry = days[day] || {};
-    const patch = { note: text.slice(0, 280), at: entry.at || new Date().toISOString(), t: entry.t || [false, false, false, false] };
+    const patch = { note: text.slice(0, 280), at: entry.at || new Date().toISOString(), t: valsOf(entry) };
     state.me = { ...state.me, days: { ...days, [day]: { ...entry, ...patch } } };
     queueWrite(() => backend.patchDay(state.me.id, day, patch).then(() => toast("Raven sent.")));
   }, 900);
