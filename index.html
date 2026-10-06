@@ -6,7 +6,7 @@
 <title>MINDJACK.9 | Life RPG</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Roboto+Condensed:wght@400;700&family=Permanent+Marker&display=swap" rel="stylesheet">
 
 <style>
 * {
@@ -15,23 +15,23 @@
 }
 
 :root {
-    --bg: #ded2b6;
-    --bg-panel: #f4ecda;
-    --bg-panel-alt: #e9dec5;
-    --bg-input: #faf4e6;
-    --border: #c3b18f;
-    --ink-blue: #2c4a6b;
-    --stamp-red: #b03a2e;
-    --ink-plum: #6d4c6b;
-    --ink-green: #4a6741;
-    --ink-ochre: #a87a2e;
-    --text-primary: #2b2620;
-    --text-dim: #7d7160;
+    --bg: #0e1310;
+    --bg-panel: #19211a;
+    --bg-panel-alt: #212c22;
+    --bg-input: #121a13;
+    --border: #3c4f38;
+    --ink-blue: #76a94e;
+    --stamp-red: #c0392b;
+    --ink-plum: #9b6cb0;
+    --ink-green: #8ec63f;
+    --ink-ochre: #e8a33d;
+    --text-primary: #e7e3d4;
+    --text-dim: #92a089;
 }
 
 @keyframes pulseGlow {
-    0%, 100% { box-shadow: 0 1px 3px rgba(43, 38, 32, 0.16); }
-    50% { box-shadow: 0 2px 7px rgba(43, 38, 32, 0.22); }
+    0%, 100% { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16); }
+    50% { box-shadow: 0 2px 7px rgba(0, 0, 0, 0.22); }
 }
 
 body {
@@ -39,11 +39,13 @@ body {
     min-height: 100vh;
     background-color: var(--bg);
     background-image:
-        radial-gradient(ellipse at 20% 10%, rgba(255, 250, 235, 0.55), transparent 55%),
-        radial-gradient(ellipse at 85% 90%, rgba(160, 130, 90, 0.18), transparent 50%);
+        radial-gradient(ellipse at 50% 0%, rgba(232, 163, 61, 0.17), transparent 58%),
+        radial-gradient(ellipse at 15% 92%, rgba(118, 169, 78, 0.14), transparent 55%),
+        radial-gradient(ellipse at 88% 34%, rgba(155, 108, 176, 0.10), transparent 50%),
+        linear-gradient(180deg, #131a14 0%, #0e1310 55%, #080b09 100%);
     background-attachment: fixed;
     color: var(--text-primary);
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
 }
 
 body::before {
@@ -52,9 +54,9 @@ body::before {
     inset: 0;
     pointer-events: none;
     z-index: 1;
-    opacity: 0.35;
+    opacity: 0.30;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.25'/%3E%3C/svg%3E");
-    mix-blend-mode: multiply;
+    mix-blend-mode: overlay;
 }
 
 .app {
@@ -97,7 +99,7 @@ body::before {
 
 .soundToggle:active {
     transform: scale(0.92);
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .planLink {
@@ -134,7 +136,7 @@ body::before {
 
 .skillsLink:active {
     transform: scale(0.92);
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .rewardsLink {
@@ -155,12 +157,12 @@ body::before {
 
 .rewardsLink:active {
     transform: scale(0.92);
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .planLink:active {
     transform: scale(0.92);
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .logo {
@@ -173,14 +175,14 @@ body::before {
 }
 
 .title {
-    font-family: 'Special Elite', 'Courier New', serif;
+    font-family: 'Anton', 'Impact', sans-serif;
     font-size: 28px;
     font-weight: 900;
     letter-spacing: 2px;
     margin-top: 8px;
     text-transform: uppercase;
     color: var(--text-primary);
-    text-shadow: 1px 1px 0 rgba(43, 38, 32, 0.18);
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.18);
 }
 
 .subtitle {
@@ -206,7 +208,7 @@ body::before {
     border-radius: 8px;
     background: var(--bg-panel);
     text-decoration: none;
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     font-weight: bold;
     letter-spacing: 0.5px;
     text-transform: uppercase;
@@ -224,7 +226,7 @@ body::before {
 }
 
 .navBtnStats:active {
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .navBtnAchievements {
@@ -233,7 +235,7 @@ body::before {
 }
 
 .navBtnAchievements:active {
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .navBtnSideOps {
@@ -242,7 +244,7 @@ body::before {
 }
 
 .navBtnSideOps:active {
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .navBtnCollectibles {
@@ -251,7 +253,7 @@ body::before {
 }
 
 .navBtnCollectibles:active {
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 /* PLAYER */
@@ -272,7 +274,7 @@ body::before {
 }
 
 .level {
-    font-family: 'Special Elite', 'Courier New', serif;
+    font-family: 'Anton', 'Impact', sans-serif;
     font-size: 24px;
     font-weight: 900;
     color: var(--text-primary);
@@ -305,7 +307,7 @@ body::before {
     height: 100%;
     width: 0%;
     background: linear-gradient(90deg, var(--ink-blue), var(--ink-plum));
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
     transition: 0.4s;
 }
 
@@ -322,7 +324,7 @@ body::before {
     display: flex;
     align-items: center;
     gap: 7px;
-    font-family: 'Special Elite', 'Courier New', serif;
+    font-family: 'Anton', 'Impact', sans-serif;
     font-size: 13px;
     font-weight: bold;
     letter-spacing: 1px;
@@ -363,7 +365,7 @@ body::before {
 }
 
 .statValue {
-    font-family: 'Special Elite', 'Courier New', serif;
+    font-family: 'Anton', 'Impact', sans-serif;
     font-size: 18px;
     font-weight: bold;
     color: var(--ink-blue);
@@ -384,7 +386,7 @@ body::before {
 }
 
 .sectionTitle {
-    font-family: 'Special Elite', 'Courier New', serif;
+    font-family: 'Anton', 'Impact', sans-serif;
     font-size: 16px;
     font-weight: bold;
     letter-spacing: 1px;
@@ -452,7 +454,7 @@ body::before {
     padding: 11px;
     background: transparent;
     color: var(--ink-blue);
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     font-weight: bold;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -461,12 +463,12 @@ body::before {
 
 .completeBtn:active {
     transform: scale(0.98);
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .completeBtn.completed {
     border-color: var(--ink-green);
-    background: rgba(74, 103, 65, 0.08);
+    background: rgba(142, 198, 63, 0.08);
     color: var(--ink-green);
     text-shadow: none;
 }
@@ -493,7 +495,7 @@ body::before {
     border-radius: 8px;
     background: transparent;
     color: var(--ink-plum);
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     font-weight: bold;
     font-size: 13px;
     letter-spacing: 1px;
@@ -502,7 +504,7 @@ body::before {
 
 .addMissionBtn:active {
     transform: scale(0.98);
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .addForm {
@@ -528,13 +530,13 @@ body::before {
     color: var(--text-primary);
     font-size: 14px;
     margin-bottom: 8px;
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
 }
 
 .addForm input:focus {
     outline: none;
     border-color: var(--ink-blue);
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .addForm textarea {
@@ -547,7 +549,7 @@ body::before {
     color: var(--text-primary);
     font-size: 13px;
     margin-bottom: 8px;
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     resize: vertical;
     min-height: 60px;
 }
@@ -555,7 +557,7 @@ body::before {
 .addForm textarea:focus {
     outline: none;
     border-color: var(--ink-blue);
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .addForm .formRow {
@@ -574,7 +576,7 @@ body::before {
 .formButtons button {
     border-radius: 6px;
     padding: 11px;
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     font-weight: bold;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -618,7 +620,7 @@ body::before {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-family: 'Special Elite', 'Courier New', serif;
+    font-family: 'Anton', 'Impact', sans-serif;
     font-weight: bold;
     font-size: 13px;
     letter-spacing: 1px;
@@ -628,7 +630,7 @@ body::before {
 .logLevelTotal {
     font-size: 12px;
     color: var(--text-dim);
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
 }
 
 .logEntries {
@@ -703,13 +705,13 @@ body::before {
     padding: 10px;
     color: var(--text-primary);
     font-size: 13px;
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
 }
 
 .logInputRow input:focus {
     outline: none;
     border-color: var(--ink-blue);
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .logButtonRow {
@@ -725,7 +727,7 @@ body::before {
     border-radius: 6px;
     padding: 10px;
     background: transparent;
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     font-weight: bold;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -739,7 +741,7 @@ body::before {
 
 .logAddBtn:active {
     transform: scale(0.98);
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .logSubtractBtn {
@@ -749,7 +751,7 @@ body::before {
 
 .logSubtractBtn:active {
     transform: scale(0.98);
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .logGrandTotal {
@@ -808,7 +810,7 @@ body::before {
     padding: 11px;
     background: transparent;
     color: var(--ink-ochre);
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     font-weight: bold;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -817,7 +819,7 @@ body::before {
 
 .redeemBtn:active:not(:disabled) {
     transform: scale(0.98);
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .redeemBtn:disabled {
@@ -837,7 +839,7 @@ body::before {
 }
 
 .rewardCard.diva.unlocked {
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
     animation: pulseGlow 3s ease-in-out infinite;
 }
 
@@ -859,16 +861,16 @@ body::before {
     border-radius: 4px;
     padding: 17px;
     margin-bottom: 12px;
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .quest.completed {
     border-color: var(--ink-green);
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .questName {
-    font-family: 'Special Elite', 'Courier New', serif;
+    font-family: 'Anton', 'Impact', sans-serif;
     font-size: 17px;
     font-weight: bold;
     color: var(--text-primary);
@@ -891,7 +893,7 @@ body::before {
 
 .questProgressText {
     margin-top: 14px;
-    font-family: 'Special Elite', 'Courier New', serif;
+    font-family: 'Anton', 'Impact', sans-serif;
     font-size: 13px;
     font-weight: bold;
     letter-spacing: 1px;
@@ -920,13 +922,13 @@ body::before {
     width: 0%;
     border-radius: 20px;
     background: linear-gradient(90deg, var(--ink-blue), var(--ink-plum));
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
     transition: 0.4s;
 }
 
 .questProgressFill.completed {
     background: linear-gradient(90deg, var(--ink-green), var(--ink-blue));
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .questPlusBtn {
@@ -937,7 +939,7 @@ body::before {
     padding: 9px 12px;
     background: transparent;
     color: var(--ink-plum);
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     font-weight: bold;
     font-size: 13px;
     letter-spacing: 1px;
@@ -945,7 +947,7 @@ body::before {
 
 .questPlusBtn:active {
     transform: scale(0.95);
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .questCompleteBtn {
@@ -956,7 +958,7 @@ body::before {
     padding: 11px;
     background: transparent;
     color: var(--ink-plum);
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     font-weight: bold;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -965,12 +967,12 @@ body::before {
 
 .questCompleteBtn:active {
     transform: scale(0.98);
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .questCompleteBtn.completed {
     border-color: var(--ink-green);
-    background: rgba(74, 103, 65, 0.08);
+    background: rgba(142, 198, 63, 0.08);
     color: var(--ink-green);
     text-shadow: none;
 }
@@ -982,7 +984,7 @@ body::before {
     border: 1px solid var(--border);
     border-radius: 4px;
     padding: 15px;
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     font-size: 12px;
     color: var(--text-dim);
     line-height: 1.9;
@@ -1014,7 +1016,7 @@ body::before {
     border: 1px solid var(--ink-blue);
     color: var(--ink-blue);
     border-radius: 6px;
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     font-weight: bold;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -1024,7 +1026,7 @@ body::before {
 .exportBtn:active,
 .importBtn:active {
     transform: scale(0.98);
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .reset {
@@ -1035,13 +1037,13 @@ body::before {
     border: 1px solid var(--stamp-red);
     color: var(--stamp-red);
     border-radius: 6px;
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     letter-spacing: 1px;
     text-transform: uppercase;
 }
 
 .reset:active {
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 /* NOTIFICATION */
@@ -1055,10 +1057,10 @@ body::before {
     border: 1px solid var(--ink-blue);
     color: var(--ink-blue);
     text-shadow: none;
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
     padding: 13px 20px;
     border-radius: 30px;
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     font-weight: bold;
     font-size: 13px;
     letter-spacing: 1px;
@@ -1085,7 +1087,7 @@ body::before {
 .card,
 .badge,
 .addForm {
-    box-shadow: 0 1px 3px rgba(43, 38, 32, 0.14), 0 6px 14px rgba(43, 38, 32, 0.06);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14), 0 6px 14px rgba(0, 0, 0, 0.06);
 }
 
 /* faint ruled lines, like a notebook page */
@@ -1095,8 +1097,8 @@ body::before {
         to bottom,
         transparent 0px,
         transparent 27px,
-        rgba(44, 74, 107, 0.07) 27px,
-        rgba(44, 74, 107, 0.07) 28px
+        rgba(118, 169, 78, 0.07) 27px,
+        rgba(118, 169, 78, 0.07) 28px
     );
 }
 
@@ -1109,7 +1111,7 @@ body::before {
 .questDescription,
 .badgeDesc,
 .cardQuote {
-    font-family: 'Caveat', cursive;
+    font-family: 'Permanent Marker', cursive;
     font-size: 17px;
     line-height: 1.4;
 }
@@ -2312,14 +2314,14 @@ const TIER_SCORE_STEP = 5000;
 
 const tiers = [
 
-    { name: "ROOKIE",    icon: "🔰", color: "#7d7160" },
-    { name: "BRONZE",    icon: "🥉", color: "#8c5a2b" },
-    { name: "SILVER",    icon: "🥈", color: "#67707a" },
-    { name: "GOLD",      icon: "🥇", color: "#a8792b" },
-    { name: "PLATINUM",  icon: "🔷", color: "#3f7f73" },
-    { name: "DIAMOND",   icon: "💎", color: "#2c6ba8" },
-    { name: "MASTER",    icon: "👑", color: "#6d4c8c" },
-    { name: "LEGENDARY", icon: "🌟", color: "#a8322b" }
+    { name: "ROOKIE",    icon: "🔰", color: "#a39880" },
+    { name: "BRONZE",    icon: "🥉", color: "#c47f3c" },
+    { name: "SILVER",    icon: "🥈", color: "#aab4bf" },
+    { name: "GOLD",      icon: "🥇", color: "#e0a93c" },
+    { name: "PLATINUM",  icon: "🔷", color: "#58b3a2" },
+    { name: "DIAMOND",   icon: "💎", color: "#4f9fe0" },
+    { name: "MASTER",    icon: "👑", color: "#a173c9" },
+    { name: "LEGENDARY", icon: "🌟", color: "#e0564a" }
 
 ];
 

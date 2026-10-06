@@ -6,7 +6,7 @@
 <title>ACHIEVEMENTS | MINDJACK.9</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Roboto+Condensed:wght@400;700&family=Permanent+Marker&display=swap" rel="stylesheet">
 
 <style>
 * {
@@ -15,23 +15,23 @@
 }
 
 :root {
-    --bg: #ded2b6;
-    --bg-panel: #f4ecda;
-    --bg-panel-alt: #e9dec5;
-    --bg-input: #faf4e6;
-    --border: #c3b18f;
-    --ink-blue: #2c4a6b;
-    --stamp-red: #b03a2e;
-    --ink-plum: #6d4c6b;
-    --ink-green: #4a6741;
-    --ink-ochre: #a87a2e;
-    --text-primary: #2b2620;
-    --text-dim: #7d7160;
+    --bg: #0e1310;
+    --bg-panel: #19211a;
+    --bg-panel-alt: #212c22;
+    --bg-input: #121a13;
+    --border: #3c4f38;
+    --ink-blue: #76a94e;
+    --stamp-red: #c0392b;
+    --ink-plum: #9b6cb0;
+    --ink-green: #8ec63f;
+    --ink-ochre: #e8a33d;
+    --text-primary: #e7e3d4;
+    --text-dim: #92a089;
 }
 
 @keyframes pulseGlow {
-    0%, 100% { box-shadow: 0 1px 3px rgba(43, 38, 32, 0.16); }
-    50% { box-shadow: 0 2px 7px rgba(43, 38, 32, 0.22); }
+    0%, 100% { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16); }
+    50% { box-shadow: 0 2px 7px rgba(0, 0, 0, 0.22); }
 }
 
 body {
@@ -39,11 +39,13 @@ body {
     min-height: 100vh;
     background-color: var(--bg);
     background-image:
-        radial-gradient(ellipse at 20% 10%, rgba(255, 250, 235, 0.55), transparent 55%),
-        radial-gradient(ellipse at 85% 90%, rgba(160, 130, 90, 0.18), transparent 50%);
+        radial-gradient(ellipse at 50% 0%, rgba(232, 163, 61, 0.17), transparent 58%),
+        radial-gradient(ellipse at 15% 92%, rgba(118, 169, 78, 0.14), transparent 55%),
+        radial-gradient(ellipse at 88% 34%, rgba(155, 108, 176, 0.10), transparent 50%),
+        linear-gradient(180deg, #131a14 0%, #0e1310 55%, #080b09 100%);
     background-attachment: fixed;
     color: var(--text-primary);
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
 }
 
 body::before {
@@ -52,9 +54,9 @@ body::before {
     inset: 0;
     pointer-events: none;
     z-index: 1;
-    opacity: 0.35;
+    opacity: 0.30;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.25'/%3E%3C/svg%3E");
-    mix-blend-mode: multiply;
+    mix-blend-mode: overlay;
 }
 
 .app {
@@ -98,14 +100,14 @@ body::before {
 }
 
 .title {
-    font-family: 'Special Elite', 'Courier New', serif;
+    font-family: 'Anton', 'Impact', sans-serif;
     font-size: 26px;
     font-weight: 900;
     letter-spacing: 2px;
     margin-top: 8px;
     text-transform: uppercase;
     color: var(--text-primary);
-    text-shadow: 1px 1px 0 rgba(43, 38, 32, 0.18);
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.18);
 }
 
 .subtitle {
@@ -142,7 +144,7 @@ body::before {
 .badge.unlocked {
     opacity: 1;
     border-color: var(--ink-ochre);
-    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .badgeIcon {
@@ -224,7 +226,7 @@ body::before {
 .card,
 .badge,
 .addForm {
-    box-shadow: 0 1px 3px rgba(43, 38, 32, 0.14), 0 6px 14px rgba(43, 38, 32, 0.06);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14), 0 6px 14px rgba(0, 0, 0, 0.06);
 }
 
 /* faint ruled lines, like a notebook page */
@@ -234,8 +236,8 @@ body::before {
         to bottom,
         transparent 0px,
         transparent 27px,
-        rgba(44, 74, 107, 0.07) 27px,
-        rgba(44, 74, 107, 0.07) 28px
+        rgba(118, 169, 78, 0.07) 27px,
+        rgba(118, 169, 78, 0.07) 28px
     );
 }
 
@@ -248,7 +250,7 @@ body::before {
 .questDescription,
 .badgeDesc,
 .cardQuote {
-    font-family: 'Caveat', cursive;
+    font-family: 'Permanent Marker', cursive;
     font-size: 17px;
     line-height: 1.4;
 }

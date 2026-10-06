@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PERSONALITY | MINDJACK.9</title>
-<meta name="theme-color" content="#070b18">
+<meta name="theme-color" content="#0e1310">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Roboto+Condensed:wght@400;700&family=Permanent+Marker&display=swap" rel="stylesheet">
 
 <style>
 * {
@@ -17,19 +17,19 @@
 
 /* Star chart, same sheet as the plan page it hangs off. */
 :root {
-    --fc-bg: #070b18;
-    --fc-panel: #0e1428;
-    --fc-panel-alt: #131b33;
-    --fc-input: #0a0f20;
-    --fc-border: #2a3455;
-    --fc-green: #7fb7c9;
-    --fc-green-dim: #4d7686;
-    --fc-amber: #c9a227;
-    --fc-soap: #b9a0d6;
-    --fc-rust: #c1695e;
-    --fc-rust-dim: #8a4d45;
-    --fc-text: #e6e3d6;
-    --fc-dim: #7f89a8;
+    --fc-bg: #0e1310;
+    --fc-panel: #19211a;
+    --fc-panel-alt: #212c22;
+    --fc-input: #121a13;
+    --fc-border: #3c4f38;
+    --fc-green: #8ec63f;
+    --fc-green-dim: #5d8030;
+    --fc-amber: #e8a33d;
+    --fc-soap: #9b6cb0;
+    --fc-rust: #c0392b;
+    --fc-rust-dim: #8c2c22;
+    --fc-text: #e7e3d4;
+    --fc-dim: #92a089;
 }
 
 body {
@@ -37,13 +37,13 @@ body {
     min-height: 100vh;
     background-color: var(--fc-bg);
     background-image:
-        radial-gradient(ellipse at 50% 0%, rgba(127, 183, 201, 0.13), transparent 60%),
-        radial-gradient(ellipse at 18% 88%, rgba(185, 160, 214, 0.12), transparent 55%),
-        radial-gradient(ellipse at 88% 30%, rgba(201, 162, 39, 0.08), transparent 50%),
-        linear-gradient(180deg, #0b1124 0%, #070b18 60%, #04060f 100%);
+        radial-gradient(ellipse at 50% 0%, rgba(232, 163, 61, 0.17), transparent 58%),
+        radial-gradient(ellipse at 15% 92%, rgba(118, 169, 78, 0.14), transparent 55%),
+        radial-gradient(ellipse at 88% 34%, rgba(155, 108, 176, 0.10), transparent 50%),
+        linear-gradient(180deg, #131a14 0%, #0e1310 55%, #080b09 100%);
     background-attachment: fixed;
     color: var(--fc-text);
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
 }
 
 /* starfield: fixed so the sky stays put while the page scrolls */
@@ -53,22 +53,9 @@ body::before {
     inset: 0;
     pointer-events: none;
     z-index: 1;
-    opacity: 0.85;
-    background-image:
-        radial-gradient(1.4px 1.4px at 12% 18%, rgba(230, 227, 214, 0.95), transparent),
-        radial-gradient(1.2px 1.2px at 27% 62%, rgba(230, 227, 214, 0.75), transparent),
-        radial-gradient(1.7px 1.7px at 41% 9%, rgba(201, 162, 39, 0.85), transparent),
-        radial-gradient(1.1px 1.1px at 56% 44%, rgba(230, 227, 214, 0.70), transparent),
-        radial-gradient(1.5px 1.5px at 68% 77%, rgba(127, 183, 201, 0.85), transparent),
-        radial-gradient(1.2px 1.2px at 82% 26%, rgba(230, 227, 214, 0.80), transparent),
-        radial-gradient(1.6px 1.6px at 91% 58%, rgba(185, 160, 214, 0.75), transparent),
-        radial-gradient(1.1px 1.1px at 8% 81%, rgba(230, 227, 214, 0.65), transparent),
-        radial-gradient(1.3px 1.3px at 35% 92%, rgba(230, 227, 214, 0.70), transparent),
-        radial-gradient(1.5px 1.5px at 74% 6%, rgba(230, 227, 214, 0.80), transparent),
-        radial-gradient(1.1px 1.1px at 49% 70%, rgba(127, 183, 201, 0.60), transparent),
-        radial-gradient(1.2px 1.2px at 19% 40%, rgba(230, 227, 214, 0.60), transparent);
-    background-size: 420px 420px;
-    background-repeat: repeat;
+    opacity: 0.30;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.25'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
 }
 
 body::after {
@@ -77,7 +64,7 @@ body::after {
     inset: 0;
     pointer-events: none;
     z-index: 1;
-    background: radial-gradient(ellipse at center, transparent 52%, rgba(2, 4, 10, 0.78) 100%);
+    background: radial-gradient(ellipse at center, transparent 52%, rgba(0, 0, 0, 0.78) 100%);
 }
 
 .app {
@@ -122,14 +109,14 @@ body::after {
 }
 
 .title {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Anton', 'Impact', sans-serif;
     font-size: 40px;
     font-weight: 700;
     letter-spacing: 4px;
     margin-top: 6px;
     text-transform: uppercase;
     color: var(--fc-text);
-    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.8), 0 0 34px rgba(127, 183, 201, 0.22);
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.8), 0 0 34px rgba(142, 198, 63, 0.22);
 }
 
 .subtitle {
@@ -163,7 +150,7 @@ body::after {
 }
 
 .ledgerValue {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Anton', 'Impact', sans-serif;
     font-size: 26px;
     font-weight: 700;
     margin-top: 3px;
@@ -187,7 +174,7 @@ body::after {
     background: transparent;
     border: 1px solid var(--fc-border);
     color: var(--fc-dim);
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Anton', 'Impact', sans-serif;
     font-size: 13px;
     letter-spacing: 2px;
     text-transform: uppercase;
@@ -197,13 +184,13 @@ body::after {
 .tab.active {
     border-color: var(--fc-green);
     color: var(--fc-green);
-    background: rgba(127, 183, 201, 0.10);
+    background: rgba(142, 198, 63, 0.10);
 }
 
 .tab.active.flawTab {
     border-color: var(--fc-rust);
     color: var(--fc-rust);
-    background: rgba(193, 105, 94, 0.12);
+    background: rgba(192, 57, 43, 0.12);
 }
 
 .traitFilter {
@@ -213,7 +200,7 @@ body::after {
     padding: 12px;
     color: var(--fc-text);
     font-size: 13px;
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     margin-bottom: 16px;
 }
 
@@ -233,7 +220,7 @@ body::after {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Anton', 'Impact', sans-serif;
     font-size: 17px;
     letter-spacing: 3px;
     text-transform: uppercase;
@@ -246,7 +233,7 @@ body::after {
 .side.flaws .sideTitle { color: var(--fc-rust); }
 
 .sideCount {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
     font-size: 10px;
     letter-spacing: 1px;
     color: var(--fc-dim);
@@ -258,7 +245,7 @@ body::after {
 }
 
 .traitGroupName {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Anton', 'Impact', sans-serif;
     font-size: 11px;
     letter-spacing: 3px;
     text-transform: uppercase;
@@ -322,14 +309,14 @@ body::after {
     border: 1px solid var(--fc-soap);
     color: var(--fc-soap);
     padding: 7px 9px;
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Anton', 'Impact', sans-serif;
     font-size: 12px;
     letter-spacing: 1px;
 }
 
 .traitBtn:active {
     transform: scale(0.94);
-    background: rgba(185, 160, 214, 0.14);
+    background: rgba(155, 108, 176, 0.14);
 }
 
 .traitBtn.minus {
@@ -338,7 +325,7 @@ body::after {
 }
 
 .traitBtn.minus:active {
-    background: rgba(193, 105, 94, 0.16);
+    background: rgba(192, 57, 43, 0.16);
 }
 
 .emptyNote,
