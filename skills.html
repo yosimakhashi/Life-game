@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKILLS | MINDJACK.9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    --bg: #ded2b6;
+    --bg-panel: #f4ecda;
+    --bg-panel-alt: #e9dec5;
+    --bg-input: #faf4e6;
+    --border: #c3b18f;
+    --ink-blue: #2c4a6b;
+    --stamp-red: #b03a2e;
+    --ink-plum: #6d4c6b;
+    --ink-green: #4a6741;
+    --ink-ochre: #a87a2e;
+    --text-primary: #2b2620;
+    --text-dim: #7d7160;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 1px 3px rgba(43, 38, 32, 0.16); }
+    50% { box-shadow: 0 2px 7px rgba(43, 38, 32, 0.22); }
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--bg);
+    background-image:
+        radial-gradient(ellipse at 20% 10%, rgba(255, 250, 235, 0.55), transparent 55%),
+        radial-gradient(ellipse at 85% 90%, rgba(160, 130, 90, 0.18), transparent 50%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: 'Courier Prime', 'Courier New', monospace;
+}
+
+/* paper grain */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.35;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.25'/%3E%3C/svg%3E");
+    mix-blend-mode: multiply;
+}
+
+.app {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+    margin: auto;
+    padding: 18px;
+    padding-bottom: 50px;
+}
+
+.header {
+    position: relative;
+    border: 1px solid var(--ink-plum);
+    background: var(--bg-panel);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 16px;
+    animation: pulseGlow 3s ease-in-out infinite;
+}
+
+.backLink {
+    display: inline-block;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.backLink:active {
+    color: var(--ink-plum);
+}
+
+.logo {
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: var(--ink-plum);
+    text-shadow: none;
+    font-weight: bold;
+}
+
+.title {
+    font-family: 'Special Elite', 'Courier New', serif;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin-top: 8px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    text-shadow: 1px 1px 0 rgba(43, 38, 32, 0.18);
+}
+
+.subtitle {
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+
+/* ADD FORM */
+
+.addForm {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px;
+    margin-bottom: 18px;
+}
+
+.addForm input {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 12px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    margin-bottom: 10px;
+}
+
+.addForm input:focus {
+    outline: none;
+    border-color: var(--ink-blue);
+}
+
+.addBtn {
+    width: 100%;
+    background: var(--bg-panel-alt);
+    border: 1px solid var(--ink-blue);
+    border-radius: 3px;
+    color: var(--ink-blue);
+    font-family: 'Special Elite', 'Courier New', serif;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 13px;
+}
+
+.addBtn:active {
+    transform: scale(0.99);
+    background: rgba(44, 74, 107, 0.1);
+}
+
+
+/* SKILL CARDS */
+
+.sectionTitle {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: 'Special Elite', 'Courier New', serif;
+    font-size: 15px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ink-blue);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 7px;
+    margin-bottom: 12px;
+}
+
+.sectionCount {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+}
+
+.skill {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--ink-ochre);
+    border-radius: 4px;
+    padding: 14px;
+    margin-bottom: 11px;
+}
+
+.skill.completed {
+    border-left-color: var(--ink-green);
+    opacity: 0.85;
+}
+
+.skillHead {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.skillName {
+    flex: 1;
+    font-size: 15px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.skill.completed .skillName {
+    color: var(--ink-green);
+}
+
+.deleteBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 18px;
+    padding: 2px 6px;
+    line-height: 1;
+}
+
+.deleteBtn:active {
+    color: var(--stamp-red);
+}
+
+.skillMeta {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    margin-top: 5px;
+}
+
+.progressRow {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-top: 11px;
+}
+
+.progressBar {
+    flex: 1;
+    height: 13px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    background: repeating-linear-gradient(
+        45deg,
+        var(--ink-ochre),
+        var(--ink-ochre) 5px,
+        #b98c3c 5px,
+        #b98c3c 10px
+    );
+    transition: width 0.25s ease;
+}
+
+.progressFill.completed {
+    background: var(--ink-green);
+}
+
+.plusBtn {
+    flex-shrink: 0;
+    min-width: 54px;
+    background: var(--bg-panel-alt);
+    border: 1px solid var(--ink-green);
+    border-radius: 3px;
+    color: var(--ink-green);
+    font-family: 'Special Elite', 'Courier New', serif;
+    font-size: 13px;
+    letter-spacing: 1px;
+    padding: 9px 10px;
+}
+
+.plusBtn:active {
+    transform: scale(0.94);
+    background: rgba(74, 103, 65, 0.14);
+}
+
+.doneStamp {
+    flex-shrink: 0;
+    min-width: 54px;
+    text-align: center;
+    font-family: 'Special Elite', 'Courier New', serif;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--ink-green);
+    border: 1px dashed var(--ink-green);
+    border-radius: 3px;
+    padding: 9px 6px;
+}
+
+.emptyNote,
+.emptyState {
+    color: var(--text-dim);
+    font-size: 13px;
+    text-align: center;
+    padding: 28px 16px;
+    line-height: 1.8;
+}
+
+.emptyState a {
+    color: var(--ink-blue);
+}
+
+.footNote {
+    color: var(--text-dim);
+    font-size: 11px;
+    line-height: 1.8;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+    margin-top: 20px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <div class="header">
+        <a class="backLink" href="index.html">&larr; Back to Life RPG</a>
+        <div class="logo">MINDJACK.9 // SKILL TREE</div>
+        <div class="title">Skills</div>
+        <div class="subtitle">What you're learning. Five points a session, a hundred to master it.</div>
+    </div>
+
+    <div id="content"></div>
+
+</div>
+
+<script>
+
+const SKILL_TARGET = 100;
+const SKILL_STEP = 5;
+
+// Matches what the old "Master a Skill" main quest paid out, so moving
+// skills off the quest board costs nothing.
+const SKILL_XP_REWARD = 600;
+const SKILL_CREDIT_REWARD = 250;
+
+const TIER_SCORE_STEP = 5000;
+const TIER_COUNT = 8;
+const DIVA_SCORE_REQUIREMENT = 15000;
+const COLLECTIBLE_IDS = ["warrior", "samurai", "pirate", "fighter", "ninja"];
+const COLLECTIBLE_CREDITS_STEP = 1000;
+
+
+function loadGame() {
+    const raw = localStorage.getItem("mindjack9");
+    return raw ? JSON.parse(raw) : null;
+}
+
+function saveGame(game) {
+    localStorage.setItem("mindjack9", JSON.stringify(game));
+}
+
+
+let game = loadGame();
+
+const content = document.getElementById("content");
+
+
+if (!game) {
+
+    content.innerHTML = `
+        <div class="emptyState">
+            NO DATA YET.<br><br>
+            Play a bit on the <a href="index.html">Life RPG</a> page first,
+            then come back to track your skills.
+        </div>
+    `;
+
+} else {
+
+    // Seeded only when the key has never existed. An empty list means the
+    // user cleared it on purpose, so the starters must not come back.
+    function ensureSkills() {
+
+        if (!Array.isArray(game.skills)) {
+            game.skills = [
+                { id: "skill_handwriting", name: "Handwriting", progress: 0, completed: false },
+                { id: "skill_psc", name: "PSC", progress: 0, completed: false }
+            ];
+            saveGame(game);
+        }
+
+    }
+
+
+    // Other pages write the whole save object back too, so re-read the
+    // latest state right before mutating - otherwise this page's snapshot
+    // (taken at load) would clobber anything changed since.
+    function refreshGame() {
+
+        const latest = loadGame();
+        if (latest) {
+            game = latest;
+        }
+
+        ensureSkills();
+
+    }
+
+
+    function applyProgressSideEffects() {
+
+        let required = game.level * 100;
+
+        while (game.xp >= required) {
+            game.xp -= required;
+            game.level++;
+            game.coins += 100;
+            game.creditsEarned = (game.creditsEarned || 0) + 100;
+            required = game.level * 100;
+        }
+
+        const newTierIndex = Math.min(
+            Math.floor(game.totalScore / TIER_SCORE_STEP),
+            TIER_COUNT - 1
+        );
+
+        if (newTierIndex > (game.tierIndex || 0)) {
+            game.tierIndex = newTierIndex;
+        }
+
+        if (!game.divaUnlocked && game.totalScore >= DIVA_SCORE_REQUIREMENT) {
+            game.divaUnlocked = true;
+        }
+
+        const unlocked = Math.min(
+            COLLECTIBLE_IDS.length,
+            Math.floor((game.creditsEarned || 0) / COLLECTIBLE_CREDITS_STEP)
+        );
+
+        if (unlocked > (game.collectiblesUnlockedCount || 0)) {
+            game.collectiblesUnlockedCount = unlocked;
+        }
+
+    }
+
+
+    function addSkill() {
+
+        const input = document.getElementById("newSkillText");
+        const name = input.value.trim();
+
+        if (!name) {
+            return;
+        }
+
+        refreshGame();
+
+        game.skills.push({
+            id: "skill_" + Date.now(),
+            name: name,
+            progress: 0,
+            completed: false
+        });
+
+        saveGame(game);
+        render();
+
+    }
+
+
+    function addSkillProgress(id) {
+
+        refreshGame();
+
+        const skill = game.skills.find(s => s.id === id);
+
+        if (!skill || skill.completed) {
+            return;
+        }
+
+        skill.progress = Math.min(SKILL_TARGET, (skill.progress || 0) + SKILL_STEP);
+
+        let justFinished = false;
+
+        if (skill.progress >= SKILL_TARGET) {
+
+            skill.completed = true;
+            justFinished = true;
+
+            game.xp = (game.xp || 0) + SKILL_XP_REWARD;
+            game.totalScore = (game.totalScore || 0) + SKILL_XP_REWARD;
+            game.coins = (game.coins || 0) + SKILL_CREDIT_REWARD;
+            game.creditsEarned = (game.creditsEarned || 0) + SKILL_CREDIT_REWARD;
+
+            applyProgressSideEffects();
+
+        }
+
+        saveGame(game);
+        render();
+
+        if (justFinished) {
+            alert("🎓 SKILL MASTERED: " + skill.name +
+                  "\n+" + SKILL_XP_REWARD + " XP | +" + SKILL_CREDIT_REWARD + " CREDITS");
+        }
+
+    }
+
+
+    function deleteSkill(id) {
+
+        const skill = game.skills.find(s => s.id === id);
+        const label = skill ? skill.name : "this skill";
+
+        if (!confirm("Remove " + label + " from the list?")) {
+            return;
+        }
+
+        refreshGame();
+
+        game.skills = game.skills.filter(s => s.id !== id);
+
+        saveGame(game);
+        render();
+
+    }
+
+
+    function skillHTML(skill) {
+
+        const progress = Math.min(SKILL_TARGET, skill.progress || 0);
+        const percent = (progress / SKILL_TARGET) * 100;
+        const done = skill.completed === true;
+
+        return `
+            <div class="skill ${done ? "completed" : ""}">
+
+                <div class="skillHead">
+                    <span class="skillName">${skill.name}</span>
+                    <button class="deleteBtn" onclick="deleteSkill('${skill.id}')">&times;</button>
+                </div>
+
+                <div class="skillMeta">
+                    ${progress} / ${SKILL_TARGET} POINTS${done
+                        ? " &middot; MASTERED"
+                        : " &middot; " + Math.ceil((SKILL_TARGET - progress) / SKILL_STEP) + " SESSIONS LEFT"}
+                </div>
+
+                <div class="progressRow">
+                    <div class="progressBar">
+                        <div class="progressFill ${done ? "completed" : ""}" style="width: ${percent}%"></div>
+                    </div>
+                    ${done
+                        ? `<div class="doneStamp">DONE</div>`
+                        : `<button class="plusBtn" onclick="addSkillProgress('${skill.id}')">+${SKILL_STEP}</button>`}
+                </div>
+
+            </div>
+        `;
+
+    }
+
+
+    function render() {
+
+        ensureSkills();
+
+        const learning = game.skills.filter(s => !s.completed);
+        const mastered = game.skills.filter(s => s.completed);
+
+        content.innerHTML = `
+
+            <div class="addForm">
+                <input type="text" id="newSkillText" placeholder="What are you learning?" maxlength="60">
+                <button class="addBtn" onclick="addSkill()">Add skill</button>
+            </div>
+
+            <div class="sectionTitle">
+                <span>Learning</span>
+                <span class="sectionCount">${learning.length}</span>
+            </div>
+
+            ${learning.length
+                ? learning.map(skillHTML).join("")
+                : `<div class="emptyNote">Nothing in progress. Add one above.</div>`}
+
+            ${mastered.length ? `
+                <div class="sectionTitle" style="margin-top: 24px;">
+                    <span>Mastered</span>
+                    <span class="sectionCount">${mastered.length}</span>
+                </div>
+                ${mastered.map(skillHTML).join("")}
+            ` : ""}
+
+            <div class="footNote">
+                Each tap is +${SKILL_STEP}. At ${SKILL_TARGET} the skill is
+                mastered and pays +${SKILL_XP_REWARD} XP and
+                +${SKILL_CREDIT_REWARD} credits &mdash; the same payout the old
+                "Master a Skill" quest gave, which this page replaces.
+            </div>
+
+        `;
+
+    }
+
+
+    window.addSkill = addSkill;
+    window.addSkillProgress = addSkillProgress;
+    window.deleteSkill = deleteSkill;
+
+    render();
+
+}
+
+</script>
+
+</body>
+</html>

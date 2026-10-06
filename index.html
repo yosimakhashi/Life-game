@@ -116,6 +116,27 @@ body::before {
     justify-content: center;
 }
 
+.skillsLink {
+    position: absolute;
+    top: 14px;
+    right: 140px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-panel-alt);
+    font-size: 15px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.skillsLink:active {
+    transform: scale(0.92);
+    box-shadow: 0 1px 4px rgba(43, 38, 32, 0.18);
+}
+
 .rewardsLink {
     position: absolute;
     top: 14px;
@@ -148,7 +169,7 @@ body::before {
     color: var(--ink-blue);
     text-shadow: none;
     font-weight: bold;
-    padding-right: 124px;
+    padding-right: 166px;
 }
 
 .title {
@@ -1121,6 +1142,7 @@ body::before {
         <button class="soundToggle" id="soundToggle" onclick="toggleFeedback()">🔊</button>
         <a class="planLink" href="plan.html" title="The Plan">📋</a>
         <a class="rewardsLink" href="rewards.html" title="Rewards">🎁</a>
+        <a class="skillsLink" href="skills.html" title="Skills">🎓</a>
         <div class="logo">MINDJACK.9 // LIFE OPERATING SYSTEM</div>
         <div class="title">LIFE RPG</div>
         <div class="subtitle">Upgrade yourself. Complete missions. Become harder to kill.</div>
@@ -1906,16 +1928,6 @@ const quests = [
         icon: "💪",
         name: "Transform Your Body",
         description: "Hit a real fitness goal - a target weight, a strength milestone, or a race. Show up for it consistently.",
-        xp: 600,
-        coins: 250,
-        target: 100
-    },
-
-    {
-        id: "master_skill",
-        icon: "🎓",
-        name: "Master a Skill",
-        description: "Finish a course, earn a certification, or reach real fluency in something you've been putting off.",
         xp: 600,
         coins: 250,
         target: 100
