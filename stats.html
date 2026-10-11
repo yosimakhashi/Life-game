@@ -4,9 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>STATS | MINDJACK.9</title>
+<meta name="theme-color" content="#0a0e13">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Roboto+Condensed:wght@400;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Alegreya:ital,wght@0,400;0,600;1,400&family=Alegreya+Sans+SC:wght@500;700&display=swap" rel="stylesheet">
 
 <style>
 * {
@@ -15,18 +16,18 @@
 }
 
 :root {
-    --bg: #0a0718;
-    --bg-panel: #141026;
-    --bg-panel-alt: #1d1636;
-    --bg-input: #0d0a1e;
-    --border: #3b2f63;
-    --ink-blue: #ff2e88;
-    --stamp-red: #ff4b5c;
-    --ink-plum: #c06bff;
-    --ink-green: #ff2e88;
-    --ink-ochre: #ffa62b;
-    --text-primary: #f1ecfa;
-    --text-dim: #9890b8;
+    --bg: #0a0e13;
+    --bg-panel: #1a232e;
+    --bg-panel-alt: #111821;
+    --bg-input: #0a0e13;
+    --border: #2a3644;
+    --ink-blue: #8fc3dc;
+    --stamp-red: #a63a32;
+    --ink-plum: #93a6b4;
+    --ink-green: #8fc3dc;
+    --ink-ochre: #c9a24a;
+    --text-primary: #dfe9ef;
+    --text-dim: #93a6b4;
 }
 
 @keyframes pulseGlow {
@@ -39,13 +40,13 @@ body {
     min-height: 100vh;
     background-color: var(--bg);
     background-image:
-        radial-gradient(ellipse at 50% 0%, rgba(255, 166, 43, 0.17), transparent 58%),
-        radial-gradient(ellipse at 15% 92%, rgba(255, 46, 136, 0.14), transparent 55%),
-        radial-gradient(ellipse at 88% 34%, rgba(192, 107, 255, 0.10), transparent 50%),
-        linear-gradient(180deg, #100b24 0%, #0a0718 55%, #080b09 100%);
+        radial-gradient(ellipse at 50% 0%, rgba(201, 162, 74, 0.17), transparent 58%),
+        radial-gradient(ellipse at 15% 92%, rgba(143, 195, 220, 0.14), transparent 55%),
+        radial-gradient(ellipse at 88% 34%, rgba(147, 166, 180, 0.10), transparent 50%),
+        linear-gradient(180deg, #111821 0%, #0a0e13 55%, #080b09 100%);
     background-attachment: fixed;
     color: var(--text-primary);
-    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+    font-family: 'Alegreya', Georgia, serif;
 }
 
 body::before {
@@ -100,7 +101,7 @@ body::before {
 }
 
 .title {
-    font-family: 'Anton', 'Impact', sans-serif;
+    font-family: 'Cinzel', Georgia, serif;
     font-size: 26px;
     font-weight: 900;
     letter-spacing: 2px;
@@ -121,7 +122,7 @@ body::before {
 }
 
 .sectionTitle {
-    font-family: 'Anton', 'Impact', sans-serif;
+    font-family: 'Cinzel', Georgia, serif;
     font-size: 16px;
     font-weight: bold;
     letter-spacing: 1px;
@@ -150,7 +151,7 @@ body::before {
 }
 
 .statTile .value {
-    font-family: 'Anton', 'Impact', sans-serif;
+    font-family: 'Cinzel', Georgia, serif;
     font-size: 20px;
     font-weight: bold;
     color: var(--ink-blue);
@@ -272,8 +273,8 @@ svg.chart {
         to bottom,
         transparent 0px,
         transparent 27px,
-        rgba(255, 46, 136, 0.07) 27px,
-        rgba(255, 46, 136, 0.07) 28px
+        rgba(143, 195, 220, 0.07) 27px,
+        rgba(143, 195, 220, 0.07) 28px
     );
 }
 
@@ -286,7 +287,7 @@ svg.chart {
 .questDescription,
 .badgeDesc,
 .cardQuote {
-    font-family: 'Permanent Marker', cursive;
+    font-family: 'Alegreya Sans SC', system-ui, sans-serif;
     font-size: 17px;
     line-height: 1.4;
 }
@@ -307,291 +308,470 @@ svg.chart {
 }
 
 
-
 /* ============================================================
-   LOS SANTOS, AFTER DARK
-   Appended last so it overrides the flatter rules above. The
-   old paper theme left text-shadow:none and transparent fills
-   all over the sheet, which is what made this read as dull.
+   THE LONG NIGHT
+   Ported from winter-arc/: Cinzel over stone panels, ice for
+   anything conquered, gold for anything earned, blood for
+   anything lost. Appended last, so it overrides the sheet above
+   rather than rewriting it.
    ============================================================ */
 
 :root {
-    --bg: #0a0718;
-    --bg-panel: #141026;
-    --bg-panel-alt: #1d1636;
-    --bg-input: #0d0a1e;
-    --border: #3b2f63;
-    --ink-blue: #ff2e88;
-    --stamp-red: #ff4b5c;
-    --ink-plum: #c06bff;
-    --ink-green: #22e0ff;
-    --ink-ochre: #ffa62b;
-    --text-primary: #f1ecfa;
-    --text-dim: #9890b8;
+    color-scheme: dark;
 
-    --fc-bg: #0a0718;
-    --fc-panel: #141026;
-    --fc-panel-alt: #1d1636;
-    --fc-input: #0d0a1e;
-    --fc-border: #3b2f63;
-    --fc-green: #22e0ff;
-    --fc-green-dim: #1f9fb8;
-    --fc-amber: #ffa62b;
-    --fc-soap: #c06bff;
-    --fc-rust: #ff4b5c;
-    --fc-rust-dim: #b03048;
-    --fc-text: #f1ecfa;
-    --fc-dim: #9890b8;
+    --night: #0a0e13;
+    --night-2: #111821;
+    --stone: #1a232e;
+    --stone-line: #2a3644;
+    --frost: #dfe9ef;
+    --frost-dim: #93a6b4;
+    --ice: #8fc3dc;
+    --gold: #c9a24a;
+    --gold-dim: #7d6630;
+    --blood: #a63a32;
+
+    --font-display: 'Cinzel', Georgia, serif;
+    --font-body: 'Alegreya', Georgia, serif;
+    --font-label: 'Alegreya Sans SC', system-ui, sans-serif;
+
+    --bg: var(--night);
+    --bg-panel: var(--stone);
+    --bg-panel-alt: var(--night-2);
+    --bg-input: var(--night);
+    --border: var(--stone-line);
+    --ink-blue: var(--ice);
+    --ink-green: var(--ice);
+    --ink-ochre: var(--gold);
+    --ink-plum: var(--frost-dim);
+    --stamp-red: var(--blood);
+    --text-primary: var(--frost);
+    --text-dim: var(--frost-dim);
+
+    --fc-bg: var(--night);
+    --fc-panel: var(--stone);
+    --fc-panel-alt: var(--night-2);
+    --fc-input: var(--night);
+    --fc-border: var(--stone-line);
+    --fc-green: var(--ice);
+    --fc-green-dim: #5c8699;
+    --fc-amber: var(--gold);
+    --fc-soap: var(--frost-dim);
+    --fc-rust: var(--blood);
+    --fc-rust-dim: #7a2b24;
+    --fc-text: var(--frost);
+    --fc-dim: var(--frost-dim);
 }
+
+html { background: var(--night); }
 
 body {
-    background-image:
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 260' preserveAspectRatio='xMidYMax meet'%3E%3Cg fill='%2305080620'%3E%3C/g%3E%3Cg fill='%23040705'%3E%3Crect x='0' y='168' width='96' height='92'/%3E%3Crect x='88' y='140' width='70' height='120'/%3E%3Crect x='150' y='186' width='110' height='74'/%3E%3Crect x='252' y='96' width='58' height='164'/%3E%3Crect x='268' y='70' width='16' height='30'/%3E%3Crect x='304' y='150' width='84' height='110'/%3E%3Crect x='380' y='118' width='46' height='142'/%3E%3Crect x='432' y='64' width='64' height='196'/%3E%3Crect x='456' y='34' width='14' height='34'/%3E%3Crect x='492' y='110' width='52' height='150'/%3E%3Crect x='540' y='84' width='72' height='176'/%3E%3Crect x='566' y='52' width='18' height='36'/%3E%3Crect x='608' y='134' width='58' height='126'/%3E%3Crect x='662' y='102' width='66' height='158'/%3E%3Crect x='724' y='158' width='78' height='102'/%3E%3Crect x='798' y='124' width='54' height='136'/%3E%3Crect x='848' y='176' width='96' height='84'/%3E%3Crect x='940' y='146' width='62' height='114'/%3E%3Crect x='998' y='190' width='120' height='70'/%3E%3Crect x='1110' y='162' width='90' height='98'/%3E%3Cpath d='M196 260 C200 214 206 184 214 156 L224 158 C216 186 210 216 208 260 Z'/%3E%3Cpath d='M219 152 C198 136 176 132 158 138 C178 134 200 142 216 158 Z'/%3E%3Cpath d='M219 152 C236 130 258 122 278 126 C256 128 236 140 222 158 Z'/%3E%3Cpath d='M219 152 C210 128 196 110 178 100 C200 108 214 124 222 148 Z'/%3E%3Cpath d='M219 152 C230 128 248 112 268 104 C246 116 232 132 224 150 Z'/%3E%3Cpath d='M219 152 C222 126 220 104 212 84 C224 102 228 126 226 150 Z'/%3E%3Cpath d='M952 260 C956 210 962 178 972 148 L982 150 C972 180 966 212 964 260 Z'/%3E%3Cpath d='M977 144 C956 126 932 122 914 128 C936 124 958 132 974 150 Z'/%3E%3Cpath d='M977 144 C996 120 1020 112 1040 116 C1016 120 996 132 980 150 Z'/%3E%3Cpath d='M977 144 C968 118 952 100 934 90 C956 98 972 116 980 140 Z'/%3E%3Cpath d='M977 144 C990 118 1008 102 1028 94 C1006 106 990 124 982 142 Z'/%3E%3Cpath d='M977 144 C980 118 978 96 970 76 C982 94 986 118 984 142 Z'/%3E%3C/g%3E%3C/svg%3E"),
-        linear-gradient(180deg, transparent 58%, rgba(255, 46, 136, 0.20) 82%, rgba(192, 107, 255, 0.22) 100%),
-        radial-gradient(ellipse 90% 40% at 50% 100%, rgba(255, 46, 136, 0.30), transparent 70%),
-        radial-gradient(ellipse at 50% 0%, rgba(255, 46, 136, 0.14), transparent 55%),
-        radial-gradient(ellipse at 12% 24%, rgba(34, 224, 255, 0.10), transparent 48%),
-        linear-gradient(180deg, #100b24 0%, #0a0718 48%, #060418 100%);
-    background-repeat: no-repeat;
-    background-position: bottom center, bottom, bottom, top, left top, top;
-    background-size: 100% auto, 100% 46vh, 100% 34vh, 100% 60vh, 100% 60vh, 100% 100%;
-    background-attachment: fixed;
+    background:
+        radial-gradient(ellipse at 50% -10%, #1b2a38 0%, var(--night) 60%) fixed,
+        var(--night);
+    color: var(--frost);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.55;
 }
 
-@keyframes neonBreathe {
-    0%, 100% { box-shadow: 0 0 0 rgba(34, 224, 255, 0), 0 6px 22px rgba(0, 0, 0, 0.55); }
-    50%      { box-shadow: 0 0 22px rgba(34, 224, 255, 0.18), 0 6px 22px rgba(0, 0, 0, 0.55); }
+/* the snowfall canvas sits under everything */
+#snow {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
 }
 
-@keyframes stripeRoll {
-    from { background-position: 0 0; }
-    to   { background-position: 36px 0; }
-}
+.app { position: relative; z-index: 1; }
 
-/* PANELS -------------------------------------------------- */
+/* PANELS: scrolls of stone ---------------------------------- */
 
 .header,
 .player,
-.mission,
-.quest,
-.stat,
-.statTile,
-.chartCard,
-.badge,
-.reward,
-.sideOp,
-.skill,
-.card,
-.addForm,
 .section,
+.chartCard,
+.addForm,
 .logLevel,
-.traitRow,
-.side .traitRow {
-    background-image: linear-gradient(165deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.22));
+.side {
+    background: color-mix(in srgb, var(--stone) 88%, transparent);
+    background-image: none;
+    border: 1px solid var(--stone-line);
+    border-radius: 6px;
+    box-shadow: none;
+    animation: none;
 }
 
 .header,
 .player {
-    border-width: 1px;
-    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.07);
-    animation: neonBreathe 4.5s ease-in-out infinite;
+    padding: 22px 20px;
 }
+
+/* HERO ------------------------------------------------------ */
+
+.title {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(34px, 8vw, 56px);
+    letter-spacing: .08em;
+    line-height: 1.05;
+    text-transform: none;
+    text-shadow: none;
+    background: linear-gradient(180deg, #f4f9fc 0%, var(--ice) 70%, #4f7d94 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.logo {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .3em;
+    color: var(--gold);
+    text-shadow: none;
+    text-transform: uppercase;
+}
+
+.subtitle,
+.rule {
+    font-family: var(--font-body);
+    color: var(--frost-dim);
+    font-size: 16px;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.backLink {
+    font-family: var(--font-label);
+    letter-spacing: .12em;
+    text-transform: lowercase;
+    color: var(--frost-dim);
+    font-size: 14px;
+}
+
+.sectionTitle,
+.sideTitle,
+.traitGroupName {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: none;
+    text-shadow: none;
+    color: var(--frost);
+}
+
+.sectionTitle { font-size: 22px; }
+
+.sectionTitle span {
+    font-family: var(--font-display);
+    color: var(--gold);
+    text-transform: none;
+    letter-spacing: .04em;
+}
+
+.sectionTitle::before { content: none; }
+
+.sectionCount,
+.sideCount,
+.statLabel,
+.ledgerLabel,
+.skillMeta,
+.cardLockedText,
+.cardLockedHint {
+    font-family: var(--font-label);
+    letter-spacing: .12em;
+    text-transform: lowercase;
+    color: var(--frost-dim);
+    text-shadow: none;
+}
+
+/* NUMBERS --------------------------------------------------- */
+
+.statValue,
+.ledgerValue,
+.logLevelTotal,
+.logGrandTotal,
+.level,
+.rank,
+.score b {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    color: var(--frost);
+    text-shadow: none;
+}
+
+.statValue { color: var(--ice); }
+
+/* CARDS: the trials ----------------------------------------- */
 
 .mission,
 .quest,
 .badge,
-.reward,
+.rewardCard,
 .sideOp,
 .skill,
-.chartCard,
-.card {
-    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+.card,
+.traitRow,
+.logEntry,
+.stat,
+.statTile {
+    background: linear-gradient(155deg, #1c2733 0%, #121a23 55%, #0b1016 100%);
+    border: 1px solid #33414f;
+    border-radius: 6px;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .06),
+        inset 0 -18px 30px rgba(0, 0, 0, .35),
+        0 6px 18px rgba(0, 0, 0, .35);
+    transition: transform .12s ease, border-color .2s, box-shadow .25s;
 }
 
-/* DISPLAY TYPE -------------------------------------------- */
-
-.title {
-    font-size: 34px;
-    letter-spacing: 3px;
-    color: var(--text-primary);
-    text-shadow:
-        2px 2px 0 #060418,
-        4px 4px 0 rgba(0, 0, 0, 0.55),
-        0 0 26px rgba(255, 46, 136, 0.38);
+.mission:active,
+.quest:active,
+.skill:active,
+.sideOp:active {
+    transform: scale(.995);
 }
 
-.logo {
-    color: var(--ink-blue);
-    text-shadow: 0 0 14px rgba(255, 46, 136, 0.45);
+/* mission icons become crests */
+.icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle at 35% 30%, #2b3a48, #0e141b 70%);
+    border: 2px solid var(--gold-dim);
+    box-shadow: inset 0 0 0 3px #0b1016, 0 0 0 1px rgba(201, 162, 74, .25);
 }
 
-.sectionTitle {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    font-size: 18px;
-    letter-spacing: 2px;
-    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
+.missionName,
+.questName,
+.rewardName,
+.skillName,
+.badge b,
+.traitName {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: .04em;
 }
 
-.sectionTitle::before {
-    content: "";
-    width: 5px;
-    height: 17px;
-    border-radius: 2px;
-    background: linear-gradient(180deg, var(--ink-blue), var(--ink-green));
-    box-shadow: 0 0 10px rgba(255, 46, 136, 0.55);
-    flex-shrink: 0;
+/* conquered */
+.mission.completed,
+.quest.completed,
+.skill.completed,
+.card.unlocked {
+    border-color: var(--ice);
+    background: linear-gradient(155deg, #1d3444 0%, #13222e 55%, #0b1016 100%);
+    box-shadow:
+        0 0 0 1px rgba(143, 195, 220, .45),
+        0 0 26px rgba(143, 195, 220, .22),
+        inset 0 1px 0 rgba(255, 255, 255, .08);
 }
 
-.statValue,
-.logLevelTotal,
-.logGrandTotal {
-    color: var(--ink-green);
-    text-shadow: 0 0 14px rgba(34, 224, 255, 0.45);
+.mission.completed .icon,
+.quest.completed .icon {
+    background: radial-gradient(circle at 35% 30%, #e9f5fb, #8fc3dc 70%);
+    border-color: var(--frost);
+    box-shadow: 0 0 18px rgba(143, 195, 220, .6);
 }
 
-.rank,
-.level {
-    text-shadow: 0 0 16px rgba(255, 46, 136, 0.45);
-}
-
-/* BARS ----------------------------------------------------- */
+/* BARS: thin, like the arc's own ---------------------------- */
 
 .bar,
 .tierBar,
 .questProgressBar,
 .progressBar {
-    background: #060418;
-    border-color: var(--border);
-    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.75);
+    height: 6px;
+    background: var(--stone-line);
+    border: 0;
+    border-radius: 2px;
+    box-shadow: none;
+    overflow: hidden;
 }
 
 .xpBar,
 .questProgressFill,
 .progressFill,
 .tierBarFill {
-    position: relative;
-    background-image: linear-gradient(
-        45deg,
-        rgba(255, 255, 255, 0.16) 25%, transparent 25%,
-        transparent 50%, rgba(255, 255, 255, 0.16) 50%,
-        rgba(255, 255, 255, 0.16) 75%, transparent 75%);
-    background-size: 36px 36px;
-    animation: stripeRoll 0.9s linear infinite;
-}
-
-.xpBar {
-    background-color: var(--ink-blue);
-    box-shadow: 0 0 14px rgba(255, 46, 136, 0.65);
+    background-image: none;
+    background-color: transparent;
+    background: linear-gradient(90deg, var(--ice), var(--frost));
+    border-radius: 0;
+    box-shadow: none;
+    animation: none;
 }
 
 .questProgressFill,
 .progressFill {
-    background-color: var(--ink-ochre);
-    box-shadow: 0 0 14px rgba(255, 166, 43, 0.6);
+    background: linear-gradient(90deg, var(--gold), #f0d58a);
+    box-shadow: 0 0 10px rgba(201, 162, 74, .5);
 }
 
 .questProgressFill.completed,
 .progressFill.completed {
-    background-color: var(--ink-green);
-    box-shadow: 0 0 16px rgba(34, 224, 255, 0.7);
+    background: linear-gradient(90deg, var(--ice), var(--frost));
+    box-shadow: 0 0 10px rgba(143, 195, 220, .5);
 }
 
-/* BUTTONS -------------------------------------------------- */
+/* BUTTONS --------------------------------------------------- */
 
 .completeBtn,
-.questPlusBtn,
 .questCompleteBtn,
 .redeemBtn,
-.navBtn,
 .addBtn,
-.plusBtn,
 .addMissionBtn,
 .logAddBtn,
+.saveMissionBtn {
+    background: var(--gold);
+    background-image: none;
+    color: #17120a;
+    border: 0;
+    border-radius: 3px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: none;
+    text-shadow: none;
+    box-shadow: none;
+}
+
+.completeBtn.completed,
+.questCompleteBtn.completed {
+    background: transparent;
+    color: var(--ice);
+    border: 2px solid var(--ice);
+    transform: rotate(-1.5deg);
+    letter-spacing: .2em;
+    font-size: 13px;
+    box-shadow: none;
+}
+
+.navBtn,
+.questPlusBtn,
+.plusBtn,
 .traitBtn,
 .tab,
 .dayChip,
-.traitPlus {
-    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(0, 0, 0, 0.30));
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.10);
-    transition: transform 0.12s ease, box-shadow 0.18s ease, filter 0.18s ease;
+.traitPlus,
+.logSubtractBtn,
+.cancelMissionBtn,
+.exportBtn,
+.importBtn {
+    background: transparent;
+    background-image: none;
+    color: var(--frost);
+    border: 1px solid var(--stone-line);
+    border-radius: 3px;
+    font-family: var(--font-label);
+    letter-spacing: .08em;
+    text-transform: none;
+    text-shadow: none;
+    box-shadow: none;
 }
 
-.completeBtn:active,
-.questPlusBtn:active,
-.questCompleteBtn:active,
-.redeemBtn:active,
 .navBtn:active,
-.addBtn:active,
+.questPlusBtn:active,
 .plusBtn:active,
-.addMissionBtn:active,
-.logAddBtn:active,
 .traitBtn:active,
 .tab:active,
-.dayChip:active,
-.traitPlus:active {
-    transform: translateY(1px) scale(0.985);
-    filter: brightness(1.25);
+.dayChip:active {
+    border-color: var(--gold-dim);
+    color: var(--gold);
+    transform: translateY(-1px);
 }
 
-.completeBtn {
-    border-color: var(--ink-green);
-    color: var(--ink-green);
-    text-shadow: 0 0 10px rgba(34, 224, 255, 0.45);
+.tab.active,
+.dayChip.active {
+    border-color: var(--ice);
+    color: var(--frost);
+    background: var(--night-2);
 }
 
-.navBtn {
-    border-color: var(--border);
+.navBtnStats,
+.navBtnAchievements,
+.navBtnSideOps,
+.navBtnCollectibles {
+    border-left: 1px solid var(--stone-line);
 }
 
-/* NAV TILES ------------------------------------------------ */
-
-.navBtnStats { border-left: 3px solid var(--ink-blue); }
-.navBtnAchievements { border-left: 3px solid var(--ink-ochre); }
-.navBtnSideOps { border-left: 3px solid var(--ink-plum); }
-.navBtnCollectibles { border-left: 3px solid var(--ink-green); }
-
-/* HEADER ICONS --------------------------------------------- */
-
+/* header icons become seals */
 .soundToggle,
 .planLink,
 .rewardsLink,
 .skillsLink,
 .traitsLink,
 .vaultLink {
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--gold-dim);
+    background: radial-gradient(circle at 35% 30%, #2b3a48, #0e141b 70%);
+    box-shadow: 0 0 0 1px rgba(201, 162, 74, .2);
 }
 
-/* INPUTS --------------------------------------------------- */
+/* INPUTS ---------------------------------------------------- */
 
 input,
 textarea,
 select {
-    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+    background: var(--night);
+    border: 1px solid var(--stone-line);
+    border-radius: 3px;
+    color: var(--frost);
+    font-family: var(--font-body);
+    box-shadow: none;
 }
 
 input:focus,
 textarea:focus,
 select:focus {
-    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(34, 224, 255, 0.30);
+    outline: 2px solid var(--ice);
+    outline-offset: 2px;
+    border-color: var(--stone-line);
+    box-shadow: none;
+}
+
+/* a disabled gold seal dims as a whole; recolouring only its text
+   left gold-on-gold and the label vanished */
+.completeBtn:disabled,
+.questCompleteBtn:disabled,
+.redeemBtn:disabled,
+.addBtn:disabled,
+.addMissionBtn:disabled,
+.logAddBtn:disabled {
+    opacity: .45;
+    color: #17120a;
+    background: var(--gold);
+    border: 0;
+    cursor: not-allowed;
+}
+
+.mission .reward,
+.questReward {
+    font-family: var(--font-label);
+    letter-spacing: .08em;
+    color: var(--gold-dim);
+    background: none;
+    border: 0;
+}
+
+.emptyState,
+.emptyNote,
+.footNote {
+    font-family: var(--font-body);
+    color: var(--frost-dim);
+    font-style: italic;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .header,
-    .player,
-    .xpBar,
-    .questProgressFill,
-    .progressFill,
-    .tierBarFill {
-        animation: none;
-    }
+    #snow { display: none; }
+    .mission, .quest, .skill, .sideOp { transition: none; }
 }
 
 </style>
 </head>
 
 <body>
+
+<canvas id="snow" aria-hidden="true"></canvas>
 
 <div class="app">
 
@@ -615,14 +795,14 @@ select:focus {
 const TIER_SCORE_STEP = 5000;
 
 const tiers = [
-    { name: "ROOKIE",    icon: "🔰", color: "#a39880" },
-    { name: "BRONZE",    icon: "🥉", color: "#c47f3c" },
-    { name: "SILVER",    icon: "🥈", color: "#aab4bf" },
-    { name: "GOLD",      icon: "🥇", color: "#e0a93c" },
-    { name: "PLATINUM",  icon: "🔷", color: "#58b3a2" },
-    { name: "DIAMOND",   icon: "💎", color: "#4f9fe0" },
-    { name: "MASTER",    icon: "👑", color: "#a173c9" },
-    { name: "LEGENDARY", icon: "🌟", color: "#e0564a" }
+    { name: "ROOKIE",    icon: "🔰", color: "#8b949e" },
+    { name: "BRONZE",    icon: "🥉", color: "#b0763a" },
+    { name: "SILVER",    icon: "🥈", color: "#c6d2dc" },
+    { name: "GOLD",      icon: "🥇", color: "#c9a24a" },
+    { name: "PLATINUM",  icon: "🔷", color: "#6fb3b8" },
+    { name: "DIAMOND",   icon: "💎", color: "#8fc3dc" },
+    { name: "MASTER",    icon: "👑", color: "#9a93c4" },
+    { name: "LEGENDARY", icon: "🌟", color: "#a63a32" }
 ];
 
 function getTier(score) {
@@ -732,13 +912,13 @@ if (!raw) {
 
             <div class="chartCard">
                 <div class="chartTitle">LIFETIME <span>SCORE</span></div>
-                ${buildChart(series, "score", "#ff2e88")}
+                ${buildChart(series, "score", "#8fc3dc")}
                 <div class="chartAxis"><span>${firstDate}</span><span>${lastDate}</span></div>
             </div>
 
             <div class="chartCard credits">
                 <div class="chartTitle">CREDITS <span>BALANCE</span></div>
-                ${buildChart(series, "coins", "#ffa62b")}
+                ${buildChart(series, "coins", "#c9a24a")}
                 <div class="chartAxis"><span>${firstDate}</span><span>${lastDate}</span></div>
             </div>
         </div>
@@ -774,6 +954,54 @@ if (!raw) {
     content.innerHTML = statsHTML + chartsHTML + tableHTML;
 
 }
+
+
+
+/* ---------- snowfall, ported from the Winter Arc ---------- */
+(function () {
+
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const c = document.getElementById("snow");
+    if (!c) return;
+
+    const ctx = c.getContext("2d");
+    let w, h, flakes = [];
+
+    function resize() {
+        w = c.width = innerWidth;
+        h = c.height = innerHeight;
+        flakes = Array.from(
+            { length: Math.min(120, Math.floor(w / 10)) },
+            () => ({
+                x: Math.random() * w,
+                y: Math.random() * h,
+                r: Math.random() * 1.8 + 0.4,
+                s: Math.random() * 0.5 + 0.2,
+                d: Math.random() * 6.28
+            })
+        );
+    }
+
+    resize();
+    addEventListener("resize", resize);
+
+    (function tick() {
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = "rgba(223, 233, 239, .55)";
+        for (const f of flakes) {
+            f.y += f.s;
+            f.d += 0.01;
+            f.x += Math.sin(f.d) * 0.3;
+            if (f.y > h) { f.y = -4; f.x = Math.random() * w; }
+            ctx.beginPath();
+            ctx.arc(f.x, f.y, f.r, 0, 6.28);
+            ctx.fill();
+        }
+        requestAnimationFrame(tick);
+    })();
+
+})();
 
 </script>
 
