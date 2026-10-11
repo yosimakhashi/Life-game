@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE VAULT | MINDJACK.9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Roboto+Condensed:wght@400;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+
+<style>
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    --bg: #0e1310;
+    --bg-panel: #19211a;
+    --bg-panel-alt: #212c22;
+    --bg-input: #121a13;
+    --border: #3c4f38;
+    --ink-blue: #76a94e;
+    --stamp-red: #c0392b;
+    --ink-plum: #9b6cb0;
+    --ink-green: #8ec63f;
+    --ink-ochre: #e8a33d;
+    --text-primary: #e7e3d4;
+    --text-dim: #92a089;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16); }
+    50% { box-shadow: 0 2px 7px rgba(0, 0, 0, 0.22); }
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--bg);
+    background-image:
+        radial-gradient(ellipse at 50% 0%, rgba(232, 163, 61, 0.17), transparent 58%),
+        radial-gradient(ellipse at 15% 92%, rgba(118, 169, 78, 0.14), transparent 55%),
+        radial-gradient(ellipse at 88% 34%, rgba(155, 108, 176, 0.10), transparent 50%),
+        linear-gradient(180deg, #131a14 0%, #0e1310 55%, #080b09 100%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.30;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.25'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+}
+
+.app {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+    margin: auto;
+    padding: 18px;
+    padding-bottom: 50px;
+}
+
+.header {
+    position: relative;
+    border: 1px solid var(--ink-green);
+    background: var(--bg-panel);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 16px;
+    animation: pulseGlow 3s ease-in-out infinite;
+}
+
+.backLink {
+    display: inline-block;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.backLink:active {
+    color: var(--ink-green);
+}
+
+.logo {
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: var(--ink-green);
+    text-shadow: none;
+    font-weight: bold;
+}
+
+.title {
+    font-family: 'Anton', 'Impact', sans-serif;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin-top: 8px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.18);
+}
+
+.subtitle {
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+.progressWrap {
+    margin-top: 14px;
+}
+
+.progressText {
+    font-size: 12px;
+    color: var(--ink-green);
+    text-shadow: none;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+
+.progressBar {
+    height: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--ink-blue), var(--ink-green));
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    transition: 0.4s;
+}
+
+.cardGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.card {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--bg-panel-alt);
+    aspect-ratio: 3 / 4;
+}
+
+.card.unlocked {
+    border-color: var(--ink-green);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
+.card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.cardCaption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 14px;
+    background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+}
+
+.cardTitle {
+    font-family: 'Anton', 'Impact', sans-serif;
+    font-weight: bold;
+    font-size: 15px;
+    color: #f4ecda;
+}
+
+.cardQuote {
+    font-size: 11px;
+    color: #d8ccae;
+    margin-top: 3px;
+    font-style: italic;
+}
+
+.cardLocked {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--text-dim);
+}
+
+.cardLockedIcon {
+    font-size: 34px;
+    opacity: 0.5;
+}
+
+.cardLockedText {
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.cardLockedHint {
+    font-size: 10px;
+    color: var(--text-dim);
+    opacity: 0.7;
+}
+
+.emptyState {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.emptyState a {
+    color: var(--ink-green);
+}
+
+/* --- ANALOG PAPER --- */
+
+.header,
+.player,
+.mission,
+.quest,
+.rewardCard,
+.logLevel,
+.sideOp,
+.stat,
+.statTile,
+.chartCard,
+.card,
+.badge,
+.addForm {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14), 0 6px 14px rgba(0, 0, 0, 0.06);
+}
+
+/* faint ruled lines, like a notebook page */
+.header,
+.player {
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 27px,
+        rgba(118, 169, 78, 0.07) 27px,
+        rgba(118, 169, 78, 0.07) 28px
+    );
+}
+
+/* red margin rule down the left of the header */
+.header {
+    border-left: 3px double var(--stamp-red);
+}
+
+.subtitle,
+.questDescription,
+.badgeDesc {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 17px;
+    line-height: 1.4;
+}
+
+.cardQuote {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 16px;
+    line-height: 1.3;
+    color: #d8ccae;
+}
+
+/* completed things get rubber-stamped */
+.completeBtn.completed,
+.questCompleteBtn.completed {
+    border: 2px solid var(--stamp-red);
+    color: var(--stamp-red);
+    background: transparent;
+    transform: rotate(-0.6deg);
+    letter-spacing: 3px;
+    box-shadow: none;
+}
+
+.badge.unlocked {
+    border: 1px solid var(--stamp-red);
+}
+
+
+/* VAULT LINK */
+
+.vaultLink {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-panel-alt);
+    font-size: 16px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vaultLink:active {
+    transform: scale(0.92);
+    border-color: var(--ink-ochre);
+}
+
+.vaultCount {
+    position: absolute;
+    top: 58px;
+    right: 16px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    text-align: center;
+    width: 38px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <div class="header">
+        <a class="backLink" href="collectibles.html">&larr; BACK TO COLLECTIBLES</a>
+        <div class="logo">MINDJACK.9 // THE VAULT</div>
+        <div class="title">The Vault</div>
+        <div class="subtitle">Everything you've already earned.</div>
+        <div class="progressWrap" id="progressWrap"></div>
+    </div>
+
+    <div id="content"></div>
+
+</div>
+
+<script>
+
+const COLLECTIBLE_IDS = ["warrior", "samurai", "pirate", "fighter", "ninja"];
+const COLLECTIBLE_CREDITS_STEP = 1000;
+
+const COLLECTIBLE_META = {
+    warrior: { title: "Not Yet The End", quote: "Discipline builds freedom.", file: "collectibles/warrior.png" },
+    samurai: { title: "Same Scars, Different Sky", quote: "Still a warrior.", file: "collectibles/samurai.png" },
+    pirate:  { title: "Captain's Resolve", quote: "Chart your own course.", file: "collectibles/pirate.png" },
+    fighter: { title: "Pain Pays", quote: "Train. Eat. Study. Improve. Repeat.", file: "collectibles/fighter.png" },
+    ninja:   { title: "Fearless", quote: "In silence, strength resides.", file: "collectibles/ninja.png" },
+};
+
+
+// Keeping the drawn order stable matters: it decides which card each
+// unlock reveals. Rebuilding it wholesale on a length change would
+// reshuffle cards the user has already earned.
+function ensureCollectiblesOrder(game) {
+
+    const known = Array.isArray(game.collectiblesOrder) ? game.collectiblesOrder : [];
+
+    const kept = known.filter(id => COLLECTIBLE_IDS.indexOf(id) !== -1);
+
+    const fresh = COLLECTIBLE_IDS.filter(id => kept.indexOf(id) === -1);
+    for (let i = fresh.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = fresh[i];
+        fresh[i] = fresh[j];
+        fresh[j] = temp;
+    }
+
+    game.collectiblesOrder = kept.concat(fresh);
+
+}
+
+
+const raw = localStorage.getItem("mindjack9");
+const content = document.getElementById("content");
+const progressWrap = document.getElementById("progressWrap");
+
+if (!raw) {
+
+    content.innerHTML = `
+        <div class="emptyState">
+            NO DATA YET.<br><br>
+            Play a bit on the <a href="index.html">Life RPG</a> page first,
+            then come back to check your vault.
+        </div>
+    `;
+
+} else {
+
+    const game = JSON.parse(raw);
+
+    ensureCollectiblesOrder(game);
+    localStorage.setItem("mindjack9", JSON.stringify(game));
+
+    const creditsEarned = game.creditsEarned || 0;
+
+    const unlockedCount = Math.min(
+        COLLECTIBLE_IDS.length,
+        Math.floor(creditsEarned / COLLECTIBLE_CREDITS_STEP)
+    );
+
+    const unlockedIds = game.collectiblesOrder.slice(0, unlockedCount);
+
+    progressWrap.innerHTML = `
+        <div class="progressText">${unlockedCount} / ${COLLECTIBLE_IDS.length} IN THE VAULT &nbsp;&bull;&nbsp; ${creditsEarned} CREDITS EARNED</div>
+    `;
+
+    if (!unlockedIds.length) {
+
+        content.innerHTML = `
+            <div class="emptyState">
+                THE VAULT IS EMPTY.<br><br>
+                Earn ${COLLECTIBLE_CREDITS_STEP} credits to pull your first card.
+                <br><br>
+                <a href="collectibles.html">See what's still locked</a>
+            </div>
+        `;
+
+    } else {
+
+        const cardsHTML = unlockedIds.map(id => {
+
+            const meta = COLLECTIBLE_META[id];
+
+            return `
+                <div class="card unlocked">
+                    <img src="${meta.file}" alt="${meta.title}">
+                    <div class="cardCaption">
+                        <div class="cardTitle">${meta.title}</div>
+                        <div class="cardQuote">"${meta.quote}"</div>
+                    </div>
+                </div>
+            `;
+
+        }).join("");
+
+        content.innerHTML = `<div class="cardGrid">${cardsHTML}</div>`;
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>

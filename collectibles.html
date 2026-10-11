@@ -145,7 +145,9 @@ body::before {
 
 .cardGrid {
     display: grid;
-    grid-template-columns: 1fr;
+    /* two up: with no artwork to frame, full-width locked slots were
+       a screen of empty box each */
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
 }
 
@@ -153,9 +155,9 @@ body::before {
     position: relative;
     border-radius: 10px;
     overflow: hidden;
-    border: 1px solid var(--border);
+    border: 1px dashed var(--border);
     background: var(--bg-panel-alt);
-    aspect-ratio: 3 / 4;
+    aspect-ratio: 4 / 5;
 }
 
 .card.unlocked {
@@ -163,35 +165,9 @@ body::before {
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
-.card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
 
-.cardCaption {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 14px;
-    background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
-}
 
-.cardTitle {
-    font-family: 'Anton', 'Impact', sans-serif;
-    font-weight: bold;
-    font-size: 15px;
-    color: #f4ecda;
-}
 
-.cardQuote {
-    font-size: 11px;
-    color: #d8ccae;
-    margin-top: 3px;
-    font-style: italic;
-}
 
 .cardLocked {
     height: 100%;
@@ -199,12 +175,14 @@ body::before {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 7px;
+    padding: 12px;
+    text-align: center;
     color: var(--text-dim);
 }
 
 .cardLockedIcon {
-    font-size: 34px;
+    font-size: 26px;
     opacity: 0.5;
 }
 
@@ -215,7 +193,8 @@ body::before {
 }
 
 .cardLockedHint {
-    font-size: 10px;
+    font-size: 9px;
+    line-height: 1.4;
     color: var(--text-dim);
     opacity: 0.7;
 }
@@ -275,12 +254,6 @@ body::before {
     line-height: 1.4;
 }
 
-.cardQuote {
-    font-family: 'Permanent Marker', cursive;
-    font-size: 16px;
-    line-height: 1.3;
-    color: #d8ccae;
-}
 
 /* completed things get rubber-stamped */
 .completeBtn.completed,
@@ -297,6 +270,41 @@ body::before {
     border: 1px solid var(--stamp-red);
 }
 
+
+/* VAULT LINK */
+
+.vaultLink {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-panel-alt);
+    font-size: 16px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vaultLink:active {
+    transform: scale(0.92);
+    border-color: var(--ink-ochre);
+}
+
+.vaultCount {
+    position: absolute;
+    top: 58px;
+    right: 16px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    text-align: center;
+    width: 38px;
+}
+
 </style>
 </head>
 
@@ -309,6 +317,8 @@ body::before {
         <div class="logo">MINDJACK.9 // COLLECTIBLE ARCHIVE</div>
         <div class="title">Collectibles</div>
         <div class="subtitle">Earn 1000 credits, unlock a random card.</div>
+        <a class="vaultLink" href="vault.html" title="The Vault" aria-label="The Vault">&#128142;</a>
+        <div class="vaultCount" id="vaultCount"></div>
         <div class="progressWrap" id="progressWrap"></div>
     </div>
 
@@ -318,31 +328,28 @@ body::before {
 
 <script>
 
-const COLLECTIBLE_IDS = ["warrior", "samurai", "pirate", "fighter", "ninja", "scarlet", "violet", "jade"];
+const COLLECTIBLE_IDS = ["warrior", "samurai", "pirate", "fighter", "ninja"];
 const COLLECTIBLE_CREDITS_STEP = 1000;
 
-const COLLECTIBLE_META = {
-    warrior: { title: "Not Yet The End", quote: "Discipline builds freedom.", file: "collectibles/warrior.png" },
-    samurai: { title: "Same Scars, Different Sky", quote: "Still a warrior.", file: "collectibles/samurai.png" },
-    pirate:  { title: "Captain's Resolve", quote: "Chart your own course.", file: "collectibles/pirate.png" },
-    fighter: { title: "Pain Pays", quote: "Train. Eat. Study. Improve. Repeat.", file: "collectibles/fighter.png" },
-    ninja:   { title: "Fearless", quote: "In silence, strength resides.", file: "collectibles/ninja.png" },
-    scarlet: { title: "Scarlet Flame", quote: "Own every room you enter.", file: "collectibles/scarlet.jpg" },
-    violet:  { title: "Forest Muse", quote: "Wild, free, unstoppable.", file: "collectibles/violet.jpg" },
-    jade:    { title: "Playful Reign", quote: "Joy is the ultimate flex.", file: "collectibles/jade.jpg" }
-};
 
 function ensureCollectiblesOrder(game) {
-    if (!Array.isArray(game.collectiblesOrder) || game.collectiblesOrder.length !== COLLECTIBLE_IDS.length) {
-        const shuffled = COLLECTIBLE_IDS.slice();
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            const temp = shuffled[i];
-            shuffled[i] = shuffled[j];
-            shuffled[j] = temp;
-        }
-        game.collectiblesOrder = shuffled;
+
+    const known = Array.isArray(game.collectiblesOrder) ? game.collectiblesOrder : [];
+
+    // keep the order already drawn, minus anything retired from the set
+    const kept = known.filter(id => COLLECTIBLE_IDS.indexOf(id) !== -1);
+
+    // shuffle in whatever is new, so added cards land in a random slot
+    const fresh = COLLECTIBLE_IDS.filter(id => kept.indexOf(id) === -1);
+    for (let i = fresh.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = fresh[i];
+        fresh[i] = fresh[j];
+        fresh[j] = temp;
     }
+
+    game.collectiblesOrder = kept.concat(fresh);
+
 }
 
 const raw = localStorage.getItem("mindjack9");
@@ -373,8 +380,6 @@ if (!raw) {
         Math.floor(creditsEarned / COLLECTIBLE_CREDITS_STEP)
     );
 
-    const unlockedIds = game.collectiblesOrder.slice(0, unlockedCount);
-
     const totalNeeded = COLLECTIBLE_IDS.length * COLLECTIBLE_CREDITS_STEP;
     const progressPct = Math.min(100, (creditsEarned / totalNeeded) * 100);
 
@@ -383,38 +388,47 @@ if (!raw) {
         <div class="progressBar"><div class="progressFill" style="width:${progressPct}%"></div></div>
     `;
 
-    const cardsHTML = game.collectiblesOrder.map((id, index) => {
+    const vaultCount = document.getElementById("vaultCount");
+    if (vaultCount) {
+        vaultCount.textContent = unlockedCount + " HELD";
+    }
 
-        const isUnlocked = index < unlockedCount;
-        const meta = COLLECTIBLE_META[id];
+    // Unlocked cards live in the vault now; this page is the locked half.
+    // Slot index is kept so each card still shows the credits that open it.
+    const lockedSlots = game.collectiblesOrder
+        .map((id, index) => ({ id: id, index: index }))
+        .filter(slot => slot.index >= unlockedCount);
 
-        if (isUnlocked) {
-            return `
-                <div class="card unlocked">
-                    <img src="${meta.file}" alt="${meta.title}">
-                    <div class="cardCaption">
-                        <div class="cardTitle">${meta.title}</div>
-                        <div class="cardQuote">"${meta.quote}"</div>
-                    </div>
-                </div>
-            `;
-        }
+    if (!lockedSlots.length) {
 
-        const creditsForThisSlot = (index + 1) * COLLECTIBLE_CREDITS_STEP;
-
-        return `
-            <div class="card">
-                <div class="cardLocked">
-                    <div class="cardLockedIcon">🔒</div>
-                    <div class="cardLockedText">LOCKED</div>
-                    <div class="cardLockedHint">Unlocks at ${creditsForThisSlot} credits earned</div>
-                </div>
+        content.innerHTML = `
+            <div class="emptyState">
+                EVERY CARD IS UNLOCKED.<br><br>
+                The whole set is in <a href="vault.html">the vault</a>.
             </div>
         `;
 
-    }).join("");
+    } else {
 
-    content.innerHTML = `<div class="cardGrid">${cardsHTML}</div>`;
+        const cardsHTML = lockedSlots.map(slot => {
+
+            const creditsForThisSlot = (slot.index + 1) * COLLECTIBLE_CREDITS_STEP;
+
+            return `
+                <div class="card">
+                    <div class="cardLocked">
+                        <div class="cardLockedIcon">&#128274;</div>
+                        <div class="cardLockedText">LOCKED</div>
+                        <div class="cardLockedHint">Unlocks at ${creditsForThisSlot} credits earned</div>
+                    </div>
+                </div>
+            `;
+
+        }).join("");
+
+        content.innerHTML = `<div class="cardGrid">${cardsHTML}</div>`;
+
+    }
 
 }
 
