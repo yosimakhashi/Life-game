@@ -332,6 +332,41 @@ body::before {
     width: 38px;
 }
 
+
+.card.pending {
+    border-style: dashed;
+    border-color: var(--ink-ochre);
+}
+
+.cardPending {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px;
+    text-align: center;
+    color: var(--text-dim);
+}
+
+.cardPendingIcon {
+    font-size: 30px;
+    opacity: 0.6;
+}
+
+.cardPendingText {
+    font-family: 'Anton', 'Impact', sans-serif;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--ink-ochre);
+}
+
+.cardPendingHint {
+    font-size: 10px;
+    line-height: 1.5;
+}
+
 </style>
 </head>
 
@@ -353,15 +388,28 @@ body::before {
 
 <script>
 
-const COLLECTIBLE_IDS = ["warrior", "samurai", "pirate", "fighter", "ninja"];
+const COLLECTIBLE_IDS = [
+    "warrior", "samurai", "pirate", "fighter", "ninja",
+    // five slots held open for artwork still to come; see
+    // COLLECTIBLE_META in vault.html to fill one in
+    "card06", "card07", "card08", "card09", "card10"
+];
 const COLLECTIBLE_CREDITS_STEP = 1000;
 
+// To activate a held slot: drop the image in collectibles/ and fill in
+// its title, quote and file here. An empty file renders as a placeholder
+// rather than a broken image, so an unlocked slot is never a dead tile.
 const COLLECTIBLE_META = {
     warrior: { title: "Not Yet The End", quote: "Discipline builds freedom.", file: "collectibles/warrior.png" },
     samurai: { title: "Same Scars, Different Sky", quote: "Still a warrior.", file: "collectibles/samurai.png" },
     pirate:  { title: "Captain's Resolve", quote: "Chart your own course.", file: "collectibles/pirate.png" },
     fighter: { title: "Pain Pays", quote: "Train. Eat. Study. Improve. Repeat.", file: "collectibles/fighter.png" },
     ninja:   { title: "Fearless", quote: "In silence, strength resides.", file: "collectibles/ninja.png" },
+    card06:  { title: "Card Six",   quote: "", file: "" },
+    card07:  { title: "Card Seven", quote: "", file: "" },
+    card08:  { title: "Card Eight", quote: "", file: "" },
+    card09:  { title: "Card Nine",  quote: "", file: "" },
+    card10:  { title: "Card Ten",   quote: "", file: "" },
 };
 
 
@@ -438,12 +486,25 @@ if (!raw) {
 
             const meta = COLLECTIBLE_META[id];
 
+            // earned, but the artwork has not been added yet
+            if (!meta || !meta.file) {
+                return `
+                    <div class="card unlocked pending">
+                        <div class="cardPending">
+                            <div class="cardPendingIcon">&#127912;</div>
+                            <div class="cardPendingText">EARNED</div>
+                            <div class="cardPendingHint">${meta ? meta.title : id} &mdash; artwork to come</div>
+                        </div>
+                    </div>
+                `;
+            }
+
             return `
                 <div class="card unlocked">
                     <img src="${meta.file}" alt="${meta.title}">
                     <div class="cardCaption">
                         <div class="cardTitle">${meta.title}</div>
-                        <div class="cardQuote">"${meta.quote}"</div>
+                        ${meta.quote ? `<div class="cardQuote">"${meta.quote}"</div>` : ""}
                     </div>
                 </div>
             `;
