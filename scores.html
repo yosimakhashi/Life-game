@@ -60,6 +60,22 @@
     background: var(--cell); color: var(--fg); text-align: left;
   }
   .day small { color: var(--muted); }
+  tfoot td {
+    background: #171717;
+    color: #e0a15a;
+    font-weight: 500;
+    font-size: 1.05rem;
+    padding: 0.75rem 0.55rem;
+  }
+  tfoot .sr { background: #171717; color: #e0a15a; }
+  .points {
+    margin: 0.9rem 1rem 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  .points span { color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.75rem; }
+  .points strong { font-size: 1.85rem; font-weight: 500; color: #e0a15a; }
   .empty-note { padding: 0 1rem; color: var(--muted); }
 </style>
 </head>
@@ -162,6 +178,21 @@ function grow(el) {
   el.style.height = Math.max(el.scrollHeight, 58) + "px";
 }
 
+function numbersIn(text) {
+  const found = String(text).match(/-?\d+(?:\.\d+)?/g);
+  if (!found) return 0;
+  return found.reduce((sum, n) => sum + Number(n), 0);
+}
+
+function columnTotals(data) {
+  return LEVELS.map((_, level) => data.reduce((sum, row) => sum + numbersIn(row[level] || ""), 0));
+}
+
+function formatPoints(n) {
+  const rounded = Math.round(n * 100) / 100;
+  return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+}
+
 function sheet(data, locked) {
   const wrap = document.createElement("div");
   wrap.className = "wrap";
@@ -169,6 +200,7 @@ function sheet(data, locked) {
   const thead = document.createElement("thead");
   thead.innerHTML = "<tr><th class='sr'>Sr</th>" + LEVELS.map((name) => "<th>" + name + "</th>").join("") + "</tr>";
   const tbody = document.createElement("tbody");
+  const totalCells = [];
   data.forEach((row, r) => {
     const tr = document.createElement("tr");
     const sr = document.createElement("td");
@@ -190,6 +222,7 @@ function sheet(data, locked) {
           grid[r][level] = box.value;
           grow(box);
           writeGrid(grid);
+          paintTotals();
         });
         td.append(box);
       }
@@ -197,8 +230,36 @@ function sheet(data, locked) {
     });
     tbody.append(tr);
   });
-  table.append(thead, tbody);
-  wrap.append(table);
+  const tfoot = document.createElement("tfoot");
+  const sumRow = document.createElement("tr");
+  const sumLabel = document.createElement("td");
+  sumLabel.className = "sr";
+  sumLabel.textContent = "Σ";
+  sumRow.append(sumLabel);
+  LEVELS.forEach(() => {
+    const td = document.createElement("td");
+    td.textContent = "0";
+    totalCells.push(td);
+    sumRow.append(td);
+  });
+  tfoot.append(sumRow);
+  table.append(thead, tbody, tfoot);
+  const points = document.createElement("div");
+  points.className = "points";
+  const pointsLabel = document.createElement("span");
+  pointsLabel.textContent = "Points";
+  const pointsValue = document.createElement("strong");
+  points.append(pointsLabel, pointsValue);
+  wrap.append(table, points);
+
+  function paintTotals() {
+    const source = locked ? data : grid;
+    const totals = columnTotals(source);
+    totals.forEach((n, i) => { totalCells[i].textContent = formatPoints(n); });
+    pointsValue.textContent = formatPoints(totals.reduce((sum, n) => sum + n, 0));
+  }
+
+  paintTotals();
   return wrap;
 }
 
