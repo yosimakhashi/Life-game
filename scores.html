@@ -45,7 +45,7 @@
     position: sticky; left: 0; z-index: 1; background: var(--head); padding: 0.45rem 0.1rem;
   }
   thead .sr { z-index: 3; }
-  tbody .sr { background: #171717; }
+  tbody .sr { position: static; width: 3.4rem; background: #171717; }
   textarea, .frozen {
     display: block; width: 100%; min-height: 3.6rem; border: 0; margin: 0;
     padding: 0.55rem 0.5rem; background: transparent; color: var(--fg);
@@ -82,10 +82,12 @@
     justify-content: center;
     width: 100%;
     min-height: 2.75rem;
-    margin-top: 0.15rem;
-    color: #c8c8c8;
-    font-size: 1.35rem;
-    line-height: 1;
+    margin-top: 0.25rem;
+    border: 1px solid #6a6a6a;
+    border-radius: 0.45rem;
+    background: #3a3a3a;
+    color: #fff;
+    font-size: 0.75rem;
   }
   .actions {
     display: flex;
@@ -142,6 +144,7 @@ const switchBtn = document.getElementById("switch");
 
 let view = "today";
 let pastDate = "";
+let flash = "";
 
 function today() {
   const d = new Date();
@@ -250,13 +253,12 @@ function sheet(data, locked) {
       const del = document.createElement("button");
       del.type = "button";
       del.className = "del";
-      del.textContent = "×";
+      del.textContent = "Del";
       del.setAttribute("aria-label", "Delete row " + (r + 1));
       del.addEventListener("click", () => {
-        const has = grid[r].some((cell) => String(cell).trim());
-        if (has && !confirm("Delete row " + (r + 1) + "?")) return;
         grid.splice(r, 1);
         writeGrid(grid);
+        flash = "Row " + (r + 1) + " deleted.";
         show();
       });
       sr.append(del);
@@ -326,9 +328,9 @@ function sheet(data, locked) {
     clear.type = "button";
     clear.textContent = "Clear";
     clear.addEventListener("click", () => {
-      if (!confirm("Clear every box on today’s sheet?")) return;
       grid.forEach((row) => row.fill(""));
       writeGrid(grid);
+      flash = "Sheet cleared.";
       show();
     });
     actions.append(add, clear);
@@ -398,7 +400,8 @@ function show() {
   }
 
   title.textContent = "Scores";
-  hint.textContent = "Three rows at a time. Tap + when you need more. Clears after midnight into History.";
+  hint.textContent = flash || "Del removes that row. Clear empties the boxes. + adds 3 rows.";
+  flash = "";
   back.textContent = "← Back";
   back.href = "total.html";
   switchBtn.hidden = false;
