@@ -24,13 +24,8 @@
     color: var(--fg);
     font-family: Outfit, ui-sans-serif, system-ui, sans-serif;
   }
-  button, a { font: inherit; color: inherit; touch-action: manipulation; }
-  a { text-decoration: none; }
-  main {
-    max-width: 40rem;
-    margin: 0 auto;
-    padding: 1.25rem 1rem 2rem;
-  }
+  a { color: inherit; text-decoration: none; touch-action: manipulation; }
+  main { max-width: 40rem; margin: 0 auto; padding: 1.25rem 1rem 2.5rem; }
   .back {
     display: inline-flex;
     align-items: center;
@@ -41,80 +36,114 @@
     font-size: 0.75rem;
   }
   h1 {
-    margin: 0.25rem 0 0.35rem;
+    margin: 0.15rem 0 0.35rem;
     font-family: Fraunces, Georgia, serif;
     font-weight: 500;
     font-size: 2rem;
   }
-  .hint { margin: 0 0 1.25rem; color: var(--muted); font-size: 0.875rem; }
-  .block { margin-bottom: 1.25rem; }
+  .hint { margin: 0 0 1.25rem; color: var(--muted); font-size: 0.875rem; line-height: 1.45; }
+  .block { margin-bottom: 1.5rem; }
   h2 {
-    margin: 0 0 0.55rem;
+    margin: 0 0 0.5rem;
     font-family: Fraunces, Georgia, serif;
     font-weight: 500;
-    font-size: 1.35rem;
+    font-size: 1.45rem;
   }
-  .cols {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 0.5rem;
+  .sheet {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border-collapse: separate;
+    border-spacing: 0;
   }
-  @media (min-width: 720px) {
-    .cols { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+  .sheet th, .sheet td {
+    border-bottom: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+    vertical-align: top;
+    background: var(--surface);
   }
-  .box { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
-  .box span {
+  .sheet tr:last-child td, .sheet tr:last-child th { border-bottom: 0; }
+  .sheet th:last-child, .sheet td:last-child { border-right: 0; }
+  .sheet thead th {
+    background: #181611;
     color: var(--muted);
     font-size: 0.75rem;
-    text-align: center;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 0.55rem 0.65rem;
   }
-  .cell {
+  .col-n { width: 2.25rem; text-align: center; color: var(--muted); font-size: 0.8rem; padding: 0.7rem 0.2rem; }
+  .col-score { width: 6.5rem; }
+  .field, .reason {
+    display: block;
     width: 100%;
-    height: 2.75rem;
-    min-width: 0;
-    padding: 0;
-    border-radius: 0.6rem;
-    border: 1px solid var(--line);
-    background: var(--surface);
-    color: var(--accent);
-    font-family: Fraunces, Georgia, serif;
+    border: 0;
+    background: transparent;
+    color: var(--fg);
+    font: inherit;
     font-size: 16px;
-    text-align: center;
+    padding: 0.7rem 0.65rem;
   }
-  .cell:focus { outline: none; border-color: var(--accent); }
+  .field { color: var(--accent); font-family: Fraunces, Georgia, serif; }
+  .reason { min-height: 4.5rem; resize: vertical; line-height: 1.4; }
+  .field:focus, .reason:focus { outline: none; background: #262219; }
 </style>
 </head>
 <body>
 <main>
   <a class="back" href="total.html">&larr; Back</a>
   <h1>Scores</h1>
-  <p class="hint">Level 1, then 2, then 3. Ten boxes on each. Type letters and numbers.</p>
+  <p class="hint">Three sheets, ten rows each. Score is letters and numbers. Reason is why you got it.</p>
   <div id="sheet"></div>
 </main>
 <script>
-const KEY = "score-grid-v1";
+const KEY = "score-grid-v2";
+const OLD = "score-grid-v1";
 const LEVELS = ["Level 1", "Level 2", "Level 3"];
-const COLS = 10;
+const ROWS = 10;
 
-function emptyGrid() {
-  return LEVELS.map(() => Array(COLS).fill(""));
+function blank() {
+  return { score: "", reason: "" };
 }
 
-function clean(value) {
-  return String(value).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+function cleanScore(value) {
+  return String(value).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+}
+
+function emptyGrid() {
+  return LEVELS.map(() => Array.from({ length: ROWS }, blank));
 }
 
 function load() {
   try {
-    const data = JSON.parse(localStorage.getItem(KEY) || "null");
-    if (!Array.isArray(data) || data.length !== 3) return emptyGrid();
-    return LEVELS.map((_, row) => Array.from({ length: COLS }, (_, col) => {
-      const value = data[row] && data[row][col];
-      return typeof value === "string" ? clean(value) : "";
-    }));
-  } catch (err) {
-    return emptyGrid();
-  }
+    const next = JSON.parse(localStorage.getItem(KEY) || "null");
+    if (Array.isArray(next) && next.length === 3) return normalize(next);
+    const old = JSON.parse(localStorage.getItem(OLD) || "null");
+    if (Array.isArray(old) && old.length === 3) {
+      return LEVELS.map((_, level) => Array.from({ length: ROWS }, (_, row) => {
+        const value = old[level] && old[level][row];
+        if (value && typeof value === "object") {
+          return { score: cleanScore(value.score || ""), reason: String(value.reason || "") };
+        }
+        return { score: typeof value === "string" ? cleanScore(value) : "", reason: "" };
+      }));
+    }
+  } catch (err) {}
+  return emptyGrid();
+}
+
+function normalize(data) {
+  return LEVELS.map((_, level) => Array.from({ length: ROWS }, (_, row) => {
+    const cell = data[level] && data[level][row];
+    if (!cell || typeof cell !== "object") return blank();
+    return {
+      score: cleanScore(cell.score || ""),
+      reason: String(cell.reason || "").slice(0, 240)
+    };
+  }));
 }
 
 function persist(grid) {
@@ -122,43 +151,59 @@ function persist(grid) {
 }
 
 const grid = load();
-const sheet = document.getElementById("sheet");
+const root = document.getElementById("sheet");
 
-LEVELS.forEach((name, r) => {
+LEVELS.forEach((name, level) => {
   const block = document.createElement("section");
   block.className = "block";
   const title = document.createElement("h2");
   title.textContent = name;
-  const cols = document.createElement("div");
-  cols.className = "cols";
-  for (let c = 0; c < COLS; c++) {
-    const box = document.createElement("label");
-    box.className = "box";
-    const cap = document.createElement("span");
-    cap.textContent = String(c + 1);
-    const input = document.createElement("input");
-    input.className = "cell";
-    input.maxLength = 6;
-    input.enterKeyHint = "done";
-    input.autocomplete = "off";
-    input.autocapitalize = "characters";
-    input.spellcheck = false;
-    input.setAttribute("aria-label", name + " box " + (c + 1));
-    input.value = grid[r][c];
-    input.addEventListener("input", () => {
-      grid[r][c] = input.value;
+  const table = document.createElement("table");
+  table.className = "sheet";
+  table.innerHTML = "<thead><tr><th class='col-n'>#</th><th class='col-score'>Score</th><th>Reason</th></tr></thead>";
+  const body = document.createElement("tbody");
+  for (let row = 0; row < ROWS; row++) {
+    const tr = document.createElement("tr");
+    const num = document.createElement("td");
+    num.className = "col-n";
+    num.textContent = String(row + 1);
+    const scoreCell = document.createElement("td");
+    const score = document.createElement("input");
+    score.className = "field";
+    score.maxLength = 8;
+    score.autocomplete = "off";
+    score.autocapitalize = "characters";
+    score.spellcheck = false;
+    score.setAttribute("aria-label", name + " row " + (row + 1) + " score");
+    score.value = grid[level][row].score;
+    score.addEventListener("input", () => {
+      grid[level][row].score = score.value;
       persist(grid);
     });
-    input.addEventListener("blur", () => {
-      input.value = clean(input.value);
-      grid[r][c] = input.value;
+    score.addEventListener("blur", () => {
+      score.value = cleanScore(score.value);
+      grid[level][row].score = score.value;
       persist(grid);
     });
-    box.append(cap, input);
-    cols.append(box);
+    scoreCell.append(score);
+    const reasonCell = document.createElement("td");
+    const reason = document.createElement("textarea");
+    reason.className = "reason";
+    reason.rows = 2;
+    reason.maxLength = 240;
+    reason.setAttribute("aria-label", name + " row " + (row + 1) + " reason");
+    reason.value = grid[level][row].reason;
+    reason.addEventListener("input", () => {
+      grid[level][row].reason = reason.value;
+      persist(grid);
+    });
+    reasonCell.append(reason);
+    tr.append(num, scoreCell, reasonCell);
+    body.append(tr);
   }
-  block.append(title, cols);
-  sheet.append(block);
+  table.append(body);
+  block.append(title, table);
+  root.append(block);
 });
 </script>
 </body>
