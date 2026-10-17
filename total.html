@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#141210">
 <title>Total</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,6 +18,7 @@
     --line: #3a342c;
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   html, body {
     margin: 0;
     background: var(--bg);
@@ -30,7 +31,7 @@
     max-width: 32rem;
     margin: 0 auto;
     min-height: 100vh;
-    padding: 1.25rem 1rem 2rem;
+    padding: 1.25rem 1rem 8.5rem;
   }
   .eyebrow {
     margin: 0;
@@ -51,48 +52,62 @@
     position: relative;
     overflow: hidden;
   }
-  .frame.adjusting {
-    touch-action: none;
-    border-color: var(--accent);
-  }
+  .frame.adjusting { touch-action: none; border-color: var(--accent); }
   #pic {
     position: absolute;
     max-width: none;
     user-select: none;
     -webkit-user-drag: none;
+    touch-action: none;
   }
   .empty {
     position: absolute;
     inset: 0;
-    border: 0;
-    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--muted);
     font-size: 0.95rem;
   }
-  .tools, .row, .foot {
-    display: flex;
-    align-items: center;
+  .hit {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    font-size: 16px;
   }
-  .tools {
-    margin-top: 0.75rem;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+  .dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+    background: var(--bg);
+    border-top: 1px solid var(--line);
+    padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
   }
+  .dock-inner { max-width: 32rem; margin: 0 auto; }
+  .tools { display: flex; gap: 0.5rem; flex-wrap: wrap; }
   .pill {
+    position: relative;
+    overflow: hidden;
     min-height: 2.75rem;
     padding: 0 0.9rem;
     border-radius: 999px;
     border: 1px solid var(--line);
     background: var(--surface);
     color: var(--fg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   .pill:active { transform: scale(0.97); }
   .pill.primary { border-color: var(--accent); color: var(--accent); }
   .row {
-    margin-top: 1.25rem;
+    margin-top: 0.75rem;
+    display: flex;
+    align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
   }
@@ -125,13 +140,7 @@
     font-variant-numeric: tabular-nums;
   }
   #total:focus { outline: none; }
-  .foot {
-    margin-top: 0.75rem;
-    justify-content: space-between;
-    gap: 0.75rem;
-  }
-  .hint { margin: 0; color: var(--muted); font-size: 0.875rem; }
-  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .hint { margin: 0.5rem 0 0; color: var(--muted); font-size: 0.875rem; }
 </style>
 </head>
 <body>
@@ -139,42 +148,46 @@
   <p class="eyebrow">Frame</p>
   <div class="frame" id="frame">
     <img id="pic" alt="" hidden>
-    <button class="empty" id="empty" type="button">Tap to place a photo</button>
-  </div>
-  <input class="sr" id="file" type="file" accept="image/*">
-
-  <div class="tools" id="tools" hidden>
-    <button class="pill" id="change" type="button">Change</button>
-    <button class="pill" id="adjust" type="button">Adjust</button>
-    <button class="pill" id="remove" type="button">Remove</button>
-  </div>
-  <div class="tools" id="cropTools" hidden>
-    <button class="pill" id="zoomOut" type="button" aria-label="Zoom out">−</button>
-    <button class="pill" id="zoomIn" type="button" aria-label="Zoom in">+</button>
-    <button class="pill" id="fit" type="button">Fit</button>
-    <button class="pill primary" id="done" type="button">Done</button>
-  </div>
-
-  <section class="row">
-    <h1>Total</h1>
-    <div class="controls">
-      <button class="step" id="down" type="button" aria-label="Decrease total">−</button>
-      <input id="total" aria-label="Total" inputmode="decimal" value="0">
-      <button class="step" id="up" type="button" aria-label="Increase total">+</button>
-    </div>
-  </section>
-  <div class="foot">
-    <p class="hint" id="hint">Type the number, or use the buttons.</p>
+    <label class="empty" id="empty">
+      Tap to place a photo
+      <input class="hit" id="file" type="file" accept="image/*">
+    </label>
   </div>
 </main>
+<div class="dock">
+  <div class="dock-inner">
+    <div class="tools" id="tools" hidden>
+      <label class="pill">Change
+        <input class="hit" id="file2" type="file" accept="image/*">
+      </label>
+      <button class="pill" id="adjust" type="button">Adjust</button>
+      <button class="pill" id="remove" type="button">Remove</button>
+    </div>
+    <div class="tools" id="cropTools" hidden>
+      <button class="pill" id="zoomOut" type="button" aria-label="Zoom out">−</button>
+      <button class="pill" id="zoomIn" type="button" aria-label="Zoom in">+</button>
+      <button class="pill" id="fit" type="button">Fit</button>
+      <button class="pill primary" id="done" type="button">Done</button>
+    </div>
+    <section class="row">
+      <h1>Total</h1>
+      <div class="controls">
+        <button class="step" id="down" type="button" aria-label="Decrease total">−</button>
+        <input id="total" aria-label="Total" inputmode="decimal" value="0">
+        <button class="step" id="up" type="button" aria-label="Increase total">+</button>
+      </div>
+    </section>
+    <p class="hint" id="hint">Tap the frame to add a photo.</p>
+  </div>
+</div>
 <script>
 const KEY = "photo-total-v1";
 const frame = document.getElementById("frame");
 const pic = document.getElementById("pic");
-const file = document.getElementById("file");
 const hint = document.getElementById("hint");
 const tools = document.getElementById("tools");
 const cropTools = document.getElementById("cropTools");
+const totalInput = document.getElementById("total");
 
 let photo = null;
 let total = 0;
@@ -205,54 +218,100 @@ function show() {
   pic.hidden = !has;
   document.getElementById("empty").hidden = has;
   tools.hidden = !has || adjusting;
-  cropTools.hidden = !adjusting;
-  frame.classList.toggle("adjusting", adjusting);
-  if (has) pic.src = photo;
-  hint.textContent = adjusting
-    ? "Drag to move. Pinch, or use + and −, to crop. Fit shows the whole photo."
-    : "Type the number, or use the buttons.";
+  cropTools.hidden = !has || !adjusting;
+  frame.classList.toggle("adjusting", adjusting && has);
+  if (has && pic.src !== photo) pic.src = photo;
+  hint.textContent = !has
+    ? "Tap the frame to add a photo."
+    : adjusting
+      ? "Drag the photo. Pinch or use + and − to crop. Fit shows all of it."
+      : "Adjust to move or crop. The number stays under Total.";
   layout();
 }
 
-function save() {
+function idb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open("photo-total", 1);
+    req.onupgradeneeded = () => req.result.createObjectStore("kv");
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbPut(key, value) {
+  const db = await idb();
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction("kv", "readwrite");
+    tx.objectStore("kv").put(value, key);
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function idbGet(key) {
+  const db = await idb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("kv", "readonly");
+    const req = tx.objectStore("kv").get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function save() {
   try {
-    localStorage.setItem(KEY, JSON.stringify({ photo, total, view }));
+    localStorage.setItem(KEY, JSON.stringify({ total, view }));
   } catch (err) {
-    photo = null;
-    view = { scale: 1, x: 0, y: 0 };
-    adjusting = false;
-    show();
-    hint.textContent = "That photo is too big to keep on this device. Try a smaller one.";
+    hint.textContent = "The number could not be saved on this phone.";
+  }
+  try {
+    await idbPut("photo", photo);
+  } catch (err) {
+    hint.textContent = "The photo is showing, but this phone would not store it.";
   }
 }
 
-function load() {
+async function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return;
-    const data = JSON.parse(raw);
-    if (typeof data.photo === "string") photo = data.photo;
-    if (typeof data.total === "number" && Number.isFinite(data.total)) {
-      total = data.total;
-      document.getElementById("total").value = formatNumber(total);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (typeof data.total === "number" && Number.isFinite(data.total)) {
+        total = data.total;
+        totalInput.value = formatNumber(total);
+      }
+      if (typeof data.photo === "string") photo = data.photo;
+      if (data.view && typeof data.view.scale === "number") {
+        view = {
+          scale: clampScale(data.view.scale),
+          x: Number(data.view.x) || 0,
+          y: Number(data.view.y) || 0
+        };
+      }
     }
-    if (data.view && typeof data.view.scale === "number") {
-      view = {
-        scale: clampScale(data.view.scale),
-        x: Number(data.view.x) || 0,
-        y: Number(data.view.y) || 0
-      };
-    }
+  } catch (err) {}
+  try {
+    const stored = await idbGet("photo");
+    if (typeof stored === "string") photo = stored;
   } catch (err) {}
   show();
 }
 
-function shrink(fileObj) {
+function readFile(fileObj) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(fileObj);
+  });
+}
+
+function canvasShrink(fileObj) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(fileObj);
     const img = new Image();
     img.onload = () => {
-      const max = 1600;
+      const max = 1200;
       const scale = Math.min(1, max / Math.max(img.width, img.height));
       const w = Math.max(1, Math.round(img.width * scale));
       const h = Math.max(1, Math.round(img.height * scale));
@@ -263,35 +322,41 @@ function shrink(fileObj) {
       if (!ctx) { URL.revokeObjectURL(url); reject(new Error("canvas")); return; }
       ctx.drawImage(img, 0, 0, w, h);
       URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL("image/jpeg", 0.86));
+      try { resolve(canvas.toDataURL("image/jpeg", 0.82)); }
+      catch (err) { reject(err); }
     };
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("image")); };
     img.src = url;
   });
 }
 
-document.getElementById("empty").addEventListener("click", () => file.click());
-document.getElementById("change").addEventListener("click", () => file.click());
-file.addEventListener("change", async () => {
-  const chosen = file.files && file.files[0];
-  file.value = "";
-  if (!chosen) return;
-  if (!chosen.type.startsWith("image/")) {
+function isImage(fileObj) {
+  return !fileObj.type || fileObj.type.startsWith("image/") || /\.(jpe?g|png|gif|webp|heic|heif)$/i.test(fileObj.name);
+}
+
+async function useFile(fileObj) {
+  if (!fileObj) return;
+  if (!isImage(fileObj)) {
     hint.textContent = "That file isn’t a photo.";
     return;
   }
   try {
-    photo = await shrink(chosen);
+    try { photo = await canvasShrink(fileObj); }
+    catch (err) { photo = await readFile(fileObj); }
     view = { scale: 1, x: 0, y: 0 };
     adjusting = false;
     show();
-    save();
+    await save();
   } catch (err) {
-    hint.textContent = "Couldn’t read that photo. Try a JPG or PNG.";
+    hint.textContent = "Couldn’t open that photo. Try another one.";
   }
-});
+}
+
+document.getElementById("file").addEventListener("change", (e) => useFile(e.target.files && e.target.files[0]));
+document.getElementById("file2").addEventListener("change", (e) => useFile(e.target.files && e.target.files[0]));
 
 document.getElementById("adjust").addEventListener("click", () => {
+  if (!photo) return;
   adjusting = true;
   show();
 });
@@ -316,6 +381,7 @@ document.getElementById("remove").addEventListener("click", () => {
   photo = null;
   view = { scale: 1, x: 0, y: 0 };
   adjusting = false;
+  pic.removeAttribute("src");
   show();
   save();
 });
@@ -324,7 +390,7 @@ pic.addEventListener("load", layout);
 window.addEventListener("resize", layout);
 
 frame.addEventListener("pointerdown", (e) => {
-  if (!adjusting || !photo) return;
+  if (!adjusting || !photo || e.target.closest("input")) return;
   frame.setPointerCapture(e.pointerId);
   pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (pts.size === 1) {
@@ -382,7 +448,6 @@ frame.addEventListener("pointercancel", endPointer);
 function formatNumber(n) {
   return Number.isInteger(n) ? String(n) : String(Math.round(n * 1000) / 1000);
 }
-const totalInput = document.getElementById("total");
 totalInput.addEventListener("input", () => {
   const next = totalInput.value;
   if (!/^-?\d*\.?\d*$/.test(next)) {
