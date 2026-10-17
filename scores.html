@@ -19,173 +19,272 @@
     --muted: #9a9a9a;
   }
   * { box-sizing: border-box; }
-  html, body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--fg);
-    font-family: Outfit, ui-sans-serif, system-ui, sans-serif;
-  }
-  a { color: var(--muted); text-decoration: none; touch-action: manipulation; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: Outfit, ui-sans-serif, system-ui, sans-serif; }
+  button, a { font: inherit; color: inherit; touch-action: manipulation; }
+  button { background: none; border: 0; padding: 0; }
+  a { color: var(--muted); text-decoration: none; }
   main { padding: 0.85rem 0 2rem; }
-  .top { padding: 0 1rem 0.75rem; }
-  .back {
-    display: inline-flex;
-    align-items: center;
-    min-height: 2.5rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    font-size: 0.75rem;
+  .top { display: flex; align-items: flex-end; justify-content: space-between; gap: 0.75rem; padding: 0 1rem 0.75rem; }
+  .back, .history-btn {
+    display: inline-flex; align-items: center; min-height: 2.75rem;
+    letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.75rem; color: var(--muted);
   }
+  .history-btn { border: 1px solid #3a3a3a; border-radius: 999px; padding: 0 0.9rem; color: var(--fg); }
   h1 { margin: 0; font-size: 1.65rem; font-weight: 500; }
   .hint { margin: 0.3rem 0 0; color: var(--muted); font-size: 0.85rem; }
-  .wrap { width: 100%; overflow-x: auto; }
-  table {
-    width: 100%;
-    min-width: 22rem;
-    border-collapse: separate;
-    border-spacing: 1px;
-    background: var(--line);
-    table-layout: fixed;
-  }
+  .wrap { width: 100%; }
+  table { width: 100%; border-collapse: separate; border-spacing: 1px; background: var(--line); table-layout: fixed; }
   th, td { background: var(--cell); vertical-align: top; }
   tbody tr:nth-child(even) td { background: var(--cell-alt); }
   thead th {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background: var(--head);
-    color: var(--fg);
-    font-weight: 500;
-    font-size: 0.95rem;
-    text-align: left;
-    padding: 0.7rem 0.55rem;
+    position: sticky; top: 0; z-index: 2; background: var(--head); color: var(--fg);
+    font-weight: 500; font-size: 0.95rem; text-align: left; padding: 0.7rem 0.55rem;
   }
   .sr, thead .sr {
-    width: 2.4rem;
-    text-align: center;
-    color: var(--muted);
-    font-size: 0.8rem;
-    position: sticky;
-    left: 0;
-    z-index: 1;
-    background: var(--head);
-    padding: 0.7rem 0.15rem;
+    width: 2.4rem; text-align: center; color: var(--muted); font-size: 0.8rem;
+    position: sticky; left: 0; z-index: 1; background: var(--head); padding: 0.7rem 0.15rem;
   }
   thead .sr { z-index: 3; }
   tbody .sr { background: #171717; }
-  textarea {
-    display: block;
-    width: 100%;
-    min-height: 3.6rem;
-    border: 0;
-    margin: 0;
-    padding: 0.55rem 0.5rem;
-    resize: none;
-    overflow: hidden;
-    background: transparent;
-    color: var(--fg);
-    font: inherit;
-    font-size: 16px;
-    line-height: 1.35;
+  textarea, .frozen {
+    display: block; width: 100%; min-height: 3.6rem; border: 0; margin: 0;
+    padding: 0.55rem 0.5rem; background: transparent; color: var(--fg);
+    font: inherit; font-size: 16px; line-height: 1.35; white-space: pre-wrap;
   }
+  textarea { resize: none; overflow: hidden; }
   textarea:focus { outline: none; background: rgba(255,255,255,0.04); }
+  .days { padding: 0 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .day {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+    min-height: 3.25rem; padding: 0.75rem 0.9rem; border-radius: 0.75rem;
+    background: var(--cell); color: var(--fg); text-align: left;
+  }
+  .day small { color: var(--muted); }
+  .empty-note { padding: 0 1rem; color: var(--muted); }
 </style>
 </head>
 <body>
 <main>
   <div class="top">
-    <a class="back" href="total.html">&larr; Back</a>
-    <h1>Scores</h1>
-    <p class="hint">Level 1, 2, and 3 are the columns. Type anything. The box grows to fit it.</p>
+    <div>
+      <a class="back" id="back" href="total.html">&larr; Back</a>
+      <h1 id="title">Scores</h1>
+      <p class="hint" id="hint">Today’s sheet. It clears after midnight and moves into History.</p>
+    </div>
+    <button class="history-btn" id="switch" type="button">History</button>
   </div>
-  <div class="wrap">
-    <table>
-      <thead>
-        <tr>
-          <th class="sr">Sr</th>
-          <th>Level 1</th>
-          <th>Level 2</th>
-          <th>Level 3</th>
-        </tr>
-      </thead>
-      <tbody id="body"></tbody>
-    </table>
-  </div>
+  <div id="app"></div>
 </main>
 <script>
 const KEY = "score-sheet-v3";
-const OLD = "score-grid-v2";
-const LEVELS = 3;
+const DAY_KEY = "score-sheet-day";
+const HISTORY_KEY = "score-sheet-history";
+const LEVELS = ["Level 1", "Level 2", "Level 3"];
 const ROWS = 10;
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-function empty() {
-  return Array.from({ length: ROWS }, () => Array(LEVELS).fill(""));
+const app = document.getElementById("app");
+const title = document.getElementById("title");
+const hint = document.getElementById("hint");
+const back = document.getElementById("back");
+const switchBtn = document.getElementById("switch");
+
+let view = "today";
+let pastDate = "";
+
+function today() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 }
 
-function load() {
+function label(iso) {
+  const parts = iso.split("-");
+  return Number(parts[2]) + " " + MONTHS[Number(parts[1]) - 1] + " " + parts[0];
+}
+
+function empty() {
+  return Array.from({ length: ROWS }, () => Array(LEVELS.length).fill(""));
+}
+
+function filled(grid) {
+  return grid.some((row) => row.some((cell) => String(cell).trim() !== ""));
+}
+
+function readGrid() {
   try {
     const saved = JSON.parse(localStorage.getItem(KEY) || "null");
     if (Array.isArray(saved) && saved.length === ROWS) {
-      return saved.map((row) => Array.from({ length: LEVELS }, (_, i) => String((row && row[i]) || "")));
-    }
-    const older = JSON.parse(localStorage.getItem(OLD) || "null");
-    if (Array.isArray(older) && older.length === LEVELS) {
-      const grid = empty();
-      for (let level = 0; level < LEVELS; level++) {
-        const col = older[level] || [];
-        for (let row = 0; row < ROWS; row++) {
-          const cell = col[row];
-          if (!cell) continue;
-          if (typeof cell === "string") grid[row][level] = cell;
-          else grid[row][level] = [cell.score, cell.reason].filter(Boolean).join("\n");
-        }
-      }
-      return grid;
+      return saved.map((row) => Array.from({ length: LEVELS.length }, (_, i) => String((row && row[i]) || "")));
     }
   } catch (err) {}
   return empty();
 }
 
-const grid = load();
-const body = document.getElementById("body");
+function readHistory() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(HISTORY_KEY) || "null");
+    if (!Array.isArray(saved)) return [];
+    return saved.filter((item) => item && typeof item.date === "string" && Array.isArray(item.grid));
+  } catch (err) {
+    return [];
+  }
+}
 
-function persist() {
+function writeHistory(items) {
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(items.slice(0, 90))); } catch (err) {}
+}
+
+function writeGrid(grid) {
   try { localStorage.setItem(KEY, JSON.stringify(grid)); } catch (err) {}
 }
+
+function rollover() {
+  const day = today();
+  const storedDay = localStorage.getItem(DAY_KEY);
+  let grid = readGrid();
+  if (storedDay && storedDay !== day) {
+    if (filled(grid)) {
+      const history = readHistory().filter((item) => item.date !== storedDay);
+      history.unshift({ date: storedDay, grid });
+      writeHistory(history);
+    }
+    grid = empty();
+    writeGrid(grid);
+  }
+  localStorage.setItem(DAY_KEY, day);
+  return grid;
+}
+
+let grid = rollover();
 
 function grow(el) {
   el.style.height = "auto";
   el.style.height = Math.max(el.scrollHeight, 58) + "px";
 }
 
-for (let row = 0; row < ROWS; row++) {
-  const tr = document.createElement("tr");
-  const sr = document.createElement("td");
-  sr.className = "sr";
-  sr.textContent = String(row + 1);
-  tr.append(sr);
-  for (let level = 0; level < LEVELS; level++) {
-    const td = document.createElement("td");
-    const box = document.createElement("textarea");
-    box.rows = 2;
-    box.value = grid[row][level];
-    box.setAttribute("aria-label", "Level " + (level + 1) + " row " + (row + 1));
-    box.addEventListener("input", () => {
-      grid[row][level] = box.value;
-      grow(box);
-      persist();
+function sheet(data, locked) {
+  const wrap = document.createElement("div");
+  wrap.className = "wrap";
+  const table = document.createElement("table");
+  const thead = document.createElement("thead");
+  thead.innerHTML = "<tr><th class='sr'>Sr</th>" + LEVELS.map((name) => "<th>" + name + "</th>").join("") + "</tr>";
+  const tbody = document.createElement("tbody");
+  data.forEach((row, r) => {
+    const tr = document.createElement("tr");
+    const sr = document.createElement("td");
+    sr.className = "sr";
+    sr.textContent = String(r + 1);
+    tr.append(sr);
+    row.forEach((value, level) => {
+      const td = document.createElement("td");
+      if (locked) {
+        const frozen = document.createElement("div");
+        frozen.className = "frozen";
+        frozen.textContent = value;
+        td.append(frozen);
+      } else {
+        const box = document.createElement("textarea");
+        box.value = value;
+        box.setAttribute("aria-label", LEVELS[level] + " row " + (r + 1));
+        box.addEventListener("input", () => {
+          grid[r][level] = box.value;
+          grow(box);
+          writeGrid(grid);
+        });
+        td.append(box);
+      }
+      tr.append(td);
     });
-    td.append(box);
-    tr.append(td);
-  }
-  body.append(tr);
+    tbody.append(tr);
+  });
+  table.append(thead, tbody);
+  wrap.append(table);
+  return wrap;
 }
 
-function sizeAll() {
+function show() {
+  app.textContent = "";
+  if (view === "list") {
+    title.textContent = "History";
+    hint.textContent = "Past days. Today’s sheet is separate.";
+    back.textContent = "← Today";
+    back.href = "#";
+    switchBtn.hidden = true;
+    const history = readHistory();
+    if (!history.length) {
+      const note = document.createElement("p");
+      note.className = "empty-note";
+      note.textContent = "Nothing saved yet. Today’s scores land here after midnight.";
+      app.append(note);
+      return;
+    }
+    const days = document.createElement("div");
+    days.className = "days";
+    history.forEach((item) => {
+      const btn = document.createElement("button");
+      btn.className = "day";
+      btn.type = "button";
+      const preview = item.grid.flat().map((cell) => String(cell).trim()).filter(Boolean)[0] || "Empty";
+      const name = document.createElement("span");
+      name.textContent = label(item.date);
+      const previewText = document.createElement("small");
+      previewText.textContent = preview.split("\n")[0].slice(0, 28);
+      btn.append(name, previewText);
+      btn.addEventListener("click", () => {
+        pastDate = item.date;
+        view = "past";
+        show();
+      });
+      days.append(btn);
+    });
+    app.append(days);
+    return;
+  }
+
+  if (view === "past") {
+    const item = readHistory().find((entry) => entry.date === pastDate);
+    title.textContent = item ? label(item.date) : "History";
+    hint.textContent = "Saved day. This one does not change.";
+    back.textContent = "← History";
+    back.href = "#";
+    switchBtn.hidden = true;
+    app.append(sheet(item ? item.grid : empty(), true));
+    return;
+  }
+
+  title.textContent = "Scores";
+  hint.textContent = "Today’s sheet. It clears after midnight and moves into History.";
+  back.textContent = "← Back";
+  back.href = "total.html";
+  switchBtn.hidden = false;
+  switchBtn.textContent = "History";
+  app.append(sheet(grid, false));
   document.querySelectorAll("textarea").forEach(grow);
 }
-window.addEventListener("load", sizeAll);
-requestAnimationFrame(sizeAll);
+
+back.addEventListener("click", (event) => {
+  if (view === "today") return;
+  event.preventDefault();
+  view = view === "past" ? "list" : "today";
+  show();
+});
+
+switchBtn.addEventListener("click", () => {
+  view = "list";
+  show();
+});
+
+function checkDay() {
+  if (localStorage.getItem(DAY_KEY) === today()) return;
+  grid = rollover();
+  if (view === "today") show();
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) checkDay();
+});
+setInterval(checkDay, 60000);
+show();
 </script>
 </body>
 </html>
