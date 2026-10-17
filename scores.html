@@ -24,7 +24,7 @@
     color: var(--fg);
     font-family: Outfit, ui-sans-serif, system-ui, sans-serif;
   }
-  button, input, a { font: inherit; color: inherit; }
+  button, a { font: inherit; color: inherit; touch-action: manipulation; }
   a { text-decoration: none; }
   main {
     max-width: 40rem;
@@ -41,64 +41,55 @@
     font-size: 0.75rem;
   }
   h1 {
-    margin: 0.25rem 0 0.4rem;
+    margin: 0.25rem 0 0.35rem;
     font-family: Fraunces, Georgia, serif;
     font-weight: 500;
     font-size: 2rem;
   }
-  .hint { margin: 0 0 1rem; color: var(--muted); font-size: 0.875rem; }
-  .sheet {
-    overflow-x: auto;
-    padding-bottom: 0.5rem;
-  }
-  .line {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin-bottom: 0.45rem;
-    min-width: max-content;
-  }
-  .level {
-    position: sticky;
-    left: 0;
-    z-index: 1;
-    width: 5.6rem;
-    flex: 0 0 5.6rem;
-    background: var(--bg);
+  .hint { margin: 0 0 1.25rem; color: var(--muted); font-size: 0.875rem; }
+  .block { margin-bottom: 1.25rem; }
+  h2 {
+    margin: 0 0 0.55rem;
     font-family: Fraunces, Georgia, serif;
-    font-size: 1.05rem;
+    font-weight: 500;
+    font-size: 1.35rem;
   }
-  .cols { display: flex; gap: 0.35rem; }
-  .num, .cell {
-    width: 2.75rem;
-    flex: 0 0 2.75rem;
-    text-align: center;
+  .cols {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.5rem;
   }
-  .num {
+  @media (min-width: 720px) {
+    .cols { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+  }
+  .box { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+  .box span {
     color: var(--muted);
     font-size: 0.75rem;
+    text-align: center;
   }
   .cell {
+    width: 100%;
     height: 2.75rem;
+    min-width: 0;
+    padding: 0;
     border-radius: 0.6rem;
     border: 1px solid var(--line);
     background: var(--surface);
     color: var(--accent);
     font-family: Fraunces, Georgia, serif;
-    font-size: 1rem;
+    font-size: 16px;
+    text-align: center;
   }
-  .cell:focus {
-    outline: none;
-    border-color: var(--accent);
-  }
+  .cell:focus { outline: none; border-color: var(--accent); }
 </style>
 </head>
 <body>
 <main>
   <a class="back" href="total.html">&larr; Back</a>
   <h1>Scores</h1>
-  <p class="hint">Three levels, ten boxes each. Letters and numbers only.</p>
-  <div class="sheet" id="sheet"></div>
+  <p class="hint">Level 1, then 2, then 3. Ten boxes on each. Type letters and numbers.</p>
+  <div id="sheet"></div>
 </main>
 <script>
 const KEY = "score-grid-v1";
@@ -109,10 +100,13 @@ function emptyGrid() {
   return LEVELS.map(() => Array(COLS).fill(""));
 }
 
+function clean(value) {
+  return String(value).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+}
+
 function load() {
   try {
-    const raw = localStorage.getItem(KEY);
-    const data = raw ? JSON.parse(raw) : null;
+    const data = JSON.parse(localStorage.getItem(KEY) || "null");
     if (!Array.isArray(data) || data.length !== 3) return emptyGrid();
     return LEVELS.map((_, row) => Array.from({ length: COLS }, (_, col) => {
       const value = data[row] && data[row][col];
@@ -123,46 +117,48 @@ function load() {
   }
 }
 
-function clean(value) {
-  return String(value).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+function persist(grid) {
+  try { localStorage.setItem(KEY, JSON.stringify(grid)); } catch (err) {}
 }
 
 const grid = load();
 const sheet = document.getElementById("sheet");
 
-const head = document.createElement("div");
-head.className = "line";
-head.innerHTML = `<div class="level"></div><div class="cols">${
-  Array.from({ length: COLS }, (_, i) => `<div class="num">${i + 1}</div>`).join("")
-}</div>`;
-sheet.append(head);
-
-grid.forEach((row, r) => {
-  const line = document.createElement("div");
-  line.className = "line";
-  const label = document.createElement("div");
-  label.className = "level";
-  label.textContent = LEVELS[r];
+LEVELS.forEach((name, r) => {
+  const block = document.createElement("section");
+  block.className = "block";
+  const title = document.createElement("h2");
+  title.textContent = name;
   const cols = document.createElement("div");
   cols.className = "cols";
-  row.forEach((value, c) => {
+  for (let c = 0; c < COLS; c++) {
+    const box = document.createElement("label");
+    box.className = "box";
+    const cap = document.createElement("span");
+    cap.textContent = String(c + 1);
     const input = document.createElement("input");
     input.className = "cell";
     input.maxLength = 6;
-    input.inputMode = "text";
+    input.enterKeyHint = "done";
     input.autocomplete = "off";
-    input.setAttribute("aria-label", `${LEVELS[r]} box ${c + 1}`);
-    input.value = value;
+    input.autocapitalize = "characters";
+    input.spellcheck = false;
+    input.setAttribute("aria-label", name + " box " + (c + 1));
+    input.value = grid[r][c];
     input.addEventListener("input", () => {
-      const next = clean(input.value);
-      if (next !== input.value) input.value = next;
-      grid[r][c] = next;
-      localStorage.setItem(KEY, JSON.stringify(grid));
+      grid[r][c] = input.value;
+      persist(grid);
     });
-    cols.append(input);
-  });
-  line.append(label, cols);
-  sheet.append(line);
+    input.addEventListener("blur", () => {
+      input.value = clean(input.value);
+      grid[r][c] = input.value;
+      persist(grid);
+    });
+    box.append(cap, input);
+    cols.append(box);
+  }
+  block.append(title, cols);
+  sheet.append(block);
 });
 </script>
 </body>
