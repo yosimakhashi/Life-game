@@ -104,6 +104,8 @@
   }
   .pill:active { transform: scale(0.97); }
   .pill.primary { border-color: var(--accent); color: var(--accent); }
+  a.pill { text-decoration: none; }
+  .scores-link { width: 100%; margin-bottom: 0.75rem; }
   .row {
     margin-top: 0.75rem;
     display: flex;
@@ -156,6 +158,7 @@
 </main>
 <div class="dock">
   <div class="dock-inner">
+    <a class="pill scores-link" href="scores.html">Scores</a>
     <div class="tools" id="tools" hidden>
       <label class="pill">Change
         <input class="hit" id="file2" type="file" accept="image/*">

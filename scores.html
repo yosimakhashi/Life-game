@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#141210">
+<title>Scores</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Outfit:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #141210;
+    --surface: #1e1b17;
+    --fg: #f4efe6;
+    --muted: #a3988c;
+    --accent: #e0a15a;
+    --line: #3a342c;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: Outfit, ui-sans-serif, system-ui, sans-serif;
+  }
+  button, input, a { font: inherit; color: inherit; }
+  a { text-decoration: none; }
+  main {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 1.25rem 1rem 2rem;
+  }
+  .back {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+  }
+  h1 {
+    margin: 0.25rem 0 0.4rem;
+    font-family: Fraunces, Georgia, serif;
+    font-weight: 500;
+    font-size: 2rem;
+  }
+  .hint { margin: 0 0 1rem; color: var(--muted); font-size: 0.875rem; }
+  .sheet {
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+  .line {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.45rem;
+    min-width: max-content;
+  }
+  .level {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    width: 5.6rem;
+    flex: 0 0 5.6rem;
+    background: var(--bg);
+    font-family: Fraunces, Georgia, serif;
+    font-size: 1.05rem;
+  }
+  .cols { display: flex; gap: 0.35rem; }
+  .num, .cell {
+    width: 2.75rem;
+    flex: 0 0 2.75rem;
+    text-align: center;
+  }
+  .num {
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+  .cell {
+    height: 2.75rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--accent);
+    font-family: Fraunces, Georgia, serif;
+    font-size: 1rem;
+  }
+  .cell:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="total.html">&larr; Back</a>
+  <h1>Scores</h1>
+  <p class="hint">Three levels, ten boxes each. Letters and numbers only.</p>
+  <div class="sheet" id="sheet"></div>
+</main>
+<script>
+const KEY = "score-grid-v1";
+const LEVELS = ["Level 1", "Level 2", "Level 3"];
+const COLS = 10;
+
+function emptyGrid() {
+  return LEVELS.map(() => Array(COLS).fill(""));
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    const data = raw ? JSON.parse(raw) : null;
+    if (!Array.isArray(data) || data.length !== 3) return emptyGrid();
+    return LEVELS.map((_, row) => Array.from({ length: COLS }, (_, col) => {
+      const value = data[row] && data[row][col];
+      return typeof value === "string" ? clean(value) : "";
+    }));
+  } catch (err) {
+    return emptyGrid();
+  }
+}
+
+function clean(value) {
+  return String(value).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+}
+
+const grid = load();
+const sheet = document.getElementById("sheet");
+
+const head = document.createElement("div");
+head.className = "line";
+head.innerHTML = `<div class="level"></div><div class="cols">${
+  Array.from({ length: COLS }, (_, i) => `<div class="num">${i + 1}</div>`).join("")
+}</div>`;
+sheet.append(head);
+
+grid.forEach((row, r) => {
+  const line = document.createElement("div");
+  line.className = "line";
+  const label = document.createElement("div");
+  label.className = "level";
+  label.textContent = LEVELS[r];
+  const cols = document.createElement("div");
+  cols.className = "cols";
+  row.forEach((value, c) => {
+    const input = document.createElement("input");
+    input.className = "cell";
+    input.maxLength = 6;
+    input.inputMode = "text";
+    input.autocomplete = "off";
+    input.setAttribute("aria-label", `${LEVELS[r]} box ${c + 1}`);
+    input.value = value;
+    input.addEventListener("input", () => {
+      const next = clean(input.value);
+      if (next !== input.value) input.value = next;
+      grid[r][c] = next;
+      localStorage.setItem(KEY, JSON.stringify(grid));
+    });
+    cols.append(input);
+  });
+  line.append(label, cols);
+  sheet.append(line);
+});
+</script>
+</body>
+</html>
