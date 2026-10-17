@@ -1516,8 +1516,16 @@ body {
 .navBtnStats,
 .navBtnAchievements,
 .navBtnSideOps,
-.navBtnCollectibles {
+.navBtnCollectibles,
+.navBtnScores {
     border-left: 1px solid var(--stone-line);
+}
+
+.navBtnScores {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-size: 14px;
+    padding: 14px 8px;
 }
 
 /* header icons become seals */
@@ -1615,6 +1623,7 @@ select:focus {
     <!-- NAV -->
 
     <div class="navRow">
+        <a class="navBtn navBtnScores" href="scores.html">SCORES</a>
         <a class="navBtn navBtnStats" href="stats.html">📊 STATS</a>
         <a class="navBtn navBtnAchievements" href="achievements.html">🏆 ACHIEVEMENTS</a>
         <a class="navBtn navBtnSideOps" href="sideops.html">⚔ SIDE OPS</a>
