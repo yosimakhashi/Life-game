@@ -161,7 +161,24 @@ body::before {
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
-.planLink:active {
+.videoLink {
+    position: absolute;
+    top: 14px;
+    right: 182px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-panel-alt);
+    font-size: 15px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.planLink:active,
+.videoLink:active {
     transform: scale(0.92);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
@@ -172,7 +189,7 @@ body::before {
     color: var(--ink-blue);
     text-shadow: none;
     font-weight: bold;
-    padding-right: 166px;
+    padding-right: 210px;
 }
 
 .title {
@@ -1533,6 +1550,7 @@ body {
 .planLink,
 .rewardsLink,
 .skillsLink,
+.videoLink,
 .traitsLink,
 .vaultLink {
     border: 1px solid var(--gold-dim);
@@ -1615,6 +1633,7 @@ select:focus {
         <a class="planLink" href="plan.html" title="The Plan">📋</a>
         <a class="rewardsLink" href="rewards.html" title="Rewards">🎁</a>
         <a class="skillsLink" href="skills.html" title="Skills">🎓</a>
+        <a class="videoLink" href="video.html" title="Video">▶</a>
         <div class="logo">MINDJACK.9 // LIFE OPERATING SYSTEM</div>
         <div class="title">LIFE RPG</div>
         <div class="subtitle">Upgrade yourself. Complete missions. Become harder to kill.</div>
