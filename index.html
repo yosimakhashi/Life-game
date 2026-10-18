@@ -1534,15 +1534,22 @@ body {
 .navBtnAchievements,
 .navBtnSideOps,
 .navBtnCollectibles,
-.navBtnScores {
+.navBtnScores,
+.navBtnVideo {
     border-left: 1px solid var(--stone-line);
 }
 
-.navBtnScores {
+.navBtnScores,
+.navBtnVideo {
     grid-column: 1 / -1;
     text-align: center;
     font-size: 14px;
     padding: 14px 8px;
+}
+
+.navBtnVideo {
+    border: 1px solid var(--gold);
+    color: var(--gold);
 }
 
 /* header icons become seals */
@@ -1642,6 +1649,7 @@ select:focus {
     <!-- NAV -->
 
     <div class="navRow">
+        <a class="navBtn navBtnVideo" href="video.html">▶ VIDEO</a>
         <a class="navBtn navBtnScores" href="scores.html">SCORES</a>
         <a class="navBtn navBtnStats" href="stats.html">📊 STATS</a>
         <a class="navBtn navBtnAchievements" href="achievements.html">🏆 ACHIEVEMENTS</a>
