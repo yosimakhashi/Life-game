@@ -34,6 +34,11 @@
     padding: 1.25rem 1rem 2rem;
   }
   a, button { touch-action: manipulation; }
+  .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
   .eyebrow {
     margin: 0;
     font-size: 0.75rem;
@@ -41,6 +46,19 @@
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--muted);
+  }
+  .video-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    border: 1px solid var(--accent);
+    background: var(--surface);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 1rem;
   }
   .frame {
     margin-top: 0.75rem;
@@ -142,7 +160,10 @@
 </head>
 <body>
 <main>
-  <p class="eyebrow">Frame</p>
+  <div class="head">
+    <p class="eyebrow">Frame</p>
+    <a class="video-icon" href="video.html" aria-label="Video">▶</a>
+  </div>
   <a class="pill scores-link" href="scores.html">Scores</a>
   <div class="frame" id="frame">
     <img id="pic" alt="" hidden>
