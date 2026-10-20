@@ -18,6 +18,7 @@
     --accent: #e0a15a;
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: Outfit, ui-sans-serif, system-ui, sans-serif; }
   button, a { font: inherit; color: inherit; touch-action: manipulation; }
   a { text-decoration: none; }
@@ -62,6 +63,15 @@
   .btn.full { border-color: var(--accent); color: var(--accent); }
   .btn.danger { color: #f0b4a8; }
   .name { margin: 0.7rem 0 0; color: var(--muted); font-size: 0.85rem; word-break: break-word; }
+  .ask {
+    margin-top: 0.85rem;
+    padding: 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: 0.9rem;
+    background: var(--card);
+  }
+  .ask p { margin: 0 0 0.75rem; }
+  .ask[hidden] { display: none !important; }
 </style>
 </head>
 <body>
@@ -78,8 +88,16 @@
     <label class="btn" id="pick"><span id="pickLabel">Upload</span>
       <input id="file" type="file" accept="video/*">
     </label>
+    <button class="btn" id="pause" type="button" hidden>Pause</button>
     <button class="btn full" id="full" type="button" hidden>Full screen</button>
     <button class="btn danger" id="remove" type="button" hidden>Delete</button>
+  </div>
+  <div class="ask" id="ask" hidden>
+    <p>Use this scene as the photo on the front page?</p>
+    <div class="actions">
+      <button class="btn full" id="yes" type="button">Yes</button>
+      <button class="btn" id="no" type="button">Not now</button>
+    </div>
   </div>
 </main>
 <script>
@@ -88,6 +106,8 @@ const player = document.getElementById("player");
 const empty = document.getElementById("empty");
 const pickLabel = document.getElementById("pickLabel");
 const full = document.getElementById("full");
+const pause = document.getElementById("pause");
+const ask = document.getElementById("ask");
 const remove = document.getElementById("remove");
 const nameEl = document.getElementById("name");
 const hint = document.getElementById("hint");
@@ -138,8 +158,11 @@ function show(blob, name) {
   player.hidden = !blob;
   empty.hidden = !!blob;
   full.hidden = !blob;
+  pause.hidden = !blob;
   remove.hidden = !blob;
   nameEl.hidden = !blob;
+  ask.hidden = true;
+  pause.textContent = "Pause";
   pickLabel.textContent = blob ? "Change" : "Upload";
   if (!blob) {
     player.removeAttribute("src");
@@ -171,6 +194,83 @@ file.addEventListener("change", async () => {
 player.addEventListener("error", () => {
   if (!player.getAttribute("src")) return;
   hint.textContent = "This phone couldn’t play that video. Try another one.";
+});
+
+pause.addEventListener("click", () => {
+  if (player.paused) player.play();
+  else player.pause();
+});
+
+player.addEventListener("play", () => {
+  pause.textContent = "Pause";
+  ask.hidden = true;
+});
+
+player.addEventListener("pause", () => {
+  pause.textContent = "Play";
+  if (!player.hidden && player.videoWidth > 0) ask.hidden = false;
+});
+
+function frameShot() {
+  const w = player.videoWidth;
+  const h = player.videoHeight;
+  if (!w || !h) throw new Error("no frame");
+  const max = 1200;
+  const scale = Math.min(1, max / Math.max(w, h));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(w * scale));
+  canvas.height = Math.max(1, Math.round(h * scale));
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("canvas");
+  ctx.drawImage(player, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.82);
+}
+
+function photoDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open("photo-total", 1);
+    req.onupgradeneeded = () => {
+      if (!req.result.objectStoreNames.contains("kv")) req.result.createObjectStore("kv");
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveFront(dataUrl) {
+  const database = await photoDb();
+  await new Promise((resolve, reject) => {
+    const tx = database.transaction("kv", "readwrite");
+    tx.objectStore("kv").put(dataUrl, "photo");
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+  let total = 0;
+  try {
+    const raw = JSON.parse(localStorage.getItem("photo-total-v1") || "null");
+    if (raw && typeof raw.total === "number" && Number.isFinite(raw.total)) total = raw.total;
+  } catch (err) {}
+  try {
+    localStorage.setItem("photo-total-v1", JSON.stringify({
+      photo: dataUrl,
+      total,
+      view: { scale: 1, x: 0, y: 0 }
+    }));
+  } catch (err) {}
+}
+
+document.getElementById("yes").addEventListener("click", async () => {
+  try {
+    await saveFront(frameShot());
+    ask.hidden = true;
+    hint.textContent = "That scene is now the photo on the front page.";
+  } catch (err) {
+    hint.textContent = "Couldn’t grab that frame. Pause on a clear moment and try again.";
+  }
+});
+
+document.getElementById("no").addEventListener("click", () => {
+  ask.hidden = true;
 });
 
 full.addEventListener("click", () => {
