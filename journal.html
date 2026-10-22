@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROJECT MAYHEM JOURNAL | MINDJACK.9</title>
+<meta name="theme-color" content="#0b0908">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Oswald:wght@500;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+<style>
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    --bg: #0b0908;
+    --bg-panel: #16110f;
+    --bg-paper: #e9dfcf;
+    --paper-ink: #1d1714;
+    --border: #3a2a24;
+    --blood: #b3131b;
+    --blood-dim: #6e0f13;
+    --soap: #f4a7c0;
+    --soap-dim: #b8728b;
+    --bruise: #6b4c7a;
+    --text-primary: #ebe2d6;
+    --text-dim: #9b8c80;
+    --font-type: 'Special Elite', 'Courier New', monospace;
+    --font-head: 'Oswald', Impact, sans-serif;
+    --font-body: 'Courier Prime', 'Courier New', monospace;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--bg);
+    background-image:
+        radial-gradient(ellipse at 50% -10%, rgba(179, 19, 27, 0.22), transparent 60%),
+        radial-gradient(ellipse at 90% 100%, rgba(244, 167, 192, 0.08), transparent 55%),
+        linear-gradient(180deg, #120d0b 0%, #0b0908 60%, #070505 100%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+}
+
+/* film grain */
+body::before {
+    content: "";
+    position: fixed;
+    inset: -50%;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0.16;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+    animation: grain 0.9s steps(4) infinite;
+}
+
+@keyframes grain {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(-3%, 2%); }
+    50% { transform: translate(2%, -3%); }
+    75% { transform: translate(-1%, 3%); }
+    100% { transform: translate(0, 0); }
+}
+
+/* the single-frame flash */
+@keyframes flicker {
+    0%, 96%, 100% { opacity: 0; }
+    97% { opacity: 1; }
+}
+
+.tylerFlash {
+    position: fixed;
+    right: 12px;
+    bottom: 80px;
+    font-family: var(--font-head);
+    font-size: 64px;
+    color: var(--soap);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 40;
+    animation: flicker 23s infinite;
+}
+
+.app {
+    position: relative;
+    z-index: 2;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px 16px 60px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.backLink {
+    display: inline-block;
+    color: var(--text-dim);
+    font-family: var(--font-type);
+    font-size: 12px;
+    text-decoration: none;
+    letter-spacing: 0.1em;
+    margin-bottom: 14px;
+}
+
+.backLink:active {
+    color: var(--soap);
+}
+
+/* HEADER */
+
+.header {
+    text-align: center;
+    margin-bottom: 22px;
+}
+
+.kicker {
+    font-family: var(--font-type);
+    color: var(--soap);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+}
+
+.title {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: clamp(34px, 10vw, 58px);
+    line-height: 0.95;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin: 8px 0 6px;
+    color: var(--text-primary);
+    text-shadow: 3px 3px 0 var(--blood-dim);
+}
+
+.title span {
+    color: var(--blood);
+    text-shadow: none;
+}
+
+.subtitle {
+    font-family: var(--font-type);
+    color: var(--text-dim);
+    font-size: 13px;
+}
+
+/* SOAP BAR / PANELS */
+
+.panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 18px;
+    margin-bottom: 16px;
+}
+
+.soapCard {
+    max-width: 420px;
+    margin: 30px auto 0;
+    background: linear-gradient(160deg, #f7bfd1 0%, var(--soap) 55%, #e08aa7 100%);
+    color: #3a0f1d;
+    border-radius: 28px;
+    padding: 30px 24px 26px;
+    text-align: center;
+    box-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.12), 0 14px 40px rgba(0, 0, 0, 0.6);
+    transform: rotate(-1deg);
+}
+
+.soapCard .brand {
+    font-family: var(--font-head);
+    font-size: 13px;
+    letter-spacing: 0.25em;
+    border-top: 2px solid #3a0f1d;
+    border-bottom: 2px solid #3a0f1d;
+    padding: 6px 0;
+    margin-bottom: 18px;
+}
+
+.soapCard h2 {
+    font-family: var(--font-head);
+    font-size: 26px;
+    text-transform: uppercase;
+    margin: 0 0 6px;
+}
+
+.soapCard p {
+    font-family: var(--font-type);
+    font-size: 13px;
+    margin: 0 0 16px;
+    line-height: 1.5;
+}
+
+.soapCard input {
+    width: 100%;
+    padding: 13px 12px;
+    margin-bottom: 10px;
+    border: 2px solid #3a0f1d;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.55);
+    color: #2a0a14;
+    font-family: var(--font-type);
+    font-size: 16px;
+    text-align: center;
+}
+
+.soapCard input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.soapCard .err {
+    min-height: 18px;
+    font-family: var(--font-type);
+    font-size: 12px;
+    color: var(--blood-dim);
+    margin-bottom: 6px;
+}
+
+.soapCard .smallLink {
+    background: none;
+    border: none;
+    color: #5a1a2e;
+    font-family: var(--font-type);
+    font-size: 11px;
+    text-decoration: underline;
+    margin-top: 14px;
+    cursor: pointer;
+}
+
+/* BUTTONS */
+
+.btn {
+    display: inline-block;
+    padding: 12px 16px;
+    border: 2px solid var(--blood);
+    border-radius: 3px;
+    background: var(--blood);
+    color: #fff;
+    font-family: var(--font-head);
+    font-size: 15px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.btn:active {
+    transform: translateY(1px) scale(0.98);
+}
+
+.btn.block {
+    width: 100%;
+}
+
+.btn.ghost {
+    background: transparent;
+    color: var(--text-primary);
+    border-color: var(--border);
+}
+
+.btn.soapBtn {
+    background: transparent;
+    color: var(--soap);
+    border-color: var(--soap-dim);
+}
+
+.btn.small {
+    padding: 8px 12px;
+    font-size: 12px;
+}
+
+/* TOOLBAR */
+
+.toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.toolbar .btn {
+    flex: 1;
+}
+
+.toolbar .btn.main {
+    flex: 2;
+}
+
+.search {
+    width: 100%;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text-primary);
+    font-family: var(--font-type);
+    font-size: 15px;
+}
+
+.search:focus {
+    outline: none;
+    border-color: var(--soap-dim);
+}
+
+.rule {
+    font-family: var(--font-type);
+    font-size: 12px;
+    color: var(--soap);
+    text-align: center;
+    margin: 0 0 16px;
+    padding: 10px;
+    border: 1px dashed var(--soap-dim);
+    border-radius: 3px;
+}
+
+/* ENTRY LIST */
+
+.entryCard {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--blood);
+    border-radius: 3px;
+    padding: 14px 14px 12px;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-family: var(--font-body);
+}
+
+.entryCard:active {
+    border-left-color: var(--soap);
+}
+
+.entryMeta {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-family: var(--font-type);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+}
+
+.entryTitle {
+    font-family: var(--font-head);
+    font-size: 19px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 4px;
+    overflow-wrap: anywhere;
+}
+
+.entryPreview {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.45;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow-wrap: anywhere;
+}
+
+.empty {
+    text-align: center;
+    font-family: var(--font-type);
+    color: var(--text-dim);
+    padding: 40px 10px;
+    line-height: 1.6;
+}
+
+.monthLabel {
+    font-family: var(--font-head);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: var(--soap-dim);
+    margin: 18px 0 8px;
+    text-transform: uppercase;
+}
+
+/* EDITOR: a page of typewriter paper */
+
+.paper {
+    background: var(--bg-paper);
+    color: var(--paper-ink);
+    border-radius: 2px;
+    padding: 20px 18px 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    position: relative;
+    background-image:
+        repeating-linear-gradient(180deg, transparent 0, transparent 27px, rgba(29, 23, 20, 0.08) 27px, rgba(29, 23, 20, 0.08) 28px);
+}
+
+.paper::after {
+    content: "CONFIDENTIAL";
+    position: absolute;
+    top: 14px;
+    right: 12px;
+    font-family: var(--font-head);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--blood);
+    border: 2px solid var(--blood);
+    padding: 2px 6px;
+    transform: rotate(6deg);
+    opacity: 0.75;
+}
+
+.paper label {
+    display: block;
+    font-family: var(--font-type);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: #6b5a50;
+    margin-bottom: 4px;
+}
+
+.paper input,
+.paper textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--paper-ink);
+    font-family: var(--font-type);
+}
+
+.paper input:focus,
+.paper textarea:focus {
+    outline: none;
+}
+
+.paper .dateInput {
+    font-size: 14px;
+    margin-bottom: 12px;
+    max-width: 200px;
+}
+
+.paper .titleInput {
+    font-family: var(--font-head);
+    font-size: 24px;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--paper-ink);
+    padding: 4px 0;
+    margin-bottom: 14px;
+}
+
+.paper textarea {
+    min-height: 52vh;
+    resize: vertical;
+    font-size: 16px;
+    line-height: 28px;
+}
+
+.paper .titleInput::placeholder,
+.paper textarea::placeholder {
+    color: #9c8a7d;
+}
+
+.moodRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 4px 0 14px;
+}
+
+.moodChip {
+    padding: 6px 10px;
+    border: 1px solid #8a766a;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--paper-ink);
+    font-family: var(--font-type);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.moodChip.active {
+    background: var(--blood);
+    border-color: var(--blood);
+    color: #fff;
+}
+
+.editorFoot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    font-family: var(--font-type);
+    font-size: 11px;
+    color: #6b5a50;
+}
+
+.editorActions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.editorActions .btn {
+    flex: 1;
+}
+
+.quote {
+    font-family: var(--font-type);
+    font-style: italic;
+    color: var(--text-dim);
+    font-size: 12px;
+    text-align: center;
+    margin: 16px 0 0;
+}
+
+/* SETTINGS */
+
+.settings h3 {
+    font-family: var(--font-head);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 0 0 10px;
+    color: var(--soap);
+    font-size: 16px;
+}
+
+.settings p {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin: 0 0 12px;
+}
+
+.settings input[type="password"] {
+    width: 100%;
+    padding: 11px 12px;
+    margin-bottom: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text-primary);
+    font-family: var(--font-type);
+    font-size: 15px;
+}
+
+.settings .row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.settings .row .btn {
+    flex: 1;
+}
+
+.msg {
+    font-family: var(--font-type);
+    font-size: 12px;
+    color: var(--soap);
+    min-height: 16px;
+    margin-top: 6px;
+}
+
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    background: var(--blood);
+    color: #fff;
+    font-family: var(--font-head);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 10px 18px;
+    border-radius: 3px;
+    z-index: 60;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+}
+
+.toast.show {
+    opacity: 1;
+}
+</style>
+</head>
+<body>
+
+<div class="tylerFlash" aria-hidden="true">T.D.</div>
+
+<div class="app">
+
+    <a class="backLink" href="index.html">&larr; BACK TO LIFE RPG</a>
+
+    <div class="header">
+        <div class="kicker">PAPER STREET SOAP CO. // PRIVATE FILE</div>
+        <div class="title">Project <span>Mayhem</span><br>Journal</div>
+        <div class="subtitle" id="subtitle">Only you get in. That's the first rule.</div>
+    </div>
+
+    <!-- LOCK SCREEN -->
+
+    <div id="lockScreen" class="hidden">
+        <form class="soapCard" id="lockForm" autocomplete="off">
+            <div class="brand">PAPER STREET SOAP CO.</div>
+            <h2 id="lockTitle">Welcome back</h2>
+            <p id="lockText">Say the password. You do not talk about this journal.</p>
+            <input type="password" id="pw1" placeholder="Password" autocomplete="current-password">
+            <input type="password" id="pw2" class="hidden" placeholder="Say it again" autocomplete="new-password">
+            <div class="err" id="lockErr"></div>
+            <button type="submit" class="btn block" id="lockBtn">Enter</button>
+            <button type="button" class="smallLink hidden" id="forgotBtn">Forgot it?</button>
+        </form>
+    </div>
+
+    <!-- LIST -->
+
+    <div id="listScreen" class="hidden">
+        <div class="toolbar">
+            <button class="btn main" onclick="newEntry()">+ New Entry</button>
+            <button class="btn ghost small" onclick="showSettings()" title="Settings">⚙</button>
+            <button class="btn ghost small" onclick="lock()" title="Lock">🔒 Lock</button>
+        </div>
+        <input class="search" id="search" type="search" placeholder="Search your entries..." oninput="renderList()">
+        <div class="rule" id="ruleLine"></div>
+        <div id="entryList"></div>
+    </div>
+
+    <!-- EDITOR -->
+
+    <div id="editorScreen" class="hidden">
+        <div class="toolbar">
+            <button class="btn ghost small" onclick="closeEditor()">&larr; All Entries</button>
+            <button class="btn ghost small" onclick="lock()">🔒 Lock</button>
+        </div>
+        <div class="paper">
+            <label for="entryDate">DATE</label>
+            <input class="dateInput" id="entryDate" type="date" onchange="queueSave()">
+            <input class="titleInput" id="entryTitle" placeholder="Title (optional)" oninput="queueSave()">
+            <label>HOW DO YOU FEEL?</label>
+            <div class="moodRow" id="moodRow"></div>
+            <textarea id="entryBody" placeholder="Write it down. Nobody else is reading." oninput="queueSave()"></textarea>
+            <div class="editorFoot">
+                <span id="wordCount">0 words</span>
+                <span id="saveState">Saved</span>
+            </div>
+        </div>
+        <div class="editorActions">
+            <button class="btn" onclick="closeEditor()">Done</button>
+            <button class="btn ghost" id="deleteBtn" onclick="deleteEntry()">Delete</button>
+        </div>
+        <p class="quote" id="editorQuote"></p>
+    </div>
+
+    <!-- SETTINGS -->
+
+    <div id="settingsScreen" class="hidden">
+        <div class="toolbar">
+            <button class="btn ghost small" onclick="showList()">&larr; All Entries</button>
+        </div>
+
+        <div class="panel settings">
+            <h3>Change password</h3>
+            <input type="password" id="curPw" placeholder="Current password">
+            <input type="password" id="newPw1" placeholder="New password">
+            <input type="password" id="newPw2" placeholder="New password again">
+            <button class="btn block" onclick="changePassword()">Change password</button>
+            <div class="msg" id="pwMsg"></div>
+        </div>
+
+        <div class="panel settings">
+            <h3>Backup</h3>
+            <p>Entries live only in this browser. Download a backup now and then. The backup file stays locked with your password.</p>
+            <div class="row">
+                <button class="btn soapBtn" onclick="exportBackup()">⬇ Download backup</button>
+                <button class="btn ghost" onclick="pickingFile = true; document.getElementById('importFile').click()">⬆ Restore backup</button>
+            </div>
+            <input type="file" id="importFile" accept=".json,application/json" class="hidden" onchange="importBackup(this)">
+            <div class="msg" id="backupMsg"></div>
+        </div>
+
+        <div class="panel settings">
+            <h3>Auto-lock</h3>
+            <p>The journal locks itself after 5 minutes without a tap, and whenever you leave this page.</p>
+        </div>
+    </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORE_KEY = "mindjack9_journal";
+const ITERATIONS = 250000;
+const AUTO_LOCK_MS = 5 * 60 * 1000;
+
+const MOODS = ["🔥 Fired up", "😐 Numb", "😤 Angry", "😌 Calm", "🤕 Beat up", "💪 Strong", "🌀 Insomnia"];
+
+const RULES = [
+    "1st rule: you do not talk about this journal.",
+    "2nd rule: you DO NOT talk about this journal.",
+    "3rd rule: if someone says stop, you stop writing. Not before.",
+    "4th rule: only one person in this journal. You.",
+    "5th rule: one entry at a time.",
+    "6th rule: no shirts, no shoes, no lies.",
+    "7th rule: entries go on as long as they have to.",
+    "8th rule: if this is your first night, you have to write."
+];
+
+const QUOTES = [
+    "\"It's only after we've lost everything that we're free to do anything.\"",
+    "\"You are not your job.\"",
+    "\"How much can you know about yourself if you've never been in a fight?\"",
+    "\"This is your life, and it's ending one minute at a time.\"",
+    "\"Self-improvement is masturbation. Now self-destruction...\"",
+    "\"I want you to hit me as hard as you can.\"",
+    "\"The things you own end up owning you.\"",
+    "\"On a long enough timeline, the survival rate for everyone drops to zero.\"",
+    "\"I am Jack's complete lack of surprise.\"",
+    "\"Stop trying to control everything and just let go.\"",
+    "\"Without pain, without sacrifice, we would have nothing.\""
+];
+
+let key = null;
+let salt = null;
+let entries = [];
+let currentId = null;
+let saveTimer = null;
+let lockTimer = null;
+let pickingFile = false;
+
+const $ = id => document.getElementById(id);
+const enc = new TextEncoder();
+const dec = new TextDecoder();
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+function b64(buf) {
+    let s = "";
+    const bytes = new Uint8Array(buf);
+    for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+    return btoa(s);
+}
+
+function unb64(str) {
+    const s = atob(str);
+    const bytes = new Uint8Array(s.length);
+    for (let i = 0; i < s.length; i++) bytes[i] = s.charCodeAt(i);
+    return bytes;
+}
+
+// CRYPTO: PBKDF2 turns the password into an AES-GCM key. Nothing readable is stored.
+
+async function deriveKey(password, saltBytes) {
+    const base = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt: saltBytes, iterations: ITERATIONS, hash: "SHA-256" },
+        base,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+    );
+}
+
+async function encryptEntries(k, saltBytes, list) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const data = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, k, enc.encode(JSON.stringify(list)));
+    return { v: 1, salt: b64(saltBytes), iv: b64(iv), data: b64(data) };
+}
+
+async function decryptVault(k, vault) {
+    const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(vault.iv) }, k, unb64(vault.data));
+    return JSON.parse(dec.decode(plain));
+}
+
+function loadVault() {
+    try {
+        return JSON.parse(localStorage.getItem(STORE_KEY));
+    } catch (e) {
+        return null;
+    }
+}
+
+async function persist() {
+    const vault = await encryptEntries(key, salt, entries);
+    localStorage.setItem(STORE_KEY, JSON.stringify(vault));
+}
+
+// SCREENS
+
+function show(id) {
+    ["lockScreen", "listScreen", "editorScreen", "settingsScreen"].forEach(s => $(s).classList.toggle("hidden", s !== id));
+    window.scrollTo(0, 0);
+}
+
+function showLock() {
+    const isNew = !loadVault();
+    $("lockTitle").textContent = isNew ? "Welcome to Fight Club" : "Welcome back";
+    $("lockText").textContent = isNew
+        ? "Pick a password. Nobody can recover it for you — not even Tyler. Don't forget it."
+        : "Say the password. You do not talk about this journal.";
+    $("pw2").classList.toggle("hidden", !isNew);
+    $("forgotBtn").classList.toggle("hidden", isNew);
+    $("lockBtn").textContent = isNew ? "Start the journal" : "Enter";
+    $("pw1").autocomplete = isNew ? "new-password" : "current-password";
+    $("pw1").value = "";
+    $("pw2").value = "";
+    $("lockErr").textContent = "";
+    $("subtitle").textContent = "Only you get in. That's the first rule.";
+    show("lockScreen");
+    setTimeout(() => $("pw1").focus(), 50);
+}
+
+function showList() {
+    $("ruleLine").textContent = pick(RULES);
+    $("subtitle").textContent = entries.length + (entries.length === 1 ? " entry" : " entries") + " on file.";
+    renderList();
+    show("listScreen");
+}
+
+function showSettings() {
+    ["curPw", "newPw1", "newPw2"].forEach(id => $(id).value = "");
+    $("pwMsg").textContent = "";
+    $("backupMsg").textContent = "";
+    show("settingsScreen");
+}
+
+function toast(text) {
+    const t = $("toast");
+    t.textContent = text;
+    t.classList.add("show");
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove("show"), 1600);
+}
+
+// UNLOCK
+
+$("lockForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const pw = $("pw1").value;
+    const vault = loadVault();
+    $("lockErr").textContent = "";
+
+    if (!pw) {
+        $("lockErr").textContent = "Say something.";
+        return;
+    }
+
+    $("lockBtn").disabled = true;
+    $("lockBtn").textContent = "Checking...";
+
+    try {
+        if (!vault) {
+            if (pw.length < 4) throw new Error("At least 4 characters.");
+            if (pw !== $("pw2").value) throw new Error("Those don't match.");
+            salt = crypto.getRandomValues(new Uint8Array(16));
+            key = await deriveKey(pw, salt);
+            entries = [];
+            await persist();
+        } else {
+            salt = unb64(vault.salt);
+            const k = await deriveKey(pw, salt);
+            try {
+                entries = await decryptVault(k, vault);
+            } catch (err) {
+                throw new Error("Wrong password. His name was Robert Paulson.");
+            }
+            key = k;
+        }
+        $("pw1").value = "";
+        $("pw2").value = "";
+        resetLockTimer();
+        showList();
+    } catch (err) {
+        $("lockErr").textContent = err.message;
+        $("lockBtn").textContent = vault ? "Enter" : "Start the journal";
+    } finally {
+        $("lockBtn").disabled = false;
+    }
+});
+
+$("forgotBtn").addEventListener("click", () => {
+    const answer = prompt("There is no way to recover the password. The entries are encrypted.\n\nTo erase EVERYTHING and start over, type: BURN IT");
+    if (answer && answer.trim().toUpperCase() === "BURN IT") {
+        localStorage.removeItem(STORE_KEY);
+        showLock();
+        toast("Everything burned");
+    }
+});
+
+async function lock() {
+    if (!key) return;
+    clearTimeout(saveTimer);
+    if (currentId) {
+        await saveCurrent();
+        cleanupEmpty();
+    }
+    key = null;
+    salt = null;
+    entries = [];
+    currentId = null;
+    $("entryBody").value = "";
+    $("entryTitle").value = "";
+    $("search").value = "";
+    clearTimeout(lockTimer);
+    showLock();
+}
+
+function resetLockTimer() {
+    clearTimeout(lockTimer);
+    if (key) lockTimer = setTimeout(lock, AUTO_LOCK_MS);
+}
+
+["click", "keydown", "touchstart", "input"].forEach(ev => document.addEventListener(ev, resetLockTimer, { passive: true }));
+
+document.addEventListener("visibilitychange", () => {
+    // the file picker hides the page on phones, so don't lock for it
+    if (document.hidden && key && !pickingFile) lock();
+});
+
+// LIST
+
+function fmtDate(iso) {
+    const d = new Date(iso + "T00:00:00");
+    return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+}
+
+function sortedEntries() {
+    return [...entries].sort((a, b) => (b.date + b.updated).localeCompare(a.date + a.updated));
+}
+
+function renderList() {
+    const q = $("search").value.trim().toLowerCase();
+    const list = sortedEntries().filter(e =>
+        !q || (e.title + " " + e.body + " " + (e.mood || "")).toLowerCase().includes(q)
+    );
+    const box = $("entryList");
+    box.innerHTML = "";
+
+    if (!entries.length) {
+        box.innerHTML = '<div class="empty">No entries yet.<br>If this is your first night, you have to write.</div>';
+        return;
+    }
+    if (!list.length) {
+        box.innerHTML = '<div class="empty">Nothing matches. I am Jack\'s empty search.</div>';
+        return;
+    }
+
+    let lastMonth = "";
+    list.forEach(e => {
+        const month = new Date(e.date + "T00:00:00").toLocaleDateString(undefined, { month: "long", year: "numeric" });
+        if (month !== lastMonth) {
+            const m = document.createElement("div");
+            m.className = "monthLabel";
+            m.textContent = month;
+            box.appendChild(m);
+            lastMonth = month;
+        }
+
+        const card = document.createElement("button");
+        card.className = "entryCard";
+        card.onclick = () => openEntry(e.id);
+
+        const meta = document.createElement("div");
+        meta.className = "entryMeta";
+        const d = document.createElement("span");
+        d.textContent = fmtDate(e.date);
+        const mood = document.createElement("span");
+        mood.textContent = e.mood || "";
+        meta.append(d, mood);
+
+        const title = document.createElement("div");
+        title.className = "entryTitle";
+        title.textContent = e.title || "Untitled";
+
+        const prev = document.createElement("div");
+        prev.className = "entryPreview";
+        prev.textContent = e.body || "(empty)";
+
+        card.append(meta, title, prev);
+        box.appendChild(card);
+    });
+}
+
+// EDITOR
+
+function today() {
+    const d = new Date();
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+
+function newEntry() {
+    const e = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), date: today(), title: "", body: "", mood: "", updated: new Date().toISOString() };
+    entries.push(e);
+    openEntry(e.id);
+}
+
+function renderMoods(selected) {
+    const row = $("moodRow");
+    row.innerHTML = "";
+    MOODS.forEach(m => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "moodChip" + (m === selected ? " active" : "");
+        b.textContent = m;
+        b.onclick = () => {
+            const e = entries.find(x => x.id === currentId);
+            e.mood = e.mood === m ? "" : m;
+            renderMoods(e.mood);
+            queueSave();
+        };
+        row.appendChild(b);
+    });
+}
+
+function openEntry(id) {
+    const e = entries.find(x => x.id === id);
+    if (!e) return;
+    currentId = id;
+    $("entryDate").value = e.date;
+    $("entryTitle").value = e.title;
+    $("entryBody").value = e.body;
+    renderMoods(e.mood);
+    updateWordCount();
+    $("saveState").textContent = "Saved";
+    $("editorQuote").textContent = pick(QUOTES);
+    $("subtitle").textContent = "Write it down. Nobody else is reading.";
+    show("editorScreen");
+    if (!e.body) setTimeout(() => $("entryBody").focus(), 50);
+}
+
+function updateWordCount() {
+    const n = $("entryBody").value.trim().split(/\s+/).filter(Boolean).length;
+    $("wordCount").textContent = n + (n === 1 ? " word" : " words");
+}
+
+function queueSave() {
+    updateWordCount();
+    $("saveState").textContent = "Saving...";
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveCurrent, 600);
+}
+
+async function saveCurrent() {
+    const e = entries.find(x => x.id === currentId);
+    if (!e || !key) return;
+    e.date = $("entryDate").value || today();
+    e.title = $("entryTitle").value.trim();
+    e.body = $("entryBody").value;
+    e.updated = new Date().toISOString();
+    await persist();
+    $("saveState").textContent = "Saved 🔒";
+}
+
+function cleanupEmpty() {
+    const before = entries.length;
+    entries = entries.filter(e => e.title || e.body.trim());
+    return entries.length !== before;
+}
+
+async function closeEditor() {
+    clearTimeout(saveTimer);
+    await saveCurrent();
+    if (cleanupEmpty()) await persist();
+    currentId = null;
+    showList();
+}
+
+async function deleteEntry() {
+    const btn = $("deleteBtn");
+    if (!btn.dataset.armed) {
+        btn.dataset.armed = "1";
+        btn.textContent = "Tap again to delete";
+        setTimeout(() => { delete btn.dataset.armed; btn.textContent = "Delete"; }, 2500);
+        return;
+    }
+    delete btn.dataset.armed;
+    btn.textContent = "Delete";
+    clearTimeout(saveTimer);
+    entries = entries.filter(e => e.id !== currentId);
+    currentId = null;
+    await persist();
+    toast("Entry destroyed");
+    showList();
+}
+
+// SETTINGS
+
+async function changePassword() {
+    const msg = $("pwMsg");
+    const cur = $("curPw").value;
+    const n1 = $("newPw1").value;
+    const n2 = $("newPw2").value;
+    msg.textContent = "";
+
+    try {
+        await decryptVault(await deriveKey(cur, salt), loadVault());
+    } catch (e) {
+        msg.textContent = "Current password is wrong.";
+        return;
+    }
+    if (n1.length < 4) { msg.textContent = "New password needs at least 4 characters."; return; }
+    if (n1 !== n2) { msg.textContent = "New passwords don't match."; return; }
+
+    salt = crypto.getRandomValues(new Uint8Array(16));
+    key = await deriveKey(n1, salt);
+    await persist();
+    ["curPw", "newPw1", "newPw2"].forEach(id => $(id).value = "");
+    msg.textContent = "Password changed. Don't forget this one either.";
+}
+
+function exportBackup() {
+    const blob = new Blob([localStorage.getItem(STORE_KEY)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "project-mayhem-journal-" + today() + ".json";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    $("backupMsg").textContent = "Backup downloaded. It opens with your current password.";
+}
+
+function importBackup(input) {
+    pickingFile = false;
+    const file = input.files[0];
+    input.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+        const msg = $("backupMsg");
+        let vault;
+        try {
+            vault = JSON.parse(reader.result);
+            if (!vault.salt || !vault.iv || !vault.data) throw new Error();
+        } catch (e) {
+            msg.textContent = "That isn't a journal backup.";
+            return;
+        }
+        const pw = prompt("Password the backup was made with:");
+        if (pw === null) return;
+        let restored;
+        try {
+            restored = await decryptVault(await deriveKey(pw, unb64(vault.salt)), vault);
+        } catch (e) {
+            msg.textContent = "Wrong password for that backup.";
+            return;
+        }
+        // merge: keep whichever copy of an entry was edited last
+        const byId = new Map(entries.map(e => [e.id, e]));
+        let added = 0;
+        restored.forEach(r => {
+            const mine = byId.get(r.id);
+            if (!mine) added++;
+            if (!mine || r.updated > mine.updated) byId.set(r.id, r);
+        });
+        entries = [...byId.values()];
+        await persist();
+        msg.textContent = "Restored. " + added + " new " + (added === 1 ? "entry" : "entries") + " added.";
+    };
+    reader.readAsText(file);
+}
+
+// START
+
+if (!window.crypto || !crypto.subtle) {
+    $("lockText").textContent = "This browser can't lock the journal. Open the page over https.";
+}
+showLock();
+</script>
+
+</body>
+</html>
