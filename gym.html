@@ -53,7 +53,7 @@
   .tabs { display: flex; gap: 0.3rem; margin: 1.2rem 0 0.25rem; padding: 0.3rem; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; }
   .tab {
     flex: 1; min-height: 2.6rem; border-radius: 999px;
-    font-family: var(--display); font-size: 1.15rem; letter-spacing: 0.08em; color: var(--muted);
+    font-family: var(--display); font-size: 1.05rem; letter-spacing: 0.05em; color: var(--muted); padding: 0 0.2rem;
   }
   .tab.on { color: #0a0b0d; background: var(--accent); box-shadow: 0 0 20px rgba(200,255,46,0.35); }
   .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
@@ -115,6 +115,38 @@
   .chart .col:hover .b, .chart .col.on .b { opacity: 1; fill: var(--accent-2); }
   .chart .tip { min-height: 1.2rem; margin-top: 0.35rem; font-size: 0.8rem; color: var(--muted); }
   .chart .tip b { color: var(--fg); font-weight: 700; }
+  .plan, .rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.7rem; }
+  .plan li { display: grid; grid-template-columns: 4.6rem 1fr; gap: 0.6rem; font-size: 0.9rem; line-height: 1.4; }
+  .plan b, .rules b { color: var(--fg); }
+  .plan li span:last-child { color: #c9ced6; }
+  .plvl { align-self: start; text-align: center; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.3rem 0.2rem; border-radius: 0.4rem; border: 1px solid; }
+  .p1 .plvl { color: var(--hot); background: rgba(255,61,127,0.1); }
+  .p2 .plvl { color: #ffb020; background: rgba(255,176,32,0.1); }
+  .p3 .plvl { color: var(--accent-2); background: rgba(46,230,255,0.08); }
+  .rules li { font-size: 0.88rem; line-height: 1.45; color: #c9ced6; }
+  .badge { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.2rem 0.5rem; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+  .badge.good, .fill.good, .tlabel.good { color: var(--accent); }
+  .badge.low, .fill.low { color: #ffb020; }
+  .badge.high, .fill.high, .tlabel.high { color: var(--hot); }
+  .badge.none, .fill.none { color: var(--muted); }
+  .vrow + .vrow { margin-top: 0.85rem; }
+  .vname { font-family: var(--display); font-size: 1.25rem; letter-spacing: 0.04em; }
+  .vbar { position: relative; height: 8px; margin-top: 0.4rem; background: #0b0d10; border-radius: 4px; overflow: hidden; }
+  .vbar .band { position: absolute; top: 0; bottom: 0; background: rgba(200,255,46,0.14); border-left: 1px dashed rgba(200,255,46,0.5); border-right: 1px dashed rgba(200,255,46,0.5); }
+  .vbar .fill { position: absolute; left: 0; top: 2px; bottom: 2px; background: currentColor; border-radius: 0 3px 3px 0; }
+  .vmeta { font-size: 0.75rem; margin-top: 0.3rem; }
+  #tip:not(:empty) { margin-top: 0.6rem; }
+  .tipcard { background: rgba(46,230,255,0.05); border: 1px solid rgba(46,230,255,0.22); border-radius: 0.7rem; padding: 0.15rem 0.8rem; }
+  .card > .tipcard { background: none; border: 0; padding: 0; }
+  .tipcard summary { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; min-height: 2.6rem; cursor: pointer; list-style: none; font-weight: 700; }
+  .tipcard summary::-webkit-details-marker { display: none; }
+  .tipcard summary::after { content: "+"; color: var(--accent-2); font-size: 1.2rem; }
+  .tipcard[open] summary::after { content: "−"; }
+  .card > .tipcard summary > span:first-child { font-family: var(--display); font-weight: 400; font-size: 1.45rem; letter-spacing: 0.04em; }
+  .tipcard .setup { margin: 0.2rem 0 0.6rem; font-size: 0.88rem; line-height: 1.45; color: #c9ced6; }
+  .tlabel { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-top: 0.4rem; }
+  .tipcard ul { margin: 0.3rem 0 0.6rem; padding-left: 1.1rem; font-size: 0.86rem; line-height: 1.45; color: #c9ced6; }
+  .tipcard li + li { margin-top: 0.2rem; }
   .ex { border-top: 1px solid var(--line); padding-top: 0.6rem; margin-top: 0.6rem; font-weight: 500; }
 </style>
 </head>
@@ -126,6 +158,8 @@
   <div class="tabs">
     <button class="tab" data-view="log" type="button">Log</button>
     <button class="tab" data-view="muscles" type="button">Muscles</button>
+    <button class="tab" data-view="coach" type="button">Coach</button>
+    <button class="tab" data-view="form" type="button">Form</button>
     <button class="tab" data-view="history" type="button">History</button>
   </div>
   <div id="app"></div>
@@ -146,6 +180,398 @@ let openGroup = "";
 let metric = "sets";
 const WEEKS = 8;
 const METRICS = { sets: "Sets", reps: "Reps", vol: "Kg" };
+
+const LIB = {
+  Chest: [
+    { name: "Bench press", alias: ["bench press", "barbell bench", "flat bench", "bench"],
+      setup: "Lie with your eyes under the bar, feet flat, and grip a little wider than shoulder width. Pull your shoulder blades back and down into the bench.",
+      cues: ["Keep a slight arch and your butt on the bench", "Lower the bar under control to your mid or lower chest", "Elbows about 45–70° from your body, not straight out", "Press up and slightly back toward your face"],
+      avoid: ["Flaring elbows out to 90°", "Bouncing the bar off your chest", "Lifting your hips off the bench"] },
+    { name: "Incline dumbbell press", alias: ["incline", "incline press", "incline dumbbell", "incline bench"],
+      setup: "Set the bench to about 30–45°. Sit back with the dumbbells on your thighs and kick them up one at a time as you lie back.",
+      cues: ["Shoulder blades pinned back the whole set", "Lower until you feel a stretch across the upper chest", "Forearms vertical, wrists stacked over elbows", "Press up and slightly in, without clanking the weights"],
+      avoid: ["Bench too steep (turns it into a shoulder press)", "Shoulders rolling forward at the top"] },
+    { name: "Push-up", alias: ["push up", "pushup", "push-up"],
+      setup: "Hands slightly wider than shoulders, body in one straight line from head to heels.",
+      cues: ["Squeeze glutes and brace your abs", "Elbows about 45° from your body", "Lower until your chest nearly touches the floor", "Push the floor away and fully lock out"],
+      avoid: ["Sagging hips", "Head poking forward", "Half reps"] },
+    { name: "Chest fly", alias: ["fly", "flye", "pec deck", "cable fly", "crossover"],
+      setup: "With cables, dumbbells or a machine, start with arms out front and a soft, fixed bend in the elbows.",
+      cues: ["Open your arms wide until you feel a deep chest stretch", "Keep the elbow bend the same throughout", "Bring your hands together as if hugging a tree", "Squeeze for a second at the end"],
+      avoid: ["Turning it into a press by bending the elbows more", "Going so deep the shoulder hurts"] },
+    { name: "Dips (chest)", alias: ["chest dip"],
+      setup: "Grip the bars, lock out, then lean your torso forward about 30°.",
+      cues: ["Shoulders down, away from your ears", "Lower until your upper arms are about parallel to the floor", "Elbows flare slightly out to target the chest"],
+      avoid: ["Dropping too deep if your shoulder hurts", "Swinging your legs"] }
+  ],
+  Back: [
+    { name: "Pull-up", alias: ["pull up", "pullup", "pull-up", "chin up", "chinup", "chin-up"],
+      setup: "Hang with hands slightly wider than shoulders (palms facing you for chin-ups). Brace your core with legs together.",
+      cues: ["Start by pulling your shoulders down, away from your ears", "Drive your elbows down toward your ribs", "Chest up toward the bar, chin over it", "Lower all the way down under control"],
+      avoid: ["Kipping or swinging", "Half reps that stop short at the bottom", "Shrugging up into your neck"] },
+    { name: "Lat pulldown", alias: ["pulldown", "pull down", "lat pull"],
+      setup: "Thighs locked under the pad, grip slightly wider than shoulders, sit tall with a small lean back.",
+      cues: ["Pull the bar to your upper chest", "Think elbows down and back, not hands", "Squeeze your lats at the bottom for a second", "Let the bar rise slowly until your arms are straight"],
+      avoid: ["Leaning way back and rowing it", "Pulling behind the neck"] },
+    { name: "Barbell row", alias: ["barbell row", "bent over row", "bent-over row", "pendlay"],
+      setup: "Hinge at the hips until your torso is about 45° or lower. Soft knees, flat back, bar hanging under your shoulders.",
+      cues: ["Brace your core and keep your back neutral", "Pull the bar to your lower ribs or belly button", "Squeeze your shoulder blades together at the top", "Lower with control. Your torso shouldn't bob up and down."],
+      avoid: ["Rounded lower back", "Standing up more with every rep", "Jerking the weight with your hips"] },
+    { name: "Dumbbell row", alias: ["dumbbell row", "db row", "one arm row", "single arm row"],
+      setup: "One hand and knee on a bench, other foot on the floor, back flat and parallel to the floor.",
+      cues: ["Pull the dumbbell toward your hip, not your chest", "Elbow stays close to your side", "Full stretch at the bottom", "Keep your shoulders square, no twisting"],
+      avoid: ["Rotating your torso to lift the weight", "Shrugging the weight up"] },
+    { name: "Seated cable row", alias: ["cable row", "seated row", "low row"],
+      setup: "Feet on the platform, knees slightly bent, sit tall with a neutral spine.",
+      cues: ["Pull the handle to your lower ribs", "Shoulders back and down, chest proud", "Squeeze your shoulder blades, then return slowly", "Let your shoulders reach forward slightly for a stretch"],
+      avoid: ["Rocking your whole torso back and forth", "Rounding your lower back"] },
+    { name: "Deadlift", alias: ["deadlift", "conventional deadlift"],
+      setup: "Bar over the middle of your foot, feet hip-width. Hinge down, grip just outside your legs, shins touching the bar.",
+      cues: ["Flat back, chest up, lats tight (squeeze your armpits)", "Push the floor away with your legs", "Keep the bar dragging close to your legs", "Finish standing tall by squeezing your glutes"],
+      avoid: ["Rounded lower back", "Hips shooting up first", "Leaning back at the top"] }
+  ],
+  Shoulders: [
+    { name: "Overhead press", alias: ["overhead press", "ohp", "military press", "shoulder press"],
+      setup: "Grip just outside your shoulders, bar resting on your front delts. Squeeze glutes and brace your abs.",
+      cues: ["Move your head back slightly so the bar travels straight up", "Push your head through once the bar passes your forehead", "Lock out with the bar over the middle of your foot", "Wrists stacked over your elbows"],
+      avoid: ["Leaning way back (turns into an incline press)", "Flaring elbows straight out to the sides"] },
+    { name: "Lateral raise", alias: ["lateral raise", "side raise", "lat raise", "side lateral"],
+      setup: "Stand with a slight forward lean, dumbbells at your sides, a small bend in the elbows.",
+      cues: ["Lead with your elbows, raising out to the sides", "Stop around shoulder height", "Lower slowly over 2–3 seconds", "Keep your shoulders down and neck relaxed"],
+      avoid: ["Swinging the weight up with your body", "Shrugging toward your ears", "Going too heavy, since this is a small muscle"] },
+    { name: "Face pull", alias: ["face pull", "facepull"],
+      setup: "Set a rope on a cable at upper-chest to face height. Grip with thumbs facing you and step back.",
+      cues: ["Pull the rope toward your forehead", "Keep your elbows high, at or above your shoulders", "Pull the rope apart and rotate your hands back at the end", "Pause, then return slowly"],
+      avoid: ["Leaning back to move the weight", "Elbows dropping into a row"] },
+    { name: "Rear delt fly", alias: ["rear delt", "reverse fly", "reverse pec deck", "rear fly"],
+      setup: "Bend forward or face a pec-deck machine, with arms out and a soft bend in the elbows.",
+      cues: ["Sweep your arms out and back in a wide arc", "Lead with your pinky side", "Keep your shoulder blades from squeezing too much, to keep the work in the rear delts"],
+      avoid: ["Using momentum", "Turning it into a row"] }
+  ],
+  Biceps: [
+    { name: "Bicep curl", alias: ["curl", "bicep curl", "biceps curl", "barbell curl", "dumbbell curl", "ez bar curl", "preacher"],
+      setup: "Stand tall with a shoulder-width underhand grip and your elbows pinned to your sides.",
+      cues: ["Curl the weight without letting your elbows drift forward", "Squeeze hard at the top", "Lower slowly over 2–3 seconds", "Fully straighten your arms at the bottom"],
+      avoid: ["Swinging with your back and hips", "Cutting the bottom half of the rep"] },
+    { name: "Hammer curl", alias: ["hammer curl", "hammer"],
+      setup: "Hold dumbbells with palms facing each other, elbows at your sides.",
+      cues: ["Keep your thumbs pointing up the whole rep", "Curl toward your shoulder", "Control the way down"],
+      avoid: ["Swinging the weights", "Elbows moving forward"] },
+    { name: "Incline dumbbell curl", alias: ["incline curl", "incline dumbbell curl"],
+      setup: "Set the bench to about 45–60° and let your arms hang straight down behind your body.",
+      cues: ["Keep your upper arms still, pointing at the floor", "Curl up without bringing your elbows forward", "Get a big stretch at the bottom"],
+      avoid: ["Going so heavy your shoulders roll forward"] }
+  ],
+  Triceps: [
+    { name: "Triceps pushdown", alias: ["pushdown", "push down", "pressdown", "rope pushdown", "tricep pushdown"],
+      setup: "Face a high cable, elbows tucked against your sides, slight forward lean.",
+      cues: ["Only your forearms move. Your elbows stay glued in place.", "Fully straighten your arms and squeeze", "Let the handle rise back to about chest height under control"],
+      avoid: ["Elbows drifting forward and up", "Leaning over the weight and using body weight"] },
+    { name: "Overhead triceps extension", alias: ["overhead extension", "overhead tricep", "french press", "overhead triceps"],
+      setup: "Hold a dumbbell or cable rope overhead with your elbows pointing forward and up, close to your head.",
+      cues: ["Lower the weight behind your head for a deep stretch", "Keep your elbows from flaring wide", "Extend until your arms are straight", "Keep your ribs down, without arching your lower back"],
+      avoid: ["Arching your back to lift the weight", "Elbows flaring out to the sides"] },
+    { name: "Skull crusher", alias: ["skull crusher", "skullcrusher", "lying extension", "lying tricep"],
+      setup: "Lie on a bench with an EZ bar or dumbbells held straight over your shoulders.",
+      cues: ["Angle your arms slightly back toward your head", "Bend only at the elbows, lowering to your forehead or just behind it", "Extend back up without moving your upper arms"],
+      avoid: ["Elbows flaring", "Turning it into a press"] },
+    { name: "Dips (triceps)", alias: ["dip", "dips", "bench dip", "tricep dip"],
+      setup: "Grip the bars and stay upright with your torso vertical to target the triceps.",
+      cues: ["Elbows point straight back, close to your body", "Lower until your upper arms are about parallel to the floor", "Lock out fully at the top"],
+      avoid: ["Going very deep if your shoulders hurt", "Shoulders rolling forward"] }
+  ],
+  Legs: [
+    { name: "Squat", alias: ["squat", "back squat", "front squat", "goblet squat"],
+      setup: "Feet about shoulder-width, toes turned out 15–30°. Take a big breath and brace your abs like you're about to be punched.",
+      cues: ["Sit your hips back and down at the same time", "Push your knees out over your toes", "Keep your heels down and chest up", "Go to at least thighs parallel if your mobility allows, then drive up"],
+      avoid: ["Knees caving inward", "Heels lifting", "Lower back rounding at the bottom"] },
+    { name: "Leg press", alias: ["leg press"],
+      setup: "Back and hips flat against the pad, feet shoulder-width in the middle of the platform.",
+      cues: ["Lower until your knees reach about 90° or a bit deeper", "Keep your lower back on the pad the whole time", "Push through your whole foot", "Stop just short of locking your knees hard"],
+      avoid: ["Hips rolling up off the seat at the bottom", "Knees caving in"] },
+    { name: "Romanian deadlift", alias: ["romanian", "rdl", "stiff leg", "stiff-leg"],
+      setup: "Stand holding the bar or dumbbells at your hips with soft knees and a flat back.",
+      cues: ["Push your hips back like closing a car door with your butt", "Slide the weight down close to your legs", "Stop when you feel a strong hamstring stretch, usually mid-shin", "Squeeze your glutes to stand back up"],
+      avoid: ["Rounding your back to reach lower", "Turning it into a squat by bending your knees a lot"] },
+    { name: "Lunge / split squat", alias: ["lunge", "split squat", "bulgarian", "step up", "step-up"],
+      setup: "Take a long stride. For Bulgarian split squats, rest your back foot on a bench.",
+      cues: ["Drop your back knee straight down", "Front knee tracks over your toes", "Keep your torso tall, or lean slightly forward for more glutes", "Drive through your front heel"],
+      avoid: ["Front heel lifting", "Knee caving inward", "Too short a stance"] },
+    { name: "Leg extension", alias: ["leg extension", "quad extension"],
+      setup: "Line your knee up with the machine's pivot point, with the pad on your lower shin.",
+      cues: ["Hold the handles and stay seated", "Straighten your legs fully and squeeze your quads", "Lower slowly"],
+      avoid: ["Kicking the weight up", "Hips lifting off the seat"] },
+    { name: "Leg curl", alias: ["leg curl", "hamstring curl", "lying curl", "seated curl"],
+      setup: "Knees lined up with the pivot, with the pad just above your heels.",
+      cues: ["Curl your heels toward your butt", "Keep your hips pressed down", "Squeeze at the end, then lower slowly"],
+      avoid: ["Hips lifting to cheat the weight up", "Partial reps"] }
+  ],
+  Glutes: [
+    { name: "Hip thrust", alias: ["hip thrust", "hip-thrust", "barbell thrust"],
+      setup: "Upper back on a bench edge at the bottom of your shoulder blades. Bar over your hip crease with a pad. Feet flat, hip-width.",
+      cues: ["Tuck your chin and look forward, not at the ceiling", "Drive through your heels", "At the top your shins should be vertical", "Squeeze your glutes hard and keep your ribs down"],
+      avoid: ["Over-arching your lower back at the top", "Feet too far out (hamstrings take over)"] },
+    { name: "Glute bridge", alias: ["glute bridge", "bridge"],
+      setup: "Lie on your back with knees bent and feet flat, close to your butt.",
+      cues: ["Flatten your lower back slightly before lifting", "Push through your heels and lift your hips", "Squeeze your glutes at the top for 1–2 seconds"],
+      avoid: ["Arching your back instead of using your hips"] },
+    { name: "Cable kickback", alias: ["kickback", "glute kickback", "donkey kick"],
+      setup: "Ankle strap on a low cable. Hold the machine and hinge forward slightly.",
+      cues: ["Kick your leg back and slightly out", "Squeeze your glute at the end", "Keep your torso and hips still"],
+      avoid: ["Arching your lower back to get the leg higher", "Swinging the leg"] }
+  ],
+  Core: [
+    { name: "Plank", alias: ["plank", "side plank"],
+      setup: "Forearms on the floor, elbows under your shoulders, body in one straight line.",
+      cues: ["Squeeze your glutes and quads", "Tuck your ribs down toward your hips", "Breathe steadily, without holding your breath", "Push the floor away with your forearms"],
+      avoid: ["Hips sagging", "Butt piking up high"] },
+    { name: "Hanging leg raise", alias: ["leg raise", "hanging raise", "knee raise", "toes to bar"],
+      setup: "Hang from a bar with your shoulders engaged and legs together.",
+      cues: ["Curl your pelvis up as you raise your legs, like tucking your tail", "Lift with your abs, not by swinging", "Lower slowly"],
+      avoid: ["Swinging for momentum", "Only lifting the legs without curling the pelvis"] },
+    { name: "Cable crunch", alias: ["crunch", "cable crunch", "sit up", "situp", "sit-up"],
+      setup: "Kneel facing a high cable and hold the rope beside your head.",
+      cues: ["Crunch by rounding your spine, bringing your ribs toward your hips", "Keep your hips still. Don't sit back.", "Squeeze your abs at the bottom"],
+      avoid: ["Pulling with your arms", "Bending at the hips instead of the spine"] },
+    { name: "Dead bug", alias: ["dead bug", "deadbug"],
+      setup: "Lie on your back with arms straight up and knees bent at 90° over your hips.",
+      cues: ["Press your lower back into the floor", "Slowly lower the opposite arm and leg", "Breathe out as you extend"],
+      avoid: ["Lower back peeling off the floor"] }
+  ],
+  Calves: [
+    { name: "Standing calf raise", alias: ["calf raise", "standing calf", "calf"],
+      setup: "Balls of your feet on a step or block, with heels free to drop below it.",
+      cues: ["Drop your heels into a deep stretch and pause 1–2 seconds", "Rise high onto your big toes", "Squeeze at the top, then lower slowly", "Keep your knees almost straight"],
+      avoid: ["Bouncing quick, short reps", "Rolling out to the pinky side of the foot"] },
+    { name: "Seated calf raise", alias: ["seated calf"],
+      setup: "Sit with the pad on your lower thighs and the balls of your feet on the platform.",
+      cues: ["Full stretch at the bottom with a pause", "Push up as high as possible", "Slow and controlled the whole way"],
+      avoid: ["Bouncing", "Partial range of motion"] }
+  ],
+  Forearms: [
+    { name: "Wrist curl", alias: ["wrist curl", "reverse wrist", "forearm curl"],
+      setup: "Rest your forearms on a bench or your thighs with your wrists hanging over the edge.",
+      cues: ["Let the weight roll to your fingertips", "Curl your wrist all the way up", "Use light weight and higher reps (12–20)"],
+      avoid: ["Lifting your forearms off the support"] },
+    { name: "Farmer's carry", alias: ["farmer", "carry", "farmers walk"],
+      setup: "Pick up heavy dumbbells or kettlebells like a deadlift, one in each hand.",
+      cues: ["Stand tall with your shoulders back and down", "Squeeze the handles hard", "Take short, steady steps"],
+      avoid: ["Leaning or hunching", "Letting your shoulders get pulled forward"] },
+    { name: "Dead hang", alias: ["dead hang", "hang"],
+      setup: "Hang from a pull-up bar with a full grip.",
+      cues: ["Keep your shoulders slightly engaged", "Breathe steadily and hold for time"],
+      avoid: ["Fully relaxed shoulders if they feel strained"] }
+  ]
+};
+
+const BASICS = [
+  ["Brace", "Before each rep, take a breath into your belly and tighten your abs as if bracing for a punch."],
+  ["Control the lowering", "Take 2–3 seconds on the way down. The lowering part builds a lot of muscle."],
+  ["Full range of motion", "Use the full range you can control. A deep stretch under load grows muscle better than half reps."],
+  ["Close to failure", "Finish most sets with 1–3 reps left in the tank. If you could do 6 more, the set was too easy."],
+  ["Progress slowly", "Add reps first. Once you hit the top of your rep range on every set, add weight."],
+  ["Warm up", "Do 1–3 lighter sets of your first exercise before the heavy ones."],
+  ["Pain is a stop sign", "Muscle burn is fine. Sharp or joint pain is not. Stop, lighten the weight, or swap the exercise."]
+];
+
+// Weekly hard-set targets per muscle (rough evidence-based ranges for muscle growth).
+const TARGETS = { Chest: [10, 20], Back: [10, 20], Shoulders: [8, 16], Biceps: [6, 14], Triceps: [6, 14], Legs: [10, 20], Glutes: [8, 16], Core: [6, 14], Calves: [6, 14], Forearms: [4, 10] };
+const STATUS = {
+  good: { icon: "✓", label: "On target", cls: "good" },
+  low: { icon: "▼", label: "Too low", cls: "low" },
+  high: { icon: "▲", label: "Too high", cls: "high" },
+  none: { icon: "–", label: "Not tracked", cls: "none" }
+};
+
+function dayNum(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return Date.UTC(y, m - 1, d) / 86400000;
+}
+
+function findLib(name) {
+  const n = name.trim().toLowerCase();
+  if (!n) return null;
+  let best = null, len = 0;
+  GROUPS.forEach(g => LIB[g].forEach(x => {
+    [x.name.toLowerCase(), ...x.alias].forEach(a => {
+      if ((n === a || n.includes(a)) && a.length > len) { best = x; len = a.length; }
+    });
+  }));
+  return best;
+}
+
+function tipCard(x, open) {
+  return `<details class="tipcard"${open ? " open" : ""}>
+    <summary><span>${esc(x.name)}</span><span class="muted">Form tips</span></summary>
+    <p class="setup">${esc(x.setup)}</p>
+    <div class="tlabel good">✓ Do</div>
+    <ul>${x.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
+    <div class="tlabel high">✕ Avoid</div>
+    <ul>${x.avoid.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
+  </details>`;
+}
+
+function updateTip() {
+  const box = document.getElementById("tip");
+  if (!box) return;
+  const x = findLib(exercise);
+  box.innerHTML = x ? tipCard(x, false) : "";
+}
+
+function exerciseTrends(log) {
+  const by = {};
+  log.forEach(e => {
+    const k = e.group + "|" + e.exercise.trim().toLowerCase();
+    (by[k] = by[k] || { name: e.exercise, group: e.group, entries: [] }).entries.push(e);
+  });
+  return Object.values(by).map(x => {
+    const weighted = x.entries.some(e => e.sets.some(s => s.w > 0));
+    const days = {};
+    x.entries.forEach(e => e.sets.forEach(s => {
+      if (weighted && !s.w) return;
+      const v = weighted ? s.w * (1 + s.r / 30) : s.r;
+      days[e.date] = Math.max(days[e.date] || 0, v);
+    }));
+    const dates = Object.keys(days).sort();
+    const vals = dates.map(d => Math.round(days[d] * 10) / 10);
+    const n = vals.length;
+    let state = "new";
+    if (n >= 2) {
+      const recent = Math.max(...vals.slice(-3));
+      const before = n > 3 ? Math.max(...vals.slice(0, -3)) : vals[0];
+      if (n >= 4 && recent <= before) state = "stalled";
+      else if (vals[n - 1] > vals[0] || recent > before) state = "up";
+      else state = "flat";
+    }
+    const change = n >= 2 ? Math.round((vals[n - 1] - vals[0]) / vals[0] * 100) : 0;
+    return { ...x, weighted, vals, n, state, change, last: dates[n - 1] };
+  }).filter(x => x.n);
+}
+
+function analyse() {
+  const log = load();
+  const now = dayNum(today());
+  const ago = e => now - dayNum(e.date);
+  const within = (es, d) => es.filter(e => ago(e) >= 0 && ago(e) < d);
+  const span = log.length ? now - Math.min(...log.map(e => dayNum(e.date))) + 1 : 0;
+
+  const muscles = GROUPS.map(g => {
+    const es = log.filter(e => e.group === g);
+    const week = totals(within(es, 7)).sets;
+    const month = totals(within(es, 28)).sets;
+    const freq = new Set(within(es, 14).map(e => e.date)).size / 2;
+    const last = es.map(e => e.date).sort().pop();
+    const since = last ? now - dayNum(last) : null;
+    const [lo, hi] = TARGETS[g];
+    const status = !es.length ? "none" : week < lo ? "low" : week > hi ? "high" : "good";
+    return { g, week, month, freq, since, lo, hi, status, ever: es.length > 0 };
+  });
+
+  const tips = [];
+  const add = (lvl, text) => tips.push({ lvl, text });
+
+  muscles.forEach(m => {
+    if (!m.ever) return;
+    if (m.since >= 8) add(1, `<b>${m.g}</b> hasn't been trained in ${m.since} days. Get at least one session in this week. Muscles start losing size after a few weeks off.`);
+    else if (m.status === "low") add(m.week < m.lo / 2 ? 1 : 2, `<b>${m.g}</b> is low: ${m.week} sets in the last 7 days. Add about <b>${m.lo - m.week} more set${m.lo - m.week === 1 ? "" : "s"}</b> to reach ${m.lo}–${m.hi}.`);
+    else if (m.status === "high") add(2, `<b>${m.g}</b> got ${m.week} sets this week, above about ${m.hi}. Extra sets past this mostly add fatigue. Cut back or spread them out.`);
+    if (m.week >= m.lo && m.freq < 1.5 && span >= 14) add(3, `<b>${m.g}</b> is trained about once a week. Split the same sets across <b>2 sessions</b> for better growth and fresher sets.`);
+  });
+
+  const sum = (gs, d) => gs.reduce((a, g) => a + totals(within(log.filter(e => e.group === g), d)).sets, 0);
+  const chest = sum(["Chest"], 28), back = sum(["Back"], 28);
+  if (chest + back >= 8) {
+    if (chest > back * 1.5) add(2, `You do ${chest} chest sets vs ${back} back sets (28 days). Add <b>more rows and pull-ups</b> to balance your posture and protect your shoulders.`);
+    else if (back > chest * 2) add(3, `Back (${back} sets) is far ahead of chest (${chest}). Fine if it's on purpose, otherwise add some pressing.`);
+  }
+  const bi = sum(["Biceps"], 28), tri = sum(["Triceps"], 28);
+  if (bi + tri >= 8 && bi > tri * 1.6) add(3, `Biceps ${bi} sets vs triceps ${tri}. Triceps make up about two-thirds of your upper arm, so <b>train them at least as much</b> for bigger arms.`);
+  const upper = sum(["Chest", "Back", "Shoulders", "Biceps", "Triceps"], 28), lower = sum(["Legs", "Glutes", "Calves"], 28);
+  if (upper + lower >= 15 && lower < upper * 0.35) add(1, `Lower body is only ${lower} sets vs ${upper} upper in 28 days. <b>Don't skip leg day.</b> Add squats, leg press or RDLs.`);
+
+  const recentSets = [];
+  within(log, 28).forEach(e => e.sets.forEach(s => recentSets.push(s.r)));
+  if (recentSets.length >= 12) {
+    const heavy = recentSets.filter(r => r <= 5).length / recentSets.length;
+    const light = recentSets.filter(r => r >= 20).length / recentSets.length;
+    if (heavy > 0.6) add(3, `${Math.round(heavy * 100)}% of your sets are 5 reps or fewer. That's great for strength. For size, add some <b>8–15 rep</b> work.`);
+    if (light > 0.6) add(3, `${Math.round(light * 100)}% of your sets are 20+ reps. <b>Add weight</b> so most sets land around 6–15 reps.`);
+  }
+
+  const trends = exerciseTrends(log);
+  trends.filter(t => t.state === "stalled").forEach(t => add(2, `<b>${esc(t.name)}</b> hasn't improved in its last 3 sessions. Add 1–2 reps per set before adding weight. If it's still stuck, check your sleep and protein, or swap to a similar exercise for 4–6 weeks.`));
+
+  const untracked = muscles.filter(m => !m.ever).map(m => m.g);
+  if (untracked.length && log.length) add(3, `Not tracked yet: ${untracked.join(", ")}. Add them if they're part of your plan.`);
+
+  tips.sort((a, b) => a.lvl - b.lvl);
+  return { log, muscles, tips, trends };
+}
+
+function renderCoach() {
+  const { log, muscles, tips, trends } = analyse();
+  if (!log.length) {
+    app.innerHTML = `<h2>Coach</h2><div class="empty">Log a few workouts and your coach will tell you what to fix.</div>`;
+    return;
+  }
+  const PRIO = { 1: "Fix first", 2: "Improve", 3: "Tip" };
+  const plan = tips.length
+    ? tips.slice(0, 8).map(t => `<li class="p${t.lvl}"><span class="plvl">${PRIO[t.lvl]}</span><span>${t.text}</span></li>`).join("")
+    : `<li class="p3"><span class="plvl">Nice</span><span>Everything looks on track. Keep adding reps or weight each week.</span></li>`;
+
+  const vol = muscles.map(m => {
+    const st = STATUS[m.status];
+    const scale = m.hi * 1.5;
+    const pct = v => Math.min(100, v / scale * 100);
+    return `<div class="vrow">
+      <div class="row"><span class="vname">${m.g}</span><span class="badge ${st.cls}">${st.icon} ${st.label}</span></div>
+      <div class="vbar" title="Target ${m.lo}–${m.hi} sets">
+        <span class="band" style="left:${pct(m.lo)}%;width:${pct(m.hi) - pct(m.lo)}%"></span>
+        <span class="fill ${st.cls}" style="width:${pct(m.week)}%"></span>
+      </div>
+      <div class="muted vmeta">${m.week} sets in 7 days · aim ${m.lo}–${m.hi} · ${m.freq ? m.freq + "×/week" : "0×/week"}${m.since !== null ? " · last " + daysAgo(shiftDays(m.since)) : ""}</div>
+    </div>`;
+  }).join("");
+
+  const TREND = { up: ["▲", "Progressing", "good"], stalled: ["■", "Stalled", "high"], flat: ["→", "Flat", "low"], new: ["•", "Need 2+ sessions", "none"] };
+  const prog = trends.sort((a, b) => b.last.localeCompare(a.last)).slice(0, 12).map(t => {
+    const [icon, label, cls] = TREND[t.state];
+    const latest = t.vals[t.n - 1];
+    const what = t.weighted ? `est. max ${Math.round(latest)} kg` : `best ${latest} reps`;
+    const ch = t.n >= 2 ? ` · ${t.change >= 0 ? "+" : ""}${t.change}% since first log` : "";
+    return `<div class="ex"><div class="row"><span>${esc(t.name)}</span><span class="badge ${cls}">${icon} ${label}</span></div>
+      <div class="muted" style="margin-top:0.2rem">${t.group} · ${t.n} session${t.n === 1 ? "" : "s"} · ${what}${ch}</div></div>`;
+  }).join("");
+
+  app.innerHTML = `
+    <h2>Your game plan</h2>
+    <div class="card"><ul class="plan">${plan}</ul></div>
+    <h2>Weekly sets vs target</h2>
+    <div class="card">${vol}<div class="muted" style="margin-top:0.6rem;font-size:0.75rem">The shaded zone is the target range: about 10–20 hard sets per week for big muscles and fewer for small ones.</div></div>
+    <h2>Strength progress</h2>
+    <div class="card">${prog}<div class="muted" style="margin-top:0.6rem;font-size:0.75rem">Estimated max = weight × (1 + reps ÷ 30), from your best set each session.</div></div>
+    <p class="muted" style="font-size:0.75rem;margin-top:1rem">General guidance based on your log, not medical advice. Listen to your body.</p>
+  `;
+}
+
+function shiftDays(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
+let formGroup = GROUPS[0];
+
+function renderForm() {
+  app.innerHTML = `
+    <h2>Golden rules</h2>
+    <div class="card"><ul class="rules">${BASICS.map(([t, d]) => `<li><b>${t}.</b> ${d}</li>`).join("")}</ul></div>
+    <h2>Exercise positioning</h2>
+    <div class="chips" style="margin-bottom:0.8rem">${GROUPS.map(g => `<button class="chip${g === formGroup ? " on" : ""}" data-formgroup="${g}" type="button">${g}</button>`).join("")}</div>
+    ${LIB[formGroup].map((x, i) => `<div class="card">${tipCard(x, i === 0)}</div>`).join("")}
+  `;
+}
+
 
 function today() {
   const d = new Date();
@@ -190,12 +616,14 @@ function render() {
   document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.view === view));
   if (view === "log") renderLog();
   else if (view === "muscles") renderMuscles();
+  else if (view === "coach") renderCoach();
+  else if (view === "form") renderForm();
   else renderHistory();
 }
 
 function renderLog() {
   const log = load();
-  const known = [...new Set(log.filter(e => e.group === group).map(e => e.exercise))];
+  const known = [...new Set(log.filter(e => e.group === group).map(e => e.exercise).concat(LIB[group].map(x => x.name)))];
   const day = log.filter(e => e.date === date);
 
   app.innerHTML = `
@@ -206,6 +634,7 @@ function renderLog() {
       <input id="date" type="date" value="${date}">
       <label for="exercise">Exercise</label>
       <input id="exercise" list="known" placeholder="e.g. Bench press" value="${esc(exercise)}" autocomplete="off">
+      <div id="tip"></div>
       <datalist id="known">${known.map(k => `<option value="${esc(k)}">`).join("")}</datalist>
       <label>Sets</label>
       <div class="sets">
@@ -227,6 +656,7 @@ function renderLog() {
     ${dayView(day, true)}
   `;
   flash = "";
+  updateTip();
 }
 
 function dayView(entries, deletable) {
@@ -356,7 +786,7 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
 app.addEventListener("input", ev => {
   const el = ev.target;
   if (el.dataset.f) draft[+el.dataset.i][el.dataset.f] = el.value;
-  else if (el.id === "exercise") exercise = el.value;
+  else if (el.id === "exercise") { exercise = el.value; updateTip(); }
 });
 
 app.addEventListener("change", ev => {
@@ -369,7 +799,8 @@ app.addEventListener("click", ev => {
   if (ev.target.closest(".chart")) return;
   const el = ev.target.closest("button, .card[data-open]");
   if (!el) return;
-  if (el.dataset.metric) { metric = el.dataset.metric; render(); }
+  if (el.dataset.formgroup) { formGroup = el.dataset.formgroup; render(); }
+  else if (el.dataset.metric) { metric = el.dataset.metric; render(); }
   else if (el.dataset.group) { group = el.dataset.group; render(); }
   else if (el.id === "addSet") {
     const last = draft[draft.length - 1] || { w: "", r: "" };
