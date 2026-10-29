@@ -120,11 +120,34 @@
     <label>Proof needed
       <select id="fProof">
         <option value="type">Type the task out exactly</option>
-        <option value="math">Solve 3 maths problems</option>
+        <option value="math">Solve maths problems</option>
         <option value="both">Both</option>
         <option value="none">Steps only</option>
       </select>
     </label>
+    <div id="mathOpts" class="card" style="background:var(--head);padding:0.75rem" hidden>
+      <label>Maths type
+        <select id="fOp">
+          <option value="add">Addition (+)</option>
+          <option value="sub">Subtraction (−)</option>
+          <option value="mul">Multiplication (×)</option>
+          <option value="mixed">Mixed (all three)</option>
+        </select>
+      </label>
+      <div class="row">
+        <label>Questions
+          <input type="number" id="fCount" min="1" max="50" value="3" inputmode="numeric">
+        </label>
+        <label>Difficulty
+          <select id="fLevel">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </label>
+      </div>
+      <div class="hint" id="mathExample" style="margin:0"></div>
+    </div>
     <label>Repeat (leave all off to ring once)
       <div class="days" id="fDays"></div>
     </label>
@@ -156,7 +179,7 @@
     </div>
 
     <div class="card" id="mathCard">
-      <div class="label" style="color:var(--muted)">Problem <span id="mathN">1</span> of 3</div>
+      <div class="label" style="color:var(--muted)">Problem <span id="mathN">1</span> of <span id="mathTotal">3</span></div>
       <div class="q" id="mathQ"></div>
       <input type="number" inputmode="numeric" id="mathA" placeholder="Answer">
       <button class="btn" id="mathBtn">Check</button>
@@ -210,6 +233,9 @@ $("addBtn").onclick = () => {
   const task = $("fTask").value.trim();
   const steps = $("fSteps").value.split("\n").map(s => s.trim()).filter(Boolean);
   const proof = $("fProof").value;
+  const needMath = proof === "math" || proof === "both";
+  const mathCount = Math.round(Number($("fCount").value));
+  if (needMath && !(mathCount >= 1 && mathCount <= 50)) return ($("formErr").textContent = "Questions must be between 1 and 50.");
   if (!time) return ($("formErr").textContent = "Pick a time.");
   if (!task) return ($("formErr").textContent = "Write the task you must complete.");
   if (proof === "none" && steps.length === 0) return ($("formErr").textContent = "Add at least one step, or choose a proof.");
@@ -217,6 +243,7 @@ $("addBtn").onclick = () => {
   alarms.push({
     id: Date.now().toString(36),
     time, task, steps, proof,
+    mathOp: $("fOp").value, mathCount: needMath ? mathCount : 0, mathLevel: $("fLevel").value,
     days: formDays.some(Boolean) ? formDays.slice() : null,
     enabled: true,
     lastFired: null
@@ -228,6 +255,14 @@ $("addBtn").onclick = () => {
   unlockAudio();
   render();
 };
+
+const OP_NAMES = { add: "addition", sub: "subtraction", mul: "multiplication", mixed: "mixed" };
+function updateMathOpts() {
+  const p = $("fProof").value;
+  $("mathOpts").hidden = !(p === "math" || p === "both");
+  $("mathExample").textContent = "Example: " + makeMath($("fOp").value, $("fLevel").value).q;
+}
+["fProof", "fOp", "fLevel"].forEach(id => $(id).addEventListener("change", updateMathOpts));
 
 /* ---------- list ---------- */
 function nextFire(a, from = new Date()) {
@@ -257,7 +292,9 @@ function render() {
     const el = document.createElement("div");
     el.className = "alarm" + (a.enabled ? "" : " off");
     const repeat = a.days ? a.days.map((on, i) => on ? DAY_NAMES[i] : "·").join(" ") : "Once";
-    const proof = { type: "type it", math: "maths", both: "type + maths", none: "steps" }[a.proof];
+    const m = mathSettings(a);
+    const maths = `${m.count} ${m.level} ${OP_NAMES[m.op]}`;
+    const proof = { type: "type it", math: maths, both: "type + " + maths, none: "steps" }[a.proof];
     el.innerHTML = `
       <div class="time"></div>
       <div class="ctrls">
@@ -357,19 +394,40 @@ async function updateWakeLock() {
 document.addEventListener("visibilitychange", updateWakeLock);
 
 /* ---------- ringing ---------- */
-function makeMath() {
-  const a = 12 + Math.floor(Math.random() * 38);
-  const b = 3 + Math.floor(Math.random() * 9);
-  const c = 10 + Math.floor(Math.random() * 90);
-  return { q: `${a} × ${b} + ${c} = ?`, ans: a * b + c };
+// alarms saved before maths options existed default to 3 medium mixed questions
+function mathSettings(a) {
+  return { op: a.mathOp || "mixed", count: a.mathCount || 3, level: a.mathLevel || "medium" };
 }
+
+const RANGES = {
+  add: { easy: [[2, 20], [2, 20]], medium: [[10, 99], [10, 99]], hard: [[100, 999], [100, 999]] },
+  sub: { easy: [[5, 20], [1, 10]], medium: [[20, 99], [10, 99]], hard: [[100, 999], [100, 999]] },
+  mul: { easy: [[2, 10], [2, 10]], medium: [[11, 30], [3, 12]], hard: [[12, 99], [12, 99]] }
+};
+const rand = ([lo, hi]) => lo + Math.floor(Math.random() * (hi - lo + 1));
+
+function makeMath(op = "mixed", level = "medium") {
+  if (op === "mixed") op = ["add", "sub", "mul"][Math.floor(Math.random() * 3)];
+  const table = RANGES[op] || RANGES.add;
+  const [ra, rb] = table[level] || table.medium;
+  let a = rand(ra), b = rand(rb);
+  if (op === "add") return { q: `${a} + ${b} = ?`, ans: a + b };
+  if (op === "sub") {
+    if (b > a) [a, b] = [b, a]; // keep answers positive
+    return { q: `${a} − ${b} = ?`, ans: a - b };
+  }
+  return { q: `${a} × ${b} = ?`, ans: a * b };
+}
+const nextMath = () => makeMath(ringing.mathOp, ringing.mathLevel);
 
 function fire(a, isTest) {
   ringing = {
     id: a.id, task: a.task, steps: a.steps.slice(), proof: a.proof,
     done: a.steps.map(() => false),
-    mathLeft: (a.proof === "math" || a.proof === "both") ? 3 : 0,
-    math: makeMath(),
+    mathOp: mathSettings(a).op, mathLevel: mathSettings(a).level,
+    mathTotal: mathSettings(a).count,
+    mathLeft: (a.proof === "math" || a.proof === "both") ? mathSettings(a).count : 0,
+    math: makeMath(mathSettings(a).op, mathSettings(a).level),
     test: !!isTest
   };
   save(RING_KEY, ringing);
@@ -413,10 +471,12 @@ function renderSteps() {
 }
 
 function renderMath() {
-  const solved = 3 - ringing.mathLeft;
+  const total = ringing.mathTotal || 3;
+  const solved = total - ringing.mathLeft;
+  $("mathTotal").textContent = total;
   if (ringing.mathLeft <= 0) {
     $("mathQ").textContent = "✓ All solved";
-    $("mathN").textContent = "3";
+    $("mathN").textContent = total;
     $("mathA").style.display = "none";
     $("mathBtn").style.display = "none";
     return;
@@ -436,7 +496,7 @@ function checkMath() {
   } else {
     $("mathErr").textContent = "Wrong. Here's a new one.";
   }
-  ringing.math = makeMath();
+  ringing.math = nextMath();
   save(RING_KEY, ringing);
   renderMath();
   checkDone();
@@ -504,6 +564,7 @@ function tick() {
 }
 
 renderDays();
+updateMathOpts();
 render();
 if (ringing) showRing();
 setInterval(tick, 1000);
