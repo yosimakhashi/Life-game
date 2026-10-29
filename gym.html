@@ -73,12 +73,16 @@
   .stat { background: var(--cell-alt); border-radius: 0.5rem; padding: 0.5rem; text-align: center; }
   .stat strong { display: block; font-size: 1.25rem; font-weight: 500; color: var(--accent); }
   .stat span { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-  .bar { height: 4px; background: var(--cell-alt); border-radius: 2px; margin-top: 0.6rem; overflow: hidden; }
-  .bar i { display: block; height: 100%; background: var(--accent); }
   .empty { color: var(--muted); text-align: center; padding: 1.5rem 0; font-size: 0.9rem; }
   .del { font-size: 0.75rem; color: var(--muted); padding: 0.3rem 0; }
   .del:hover { color: #e06a5a; }
   .flash { color: var(--accent); font-size: 0.85rem; min-height: 1.2rem; margin-top: 0.5rem; text-align: center; }
+  .chart { margin-top: 0.7rem; cursor: default; }
+  .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart .col { cursor: pointer; }
+  .chart .col:hover .b, .chart .col.on .b { fill: #f0bb7f; }
+  .chart .tip { min-height: 1.2rem; margin-top: 0.3rem; font-size: 0.8rem; color: var(--muted); }
+  .chart .tip b { color: var(--fg); font-weight: 500; }
   .ex { border-top: 1px solid #3a3a3a; padding-top: 0.55rem; margin-top: 0.55rem; }
 </style>
 </head>
@@ -107,6 +111,9 @@ let draft = [{ w: "", r: "" }, { w: "", r: "" }, { w: "", r: "" }];
 let exercise = "";
 let flash = "";
 let openGroup = "";
+let metric = "sets";
+const WEEKS = 8;
+const METRICS = { sets: "Sets", reps: "Reps", vol: "Kg" };
 
 function today() {
   const d = new Date();
@@ -207,10 +214,62 @@ function dayView(entries, deletable) {
   }).join("");
 }
 
+function weekStart(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d));
+  t.setUTCDate(t.getUTCDate() - (t.getUTCDay() + 6) % 7);
+  return t.toISOString().slice(0, 10);
+}
+
+function lastWeeks() {
+  const out = [];
+  const t = new Date(weekStart(today()) + "T00:00:00Z");
+  for (let i = WEEKS - 1; i >= 0; i--) {
+    const w = new Date(t);
+    w.setUTCDate(t.getUTCDate() - i * 7);
+    out.push(w.toISOString().slice(0, 10));
+  }
+  return out;
+}
+
+function shortDate(iso) {
+  const [, m, d] = iso.split("-").map(Number);
+  return d + " " + MONTHS[m - 1];
+}
+
+function weekLabel(v) {
+  const unit = metric === "vol" ? "kg moved" : METRICS[metric].toLowerCase();
+  return v + " " + (v === 1 && metric !== "vol" ? unit.slice(0, -1) : unit);
+}
+
+function weeklyChart(entries) {
+  const weeks = lastWeeks();
+  const vals = weeks.map(w => totals(entries.filter(e => weekStart(e.date) === w))[metric]);
+  const max = Math.max(...vals);
+  if (!max) return `<div class="chart"><div class="tip">No ${METRICS[metric].toLowerCase()} in the last ${WEEKS} weeks.</div></div>`;
+  const W = 320, H = 96, top = 14, base = H - 18, slot = W / WEEKS, bw = slot - 8;
+  const cols = vals.map((v, i) => {
+    const x = i * slot + 4, h = v ? Math.max(4, (v / max) * (base - top)) : 0, y = base - h, r = Math.min(4, h, bw / 2);
+    const bar = v ? `<path class="b" fill="#e0a15a" d="M${x},${base} V${y + r} Q${x},${y} ${x + r},${y} H${x + bw - r} Q${x + bw},${y} ${x + bw},${y + r} V${base} Z"/>` : "";
+    const label = i === WEEKS - 1 || v === max ? `<text x="${x + bw / 2}" y="${y - 4}" text-anchor="middle" fill="#f2f2f2" font-size="10">${v}</text>` : "";
+    const tick = i % 2 === 1 ? `<text x="${x + bw / 2}" y="${H - 4}" text-anchor="middle" fill="#9a9a9a" font-size="9">${i === WEEKS - 1 ? "This wk" : shortDate(weeks[i])}</text>` : "";
+    return `<g class="col" data-wk="${weeks[i]}" data-v="${v}"><rect x="${i * slot}" y="0" width="${slot}" height="${H}" fill="transparent"/>${bar}${label}${tick}</g>`;
+  }).join("");
+  const thisWk = vals[WEEKS - 1], lastWk = vals[WEEKS - 2];
+  const diff = lastWk ? Math.round((thisWk - lastWk) / lastWk * 100) : null;
+  const summary = `This week: <b>${weekLabel(thisWk)}</b>` + (diff === null ? "" : ` · ${diff >= 0 ? "▲" : "▼"} ${Math.abs(diff)}% vs last week`);
+  return `<div class="chart">
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Weekly ${METRICS[metric].toLowerCase()}, last ${WEEKS} weeks: ${vals.join(", ")}">
+      <line x1="0" x2="${W}" y1="${base}" y2="${base}" stroke="#4a4a4a" stroke-width="1"/>${cols}
+    </svg>
+    <div class="tip" data-summary="${esc(summary)}">${summary}</div>
+  </div>`;
+}
+
 function renderMuscles() {
   const log = load();
-  const max = Math.max(1, ...GROUPS.map(g => totals(log.filter(e => e.group === g)).sets));
-  app.innerHTML = `<h2>All time, per muscle group</h2>` + GROUPS.map(g => {
+  app.innerHTML = `<h2>Weekly progress · last ${WEEKS} weeks</h2>
+    <div class="chips" style="margin-bottom:0.8rem">${Object.keys(METRICS).map(k => `<button class="chip${k === metric ? " on" : ""}" data-metric="${k}" type="button">${METRICS[k]}</button>`).join("")}</div>` + GROUPS.map(g => {
     const entries = log.filter(e => e.group === g);
     const t = totals(entries);
     const last = entries.map(e => e.date).sort().pop();
@@ -241,7 +300,8 @@ function renderMuscles() {
         <div class="stat"><strong>${t.reps}</strong><span>Reps</span></div>
         <div class="stat"><strong>${t.vol}</strong><span>Kg moved</span></div>
       </div>
-      <div class="bar"><i style="width:${(t.sets / max) * 100}%"></i></div>
+      <div class="muted" style="margin-top:0.25rem;font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase">All time</div>
+      ${weeklyChart(entries)}
       ${detail}
     </div>`;
   }).join("");
@@ -272,9 +332,13 @@ app.addEventListener("change", ev => {
 });
 
 app.addEventListener("click", ev => {
+  const col = ev.target.closest(".col");
+  if (col) { showWeek(col); return; }
+  if (ev.target.closest(".chart")) return;
   const el = ev.target.closest("button, .card[data-open]");
   if (!el) return;
-  if (el.dataset.group) { group = el.dataset.group; render(); }
+  if (el.dataset.metric) { metric = el.dataset.metric; render(); }
+  else if (el.dataset.group) { group = el.dataset.group; render(); }
   else if (el.id === "addSet") {
     const last = draft[draft.length - 1] || { w: "", r: "" };
     draft.push({ w: last.w, r: last.r });
@@ -300,6 +364,25 @@ app.addEventListener("click", ev => {
     render();
   }
   else if (el.dataset.open) { openGroup = openGroup === el.dataset.open ? "" : el.dataset.open; render(); }
+});
+
+function showWeek(col) {
+  const chart = col.closest(".chart");
+  chart.querySelectorAll(".col").forEach(c => c.classList.toggle("on", c === col));
+  chart.querySelector(".tip").innerHTML = `Week of ${shortDate(col.dataset.wk)}: <b>${weekLabel(+col.dataset.v)}</b>`;
+}
+
+app.addEventListener("mouseover", ev => {
+  const col = ev.target.closest(".col");
+  if (col) showWeek(col);
+});
+
+app.addEventListener("mouseout", ev => {
+  const chart = ev.target.closest(".chart");
+  if (!chart || chart.contains(ev.relatedTarget)) return;
+  chart.querySelectorAll(".col").forEach(c => c.classList.remove("on"));
+  const tip = chart.querySelector(".tip");
+  if (tip.dataset.summary) tip.innerHTML = tip.dataset.summary;
 });
 
 render();
