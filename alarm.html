@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e0e0e">
+<title>Task Alarm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --head: #1a1a1a;
+    --cell: #2a2a2a;
+    --cell-alt: #323232;
+    --line: #3a3a3a;
+    --fg: #f2f2f2;
+    --muted: #9a9a9a;
+    --accent: #e0a15a;
+    --red: #b3131b;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: Outfit, ui-sans-serif, system-ui, sans-serif; }
+  button, a, input, textarea, select { font: inherit; color: inherit; touch-action: manipulation; }
+  button { background: none; border: 0; padding: 0; cursor: pointer; }
+  a { color: var(--muted); text-decoration: none; }
+  main { padding: 0.85rem 1rem 2rem; max-width: 34rem; margin: 0 auto; }
+  .back {
+    display: inline-flex; align-items: center; min-height: 2.75rem;
+    letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.75rem; color: var(--muted);
+  }
+  h1 { margin: 0; font-size: 1.65rem; font-weight: 500; }
+  h2 { margin: 1.5rem 0 0.6rem; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .hint { margin: 0.3rem 0 0; color: var(--muted); font-size: 0.85rem; line-height: 1.4; }
+  .card { background: var(--cell); border-radius: 0.75rem; padding: 0.9rem; display: flex; flex-direction: column; gap: 0.75rem; }
+  label { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.8rem; color: var(--muted); }
+  input[type=text], input[type=time], input[type=number], textarea, select {
+    width: 100%; min-height: 2.75rem; padding: 0.55rem 0.65rem; border-radius: 0.45rem;
+    border: 1px solid var(--line); background: var(--head); color: var(--fg); font-size: 16px;
+  }
+  textarea { resize: vertical; min-height: 5rem; line-height: 1.35; }
+  input[type=time] { font-size: 1.6rem; color-scheme: dark; }
+  .days { display: flex; gap: 0.3rem; }
+  .days button {
+    flex: 1; min-height: 2.6rem; border-radius: 0.45rem; border: 1px solid var(--line);
+    color: var(--muted); font-size: 0.8rem;
+  }
+  .days button.on { border-color: var(--accent); color: var(--accent); background: rgba(224,161,90,0.08); }
+  .row { display: flex; gap: 0.5rem; }
+  .row > * { flex: 1; }
+  .btn {
+    display: flex; align-items: center; justify-content: center; min-height: 2.9rem;
+    border-radius: 0.45rem; border: 1px solid #6a6a6a; background: #3a3a3a; color: #fff; font-size: 0.9rem;
+  }
+  .btn.primary { border-color: var(--accent); background: transparent; color: var(--accent); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .alarm {
+    display: grid; grid-template-columns: 1fr auto; gap: 0.25rem 0.75rem; align-items: center;
+    background: var(--cell); border-radius: 0.75rem; padding: 0.8rem 0.9rem;
+  }
+  .alarm.off { opacity: 0.45; }
+  .alarm .time { font-size: 1.9rem; font-weight: 500; line-height: 1; }
+  .alarm .task { color: var(--fg); font-size: 0.9rem; }
+  .alarm .meta { color: var(--muted); font-size: 0.75rem; }
+  .alarm .ctrls { grid-row: 1 / span 3; grid-column: 2; display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-end; }
+  .toggle { width: 3.1rem; height: 1.8rem; border-radius: 999px; background: #444; position: relative; }
+  .toggle::after { content: ""; position: absolute; top: 0.2rem; left: 0.2rem; width: 1.4rem; height: 1.4rem; border-radius: 50%; background: #ddd; transition: left 0.15s; }
+  .toggle.on { background: var(--accent); }
+  .toggle.on::after { left: 1.5rem; }
+  .small { font-size: 0.75rem; color: var(--muted); min-height: 2rem; padding: 0 0.3rem; }
+  .empty { color: var(--muted); font-size: 0.85rem; padding: 0.5rem 0; }
+  .warn {
+    margin-top: 1rem; padding: 0.75rem 0.9rem; border-radius: 0.6rem; border: 1px solid #5a4a30;
+    color: #d8c3a5; font-size: 0.8rem; line-height: 1.45; background: #1a1610;
+  }
+  .status { margin-top: 0.75rem; font-size: 0.8rem; color: var(--muted); }
+  .status b { color: var(--accent); font-weight: 500; }
+
+  /* ringing overlay */
+  #ring {
+    position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column;
+    background: #120405; overflow-y: auto; padding: 1.25rem 1rem 2rem;
+    animation: pulse 1s infinite alternate;
+  }
+  #ring.show { display: flex; }
+  @keyframes pulse { from { background: #120405; } to { background: #2a0709; } }
+  #ring .inner { max-width: 32rem; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 0.9rem; }
+  #ring .bigtime { font-size: 3.6rem; font-weight: 500; text-align: center; line-height: 1; margin-top: 0.5rem; }
+  #ring .label { text-align: center; letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.75rem; color: #f4a7c0; }
+  #ring .tasktitle { text-align: center; font-size: 1.35rem; }
+  #ring .card { background: rgba(255,255,255,0.06); }
+  .step { display: flex; align-items: center; gap: 0.7rem; min-height: 2.9rem; padding: 0.3rem 0.2rem; text-align: left; width: 100%; font-size: 1rem; }
+  .step .box { flex: 0 0 1.5rem; height: 1.5rem; border-radius: 0.35rem; border: 2px solid #888; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
+  .step.done .box { border-color: var(--accent); background: var(--accent); color: #111; }
+  .step.done span:last-child { text-decoration: line-through; color: var(--muted); }
+  .q { font-size: 1.3rem; text-align: center; }
+  .err { color: #ff7a7a; font-size: 0.8rem; min-height: 1em; text-align: center; }
+  #unmute { border-color: #ff7a7a; color: #ff7a7a; }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="index.html">← Back</a>
+  <h1>Task Alarm</h1>
+  <p class="hint">An alarm with no snooze and no off button. It only stops once you finish the task you set.</p>
+
+  <h2>New alarm</h2>
+  <div class="card">
+    <label>Time
+      <input type="time" id="fTime" value="06:00">
+    </label>
+    <label>Task to complete
+      <input type="text" id="fTask" placeholder="e.g. 20 push-ups and drink a glass of water" maxlength="120">
+    </label>
+    <label>Steps (one per line, optional): you tick each one off
+      <textarea id="fSteps" placeholder="Get out of bed&#10;20 push-ups&#10;Drink water&#10;Make the bed"></textarea>
+    </label>
+    <label>Proof needed
+      <select id="fProof">
+        <option value="type">Type the task out exactly</option>
+        <option value="math">Solve 3 maths problems</option>
+        <option value="both">Both</option>
+        <option value="none">Steps only</option>
+      </select>
+    </label>
+    <label>Repeat (leave all off to ring once)
+      <div class="days" id="fDays"></div>
+    </label>
+    <button class="btn primary" id="addBtn">Add alarm</button>
+    <div class="err" id="formErr"></div>
+  </div>
+
+  <h2>Your alarms</h2>
+  <div class="list" id="list"></div>
+  <div class="status" id="status"></div>
+  <div class="row" style="margin-top:0.75rem">
+    <button class="btn" id="testBtn">Test ring now</button>
+  </div>
+
+  <div class="warn">
+    <b>Keep this page open.</b> A web page can only ring while it is open. Leave this tab open on your phone, plugged in, with the volume up. The page keeps the screen awake while an alarm is set (if your browser supports it). If you close the tab or the phone kills it, the alarm won't go off. If you reload while it's ringing, it starts ringing again.
+  </div>
+</main>
+
+<div id="ring" role="alertdialog" aria-modal="true" aria-labelledby="ringTask">
+  <div class="inner">
+    <div class="label">Alarm: complete your task to stop it</div>
+    <div class="bigtime" id="ringClock">--:--</div>
+    <div class="tasktitle" id="ringTask"></div>
+    <button class="btn" id="unmute" hidden>Tap to resume sound (your browser paused it)</button>
+
+    <div class="card" id="stepsCard">
+      <div class="list" id="ringSteps"></div>
+    </div>
+
+    <div class="card" id="mathCard">
+      <div class="label" style="color:var(--muted)">Problem <span id="mathN">1</span> of 3</div>
+      <div class="q" id="mathQ"></div>
+      <input type="number" inputmode="numeric" id="mathA" placeholder="Answer">
+      <button class="btn" id="mathBtn">Check</button>
+      <div class="err" id="mathErr"></div>
+    </div>
+
+    <div class="card" id="typeCard">
+      <label>Type this exactly: <span id="typeTarget" style="color:var(--fg)"></span>
+        <input type="text" id="typeA" autocomplete="off" autocapitalize="off" spellcheck="false">
+      </label>
+    </div>
+
+    <button class="btn primary" id="doneBtn" disabled>Task complete: stop alarm</button>
+    <div class="err" id="doneErr"></div>
+  </div>
+</div>
+
+<script>
+const KEY = "taskAlarm.alarms";
+const RING_KEY = "taskAlarm.ringing";
+const DAY_NAMES = ["S", "M", "T", "W", "T", "F", "S"];
+const $ = id => document.getElementById(id);
+
+function load(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch (e) { return fallback; }
+}
+function save(key, val) {
+  try { val === null ? localStorage.removeItem(key) : localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+}
+
+let alarms = load(KEY, []);
+let ringing = load(RING_KEY, null); // { id, task, steps, proof, done:[], mathLeft, math }
+let formDays = [false, false, false, false, false, false, false];
+
+/* ---------- form ---------- */
+function renderDays() {
+  const wrap = $("fDays");
+  wrap.innerHTML = "";
+  DAY_NAMES.forEach((d, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = d;
+    b.className = formDays[i] ? "on" : "";
+    b.onclick = () => { formDays[i] = !formDays[i]; renderDays(); };
+    wrap.appendChild(b);
+  });
+}
+
+$("addBtn").onclick = () => {
+  const time = $("fTime").value;
+  const task = $("fTask").value.trim();
+  const steps = $("fSteps").value.split("\n").map(s => s.trim()).filter(Boolean);
+  const proof = $("fProof").value;
+  if (!time) return ($("formErr").textContent = "Pick a time.");
+  if (!task) return ($("formErr").textContent = "Write the task you must complete.");
+  if (proof === "none" && steps.length === 0) return ($("formErr").textContent = "Add at least one step, or choose a proof.");
+  $("formErr").textContent = "";
+  alarms.push({
+    id: Date.now().toString(36),
+    time, task, steps, proof,
+    days: formDays.some(Boolean) ? formDays.slice() : null,
+    enabled: true,
+    lastFired: null
+  });
+  save(KEY, alarms);
+  $("fTask").value = ""; $("fSteps").value = "";
+  formDays = [false, false, false, false, false, false, false];
+  renderDays();
+  unlockAudio();
+  render();
+};
+
+/* ---------- list ---------- */
+function nextFire(a, from = new Date()) {
+  const [h, m] = a.time.split(":").map(Number);
+  for (let add = 0; add < 8; add++) {
+    const d = new Date(from);
+    d.setDate(d.getDate() + add);
+    d.setHours(h, m, 0, 0);
+    if (d <= from) continue;
+    if (a.days && !a.days[d.getDay()]) continue;
+    return d;
+  }
+  return null;
+}
+
+function fmtIn(ms) {
+  const mins = Math.round(ms / 60000);
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return h ? `${h}h ${m}m` : `${m}m`;
+}
+
+function render() {
+  const list = $("list");
+  list.innerHTML = "";
+  if (!alarms.length) list.innerHTML = '<div class="empty">No alarms yet.</div>';
+  alarms.forEach(a => {
+    const el = document.createElement("div");
+    el.className = "alarm" + (a.enabled ? "" : " off");
+    const repeat = a.days ? a.days.map((on, i) => on ? DAY_NAMES[i] : "·").join(" ") : "Once";
+    const proof = { type: "type it", math: "maths", both: "type + maths", none: "steps" }[a.proof];
+    el.innerHTML = `
+      <div class="time"></div>
+      <div class="ctrls">
+        <button class="toggle ${a.enabled ? "on" : ""}" aria-label="Turn alarm on or off"></button>
+        <button class="small del">Delete</button>
+      </div>
+      <div class="task"></div>
+      <div class="meta"></div>`;
+    el.querySelector(".time").textContent = a.time;
+    el.querySelector(".task").textContent = a.task;
+    el.querySelector(".meta").textContent = `${repeat} · ${a.steps.length} step${a.steps.length === 1 ? "" : "s"} · proof: ${proof}`;
+    el.querySelector(".toggle").onclick = () => { a.enabled = !a.enabled; save(KEY, alarms); unlockAudio(); render(); };
+    el.querySelector(".del").onclick = () => {
+      if (!confirm("Delete this alarm?")) return;
+      alarms = alarms.filter(x => x !== a); save(KEY, alarms); render();
+    };
+    list.appendChild(el);
+  });
+  updateStatus();
+  updateWakeLock();
+}
+
+function updateStatus() {
+  const now = new Date();
+  let best = null;
+  alarms.filter(a => a.enabled).forEach(a => {
+    const t = nextFire(a, now);
+    if (t && (!best || t < best.t)) best = { t, a };
+  });
+  $("status").innerHTML = best
+    ? `Next alarm in <b>${fmtIn(best.t - now)}</b>: ${best.a.time}`
+    : "No alarm set.";
+}
+
+/* ---------- sound ---------- */
+let ctx = null, beepTimer = null, ringStart = 0;
+
+function unlockAudio() {
+  try {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === "suspended") ctx.resume();
+  } catch (e) {}
+}
+
+function beep() {
+  if (!ctx) return;
+  if (ctx.state !== "running") { $("unmute").hidden = false; return; }
+  $("unmute").hidden = true;
+  // gets louder over the first 30 seconds
+  const level = Math.min(1, 0.25 + (Date.now() - ringStart) / 40000);
+  const t = ctx.currentTime;
+  for (let i = 0; i < 4; i++) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "square";
+    o.frequency.value = i % 2 ? 880 : 1175;
+    g.gain.setValueAtTime(0.0001, t + i * 0.18);
+    g.gain.exponentialRampToValueAtTime(0.5 * level, t + i * 0.18 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.18 + 0.14);
+    o.connect(g).connect(ctx.destination);
+    o.start(t + i * 0.18);
+    o.stop(t + i * 0.18 + 0.15);
+  }
+  if (navigator.vibrate) navigator.vibrate([400, 150, 400]);
+}
+
+function startSound() {
+  unlockAudio();
+  ringStart = Date.now();
+  clearInterval(beepTimer);
+  beep();
+  beepTimer = setInterval(beep, 1100);
+}
+function stopSound() {
+  clearInterval(beepTimer);
+  beepTimer = null;
+  if (navigator.vibrate) navigator.vibrate(0);
+}
+
+$("unmute").onclick = () => { unlockAudio(); setTimeout(beep, 50); };
+document.addEventListener("pointerdown", unlockAudio, { passive: true });
+
+/* ---------- screen wake lock ---------- */
+let wakeLock = null;
+async function updateWakeLock() {
+  const want = !!ringing || alarms.some(a => a.enabled);
+  if (!("wakeLock" in navigator)) return;
+  try {
+    if (want && !wakeLock && document.visibilityState === "visible") {
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => { wakeLock = null; });
+    } else if (!want && wakeLock) {
+      await wakeLock.release();
+      wakeLock = null;
+    }
+  } catch (e) {}
+}
+document.addEventListener("visibilitychange", updateWakeLock);
+
+/* ---------- ringing ---------- */
+function makeMath() {
+  const a = 12 + Math.floor(Math.random() * 38);
+  const b = 3 + Math.floor(Math.random() * 9);
+  const c = 10 + Math.floor(Math.random() * 90);
+  return { q: `${a} × ${b} + ${c} = ?`, ans: a * b + c };
+}
+
+function fire(a, isTest) {
+  ringing = {
+    id: a.id, task: a.task, steps: a.steps.slice(), proof: a.proof,
+    done: a.steps.map(() => false),
+    mathLeft: (a.proof === "math" || a.proof === "both") ? 3 : 0,
+    math: makeMath(),
+    test: !!isTest
+  };
+  save(RING_KEY, ringing);
+  showRing();
+}
+
+function showRing() {
+  const r = ringing;
+  $("ring").classList.add("show");
+  document.body.style.overflow = "hidden";
+  $("ringTask").textContent = r.task;
+
+  $("stepsCard").style.display = r.steps.length ? "" : "none";
+  renderSteps();
+
+  $("mathCard").style.display = (r.proof === "math" || r.proof === "both") ? "" : "none";
+  renderMath();
+
+  const needType = r.proof === "type" || r.proof === "both";
+  $("typeCard").style.display = needType ? "" : "none";
+  $("typeTarget").textContent = r.task;
+  $("typeA").value = "";
+
+  checkDone();
+  startSound();
+  updateWakeLock();
+}
+
+function renderSteps() {
+  const wrap = $("ringSteps");
+  wrap.innerHTML = "";
+  ringing.steps.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.className = "step" + (ringing.done[i] ? " done" : "");
+    b.innerHTML = '<span class="box"></span><span></span>';
+    b.querySelector(".box").textContent = ringing.done[i] ? "✓" : "";
+    b.lastChild.textContent = s;
+    b.onclick = () => { ringing.done[i] = !ringing.done[i]; save(RING_KEY, ringing); renderSteps(); checkDone(); };
+    wrap.appendChild(b);
+  });
+}
+
+function renderMath() {
+  const solved = 3 - ringing.mathLeft;
+  if (ringing.mathLeft <= 0) {
+    $("mathQ").textContent = "✓ All solved";
+    $("mathN").textContent = "3";
+    $("mathA").style.display = "none";
+    $("mathBtn").style.display = "none";
+    return;
+  }
+  $("mathN").textContent = solved + 1;
+  $("mathQ").textContent = ringing.math.q;
+  $("mathA").style.display = "";
+  $("mathBtn").style.display = "";
+  $("mathA").value = "";
+}
+
+function checkMath() {
+  const v = Number($("mathA").value);
+  if ($("mathA").value !== "" && v === ringing.math.ans) {
+    ringing.mathLeft--;
+    $("mathErr").textContent = "";
+  } else {
+    $("mathErr").textContent = "Wrong. Here's a new one.";
+  }
+  ringing.math = makeMath();
+  save(RING_KEY, ringing);
+  renderMath();
+  checkDone();
+}
+$("mathBtn").onclick = checkMath;
+$("mathA").addEventListener("keydown", e => { if (e.key === "Enter") checkMath(); });
+
+const norm = s => s.trim().replace(/\s+/g, " ").toLowerCase();
+$("typeA").addEventListener("input", checkDone);
+$("typeA").addEventListener("paste", e => e.preventDefault());
+
+function isComplete() {
+  const r = ringing;
+  if (!r) return false;
+  if (r.done.some(d => !d)) return false;
+  if (r.mathLeft > 0) return false;
+  if ((r.proof === "type" || r.proof === "both") && norm($("typeA").value) !== norm(r.task)) return false;
+  return true;
+}
+function checkDone() { $("doneBtn").disabled = !isComplete(); }
+
+$("doneBtn").onclick = () => {
+  if (!isComplete()) return;
+  stopSound();
+  ringing = null;
+  save(RING_KEY, null);
+  $("ring").classList.remove("show");
+  document.body.style.overflow = "";
+  render();
+};
+
+// warn before leaving while ringing
+window.addEventListener("beforeunload", e => {
+  if (ringing) { e.preventDefault(); e.returnValue = ""; }
+});
+
+$("testBtn").onclick = () => {
+  unlockAudio();
+  const sample = alarms.find(a => a.enabled) || alarms[0] || {
+    id: "test", task: "touch your toes", steps: ["Stand up", "Touch your toes"], proof: "type"
+  };
+  fire(sample, true);
+};
+
+/* ---------- clock loop ---------- */
+function pad(n) { return String(n).padStart(2, "0"); }
+function tick() {
+  const now = new Date();
+  $("ringClock").textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  if (!ringing) {
+    const hm = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const stamp = now.toDateString() + " " + hm;
+    for (const a of alarms) {
+      if (!a.enabled || a.time !== hm || a.lastFired === stamp) continue;
+      if (a.days && !a.days[now.getDay()]) continue;
+      a.lastFired = stamp;
+      if (!a.days) a.enabled = false; // one-time alarm
+      save(KEY, alarms);
+      fire(a);
+      render();
+      break;
+    }
+  }
+  if (now.getSeconds() === 0) updateStatus();
+}
+
+renderDays();
+render();
+if (ringing) showRing();
+setInterval(tick, 1000);
+tick();
+</script>
+</body>
+</html>
