@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e0e0e">
+<title>Gym Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --head: #1a1a1a;
+    --cell: #2a2a2a;
+    --cell-alt: #323232;
+    --line: #3a3a3a;
+    --fg: #f2f2f2;
+    --muted: #9a9a9a;
+    --accent: #e0a15a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: Outfit, ui-sans-serif, system-ui, sans-serif; }
+  button, a, input, select { font: inherit; color: inherit; touch-action: manipulation; }
+  button { background: none; border: 0; padding: 0; cursor: pointer; }
+  a { color: var(--muted); text-decoration: none; }
+  main { padding: 0.85rem 1rem 2rem; max-width: 40rem; margin: 0 auto; }
+  .back {
+    display: inline-flex; align-items: center; min-height: 2.75rem;
+    letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.75rem; color: var(--muted);
+  }
+  h1 { margin: 0; font-size: 1.65rem; font-weight: 500; }
+  h2 { margin: 1.4rem 0 0.6rem; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .hint { margin: 0.3rem 0 0; color: var(--muted); font-size: 0.85rem; }
+  .tabs { display: flex; gap: 0.4rem; margin: 1rem 0 0.25rem; }
+  .tab {
+    flex: 1; min-height: 2.6rem; border: 1px solid var(--line); border-radius: 999px;
+    font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+  }
+  .tab.on { color: var(--fg); border-color: var(--accent); background: #1a1a1a; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .chip {
+    min-height: 2.5rem; padding: 0 0.9rem; border-radius: 999px; border: 1px solid var(--line);
+    background: #1a1a1a; font-size: 0.9rem;
+  }
+  .chip.on { border-color: var(--accent); color: var(--accent); }
+  .card { background: var(--cell); border-radius: 0.75rem; padding: 0.85rem 0.9rem; margin-bottom: 0.5rem; }
+  .card h3 { margin: 0; font-size: 1rem; font-weight: 500; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+  .muted { color: var(--muted); font-size: 0.85rem; }
+  .tag { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+  input, select {
+    width: 100%; min-height: 2.75rem; padding: 0 0.7rem; border-radius: 0.5rem;
+    border: 1px solid var(--line); background: #1a1a1a; font-size: 16px;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  label { display: block; margin: 0.7rem 0 0.3rem; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .sets { display: flex; flex-direction: column; gap: 0.4rem; }
+  .set { display: grid; grid-template-columns: 2.2rem 1fr 1fr 2.4rem; gap: 0.4rem; align-items: center; }
+  .set .n { color: var(--muted); font-size: 0.85rem; text-align: center; }
+  .x { min-height: 2.75rem; border-radius: 0.5rem; color: var(--muted); font-size: 1.1rem; }
+  .x:hover { color: var(--fg); }
+  .btn {
+    display: flex; align-items: center; justify-content: center; width: 100%; min-height: 2.75rem;
+    border: 1px solid var(--line); border-radius: 0.75rem; background: #1a1a1a; font-size: 1rem;
+  }
+  .btn.primary { border-color: var(--accent); color: var(--accent); }
+  .btn:active, .chip:active, .tab:active { transform: scale(0.98); }
+  .btns { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+  .setlist { margin: 0.45rem 0 0; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .pill { background: var(--cell-alt); border-radius: 0.4rem; padding: 0.2rem 0.5rem; font-size: 0.85rem; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-top: 0.6rem; }
+  .stat { background: var(--cell-alt); border-radius: 0.5rem; padding: 0.5rem; text-align: center; }
+  .stat strong { display: block; font-size: 1.25rem; font-weight: 500; color: var(--accent); }
+  .stat span { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .bar { height: 4px; background: var(--cell-alt); border-radius: 2px; margin-top: 0.6rem; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--accent); }
+  .empty { color: var(--muted); text-align: center; padding: 1.5rem 0; font-size: 0.9rem; }
+  .del { font-size: 0.75rem; color: var(--muted); padding: 0.3rem 0; }
+  .del:hover { color: #e06a5a; }
+  .flash { color: var(--accent); font-size: 0.85rem; min-height: 1.2rem; margin-top: 0.5rem; text-align: center; }
+  .ex { border-top: 1px solid #3a3a3a; padding-top: 0.55rem; margin-top: 0.55rem; }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="index.html">&larr; Back</a>
+  <h1>Gym Tracker</h1>
+  <p class="hint">Log sets and reps for each muscle group. Saved on this device.</p>
+  <div class="tabs">
+    <button class="tab" data-view="log" type="button">Log</button>
+    <button class="tab" data-view="muscles" type="button">Muscles</button>
+    <button class="tab" data-view="history" type="button">History</button>
+  </div>
+  <div id="app"></div>
+</main>
+<script>
+const KEY = "gym-log-v1";
+const GROUPS = ["Chest", "Back", "Shoulders", "Biceps", "Triceps", "Legs", "Glutes", "Core", "Calves", "Forearms"];
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+const app = document.getElementById("app");
+let view = "log";
+let group = GROUPS[0];
+let date = today();
+let draft = [{ w: "", r: "" }, { w: "", r: "" }, { w: "", r: "" }];
+let exercise = "";
+let flash = "";
+let openGroup = "";
+
+function today() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
+function niceDate(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return d + " " + MONTHS[m - 1] + " " + y;
+}
+
+function daysAgo(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const [ty, tm, td] = today().split("-").map(Number);
+  const n = Math.round((Date.UTC(ty, tm - 1, td) - Date.UTC(y, m - 1, d)) / 86400000);
+  return n === 0 ? "today" : n === 1 ? "yesterday" : n + " days ago";
+}
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; }
+}
+
+function save(log) {
+  try { localStorage.setItem(KEY, JSON.stringify(log)); } catch (e) {}
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function setText(s) {
+  return (s.w ? s.w + " kg × " : "") + s.r;
+}
+
+function totals(entries) {
+  let sets = 0, reps = 0, vol = 0;
+  entries.forEach(e => e.sets.forEach(s => { sets++; reps += s.r; vol += (s.w || 0) * s.r; }));
+  return { sets, reps, vol: Math.round(vol) };
+}
+
+function render() {
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.view === view));
+  if (view === "log") renderLog();
+  else if (view === "muscles") renderMuscles();
+  else renderHistory();
+}
+
+function renderLog() {
+  const log = load();
+  const known = [...new Set(log.filter(e => e.group === group).map(e => e.exercise))];
+  const day = log.filter(e => e.date === date);
+
+  app.innerHTML = `
+    <h2>Muscle group</h2>
+    <div class="chips">${GROUPS.map(g => `<button class="chip${g === group ? " on" : ""}" data-group="${g}" type="button">${g}</button>`).join("")}</div>
+    <div class="card" style="margin-top:0.9rem">
+      <label for="date">Date</label>
+      <input id="date" type="date" value="${date}">
+      <label for="exercise">Exercise</label>
+      <input id="exercise" list="known" placeholder="e.g. Bench press" value="${esc(exercise)}" autocomplete="off">
+      <datalist id="known">${known.map(k => `<option value="${esc(k)}">`).join("")}</datalist>
+      <label>Sets</label>
+      <div class="sets">
+        ${draft.map((s, i) => `
+          <div class="set">
+            <span class="n">${i + 1}</span>
+            <input type="number" inputmode="decimal" min="0" step="0.5" placeholder="kg" data-i="${i}" data-f="w" value="${s.w}">
+            <input type="number" inputmode="numeric" min="0" step="1" placeholder="reps" data-i="${i}" data-f="r" value="${s.r}">
+            <button class="x" data-rm="${i}" type="button" aria-label="Remove set">×</button>
+          </div>`).join("")}
+      </div>
+      <div class="btns">
+        <button class="btn" id="addSet" type="button">+ Set</button>
+        <button class="btn primary" id="saveEx" type="button">Save exercise</button>
+      </div>
+      <div class="flash">${esc(flash)}</div>
+    </div>
+    <h2>${date === today() ? "Today" : niceDate(date)}</h2>
+    ${dayView(day, true)}
+  `;
+  flash = "";
+}
+
+function dayView(entries, deletable) {
+  if (!entries.length) return `<div class="empty">Nothing logged yet.</div>`;
+  const byGroup = {};
+  entries.forEach(e => (byGroup[e.group] = byGroup[e.group] || []).push(e));
+  return Object.keys(byGroup).map(g => {
+    const t = totals(byGroup[g]);
+    return `<div class="card">
+      <div class="row"><h3>${g}</h3><span class="muted">${t.sets} set${t.sets === 1 ? "" : "s"} · ${t.reps} reps</span></div>
+      ${byGroup[g].map(e => `
+        <div class="ex">
+          <div class="row"><span>${esc(e.exercise)}</span>${deletable ? `<button class="del" data-del="${e.id}" type="button">Delete</button>` : ""}</div>
+          <div class="setlist">${e.sets.map(s => `<span class="pill">${setText(s)}</span>`).join("")}</div>
+        </div>`).join("")}
+    </div>`;
+  }).join("");
+}
+
+function renderMuscles() {
+  const log = load();
+  const max = Math.max(1, ...GROUPS.map(g => totals(log.filter(e => e.group === g)).sets));
+  app.innerHTML = `<h2>All time, per muscle group</h2>` + GROUPS.map(g => {
+    const entries = log.filter(e => e.group === g);
+    const t = totals(entries);
+    const last = entries.map(e => e.date).sort().pop();
+    const isOpen = openGroup === g;
+    let detail = "";
+    if (isOpen) {
+      const byEx = {};
+      entries.forEach(e => (byEx[e.exercise] = byEx[e.exercise] || []).push(e));
+      detail = Object.keys(byEx).length ? Object.keys(byEx).map(name => {
+        const list = byEx[name];
+        const et = totals(list);
+        let best = null;
+        list.forEach(e => e.sets.forEach(s => {
+          if (!best || (s.w || 0) > (best.w || 0) || ((s.w || 0) === (best.w || 0) && s.r > best.r)) best = s;
+        }));
+        const recent = list.slice().sort((a, b) => b.date.localeCompare(a.date))[0];
+        return `<div class="ex">
+          <div class="row"><span>${esc(name)}</span><span class="muted">${et.sets} set${et.sets === 1 ? "" : "s"} · ${et.reps} reps</span></div>
+          <div class="muted" style="margin-top:0.25rem">Best: ${setText(best)} · Last: ${niceDate(recent.date)}</div>
+          <div class="setlist">${recent.sets.map(s => `<span class="pill">${setText(s)}</span>`).join("")}</div>
+        </div>`;
+      }).join("") : `<div class="empty">No exercises yet.</div>`;
+    }
+    return `<div class="card" data-open="${g}" style="cursor:pointer">
+      <div class="row"><h3>${g}</h3><span class="muted">${last ? "Last: " + daysAgo(last) : "Not trained yet"}</span></div>
+      <div class="stats">
+        <div class="stat"><strong>${t.sets}</strong><span>Sets</span></div>
+        <div class="stat"><strong>${t.reps}</strong><span>Reps</span></div>
+        <div class="stat"><strong>${t.vol}</strong><span>Kg moved</span></div>
+      </div>
+      <div class="bar"><i style="width:${(t.sets / max) * 100}%"></i></div>
+      ${detail}
+    </div>`;
+  }).join("");
+}
+
+function renderHistory() {
+  const log = load();
+  const dates = [...new Set(log.map(e => e.date))].sort().reverse();
+  if (!dates.length) { app.innerHTML = `<h2>History</h2><div class="empty">No workouts yet.</div>`; return; }
+  app.innerHTML = `<h2>History</h2>` + dates.map(d => {
+    const entries = log.filter(e => e.date === d);
+    const t = totals(entries);
+    const groups = [...new Set(entries.map(e => e.group))].join(", ");
+    return `<h2 style="color:var(--fg);text-transform:none;letter-spacing:0;font-size:1rem">${niceDate(d)} <span class="muted">· ${groups} · ${t.sets} set${t.sets === 1 ? "" : "s"} · ${t.reps} reps</span></h2>${dayView(entries, true)}`;
+  }).join("");
+}
+
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => { view = t.dataset.view; render(); }));
+
+app.addEventListener("input", ev => {
+  const el = ev.target;
+  if (el.dataset.f) draft[+el.dataset.i][el.dataset.f] = el.value;
+  else if (el.id === "exercise") exercise = el.value;
+});
+
+app.addEventListener("change", ev => {
+  if (ev.target.id === "date" && ev.target.value) { date = ev.target.value; render(); }
+});
+
+app.addEventListener("click", ev => {
+  const el = ev.target.closest("button, .card[data-open]");
+  if (!el) return;
+  if (el.dataset.group) { group = el.dataset.group; render(); }
+  else if (el.id === "addSet") {
+    const last = draft[draft.length - 1] || { w: "", r: "" };
+    draft.push({ w: last.w, r: last.r });
+    render();
+  }
+  else if (el.dataset.rm !== undefined) { draft.splice(+el.dataset.rm, 1); if (!draft.length) draft.push({ w: "", r: "" }); render(); }
+  else if (el.id === "saveEx") {
+    const name = exercise.trim();
+    const sets = draft.filter(s => +s.r > 0).map(s => ({ w: +s.w > 0 ? +s.w : 0, r: Math.round(+s.r) }));
+    if (!name) { flash = "Enter an exercise name."; render(); return; }
+    if (!sets.length) { flash = "Add reps to at least one set."; render(); return; }
+    const log = load();
+    log.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), date, group, exercise: name, sets });
+    save(log);
+    flash = `Saved ${name}: ${sets.length} set${sets.length > 1 ? "s" : ""}.`;
+    exercise = "";
+    draft = [{ w: "", r: "" }, { w: "", r: "" }, { w: "", r: "" }];
+    render();
+  }
+  else if (el.dataset.del) {
+    if (!confirm("Delete this exercise?")) return;
+    save(load().filter(e => e.id !== el.dataset.del));
+    render();
+  }
+  else if (el.dataset.open) { openGroup = openGroup === el.dataset.open ? "" : el.dataset.open; render(); }
+});
+
+render();
+</script>
+</body>
+</html>
