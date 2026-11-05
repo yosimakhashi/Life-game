@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#140f1f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="പഠന ദീപം">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>പഠന ദീപം</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Malayalam:wght@500;700&family=Manjari:wght@400;700&family=Source+Serif+4:ital,wght@1,400&display=swap">
+<style>
+/* Layout: one column. A lamp-lit card holds today's affirmation; below it the
+   "I believe this" button lights today's lamp, then the day's study goal,
+   the week of lamps, saved affirmations and settings. */
+:root {
+    --bg: #140f1f;
+    --panel: #1e1830;
+    --panel-2: #271f3d;
+    --line: #342a50;
+    --fg: #f6efe3;
+    --dim: #b3a8c7;
+    --gold: #f4b544;
+    --flame: #ff8a3d;
+    --on-gold: #2a1600;
+    --glow: rgba(255, 170, 70, .28);
+}
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg: #fbf6ec;
+        --panel: #ffffff;
+        --panel-2: #f6eedf;
+        --line: #eadfca;
+        --fg: #2a2135;
+        --dim: #6f6580;
+        --gold: #c98512;
+        --flame: #e8621c;
+        --on-gold: #ffffff;
+        --glow: rgba(232, 140, 40, .22);
+    }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); }
+body {
+    font-family: 'Manjari', 'Noto Sans Malayalam', system-ui, sans-serif;
+    font-size: 17px;
+    line-height: 1.5;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
+}
+main { max-width: 520px; margin: 0 auto; display: grid; gap: 14px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand img { width: 36px; height: 36px; border-radius: 9px; }
+.brand h1 { font-family: 'Noto Serif Malayalam', serif; font-size: 22px; margin: 0; line-height: 1.2; }
+.brand .date { font-size: 13px; color: var(--dim); }
+.streakChip {
+    display: flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 999px;
+    background: var(--panel); border: 1px solid var(--line); font-weight: 700; white-space: nowrap;
+}
+.back { font-size: 13px; color: var(--dim); text-decoration: none; }
+
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 18px; }
+.label { font-size: 13px; color: var(--dim); letter-spacing: .02em; margin: 0 0 8px; }
+
+/* Hero */
+.hero {
+    position: relative; overflow: hidden; text-align: center; padding: 22px 20px 18px;
+    background: radial-gradient(120% 70% at 50% 0%, var(--glow), transparent 70%), var(--panel);
+}
+.lamp { width: 64px; height: 84px; margin: 0 auto 4px; display: block; }
+.lamp .f { transform-origin: 32px 46px; animation: flicker 2.6s ease-in-out infinite; }
+.lamp.dim .f { opacity: .35; animation: none; }
+.lamp.burst .f { animation: burst .9s ease-out, flicker 2.6s ease-in-out .9s infinite; }
+@keyframes flicker { 0%,100% { transform: scale(1, 1) } 30% { transform: scale(.96, 1.04) } 60% { transform: scale(1.03, .97) } }
+@keyframes burst { 0% { transform: scale(.4) } 60% { transform: scale(1.35) } 100% { transform: scale(1) } }
+@media (prefers-reduced-motion: reduce) { .lamp .f { animation: none !important; } }
+
+.affirm {
+    font-family: 'Noto Serif Malayalam', serif; font-weight: 700;
+    font-size: clamp(22px, 6.4vw, 29px); line-height: 1.55; margin: 6px 0 10px; text-wrap: balance;
+}
+.meaning { font-family: 'Source Serif 4', Georgia, serif; font-style: italic; color: var(--dim); margin: 0 0 4px; font-size: 16px; }
+.meaning[hidden] { display: none; }
+
+.dayNav { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 4px; }
+.dayNav button {
+    width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel-2); font-size: 18px;
+}
+.dayNav button:disabled { opacity: .3; cursor: default; }
+.dayNav .which { min-width: 120px; font-size: 14px; color: var(--dim); }
+
+.actions { display: flex; justify-content: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.pill {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--panel-2); font-size: 15px;
+}
+.pill[aria-pressed="true"] { border-color: var(--flame); color: var(--flame); }
+
+.believe {
+    width: 100%; padding: 16px; border: 0; border-radius: 16px; font-size: 19px; font-weight: 700;
+    background: linear-gradient(180deg, var(--gold), var(--flame)); color: var(--on-gold);
+    box-shadow: 0 8px 24px var(--glow);
+}
+.believe.done { background: var(--panel); color: var(--gold); border: 1px solid var(--gold); box-shadow: none; }
+.believe[hidden] { display: none; }
+
+/* Study goal */
+.task { display: flex; gap: 14px; align-items: flex-start; }
+.check {
+    flex: none; width: 30px; height: 30px; border-radius: 9px; border: 2px solid var(--gold);
+    background: transparent; display: grid; place-items: center; font-size: 18px; color: var(--on-gold); padding: 0;
+}
+.check[aria-checked="true"] { background: var(--gold); }
+.task .ml { font-weight: 700; }
+.task .en { font-family: 'Source Serif 4', Georgia, serif; font-style: italic; color: var(--dim); font-size: 15px; }
+.task.done .ml { text-decoration: line-through; text-decoration-color: var(--gold); opacity: .75; }
+
+/* Week */
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+.week .d { font-size: 12px; color: var(--dim); }
+.week svg { width: 28px; height: 36px; display: block; margin: 0 auto 2px; }
+.week .off .f { opacity: .18; }
+.week .today .d { color: var(--fg); font-weight: 700; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+.stat { background: var(--panel-2); border-radius: 12px; padding: 10px; text-align: center; }
+.stat b { display: block; font-size: 24px; color: var(--gold); font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--dim); }
+
+/* Saved */
+.saved { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.saved li { display: flex; gap: 10px; align-items: flex-start; background: var(--panel-2); border-radius: 12px; padding: 10px 12px; }
+.saved .t { flex: 1; font-family: 'Noto Serif Malayalam', serif; font-size: 15px; line-height: 1.6; }
+.saved button { border: 0; background: none; color: var(--dim); font-size: 18px; padding: 0 4px; }
+.empty { color: var(--dim); font-size: 14px; margin: 0; }
+
+/* Settings */
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; }
+.row + .row { border-top: 1px solid var(--line); }
+.row small { display: block; color: var(--dim); font-size: 13px; }
+.switch { flex: none; width: 50px; height: 30px; border-radius: 999px; border: 0; background: var(--line); position: relative; padding: 0; }
+.switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .2s; }
+.switch[aria-checked="true"] { background: var(--gold); }
+.switch[aria-checked="true"]::after { transform: translateX(20px); }
+
+.toast {
+    position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); transform: translate(-50%, 20px);
+    background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 15px;
+    opacity: 0; pointer-events: none; transition: .25s; max-width: calc(100% - 32px); text-align: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<main>
+    <header>
+        <div class="brand">
+            <img src="icon.svg" alt="">
+            <div>
+                <h1>പഠന ദീപം</h1>
+                <div class="date" id="today"></div>
+            </div>
+        </div>
+        <div class="streakChip" title="തുടർച്ചയായ ദിവസങ്ങൾ (streak)">🔥 <span id="streakChip">0</span></div>
+    </header>
+
+    <section class="card hero" aria-labelledby="heroLabel">
+        <svg class="lamp" id="heroLamp" viewBox="0 0 64 84" aria-hidden="true">
+            <g class="f">
+                <ellipse cx="32" cy="26" rx="10" ry="18" fill="var(--flame)"/>
+                <ellipse cx="32" cy="31" rx="6" ry="11" fill="#ffd56b"/>
+                <ellipse cx="32" cy="36" rx="2.5" ry="5" fill="#fff4cf"/>
+            </g>
+            <path d="M8 46 Q32 58 56 46 Q53 58 32 60 Q11 58 8 46Z" fill="var(--gold)"/>
+            <rect x="29" y="59" width="6" height="14" fill="var(--gold)"/>
+            <path d="M18 80 Q32 72 46 80 L46 83 L18 83Z" fill="var(--gold)"/>
+        </svg>
+        <p class="label" id="heroLabel">ഇന്നത്തെ സ്ഥിരീകരണം</p>
+        <p class="affirm" id="affirm" lang="ml"></p>
+        <p class="meaning" id="meaning" lang="en"></p>
+        <div class="dayNav">
+            <button id="prev" aria-label="മുൻ ദിവസം (previous day)">‹</button>
+            <span class="which" id="which">ഇന്ന്</span>
+            <button id="next" aria-label="അടുത്ത ദിവസം (next day)">›</button>
+        </div>
+        <div class="actions">
+            <button class="pill" id="speak">🔊 വായിക്കുക</button>
+            <button class="pill" id="fav" aria-pressed="false">♡ സൂക്ഷിക്കുക</button>
+            <button class="pill" id="share">↗ പങ്കിടുക</button>
+        </div>
+    </section>
+
+    <button class="believe" id="believe">ഞാൻ ഇത് വിശ്വസിക്കുന്നു ✓</button>
+
+    <section class="card">
+        <p class="label">📖 ഇന്നത്തെ പഠന ലക്ഷ്യം</p>
+        <div class="task" id="taskBox">
+            <button class="check" id="taskCheck" role="checkbox" aria-checked="false" aria-label="പൂർത്തിയായി (done)"></button>
+            <div>
+                <div class="ml" id="taskMl"></div>
+                <div class="en" id="taskEn" lang="en"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <p class="label">🪔 ഈ ആഴ്ചയിലെ ദീപങ്ങൾ</p>
+        <div class="week" id="week"></div>
+        <div class="stats">
+            <div class="stat"><b id="sStreak">0</b><span>തുടർച്ച</span></div>
+            <div class="stat"><b id="sBest">0</b><span>മികച്ച തുടർച്ച</span></div>
+            <div class="stat"><b id="sTotal">0</b><span>ആകെ ദിവസങ്ങൾ</span></div>
+        </div>
+    </section>
+
+    <section class="card">
+        <p class="label">♥ സൂക്ഷിച്ചവ</p>
+        <ul class="saved" id="saved"></ul>
+        <p class="empty" id="savedEmpty">ഇഷ്ടപ്പെട്ട സ്ഥിരീകരണങ്ങൾ ♡ അമർത്തി ഇവിടെ സൂക്ഷിക്കാം.</p>
+    </section>
+
+    <section class="card">
+        <p class="label">⚙ ക്രമീകരണങ്ങൾ</p>
+        <div class="row">
+            <div>ഇംഗ്ലീഷ് അർത്ഥം കാണിക്കുക<small>Show English meaning</small></div>
+            <button class="switch" id="enSwitch" role="switch" aria-checked="true" aria-label="Show English meaning"></button>
+        </div>
+        <div class="row">
+            <div>ദിവസവും ഓർമ്മിപ്പിക്കുക<small id="remindNote">Daily reminder notification</small></div>
+            <button class="switch" id="remindSwitch" role="switch" aria-checked="false" aria-label="Daily reminder"></button>
+        </div>
+    </section>
+
+    <a class="back" href="../">← Life Game</a>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="affirmations.js"></script>
+<script>
+const STORE = 'padana-deepam-v1';
+const $ = id => document.getElementById(id);
+
+function load() {
+    const blank = { affirmed: {}, tasks: {}, favs: [], showEn: true, remind: false };
+    try { return Object.assign(blank, JSON.parse(localStorage.getItem(STORE)) || {}); } catch (e) { return blank; }
+}
+const S = load();
+function save() { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} }
+
+let today = dayNumber(new Date());
+let viewDay = today;
+
+function dateOf(day) { const d = new Date(day * 86400000); return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()); }
+function fmt(day, opts) {
+    try { return new Intl.DateTimeFormat('ml-IN', opts).format(dateOf(day)); }
+    catch (e) { return dateOf(day).toDateString(); }
+}
+
+function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toast.t);
+    toast.t = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function streakEnding(day) {
+    let n = 0;
+    while (S.affirmed[day - n]) n++;
+    return n;
+}
+function currentStreak() {
+    // A streak stays alive today until midnight, even before today's lamp is lit.
+    return S.affirmed[today] ? streakEnding(today) : streakEnding(today - 1);
+}
+function bestStreak() {
+    const days = Object.keys(S.affirmed).map(Number).sort((a, b) => a - b);
+    let best = 0, run = 0, prev = null;
+    for (const d of days) { run = prev === d - 1 ? run + 1 : 1; best = Math.max(best, run); prev = d; }
+    return best;
+}
+
+const lampSvg = '<svg viewBox="0 0 64 84" aria-hidden="true"><g class="f"><ellipse cx="32" cy="26" rx="10" ry="18" fill="var(--flame)"/><ellipse cx="32" cy="31" rx="6" ry="11" fill="#ffd56b"/></g><path d="M8 46 Q32 58 56 46 Q53 58 32 60 Q11 58 8 46Z" fill="var(--gold)"/><rect x="29" y="59" width="6" height="14" fill="var(--gold)"/><path d="M18 80 Q32 72 46 80 L46 83 L18 83Z" fill="var(--gold)"/></svg>';
+
+function render() {
+    const idx = affirmationFor(viewDay);
+    const [ml, en] = AFFIRMATIONS[idx];
+    $('today').textContent = fmt(today, { weekday: 'long', day: 'numeric', month: 'long' });
+    $('affirm').textContent = ml;
+    $('meaning').textContent = en;
+    $('meaning').hidden = !S.showEn;
+
+    const isToday = viewDay === today;
+    $('which').textContent = isToday ? 'ഇന്ന്' : viewDay === today - 1 ? 'ഇന്നലെ' : fmt(viewDay, { day: 'numeric', month: 'short' });
+    $('heroLabel').textContent = isToday ? 'ഇന്നത്തെ സ്ഥിരീകരണം' : 'ആ ദിവസത്തെ സ്ഥിരീകരണം';
+    $('next').disabled = isToday;
+    $('prev').disabled = viewDay <= today - AFFIRMATIONS.length + 1;
+
+    const faved = S.favs.includes(idx);
+    $('fav').setAttribute('aria-pressed', faved);
+    $('fav').textContent = faved ? '♥ സൂക്ഷിച്ചു' : '♡ സൂക്ഷിക്കുക';
+
+    const lit = !!S.affirmed[today];
+    $('believe').hidden = !isToday;
+    $('believe').classList.toggle('done', lit);
+    $('believe').textContent = lit ? 'ഇന്നത്തെ ദീപം തെളിഞ്ഞു 🪔' : 'ഞാൻ ഇത് വിശ്വസിക്കുന്നു ✓';
+    $('heroLamp').classList.toggle('dim', isToday ? !lit : !S.affirmed[viewDay]);
+
+    const [tml, ten] = STUDY_TASKS[taskFor(today)];
+    const tdone = !!S.tasks[today];
+    $('taskMl').textContent = tml;
+    $('taskEn').textContent = S.showEn ? ten : '';
+    $('taskCheck').setAttribute('aria-checked', tdone);
+    $('taskCheck').textContent = tdone ? '✓' : '';
+    $('taskBox').classList.toggle('done', tdone);
+
+    // Monday-to-Sunday week containing today.
+    const dow = (dateOf(today).getDay() + 6) % 7;
+    let w = '';
+    for (let i = 0; i < 7; i++) {
+        const d = today - dow + i;
+        const cls = (S.affirmed[d] ? '' : 'off') + (d === today ? ' today' : '');
+        w += `<div class="${cls}">${lampSvg}<span class="d">${fmt(d, { weekday: 'narrow' })}</span></div>`;
+    }
+    $('week').innerHTML = w;
+
+    const cs = currentStreak();
+    $('streakChip').textContent = cs;
+    $('sStreak').textContent = cs;
+    $('sBest').textContent = bestStreak();
+    $('sTotal').textContent = Object.keys(S.affirmed).length;
+
+    const list = $('saved');
+    list.innerHTML = '';
+    S.favs.forEach(i => {
+        const li = document.createElement('li');
+        const t = document.createElement('span');
+        t.className = 't';
+        t.lang = 'ml';
+        t.textContent = AFFIRMATIONS[i][0];
+        const rm = document.createElement('button');
+        rm.textContent = '×';
+        rm.setAttribute('aria-label', 'നീക്കം ചെയ്യുക (remove)');
+        rm.onclick = () => { S.favs = S.favs.filter(x => x !== i); save(); render(); };
+        li.append(t, rm);
+        list.append(li);
+    });
+    $('savedEmpty').hidden = S.favs.length > 0;
+
+    $('enSwitch').setAttribute('aria-checked', S.showEn);
+    $('remindSwitch').setAttribute('aria-checked', S.remind);
+}
+
+$('prev').onclick = () => { viewDay--; render(); };
+$('next').onclick = () => { if (viewDay < today) viewDay++; render(); };
+
+$('believe').onclick = () => {
+    if (S.affirmed[today]) return;
+    S.affirmed[today] = true;
+    save();
+    render();
+    const lamp = $('heroLamp');
+    lamp.classList.remove('burst'); void lamp.offsetWidth; lamp.classList.add('burst');
+    if (navigator.vibrate) navigator.vibrate(30);
+    const n = currentStreak();
+    toast(n > 1 ? `🔥 ${n} ദിവസം തുടർച്ചയായി! ഇനി പഠിക്കാൻ തുടങ്ങാം.` : '🪔 ദീപം തെളിഞ്ഞു! ഇനി പഠിക്കാൻ തുടങ്ങാം.');
+};
+
+$('taskCheck').onclick = () => {
+    if (S.tasks[today]) delete S.tasks[today]; else { S.tasks[today] = true; toast('👏 മിടുക്ക്! ഇന്നത്തെ ലക്ഷ്യം പൂർത്തിയായി.'); }
+    save(); render();
+};
+
+$('fav').onclick = () => {
+    const idx = affirmationFor(viewDay);
+    if (S.favs.includes(idx)) S.favs = S.favs.filter(x => x !== idx);
+    else { S.favs.unshift(idx); toast('♥ സൂക്ഷിച്ചു'); }
+    save(); render();
+};
+
+$('share').onclick = async () => {
+    const [ml, en] = AFFIRMATIONS[affirmationFor(viewDay)];
+    const text = `🪔 ${ml}\n${en}\n— പഠന ദീപം`;
+    try {
+        if (navigator.share) await navigator.share({ text });
+        else { await navigator.clipboard.writeText(text); toast('പകർത്തി (copied)'); }
+    } catch (e) { /* user closed the share sheet */ }
+};
+
+// Read aloud with a Malayalam voice when the device has one.
+function malayalamVoice() {
+    return (speechSynthesis.getVoices() || []).find(v => v.lang && v.lang.toLowerCase().startsWith('ml'));
+}
+$('speak').onclick = () => {
+    if (!('speechSynthesis' in window)) { toast('ഈ ഫോണിൽ വായിക്കാനുള്ള സൗകര്യമില്ല.'); return; }
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(AFFIRMATIONS[affirmationFor(viewDay)][0]);
+    u.lang = 'ml-IN';
+    u.rate = 0.85;
+    const v = malayalamVoice();
+    if (v) u.voice = v;
+    else toast('മലയാളം ശബ്ദം ഫോണിൽ ഇല്ലെങ്കിൽ, Settings → Text-to-speech ൽ Malayalam ചേർക്കുക.');
+    speechSynthesis.speak(u);
+};
+if ('speechSynthesis' in window) speechSynthesis.getVoices();
+
+$('enSwitch').onclick = () => { S.showEn = !S.showEn; save(); render(); };
+
+// Daily reminder via periodic background sync (installed app, Chrome on Android).
+async function setReminder(on) {
+    const note = $('remindNote');
+    if (!on) {
+        try { const reg = await navigator.serviceWorker.ready; await reg.periodicSync.unregister('daily-affirmation'); } catch (e) {}
+        S.remind = false; save(); render();
+        note.textContent = 'Daily reminder notification';
+        return;
+    }
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+        note.textContent = 'ഈ ബ്രൗസറിൽ അറിയിപ്പുകൾ ലഭ്യമല്ല. Notifications are not supported here.';
+        return;
+    }
+    if (await Notification.requestPermission() !== 'granted') {
+        note.textContent = 'അറിയിപ്പ് അനുമതി നൽകിയിട്ടില്ല. Notification permission was not given.';
+        return;
+    }
+    try {
+        const reg = await navigator.serviceWorker.ready;
+        if (!('periodicSync' in reg)) throw new Error('unsupported');
+        await reg.periodicSync.register('daily-affirmation', { minInterval: 12 * 60 * 60 * 1000 });
+        S.remind = true; save(); render();
+        note.textContent = 'ദിവസവും ഒരു തവണ ഇന്നത്തെ സ്ഥിരീകരണം അയയ്ക്കും. The phone picks the exact time.';
+        toast('🔔 ഓർമ്മപ്പെടുത്തൽ ഓണാക്കി');
+    } catch (e) {
+        note.textContent = 'ആദ്യം ആപ്പ് ഹോം സ്ക്രീനിൽ ഇൻസ്റ്റാൾ ചെയ്യുക (Chrome, Android). Install the app to your home screen first; iPhones cannot send this reminder.';
+    }
+}
+$('remindSwitch').onclick = () => setReminder(!S.remind);
+
+// Roll over to the new day if the app stays open past midnight.
+function checkDay() {
+    const now = dayNumber(new Date());
+    if (now !== today) { if (viewDay === today) viewDay = now; today = now; render(); }
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkDay(); });
+setInterval(checkDay, 60000);
+
+render();
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
