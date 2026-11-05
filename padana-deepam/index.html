@@ -7,11 +7,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="പഠന ദീപം">
+<meta name="apple-mobile-web-app-title" content="Padana Deepam">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-180.png">
-<title>പഠന ദീപം</title>
+<title>Athira’s Padana Deepam</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Malayalam:wght@500;700&family=Manjari:wght@400;700&family=Source+Serif+4:ital,wght@1,400&display=swap">
@@ -164,7 +164,7 @@ header { display: flex; align-items: center; justify-content: space-between; gap
         <div class="brand">
             <img src="icon.svg" alt="">
             <div>
-                <h1>പഠന ദീപം</h1>
+                <h1>Athira’s Padana Deepam</h1>
                 <div class="date" id="today"></div>
             </div>
         </div>
@@ -387,7 +387,7 @@ $('fav').onclick = () => {
 
 $('share').onclick = async () => {
     const [ml, en] = AFFIRMATIONS[affirmationFor(viewDay)];
-    const text = `🪔 ${ml}\n${en}\n— പഠന ദീപം`;
+    const text = `🪔 ${ml}\n${en}\n— Athira’s Padana Deepam`;
     try {
         if (navigator.share) await navigator.share({ text });
         else { await navigator.clipboard.writeText(text); toast('പകർത്തി (copied)'); }

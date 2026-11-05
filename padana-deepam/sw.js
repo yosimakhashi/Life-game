@@ -3,7 +3,7 @@
 // back to the cache when offline.
 importScripts('affirmations.js');
 
-const CACHE = 'padana-deepam-v1';
+const CACHE = 'padana-deepam-v2';
 const META = 'padana-deepam-meta';
 const SHELL = ['./', 'index.html', 'affirmations.js', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
