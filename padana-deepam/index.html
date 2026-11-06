@@ -88,7 +88,8 @@ header { display: flex; align-items: center; justify-content: space-between; gap
     font-size: clamp(22px, 6.4vw, 29px); line-height: 1.55; margin: 6px 0 10px; text-wrap: balance;
 }
 .meaning { font-family: 'Source Serif 4', Georgia, serif; font-style: italic; color: var(--dim); margin: 0 0 4px; font-size: 16px; }
-.meaning[hidden] { display: none; }
+.meaning[hidden], .by[hidden] { display: none; }
+.by { color: var(--gold); font-size: 15px; margin: -4px 0 10px; }
 
 .dayNav { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 4px; }
 .dayNav button {
@@ -182,8 +183,9 @@ header { display: flex; align-items: center; justify-content: space-between; gap
             <rect x="29" y="59" width="6" height="14" fill="var(--gold)"/>
             <path d="M18 80 Q32 72 46 80 L46 83 L18 83Z" fill="var(--gold)"/>
         </svg>
-        <p class="label" id="heroLabel">ഇന്നത്തെ സ്ഥിരീകരണം</p>
+        <p class="label" id="heroLabel">ഇന്നത്തെ പ്രചോദനം</p>
         <p class="affirm" id="affirm" lang="ml"></p>
+        <p class="by" id="by"></p>
         <p class="meaning" id="meaning" lang="en"></p>
         <div class="dayNav">
             <button id="prev" aria-label="മുൻ ദിവസം (previous day)">‹</button>
@@ -197,7 +199,7 @@ header { display: flex; align-items: center; justify-content: space-between; gap
         </div>
     </section>
 
-    <button class="believe" id="believe">ഞാൻ ഇത് വിശ്വസിക്കുന്നു ✓</button>
+    <button class="believe" id="believe">ഇന്ന് ഞാൻ പഠിക്കും ✓</button>
 
     <section class="card">
         <p class="label">📖 ഇന്നത്തെ പഠന ലക്ഷ്യം</p>
@@ -223,7 +225,7 @@ header { display: flex; align-items: center; justify-content: space-between; gap
     <section class="card">
         <p class="label">♥ സൂക്ഷിച്ചവ</p>
         <ul class="saved" id="saved"></ul>
-        <p class="empty" id="savedEmpty">ഇഷ്ടപ്പെട്ട സ്ഥിരീകരണങ്ങൾ ♡ അമർത്തി ഇവിടെ സൂക്ഷിക്കാം.</p>
+        <p class="empty" id="savedEmpty">ഇഷ്ടപ്പെട്ട വാക്കുകൾ ♡ അമർത്തി ഇവിടെ സൂക്ഷിക്കാം.</p>
     </section>
 
     <section class="card">
@@ -248,7 +250,7 @@ const STORE = 'padana-deepam-v1';
 const $ = id => document.getElementById(id);
 
 function load() {
-    const blank = { affirmed: {}, tasks: {}, favs: [], showEn: true, remind: false };
+    const blank = { affirmed: {}, tasks: {}, favQ: [], showEn: true, remind: false };
     try { return Object.assign(blank, JSON.parse(localStorage.getItem(STORE)) || {}); } catch (e) { return blank; }
 }
 const S = load();
@@ -290,8 +292,10 @@ function bestStreak() {
 const lampSvg = '<svg viewBox="0 0 64 84" aria-hidden="true"><g class="f"><ellipse cx="32" cy="26" rx="10" ry="18" fill="var(--flame)"/><ellipse cx="32" cy="31" rx="6" ry="11" fill="#ffd56b"/></g><path d="M8 46 Q32 58 56 46 Q53 58 32 60 Q11 58 8 46Z" fill="var(--gold)"/><rect x="29" y="59" width="6" height="14" fill="var(--gold)"/><path d="M18 80 Q32 72 46 80 L46 83 L18 83Z" fill="var(--gold)"/></svg>';
 
 function render() {
-    const idx = affirmationFor(viewDay);
-    const [ml, en] = AFFIRMATIONS[idx];
+    const idx = quoteFor(viewDay);
+    const [ml, en, by] = QUOTES[idx];
+    $('by').textContent = by ? '— ' + by : '';
+    $('by').hidden = !by;
     $('today').textContent = fmt(today, { weekday: 'long', day: 'numeric', month: 'long' });
     $('affirm').textContent = ml;
     $('meaning').textContent = en;
@@ -299,18 +303,18 @@ function render() {
 
     const isToday = viewDay === today;
     $('which').textContent = isToday ? 'ഇന്ന്' : viewDay === today - 1 ? 'ഇന്നലെ' : fmt(viewDay, { day: 'numeric', month: 'short' });
-    $('heroLabel').textContent = isToday ? 'ഇന്നത്തെ സ്ഥിരീകരണം' : 'ആ ദിവസത്തെ സ്ഥിരീകരണം';
+    $('heroLabel').textContent = isToday ? 'ഇന്നത്തെ പ്രചോദനം' : 'ആ ദിവസത്തെ പ്രചോദനം';
     $('next').disabled = isToday;
-    $('prev').disabled = viewDay <= today - AFFIRMATIONS.length + 1;
+    $('prev').disabled = viewDay <= today - QUOTES.length + 1;
 
-    const faved = S.favs.includes(idx);
+    const faved = S.favQ.includes(idx);
     $('fav').setAttribute('aria-pressed', faved);
     $('fav').textContent = faved ? '♥ സൂക്ഷിച്ചു' : '♡ സൂക്ഷിക്കുക';
 
     const lit = !!S.affirmed[today];
     $('believe').hidden = !isToday;
     $('believe').classList.toggle('done', lit);
-    $('believe').textContent = lit ? 'ഇന്നത്തെ ദീപം തെളിഞ്ഞു 🪔' : 'ഞാൻ ഇത് വിശ്വസിക്കുന്നു ✓';
+    $('believe').textContent = lit ? 'ഇന്നത്തെ ദീപം തെളിഞ്ഞു 🪔' : 'ഇന്ന് ഞാൻ പഠിക്കും ✓';
     $('heroLamp').classList.toggle('dim', isToday ? !lit : !S.affirmed[viewDay]);
 
     const [tml, ten] = STUDY_TASKS[taskFor(today)];
@@ -339,20 +343,20 @@ function render() {
 
     const list = $('saved');
     list.innerHTML = '';
-    S.favs.forEach(i => {
+    S.favQ.forEach(i => {
         const li = document.createElement('li');
         const t = document.createElement('span');
         t.className = 't';
         t.lang = 'ml';
-        t.textContent = AFFIRMATIONS[i][0];
+        t.textContent = QUOTES[i][0];
         const rm = document.createElement('button');
         rm.textContent = '×';
         rm.setAttribute('aria-label', 'നീക്കം ചെയ്യുക (remove)');
-        rm.onclick = () => { S.favs = S.favs.filter(x => x !== i); save(); render(); };
+        rm.onclick = () => { S.favQ = S.favQ.filter(x => x !== i); save(); render(); };
         li.append(t, rm);
         list.append(li);
     });
-    $('savedEmpty').hidden = S.favs.length > 0;
+    $('savedEmpty').hidden = S.favQ.length > 0;
 
     $('enSwitch').setAttribute('aria-checked', S.showEn);
     $('remindSwitch').setAttribute('aria-checked', S.remind);
@@ -379,15 +383,15 @@ $('taskCheck').onclick = () => {
 };
 
 $('fav').onclick = () => {
-    const idx = affirmationFor(viewDay);
-    if (S.favs.includes(idx)) S.favs = S.favs.filter(x => x !== idx);
-    else { S.favs.unshift(idx); toast('♥ സൂക്ഷിച്ചു'); }
+    const idx = quoteFor(viewDay);
+    if (S.favQ.includes(idx)) S.favQ = S.favQ.filter(x => x !== idx);
+    else { S.favQ.unshift(idx); toast('♥ സൂക്ഷിച്ചു'); }
     save(); render();
 };
 
 $('share').onclick = async () => {
-    const [ml, en] = AFFIRMATIONS[affirmationFor(viewDay)];
-    const text = `🪔 ${ml}\n${en}\n— Athira’s Padana Deepam`;
+    const [ml, en, by] = QUOTES[quoteFor(viewDay)];
+    const text = `🪔 ${ml}${by ? ' — ' + by : ''}\n${en}\n— Athira’s Padana Deepam`;
     try {
         if (navigator.share) await navigator.share({ text });
         else { await navigator.clipboard.writeText(text); toast('പകർത്തി (copied)'); }
@@ -401,7 +405,7 @@ function malayalamVoice() {
 $('speak').onclick = () => {
     if (!('speechSynthesis' in window)) { toast('ഈ ഫോണിൽ വായിക്കാനുള്ള സൗകര്യമില്ല.'); return; }
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(AFFIRMATIONS[affirmationFor(viewDay)][0]);
+    const u = new SpeechSynthesisUtterance(QUOTES[quoteFor(viewDay)][0]);
     u.lang = 'ml-IN';
     u.rate = 0.85;
     const v = malayalamVoice();
@@ -435,7 +439,7 @@ async function setReminder(on) {
         if (!('periodicSync' in reg)) throw new Error('unsupported');
         await reg.periodicSync.register('daily-affirmation', { minInterval: 12 * 60 * 60 * 1000 });
         S.remind = true; save(); render();
-        note.textContent = 'ദിവസവും ഒരു തവണ ഇന്നത്തെ സ്ഥിരീകരണം അയയ്ക്കും. The phone picks the exact time.';
+        note.textContent = 'ദിവസവും ഒരു തവണ ഇന്നത്തെ പ്രചോദനം അയയ്ക്കും. The phone picks the exact time.';
         toast('🔔 ഓർമ്മപ്പെടുത്തൽ ഓണാക്കി');
     } catch (e) {
         note.textContent = 'ആദ്യം ആപ്പ് ഹോം സ്ക്രീനിൽ ഇൻസ്റ്റാൾ ചെയ്യുക (Chrome, Android). Install the app to your home screen first; iPhones cannot send this reminder.';

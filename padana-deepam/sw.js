@@ -3,7 +3,7 @@
 // back to the cache when offline.
 importScripts('affirmations.js');
 
-const CACHE = 'padana-deepam-v2';
+const CACHE = 'padana-deepam-v3';
 const META = 'padana-deepam-meta';
 const SHELL = ['./', 'index.html', 'affirmations.js', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
@@ -45,7 +45,7 @@ async function remindOnce() {
     const meta = await caches.open(META);
     const last = await meta.match('last-reminder');
     if (last && (await last.text()) === day) return;
-    const [ml] = self.AFFIRMATIONS[self.affirmationFor(Number(day))];
+    const [ml] = self.QUOTES[self.quoteFor(Number(day))];
     await self.registration.showNotification('🪔 ഇന്നത്തെ ദീപം', {
         body: ml,
         icon: 'icon-192.png',
