@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0c0a09">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Iron Will">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Iron Will</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Special+Elite&display=swap">
+<style>
+/* Iron Will: a retention streak tracker dressed as an underground fight.
+   Layout, top to bottom: the fight card (day counter + live clock), the arena
+   (your fighter vs. the current milestone enemy, whose health drains as time
+   passes), action buttons, the mission path of enemies, and the fight log. */
+:root {
+    --bg: #0c0a09;
+    --concrete: #171312;
+    --concrete-2: #211b19;
+    --line: #3a2f2b;
+    --bone: #efe6d8;
+    --dim: #a3958a;
+    --blood: #d11a2a;
+    --blood-dark: #7a0d17;
+    --amber: #ffb547;
+    --tape: #e9dcc5;
+    --ok: #7bd389;
+    --gutter: 16px;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--bone); }
+body {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+/* Film grain + flicker over everything */
+body::before {
+    content: ""; position: fixed; inset: -50%; pointer-events: none; z-index: 50;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='.55'/></svg>");
+    opacity: .07; animation: grain .6s steps(4) infinite;
+}
+body::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 51;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.65) 100%);
+    animation: flicker 7s infinite;
+}
+@keyframes grain { 0%{transform:translate(0,0)} 25%{transform:translate(-3%,2%)} 50%{transform:translate(2%,-3%)} 75%{transform:translate(-2%,-1%)} }
+@keyframes flicker { 0%,96%,100%{opacity:1} 97%{opacity:.6} 98%{opacity:1} 99%{opacity:.75} }
+
+.wrap { max-width: 560px; margin: 0 auto; padding: 0 var(--gutter) 40px; }
+h1, h2, .anton { font-family: 'Anton', Impact, 'Arial Narrow', sans-serif; font-weight: 400; letter-spacing: .02em; }
+
+/* ---------- Top bar ---------- */
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 0 6px; }
+.back { color: var(--dim); text-decoration: none; font-size: 14px; }
+.brand { font-family: 'Anton', sans-serif; font-size: 22px; letter-spacing: .12em; transform: rotate(-2deg); }
+.brand span { color: var(--blood); }
+.iconBtn { background: none; border: 1px solid var(--line); color: var(--bone); width: 38px; height: 38px; border-radius: 4px; font-size: 17px; cursor: pointer; }
+
+/* ---------- Start screen ---------- */
+#startScreen { text-align: center; padding-top: 18px; }
+.manifesto { font-family: 'Anton', sans-serif; font-size: clamp(40px, 13vw, 72px); line-height: .95; margin: 12px 0 6px; text-transform: uppercase; }
+.manifesto em { font-style: normal; color: var(--blood); display: inline-block; animation: jitter 3s infinite; }
+@keyframes jitter { 0%,92%,100%{transform:translate(0,0)} 93%{transform:translate(-2px,1px)} 95%{transform:translate(2px,-1px)} 97%{transform:translate(-1px,0)} }
+.sub { color: var(--dim); font-size: 15px; line-height: 1.5; margin: 10px auto 22px; max-width: 420px; }
+.bigBtn {
+    display: block; width: 100%; padding: 18px 16px; border: none; cursor: pointer;
+    font-family: 'Anton', sans-serif; font-size: 24px; letter-spacing: .08em; text-transform: uppercase;
+    color: #fff; background: var(--blood); border-radius: 3px;
+    box-shadow: 0 6px 0 var(--blood-dark), 0 14px 30px rgba(209,26,42,.35);
+    transition: transform .08s, box-shadow .08s; position: relative; overflow: hidden;
+}
+.bigBtn:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--blood-dark); }
+.bigBtn::after { content:""; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent); transform:skewX(-20deg); animation: shine 3.2s infinite; }
+@keyframes shine { 0%,60%{left:-60%} 100%{left:130%} }
+.backdate { margin-top: 18px; text-align: left; border: 1px dashed var(--line); padding: 12px; border-radius: 4px; }
+.backdate summary { cursor: pointer; color: var(--dim); font-size: 14px; }
+.backdate label { display: block; font-size: 13px; color: var(--dim); margin: 10px 0 6px; }
+input[type=datetime-local] { width: 100%; background: var(--concrete-2); color: var(--bone); border: 1px solid var(--line); padding: 10px; font-family: inherit; font-size: 15px; border-radius: 3px; color-scheme: dark; }
+.prevStats { display: flex; gap: 8px; margin-top: 22px; }
+
+/* ---------- Fight card (counter) ---------- */
+.card { background: linear-gradient(180deg, var(--concrete-2), var(--concrete)); border: 1px solid var(--line); border-radius: 4px; position: relative; }
+.counter { text-align: center; padding: 14px 12px 12px; margin-top: 6px; overflow: hidden; }
+.counter .label { font-size: 13px; color: var(--dim); letter-spacing: .25em; text-transform: uppercase; }
+.dayBig { font-family: 'Anton', sans-serif; font-size: clamp(76px, 25vw, 128px); line-height: .9; margin: 4px 0 0; color: var(--bone); text-shadow: 4px 4px 0 var(--blood-dark); }
+.dayBig.bump { animation: bump .5s; }
+@keyframes bump { 0%{transform:scale(1)} 30%{transform:scale(1.18) rotate(-2deg); color: var(--blood)} 100%{transform:scale(1)} }
+.clock { font-size: 22px; letter-spacing: .08em; margin-top: 4px; }
+.clock b { color: var(--amber); font-weight: 400; }
+.rankTag { display: inline-block; margin-top: 10px; background: var(--tape); color: #1a1310; padding: 4px 12px; font-family: 'Anton', sans-serif; letter-spacing: .1em; font-size: 16px; transform: rotate(-1.5deg); box-shadow: 2px 2px 0 rgba(0,0,0,.5); }
+
+/* ---------- Arena ---------- */
+.arena {
+    position: relative; height: 300px; margin-top: 12px; overflow: hidden; border-radius: 4px;
+    border: 1px solid var(--line); user-select: none; touch-action: manipulation;
+    background:
+        linear-gradient(180deg, transparent 72%, #0a0807 72%, #15100e 100%),
+        repeating-linear-gradient(0deg, transparent 0 22px, rgba(0,0,0,.35) 22px 24px),
+        repeating-linear-gradient(90deg, transparent 0 46px, rgba(0,0,0,.3) 46px 48px),
+        linear-gradient(180deg, #2a1d19, #1a1210);
+}
+.arena.shake { animation: shake .35s; }
+@keyframes shake { 0%,100%{transform:translate(0)} 20%{transform:translate(-6px,3px)} 40%{transform:translate(5px,-4px)} 60%{transform:translate(-4px,2px)} 80%{transform:translate(3px,-1px)} }
+.bulb { position: absolute; top: 0; left: 50%; width: 2px; height: 46px; background: #555; transform-origin: top center; animation: swing 4s ease-in-out infinite; z-index: 1; }
+.bulb::after { content: ""; position: absolute; bottom: -10px; left: -7px; width: 16px; height: 16px; border-radius: 50%; background: #ffe6a8; box-shadow: 0 0 20px 8px rgba(255,200,110,.55); }
+.cone { position: absolute; top: 40px; left: 50%; width: 520px; height: 300px; transform: translateX(-50%); background: radial-gradient(ellipse 50% 70% at 50% 0%, rgba(255,205,120,.22), transparent 70%); pointer-events: none; animation: coneSwing 4s ease-in-out infinite; transform-origin: top center; }
+@keyframes swing { 0%,100%{transform:rotate(6deg)} 50%{transform:rotate(-6deg)} }
+@keyframes coneSwing { 0%,100%{transform:translateX(-52%)} 50%{transform:translateX(-48%)} }
+.floorText { position: absolute; bottom: 8px; left: 0; right: 0; text-align: center; font-size: 11px; color: rgba(239,230,216,.35); letter-spacing: .3em; }
+
+.fighter, .enemy { position: absolute; bottom: 22px; width: 130px; height: 195px; z-index: 3; }
+.fighter { left: calc(50% - 128px); }
+.enemy { left: calc(50% - 40px); transform-origin: bottom center; transition: opacity .6s; }
+.fighter svg, .enemy svg { width: 100%; height: 100%; overflow: visible; }
+.enemy svg { transform: scaleX(-1); }
+.fig .body { animation: bob 1s ease-in-out infinite; }
+.enemy .fig .body { animation-duration: 1.15s; }
+@keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(4px)} }
+.fig .lead .arm { transform-origin: 70px 64px; transform-box: view-box; }
+.fig.jab .lead .arm { animation: armOut .24s ease-out; }
+.fig.jab .lead .fist { animation: fistOut .24s ease-out; }
+.fig.cross .rear { animation: crossOut .28s ease-out; }
+.fig.jab .torso, .fig.cross .torso, .fig.jab .head, .fig.cross .head { animation: lean .26s ease-out; }
+@keyframes armOut { 40%{transform:scaleX(1.75)} }
+@keyframes fistOut { 40%{transform:translateX(26px)} }
+@keyframes crossOut { 40%{transform:translate(34px,-6px)} }
+@keyframes lean { 40%{transform:translateX(6px)} }
+.enemy.hit { animation: flinch .3s; }
+.enemy.hit svg { animation: flash .3s; }
+@keyframes flinch { 0%,100%{transform:translateX(0) scale(var(--s,1))} 35%{transform:translateX(12px) rotate(4deg) scale(var(--s,1))} }
+@keyframes flash { 30%{filter: brightness(2.6) saturate(.3)} }
+.enemy { transform: scale(var(--s,1)); }
+.enemy.down { animation: knockdown 1s forwards; }
+@keyframes knockdown { 0%{transform:scale(var(--s,1))} 30%{transform:translate(20px,-20px) rotate(18deg) scale(var(--s,1))} 100%{transform:translate(70px,40px) rotate(90deg) scale(var(--s,1)); opacity:0} }
+.enemy.enter { animation: enter .9s ease-out; }
+@keyframes enter { 0%{transform:translateX(220px) scale(var(--s,1)); opacity:0} 100%{transform:translateX(0) scale(var(--s,1)); opacity:1} }
+.eyes { animation: glow 1.6s ease-in-out infinite; }
+@keyframes glow { 50%{opacity:.35} }
+
+.hud { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; gap: 10px; z-index: 5; }
+.hp { flex: 1; }
+.hp .nm { font-family: 'Anton', sans-serif; font-size: 15px; letter-spacing: .06em; text-shadow: 1px 1px 0 #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hp.foe { text-align: right; }
+.hp.foe .nm { color: #ff6b74; }
+.bar { height: 10px; background: #000; border: 1px solid #000; outline: 1px solid var(--line); margin-top: 3px; position: relative; overflow: hidden; }
+.bar i { position: absolute; top: 0; bottom: 0; left: 0; background: linear-gradient(180deg, #ffd27a, #e19a22); transition: width .5s; }
+.hp.foe .bar i { left: auto; right: 0; background: linear-gradient(180deg, #ff4d5a, #9d0f1c); }
+.bar i.lag { background: #fff !important; opacity: .55; transition: width 1.2s .3s; z-index: 0; }
+.bar i.main { z-index: 1; }
+.hpSub { font-size: 11px; color: var(--dim); margin-top: 3px; }
+
+.spark { position: absolute; z-index: 6; pointer-events: none; font-family: 'Anton', sans-serif; color: var(--amber); font-size: 26px; text-shadow: 2px 2px 0 #000, 0 0 12px rgba(255,140,40,.8); animation: sparkUp .8s ease-out forwards; }
+@keyframes sparkUp { 0%{transform:translate(-50%,0) scale(.4) rotate(-8deg); opacity:1} 25%{transform:translate(-50%,-10px) scale(1.25) rotate(4deg)} 100%{transform:translate(-50%,-60px) scale(1); opacity:0} }
+.burst { position: absolute; z-index: 5; width: 70px; height: 70px; margin: -35px 0 0 -35px; pointer-events: none; animation: burst .3s ease-out forwards; }
+@keyframes burst { 0%{transform:scale(.2); opacity:1} 100%{transform:scale(1.4); opacity:0} }
+.taunt { position: absolute; z-index: 7; right: 10px; top: 58px; max-width: 58%; background: #0b0807; border: 1px solid var(--blood); color: #ffb3b8; font-size: 13px; padding: 7px 10px; border-radius: 4px; animation: tauntIn 3.4s forwards; }
+.taunt::after { content:""; position:absolute; bottom:-7px; right:40px; border:7px solid transparent; border-top-color: var(--blood); border-bottom: 0; }
+.reply { right: auto; left: 10px; top: 104px; border-color: var(--tape); color: var(--tape); }
+.reply::after { right: auto; left: 40px; border-top-color: var(--tape); }
+@keyframes tauntIn { 0%{opacity:0; transform:translateY(6px)} 10%,85%{opacity:1; transform:none} 100%{opacity:0} }
+
+/* Urge-fight mode overlay inside arena */
+.urgeHud { position: absolute; inset: 0; z-index: 8; display: none; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 14px; pointer-events: none; }
+.arena.urge .urgeHud { display: flex; }
+.arena.urge { outline: 2px solid var(--blood); cursor: pointer; }
+.urgeTimer { font-family: 'Anton', sans-serif; font-size: 44px; color: #fff; text-shadow: 3px 3px 0 var(--blood-dark); }
+.urgeTip { background: rgba(0,0,0,.75); padding: 6px 10px; font-size: 13px; margin-top: 4px; border-left: 3px solid var(--blood); max-width: 90%; text-align: center; }
+.combo { min-height: 34px; font-family: 'Anton', sans-serif; font-size: 30px; color: var(--amber); text-shadow: 2px 2px 0 #000; }
+.tapHint { font-size: 12px; color: var(--dim); animation: glow 1s infinite; white-space: nowrap; }
+
+/* ---------- Actions ---------- */
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.btn { padding: 14px 10px; border-radius: 3px; cursor: pointer; font-family: 'Anton', sans-serif; font-size: 17px; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--line); background: var(--concrete-2); color: var(--bone); transition: transform .08s; }
+.btn:active { transform: scale(.97); }
+.btn.red { background: var(--blood); border-color: var(--blood); color: #fff; box-shadow: 0 4px 0 var(--blood-dark); }
+.btn.ghost { background: transparent; color: var(--dim); }
+.btn small { display: block; font-family: 'Special Elite', monospace; font-size: 11px; letter-spacing: 0; text-transform: none; opacity: .8; margin-top: 2px; }
+
+.rule { margin-top: 14px; padding: 14px 16px; border-left: 4px solid var(--blood); background: var(--concrete); font-size: 15px; line-height: 1.45; }
+.rule .n { font-family: 'Anton', sans-serif; color: var(--blood); letter-spacing: .1em; font-size: 13px; display: block; margin-bottom: 4px; }
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 14px; }
+.stat { background: var(--concrete); border: 1px solid var(--line); padding: 10px 4px; text-align: center; border-radius: 3px; flex: 1; }
+.stat .v { font-family: 'Anton', sans-serif; font-size: 24px; }
+.stat .k { font-size: 10px; color: var(--dim); letter-spacing: .08em; text-transform: uppercase; margin-top: 2px; }
+
+/* ---------- Mission path ---------- */
+h2 { font-size: 26px; margin: 30px 0 4px; text-transform: uppercase; }
+h2 span { color: var(--blood); }
+.h2sub { color: var(--dim); font-size: 13px; margin-bottom: 14px; }
+.path { position: relative; padding-left: 42px; }
+.path::before { content: ""; position: absolute; left: 17px; top: 10px; bottom: 10px; width: 3px; background: repeating-linear-gradient(180deg, var(--line) 0 8px, transparent 8px 14px); }
+.path .fill { position: absolute; left: 17px; top: 10px; width: 3px; background: var(--blood); box-shadow: 0 0 10px var(--blood); transition: height 1s; }
+.node { position: relative; padding: 10px 12px; margin-bottom: 10px; background: var(--concrete); border: 1px solid var(--line); border-radius: 3px; display: flex; align-items: center; gap: 12px; }
+.node .dot { position: absolute; left: -34px; top: 50%; width: 22px; height: 22px; margin-top: -11px; border-radius: 50%; background: var(--bg); border: 3px solid var(--line); display: grid; place-items: center; font-size: 11px; }
+.node .d { font-family: 'Anton', sans-serif; font-size: 22px; min-width: 52px; text-align: center; color: var(--dim); line-height: 1; }
+.node .d small { display: block; font-family: 'Special Elite', monospace; font-size: 10px; }
+.node .info { flex: 1; min-width: 0; }
+.node .t { font-family: 'Anton', sans-serif; font-size: 17px; letter-spacing: .04em; }
+.node .q { font-size: 12px; color: var(--dim); margin-top: 2px; }
+.node .st { font-family: 'Anton', sans-serif; font-size: 12px; letter-spacing: .1em; padding: 3px 7px; border: 1px solid var(--line); color: var(--dim); white-space: nowrap; }
+.node.ko { opacity: .75; }
+.node.ko .dot { background: var(--blood); border-color: var(--blood); color: #fff; }
+.node.ko .t { text-decoration: line-through; text-decoration-color: var(--blood); text-decoration-thickness: 3px; }
+.node.ko .st { color: #fff; background: var(--blood-dark); border-color: var(--blood); transform: rotate(-4deg); }
+.node.now { border-color: var(--blood); box-shadow: 0 0 0 1px var(--blood), 0 0 24px rgba(209,26,42,.25); }
+.node.now .dot { border-color: var(--blood); animation: pulse 1.4s infinite; }
+.node.now .d, .node.now .t { color: var(--bone); }
+.node.now .st { color: var(--amber); border-color: var(--amber); }
+.node.locked .t { color: var(--dim); }
+@keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(209,26,42,.7)} 100%{box-shadow:0 0 0 14px rgba(209,26,42,0)} }
+
+/* ---------- Log ---------- */
+.log { list-style: none; margin: 0; padding: 0; }
+.log li { display: flex; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px dashed var(--line); font-size: 14px; }
+.log li b { font-family: 'Anton', sans-serif; font-weight: 400; font-size: 18px; }
+.log .why { color: var(--dim); font-size: 12px; }
+.empty { color: var(--dim); font-size: 14px; }
+
+/* ---------- Modals ---------- */
+.modal { position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center; padding: var(--gutter); background: rgba(0,0,0,.82); }
+.modal.open { display: flex; }
+.sheet { width: 100%; max-width: 420px; background: var(--concrete); border: 1px solid var(--line); border-top: 4px solid var(--blood); padding: 20px; border-radius: 3px; animation: drop .25s ease-out; }
+@keyframes drop { from{transform:translateY(-20px); opacity:0} }
+.sheet h3 { font-family: 'Anton', sans-serif; font-weight: 400; font-size: 28px; margin: 0 0 8px; text-transform: uppercase; }
+.sheet p { color: var(--dim); font-size: 14px; line-height: 1.5; margin: 0 0 14px; }
+.choice { display: flex; gap: 8px; margin-bottom: 14px; }
+.choice button { flex: 1; padding: 10px; background: var(--concrete-2); border: 1px solid var(--line); color: var(--bone); font-family: inherit; font-size: 14px; cursor: pointer; border-radius: 3px; }
+.choice button.on { border-color: var(--blood); background: var(--blood-dark); }
+.hold { position: relative; overflow: hidden; width: 100%; padding: 16px; border: 1px solid var(--blood); background: transparent; color: #fff; font-family: 'Anton', sans-serif; font-size: 18px; letter-spacing: .08em; cursor: pointer; border-radius: 3px; user-select: none; -webkit-user-select: none; touch-action: none; }
+.hold i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--blood); z-index: 0; }
+.hold span { position: relative; z-index: 1; }
+.linkBtn { display: block; margin: 12px auto 0; background: none; border: none; color: var(--dim); font-family: inherit; font-size: 14px; cursor: pointer; text-decoration: underline; }
+.row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed var(--line); font-size: 15px; }
+.toggle { width: 52px; height: 28px; border-radius: 14px; background: var(--line); border: none; position: relative; cursor: pointer; }
+.toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--bone); transition: left .2s; }
+.toggle.on { background: var(--blood); }
+.toggle.on::after { left: 27px; }
+
+/* ---------- K.O. overlay ---------- */
+.ko { position: fixed; inset: 0; z-index: 45; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: var(--gutter); background: radial-gradient(circle, rgba(122,13,23,.92), rgba(0,0,0,.96) 70%); overflow: hidden; }
+.ko.open { display: flex; }
+.ko .stamp { font-family: 'Anton', sans-serif; font-size: clamp(110px, 40vw, 200px); line-height: .85; color: #fff; text-shadow: 6px 6px 0 var(--blood), 12px 12px 0 #000; animation: stamp .55s cubic-bezier(.2,1.6,.4,1) both; }
+@keyframes stamp { 0%{transform:scale(4) rotate(-18deg); opacity:0} 100%{transform:scale(1) rotate(-6deg); opacity:1} }
+.ko .who { font-family: 'Anton', sans-serif; font-size: 26px; margin-top: 18px; text-transform: uppercase; animation: fadeUp .5s .5s both; }
+.ko .who s { text-decoration-color: var(--blood); text-decoration-thickness: 4px; }
+.ko .msg { color: var(--tape); max-width: 360px; font-size: 15px; line-height: 1.5; margin: 10px 0 16px; animation: fadeUp .5s .8s both; }
+.ko .rankUp { background: var(--tape); color: #1a1310; font-family: 'Anton', sans-serif; padding: 6px 14px; font-size: 18px; letter-spacing: .1em; margin-bottom: 22px; animation: fadeUp .5s 1.1s both; transform: rotate(-2deg); }
+.ko .bigBtn { max-width: 320px; animation: fadeUp .5s 1.3s both; }
+@keyframes fadeUp { from{opacity:0; transform:translateY(14px)} }
+.shard { position: absolute; width: 8px; height: 18px; background: var(--amber); top: 50%; left: 50%; pointer-events: none; animation: shard 1.4s ease-out forwards; }
+@keyframes shard { to { transform: translate(var(--x), var(--y)) rotate(var(--r)); opacity: 0; } }
+.crack { position: absolute; inset: 0; pointer-events: none; opacity: .5; }
+
+/* Relapse flash */
+.downFlash { position: fixed; inset: 0; z-index: 46; background: var(--blood); display: none; align-items: center; justify-content: center; flex-direction: column; text-align: center; padding: var(--gutter); }
+.downFlash.open { display: flex; animation: downIn 2.6s forwards; }
+.downFlash h3 { font-family: 'Anton', sans-serif; font-weight: 400; font-size: clamp(48px, 15vw, 90px); margin: 0; line-height: .95; color: #fff; text-shadow: 4px 4px 0 #000; }
+.downFlash p { font-size: 17px; color: #fff; margin-top: 12px; }
+@keyframes downIn { 0%{opacity:0} 10%{opacity:1} 85%{opacity:1} 100%{opacity:0} }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--tape); color: #1a1310; padding: 10px 16px; font-size: 14px; z-index: 60; border-radius: 3px; box-shadow: 0 6px 20px rgba(0,0,0,.6); display: none; max-width: calc(100% - 32px); text-align: center; }
+.toast.show { display: block; animation: fadeUp .25s; }
+
+.hidden { display: none !important; }
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+    <div class="topbar">
+        <a class="back" href="../index.html">← BASE</a>
+        <div class="brand">IRON <span>WILL</span></div>
+        <button class="iconBtn" id="settingsBtn" aria-label="Settings">⚙</button>
+    </div>
+
+    <!-- ============ START SCREEN ============ -->
+    <section id="startScreen" class="hidden">
+        <div class="manifesto">You are not<br>your <em>urges.</em></div>
+        <p class="sub">Every day you hold the line, an enemy takes damage. Hit a milestone and it goes down. Walk the path. Don't tap out.</p>
+        <button class="bigBtn" id="startBtn">🥊 Step into the ring</button>
+        <details class="backdate">
+            <summary>Already holding the line? Set when your streak started</summary>
+            <label for="startAt">Streak started at</label>
+            <input type="datetime-local" id="startAt">
+        </details>
+        <div class="prevStats" id="prevStats"></div>
+    </section>
+
+    <!-- ============ FIGHT SCREEN ============ -->
+    <section id="fightScreen" class="hidden">
+        <div class="card counter">
+            <div class="label">Round</div>
+            <div class="dayBig" id="dayBig">0</div>
+            <div class="label">days clean</div>
+            <div class="clock" id="clock">00<b>h</b> 00<b>m</b> 00<b>s</b></div>
+            <div class="rankTag" id="rankTag">RECRUIT</div>
+        </div>
+
+        <div class="arena" id="arena" aria-label="Arena">
+            <div class="cone"></div>
+            <div class="bulb"></div>
+            <div class="hud">
+                <div class="hp">
+                    <div class="nm">YOU</div>
+                    <div class="bar"><i class="main" id="youBar" style="width:100%"></i></div>
+                    <div class="hpSub" id="youSub">Will: full</div>
+                </div>
+                <div class="hp foe">
+                    <div class="nm" id="foeName">THE ITCH</div>
+                    <div class="bar"><i class="lag" id="foeLag" style="width:100%"></i><i class="main" id="foeBar" style="width:100%"></i></div>
+                    <div class="hpSub" id="foeSub">falls in —</div>
+                </div>
+            </div>
+            <div class="fighter" id="fighter"></div>
+            <div class="enemy" id="enemy"></div>
+            <div class="urgeHud">
+                <div class="combo" id="combo"></div>
+                <div class="tapHint">TAP THE ARENA TO HIT BACK</div>
+                <div class="urgeTimer" id="urgeTimer">60</div>
+                <div class="urgeTip" id="urgeTip">Drop and do 20 push-ups.</div>
+            </div>
+            <div class="floorText">— IRON WILL · BASEMENT —</div>
+        </div>
+
+        <div class="actions">
+            <button class="btn red" id="urgeBtn">⚡ Urge attack<small>Fight it for 60 seconds</small></button>
+            <button class="btn" id="towelBtn">🏳 Throw in towel<small>End this streak</small></button>
+        </div>
+
+        <div class="rule" id="rule"></div>
+
+        <div class="stats">
+            <div class="stat"><div class="v" id="sBest">0</div><div class="k">Best</div></div>
+            <div class="stat"><div class="v" id="sKO">0</div><div class="k">KOs</div></div>
+            <div class="stat"><div class="v" id="sUrge">0</div><div class="k">Urges beat</div></div>
+            <div class="stat"><div class="v" id="sFights">1</div><div class="k">Fight #</div></div>
+        </div>
+    </section>
+
+    <!-- ============ MISSION PATH ============ -->
+    <h2>The <span>Path</span></h2>
+    <div class="h2sub" id="pathSub">Every milestone is an enemy. Put them all down.</div>
+    <div class="path" id="path"><div class="fill" id="pathFill"></div></div>
+
+    <h2>Fight <span>Log</span></h2>
+    <ul class="log" id="log"></ul>
+</div>
+
+<!-- Towel modal -->
+<div class="modal" id="towelModal" role="dialog" aria-modal="true" aria-labelledby="towelTitle">
+    <div class="sheet">
+        <h3 id="towelTitle">Throw in the towel?</h3>
+        <p id="towelText">This ends your current streak. It goes into the fight log, and you start again from day zero.</p>
+        <div class="choice" id="reasonChoice">
+            <button data-r="relapse" class="on">I slipped</button>
+            <button data-r="reset">Just resetting</button>
+        </div>
+        <button class="hold" id="holdBtn"><i id="holdFill"></i><span>HOLD TO END STREAK</span></button>
+        <button class="linkBtn" id="keepFighting">No — keep fighting</button>
+    </div>
+</div>
+
+<!-- Settings modal -->
+<div class="modal" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <div class="sheet">
+        <h3 id="setTitle">Corner</h3>
+        <div class="row"><span>Sound effects</span><button class="toggle" id="soundToggle" aria-label="Sound"></button></div>
+        <div class="row"><span>Vibration</span><button class="toggle" id="buzzToggle" aria-label="Vibration"></button></div>
+        <div id="adjustWrap">
+            <label for="adjustAt" style="display:block;font-size:13px;color:var(--dim);margin:14px 0 6px">Correct this streak's start time</label>
+            <input type="datetime-local" id="adjustAt">
+            <button class="btn" id="adjustSave" style="width:100%;margin-top:10px">Save start time</button>
+        </div>
+        <button class="linkBtn" id="wipeBtn" style="color:#ff6b74">Erase all data</button>
+        <button class="linkBtn" id="closeSettings">Close</button>
+    </div>
+</div>
+
+<!-- KO overlay -->
+<div class="ko" id="koOverlay">
+    <svg class="crack" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M50 50 L20 5 M50 50 L90 12 M50 50 L96 70 M50 50 L60 98 M50 50 L4 80 M50 50 L0 40 M35 28 L28 32 M70 30 L78 26 M72 62 L80 70" stroke="#fff" stroke-width=".35" fill="none"/></svg>
+    <div class="stamp">K.O.</div>
+    <div class="who" id="koWho"></div>
+    <div class="msg" id="koMsg"></div>
+    <div class="rankUp" id="koRank"></div>
+    <button class="bigBtn" id="koNext">Next fight →</button>
+</div>
+
+<div class="downFlash" id="downFlash">
+    <h3>Down.<br>Not out.</h3>
+    <p id="downMsg">Get up. Round one starts now.</p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* ============================================================
+   DATA
+   ============================================================ */
+const KEY = 'iron-will-v1';
+const DAY = 86400000;
+
+// Milestone enemies. Days are counted in full 24h periods since the start.
+const ENEMIES = [
+    { d: 1,   n: 'The Itch',        q: 'Small, loud and desperate. Survive the first night.' },
+    { d: 3,   n: 'The Whisper',     q: '"Just once won\'t matter." It always lies.' },
+    { d: 7,   n: 'The Scroller',    q: 'Lives in your phone after midnight.' },
+    { d: 14,  n: 'Flatline',        q: 'Drains your drive to make you quit. Hold on.' },
+    { d: 21,  n: 'Old Habit',       q: 'Knows every one of your weak moments.' },
+    { d: 30,  n: 'The Craving',     q: 'First real boss. One month of iron.' },
+    { d: 45,  n: 'The Doubter',     q: '"Is this even working?" Yes. Keep swinging.' },
+    { d: 60,  n: 'The Mirage',      q: 'Shows you shortcuts that lead back to day zero.' },
+    { d: 90,  n: 'The Shadow',      q: 'Ninety days. The rewiring is real now.' },
+    { d: 120, n: 'The Hydra',       q: 'Cut one urge down, two more appear. Cut again.' },
+    { d: 180, n: 'The Tyrant',      q: 'Half a year. It used to rule you.' },
+    { d: 270, n: 'The Warlord',     q: 'Commands every bad habit you ever had.' },
+    { d: 365, n: 'The Former You',  q: 'The final boss. One year. Bury him.' },
+];
+const RANKS = ['Recruit', 'Brawler', 'Scrapper', 'Street Fighter', 'Iron Jaw', 'Bare Knuckle',
+    'Enforcer', 'Contender', 'Champion', 'Veteran', 'Warlord', 'Legend', 'Myth', 'Untouchable'];
+
+function enemyAt(i) {
+    if (i < ENEMIES.length) return ENEMIES[i];
+    const k = i - ENEMIES.length + 1; // endless mode: every 100 days after a year
+    return { d: 365 + k * 100, n: 'Echo #' + k, q: 'Echoes of the old you. Legends keep fighting.' };
+}
+function rankFor(kos) { return kos < RANKS.length ? RANKS[kos] : 'Untouchable ' + toRoman(kos - RANKS.length + 2); }
+function toRoman(n) { const m = [[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']]; let s=''; for (const [v,r] of m) while (n>=v){s+=r;n-=v;} return s; }
+
+const RULES = [
+    "You don't bargain with the urge. You hit it first.",
+    "Discomfort is the entry fee. Pay it.",
+    "Nobody is coming to save you. Get up anyway.",
+    "Win the next ten minutes. Then the next ten.",
+    "Phone stays out of the bedroom. No exceptions.",
+    "Energy kept is energy built. Spend it on the work.",
+    "When it whispers, move: push-ups, cold water, a walk.",
+    "Boredom is the enemy's best scout. Stay busy.",
+    "Lose a round, not the war. But don't lose the round.",
+    "Your future self is watching this fight.",
+    "Hard days count double. Hold the line.",
+    "Train the body. The mind follows.",
+    "Fight the first thought. The second one is already losing.",
+    "You are building a man, not a streak.",
+];
+const URGE_TIPS = [
+    'Drop and do 20 push-ups. Now.', 'Splash cold water on your face.', 'Breathe in 4 · hold 7 · out 8.',
+    'Leave the room. Change the scene.', 'Put the phone face down, across the room.', 'Name one goal you are protecting.',
+    'Go for a 10 minute walk.', 'Text someone. Talk to a real person.', 'Read your reasons. Remember why.',
+];
+const TAUNTS = [
+    "Just once won't hurt.", "You deserve a break.", "Nobody will know.", "Start again Monday.",
+    "You're bored anyway.", "One quick look...", "You already failed before.", "It's not a big deal.",
+];
+const REPLIES = ["Not today.", "I know your tricks.", "Hit harder.", "Keep talking.", "I'm still standing.", "Watch me."];
+const HITS = ['THUD', 'CRACK', 'WHAM', 'SMACK', 'BAM', 'POW'];
+
+let S = load();
+function fresh() { return { start: null, history: [], urges: 0, koSeen: 0, sound: true, buzz: true }; }
+function load() {
+    try { const v = JSON.parse(localStorage.getItem(KEY)); if (v && typeof v === 'object') return Object.assign(fresh(), v); } catch (e) {}
+    return fresh();
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+function elapsed() { return S.start ? Math.max(0, Date.now() - S.start) : 0; }
+function daysOf(ms) { return Math.floor(ms / DAY); }
+function kosFor(days) { let i = 0; while (enemyAt(i).d <= days) i++; return i; }
+function bestMs() { return Math.max(elapsed(), ...S.history.map(h => h.end - h.start), 0); }
+function fmtDur(ms) {
+    if (ms <= 0) return 'now';
+    const d = Math.floor(ms / DAY), h = Math.floor(ms % DAY / 3600000), m = Math.floor(ms % 3600000 / 60000);
+    if (d) return `${d}d ${h}h`;
+    if (h) return `${h}h ${m}m`;
+    return `${m}m ${Math.floor(ms % 60000 / 1000)}s`;
+}
+function fmtDate(ts) { return new Date(ts).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); }
+function toLocalInput(ts) { const d = new Date(ts); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.remove('show'); void t.offsetWidth; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600); }
+function buzz(p) { if (S.buzz && navigator.vibrate) try { navigator.vibrate(p); } catch (e) {} }
+
+/* ============================================================
+   SOUND (synthesised, no files)
+   ============================================================ */
+let ac = null;
+function ctx() { if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (ac && ac.state === 'suspended') ac.resume(); return ac; }
+function punchSound(heavy) {
+    if (!S.sound) return; const a = ctx(); if (!a) return; const t = a.currentTime;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(heavy ? 150 : 190, t); o.frequency.exponentialRampToValueAtTime(40, t + .18);
+    g.gain.setValueAtTime(heavy ? .9 : .6, t); g.gain.exponentialRampToValueAtTime(.001, t + .22);
+    o.connect(g).connect(a.destination); o.start(t); o.stop(t + .25);
+    const len = a.sampleRate * .08, buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const n = a.createBufferSource(), f = a.createBiquadFilter(), ng = a.createGain();
+    n.buffer = buf; f.type = 'lowpass'; f.frequency.value = heavy ? 1400 : 2200; ng.gain.value = heavy ? .5 : .3;
+    n.connect(f).connect(ng).connect(a.destination); n.start(t);
+}
+function bell(times = 3) {
+    if (!S.sound) return; const a = ctx(); if (!a) return;
+    for (let k = 0; k < times; k++) {
+        const t = a.currentTime + k * .35;
+        [880, 1320, 2093].forEach((fq, j) => {
+            const o = a.createOscillator(), g = a.createGain();
+            o.frequency.value = fq; g.gain.setValueAtTime(.25 / (j + 1), t); g.gain.exponentialRampToValueAtTime(.001, t + 1.2);
+            o.connect(g).connect(a.destination); o.start(t); o.stop(t + 1.3);
+        });
+    }
+}
+function thudLow() {
+    if (!S.sound) return; const a = ctx(); if (!a) return; const t = a.currentTime;
+    const o = a.createOscillator(), g = a.createGain();
+    o.frequency.setValueAtTime(90, t); o.frequency.exponentialRampToValueAtTime(30, t + .6);
+    g.gain.setValueAtTime(1, t); g.gain.exponentialRampToValueAtTime(.001, t + .7);
+    o.connect(g).connect(a.destination); o.start(t); o.stop(t + .75);
+}
+
+/* ============================================================
+   FIGHTER ART (inline SVG, facing right; enemy is mirrored)
+   ============================================================ */
+function figureSVG(kind, tier) {
+    const foe = kind === 'foe';
+    const skin = foe ? '#2a0a0e' : '#e9dcc5';
+    const shade = foe ? '#14050a' : '#b9a78e';
+    const shorts = foe ? '#5a0912' : '#1d1d1d';
+    const tape = foe ? '#3a0d12' : '#ffffff';
+    const horns = foe && tier >= 5 ? `<path d="M50 24 L44 6 L56 20 Z M66 22 L74 4 L72 22 Z" fill="${skin}"/>` : '';
+    const crown = foe && tier >= 12 ? `<path d="M44 18 L48 6 L54 14 L60 2 L66 14 L72 6 L76 18 Z" fill="#c89b2e"/>` : '';
+    const aura = foe ? `<ellipse cx="62" cy="110" rx="58" ry="100" fill="url(#aura${tier})"/>` : '';
+    const face = foe
+        ? `<g class="eyes"><circle cx="66" cy="34" r="2.6" fill="#ff2434"/><circle cx="73" cy="33" r="2.6" fill="#ff2434"/></g>`
+        : `<path d="M43 30 Q60 24 77 30" stroke="#d11a2a" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M44 30 L34 38 M44 31 L36 44" stroke="#d11a2a" stroke-width="3" stroke-linecap="round"/><path d="M64 44 L70 44" stroke="${shade}" stroke-width="2" stroke-linecap="round"/>`;
+    return `<svg viewBox="0 0 140 210" class="fig ${kind}" aria-hidden="true">
+      <defs><radialGradient id="aura${tier}"><stop offset="0" stop-color="#d11a2a" stop-opacity=".35"/><stop offset="1" stop-color="#d11a2a" stop-opacity="0"/></radialGradient></defs>
+      ${aura}
+      <ellipse cx="62" cy="204" rx="40" ry="5" fill="#000" opacity=".5"/>
+      <g class="body">
+        <g stroke="${skin}" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none">
+          <polyline points="52,112 40,158 32,196"/>
+          <polyline points="70,112 84,154 92,196"/>
+        </g>
+        <path d="M24 196 h16 M86 196 h16" stroke="${foe ? '#000' : '#222'}" stroke-width="8" stroke-linecap="round"/>
+        <g class="rear">
+          <polyline points="68,62 82,84 92,64" stroke="${shade}" stroke-width="11" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="94" cy="58" r="9.5" fill="${tape}" stroke="${shade}" stroke-width="2"/>
+        </g>
+        <g class="torso">
+          <path d="M42 54 Q60 46 80 54 L74 112 L48 112 Z" fill="${skin}"/>
+          <path d="M60 60 V100 M50 78 H70" stroke="${shade}" stroke-width="1.5" opacity=".55"/>
+          <rect x="44" y="104" width="34" height="22" rx="3" fill="${shorts}"/>
+          <rect x="44" y="104" width="34" height="5" fill="${foe ? '#000' : '#d11a2a'}"/>
+        </g>
+        <g class="head">${horns}${crown}<circle cx="60" cy="34" r="17" fill="${skin}"/>${face}</g>
+        <g class="lead">
+          <line class="arm" x1="70" y1="64" x2="104" y2="62" stroke="${skin}" stroke-width="11" stroke-linecap="round"/>
+          <circle class="fist" cx="108" cy="61" r="10.5" fill="${tape}" stroke="${shade}" stroke-width="2"/>
+        </g>
+      </g></svg>`;
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+let curEnemyIdx = -1;
+function enemyScale(i) { return Math.min(1 + i * 0.035, 1.42); }
+
+function setEnemy(i, animateIn) {
+    curEnemyIdx = i;
+    const el = $('enemy');
+    el.innerHTML = figureSVG('foe', i);
+    el.style.setProperty('--s', enemyScale(i));
+    el.className = 'enemy' + (animateIn ? ' enter' : '');
+    $('foeName').textContent = enemyAt(i).n.toUpperCase();
+}
+
+function renderTick() {
+    if (!S.start) return;
+    const ms = elapsed(), days = daysOf(ms);
+    const dEl = $('dayBig');
+    if (dEl.textContent !== String(days)) { if (dEl.textContent !== '' && renderTick.ran) { dEl.classList.remove('bump'); void dEl.offsetWidth; dEl.classList.add('bump'); } dEl.textContent = days; }
+    renderTick.ran = true;
+    const rem = ms % DAY;
+    $('clock').innerHTML = `${pad(Math.floor(rem/3600000))}<b>h</b> ${pad(Math.floor(rem%3600000/60000))}<b>m</b> ${pad(Math.floor(rem%60000/1000))}<b>s</b>`;
+
+    const kos = kosFor(days);
+    $('rankTag').textContent = rankFor(kos).toUpperCase();
+    // Current enemy is the next undefeated milestone
+    if (kos !== curEnemyIdx) {
+        if (curEnemyIdx >= 0 && kos > curEnemyIdx) knockdownThen(kos); else setEnemy(kos, false);
+    }
+    const e = enemyAt(kos), prev = kos ? enemyAt(kos - 1).d * DAY : 0, next = e.d * DAY;
+    const hp = Math.max(0, Math.min(1, 1 - (ms - prev) / (next - prev)));
+    const w = (hp * 100).toFixed(2) + '%';
+    $('foeBar').style.width = w; $('foeLag').style.width = w;
+    $('foeSub').textContent = `${(hp*100).toFixed(1)}% · falls in ${fmtDur(next - ms)}`;
+    $('youSub').textContent = days >= 1 ? `Will: hardened ×${days}` : 'Will: full';
+    $('sBest').textContent = daysOf(bestMs());
+    $('sKO').textContent = kos;
+
+    // KO celebration once per milestone (also when returning to the app after one fell)
+    if (kos > S.koSeen) { const idx = kos - 1; S.koSeen = kos; save(); showKO(idx, kos); renderPath(); }
+    if (renderTick.lastDay !== days) { renderTick.lastDay = days; renderPath(); }
+}
+
+function knockdownThen(newIdx) {
+    const el = $('enemy');
+    el.className = 'enemy down';
+    thudLow(); $('arena').classList.add('shake'); setTimeout(() => $('arena').classList.remove('shake'), 400);
+    setTimeout(() => setEnemy(newIdx, true), 1000);
+    curEnemyIdx = newIdx;
+}
+
+function renderPath() {
+    const days = S.start ? daysOf(elapsed()) : 0;
+    const kos = S.start ? kosFor(days) : 0;
+    const showTo = Math.max(ENEMIES.length, kos + 3);
+    const wrap = $('path');
+    wrap.querySelectorAll('.node').forEach(n => n.remove());
+    let nowNode = null;
+    for (let i = 0; i < showTo; i++) {
+        const e = enemyAt(i);
+        const state = !S.start ? 'locked' : i < kos ? 'ko' : i === kos ? 'now' : 'locked';
+        const n = document.createElement('div');
+        n.className = 'node ' + state;
+        let st = state === 'ko' ? 'K.O.' : state === 'now' ? 'FIGHTING' : 'LOCKED';
+        let when = '';
+        if (S.start) {
+            const at = S.start + e.d * DAY;
+            when = state === 'ko' ? `Down on ${fmtDate(at)}` : `Falls ${fmtDate(at)}`;
+        }
+        n.innerHTML = `<div class="dot">${state === 'ko' ? '✕' : ''}</div>
+            <div class="d">${e.d}<small>DAY${e.d > 1 ? 'S' : ''}</small></div>
+            <div class="info"><div class="t"></div><div class="q"></div></div>
+            <div class="st">${st}</div>`;
+        n.querySelector('.t').textContent = e.n;
+        n.querySelector('.q').textContent = (state === 'locked' && !S.start) ? e.q : (when ? when + ' · ' : '') + e.q;
+        wrap.appendChild(n);
+        if (state === 'now') nowNode = n;
+    }
+    // Red progress line reaches the current enemy
+    requestAnimationFrame(() => {
+        const fill = $('pathFill');
+        if (nowNode) fill.style.height = (nowNode.offsetTop + nowNode.offsetHeight / 2 - 10) + 'px';
+        else fill.style.height = '0px';
+    });
+    $('pathSub').textContent = S.start
+        ? `${kos} down. Next: ${enemyAt(kos).n} on day ${enemyAt(kos).d}.`
+        : 'Every milestone is an enemy. Put them all down.';
+}
+
+function renderLog() {
+    const ul = $('log'); ul.innerHTML = '';
+    const items = S.history.slice().reverse();
+    if (!items.length) { ul.innerHTML = '<li class="empty">No fights logged yet. The first one is the hardest.</li>'; return; }
+    const best = Math.max(...S.history.map(h => h.end - h.start));
+    items.forEach((h, i) => {
+        const li = document.createElement('li');
+        const len = h.end - h.start, d = daysOf(len);
+        li.innerHTML = `<div><b>${d} day${d === 1 ? '' : 's'}</b>${len === best ? ' 🏆' : ''}<div class="why">${fmtDate(h.start)} → ${fmtDate(h.end)}</div></div>
+            <div class="why" style="text-align:right">Fight #${S.history.length - i}<br>${h.reason === 'reset' ? 'Reset' : 'Went down'} · ${kosFor(d)} KO</div>`;
+        ul.appendChild(li);
+    });
+}
+
+function renderAll() {
+    const active = !!S.start;
+    $('startScreen').classList.toggle('hidden', active);
+    $('fightScreen').classList.toggle('hidden', !active);
+    $('adjustWrap').classList.toggle('hidden', !active);
+    if (active) {
+        if (curEnemyIdx < 0) { $('fighter').innerHTML = figureSVG('you', 0); setEnemy(kosFor(daysOf(elapsed())), true); }
+        $('sUrge').textContent = S.urges;
+        $('sFights').textContent = S.history.length + 1;
+        const ri = Math.floor(Date.now() / DAY) % RULES.length;
+        $('rule').innerHTML = `<span class="n">RULE ${ri + 1} OF THE BASEMENT</span>`;
+        $('rule').appendChild(document.createTextNode(RULES[ri]));
+        renderTick();
+    } else {
+        $('startAt').value = toLocalInput(Date.now());
+        $('startAt').max = toLocalInput(Date.now());
+        const best = daysOf(bestMs());
+        $('prevStats').innerHTML = S.history.length ? `
+            <div class="stat"><div class="v">${best}</div><div class="k">Best days</div></div>
+            <div class="stat"><div class="v">${S.history.length}</div><div class="k">Fights</div></div>
+            <div class="stat"><div class="v">${S.urges}</div><div class="k">Urges beat</div></div>` : '';
+    }
+    renderPath(); renderLog();
+    $('soundToggle').classList.toggle('on', S.sound);
+    $('buzzToggle').classList.toggle('on', S.buzz);
+}
+
+/* ============================================================
+   ARENA ACTION
+   ============================================================ */
+function punch(heavy) {
+    const f = $('fighter').querySelector('.fig'); const en = $('enemy');
+    if (!f || en.classList.contains('down')) return;
+    const type = heavy || Math.random() < .35 ? 'cross' : 'jab';
+    f.classList.remove('jab', 'cross'); void f.getBoundingClientRect(); f.classList.add(type);
+    setTimeout(() => {
+        en.classList.remove('hit', 'enter'); void en.offsetWidth; en.classList.add('hit');
+        punchSound(type === 'cross');
+        const arena = $('arena'), r = arena.getBoundingClientRect();
+        const x = r.width / 2 + 2 + (Math.random() * 16 - 8), y = r.height - 22 - 195 * .78 + (Math.random() * 20 - 6);
+        const b = document.createElement('div'); b.className = 'burst';
+        b.style.left = x + 'px'; b.style.top = y + 'px';
+        b.innerHTML = '<svg viewBox="0 0 70 70"><polygon points="35,0 42,24 68,18 48,36 66,58 40,46 30,70 26,44 2,52 20,32 4,10 28,22" fill="#ffb547" stroke="#fff" stroke-width="2"/></svg>';
+        arena.appendChild(b); setTimeout(() => b.remove(), 320);
+        const s = document.createElement('div'); s.className = 'spark';
+        s.textContent = HITS[Math.floor(Math.random() * HITS.length)];
+        s.style.left = x + 'px'; s.style.top = (y - 30) + 'px';
+        arena.appendChild(s); setTimeout(() => s.remove(), 820);
+        if (type === 'cross') { arena.classList.remove('shake'); void arena.offsetWidth; arena.classList.add('shake'); }
+        // little white "damage chip" trailing behind on the enemy bar
+        const lag = $('foeLag'), main = $('foeBar');
+        lag.style.transition = 'none'; lag.style.width = main.style.width;
+    }, 95);
+    setTimeout(() => f.classList.remove('jab', 'cross'), 320);
+}
+
+function bubble(text, reply) {
+    const a = $('arena'); const t = document.createElement('div');
+    t.className = 'taunt' + (reply ? ' reply' : ''); t.textContent = text;
+    a.appendChild(t); setTimeout(() => t.remove(), 3400);
+}
+
+// Idle loop: the fighter keeps working the enemy over; the enemy taunts now and then.
+let idleT = null, tauntT = null;
+function idleLoop() {
+    clearTimeout(idleT);
+    idleT = setTimeout(() => {
+        if (S.start && !document.hidden && !urge.on) {
+            punch(); if (Math.random() < .4) setTimeout(() => punch(), 260);
+        }
+        idleLoop();
+    }, 1500 + Math.random() * 1600);
+}
+function tauntLoop() {
+    clearTimeout(tauntT);
+    tauntT = setTimeout(() => {
+        if (S.start && !document.hidden && !urge.on) {
+            bubble(TAUNTS[Math.floor(Math.random() * TAUNTS.length)]);
+            setTimeout(() => { bubble(REPLIES[Math.floor(Math.random() * REPLIES.length)], true); punch(true); setTimeout(() => punch(), 200); setTimeout(() => punch(true), 420); }, 1500);
+        }
+        tauntLoop();
+    }, 11000 + Math.random() * 8000);
+}
+
+/* ---------- Urge attack: 60s tap-to-fight ---------- */
+const urge = { on: false, left: 60, combo: 0, hits: 0, timer: null, lastTap: 0 };
+function startUrge() {
+    if (urge.on) return;
+    ctx();
+    urge.on = true; urge.left = 60; urge.combo = 0; urge.hits = 0;
+    const a = $('arena'); a.classList.add('urge');
+    a.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    $('urgeBtn').disabled = true; $('urgeBtn').style.opacity = .5;
+    $('urgeTimer').textContent = 60; $('combo').textContent = '';
+    let tip = 0; $('urgeTip').textContent = URGE_TIPS[0];
+    bubble("You know you want to...");
+    urge.timer = setInterval(() => {
+        urge.left--;
+        $('urgeTimer').textContent = urge.left;
+        if (urge.left % 10 === 0) { tip = (tip + 1) % URGE_TIPS.length; $('urgeTip').textContent = URGE_TIPS[tip]; }
+        if (urge.left % 15 === 0 && urge.left > 0) bubble(TAUNTS[Math.floor(Math.random() * TAUNTS.length)]);
+        if (urge.left <= 0) endUrge();
+    }, 1000);
+}
+function urgeTap() {
+    if (!urge.on) return;
+    const now = Date.now();
+    urge.combo = now - urge.lastTap < 700 ? urge.combo + 1 : 1; urge.lastTap = now; urge.hits++;
+    punch(urge.combo % 4 === 0);
+    buzz(urge.combo % 4 === 0 ? 40 : 15);
+    if (urge.combo > 1) { const c = $('combo'); c.textContent = urge.combo + ' HIT COMBO'; c.style.animation = 'none'; void c.offsetWidth; c.style.animation = 'bump .3s'; }
+}
+function endUrge() {
+    clearInterval(urge.timer); urge.on = false;
+    $('arena').classList.remove('urge');
+    $('urgeBtn').disabled = false; $('urgeBtn').style.opacity = 1;
+    S.urges++; save(); $('sUrge').textContent = S.urges;
+    bell(1); buzz([60, 40, 120]);
+    bubble('Urge destroyed.', true);
+    toast(`⚡ Urge destroyed with ${urge.hits} hits. That's ${S.urges} beaten.`);
+}
+
+/* ---------- KO overlay ---------- */
+function showKO(idx, kos) {
+    const e = enemyAt(idx);
+    $('koWho').innerHTML = ''; const s = document.createElement('s'); s.textContent = e.n; $('koWho').append(s, document.createTextNode(` is down`));
+    $('koMsg').textContent = `Day ${e.d}. ${e.d >= 365 ? 'A full year of iron. You buried the man you used to be.' : 'You took everything it threw at you and you are still standing.'} Next up: ${enemyAt(kos).n} on day ${enemyAt(kos).d}.`;
+    $('koRank').textContent = 'NEW RANK: ' + rankFor(kos).toUpperCase();
+    const o = $('koOverlay'); o.classList.add('open');
+    o.querySelectorAll('.shard').forEach(x => x.remove());
+    for (let i = 0; i < 28; i++) {
+        const sh = document.createElement('div'); sh.className = 'shard';
+        const ang = Math.random() * Math.PI * 2, dist = 160 + Math.random() * 260;
+        sh.style.setProperty('--x', Math.cos(ang) * dist + 'px'); sh.style.setProperty('--y', Math.sin(ang) * dist + 'px');
+        sh.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg');
+        sh.style.background = Math.random() < .5 ? 'var(--amber)' : (Math.random() < .5 ? '#fff' : 'var(--blood)');
+        o.appendChild(sh);
+    }
+    bell(3); thudLow(); buzz([100, 60, 100, 60, 300]);
+}
+
+/* ============================================================
+   ACTIONS
+   ============================================================ */
+$('startBtn').onclick = () => {
+    ctx();
+    let t = Date.now();
+    if ($('startAt').closest('details').open && $('startAt').value) {
+        const v = new Date($('startAt').value).getTime();
+        if (!isNaN(v)) t = Math.min(v, Date.now());
+    }
+    S.start = t; S.koSeen = kosFor(daysOf(Date.now() - t)); // past milestones count as already celebrated
+    save(); curEnemyIdx = -1; renderTick.ran = false;
+    renderAll(); bell(1); buzz(80);
+    toast(S.koSeen ? `Back in the ring. ${S.koSeen} enemies already down.` : 'Round one. Fight.');
+    setTimeout(() => { punch(true); setTimeout(() => punch(), 250); }, 900);
+};
+
+$('urgeBtn').onclick = startUrge;
+$('arena').addEventListener('pointerdown', e => { if (urge.on) { e.preventDefault(); urgeTap(); } });
+
+// Towel modal with hold-to-confirm
+let reason = 'relapse';
+$('towelBtn').onclick = () => {
+    const d = daysOf(elapsed());
+    $('towelText').textContent = `You're ${d} day${d === 1 ? '' : 's'} in. Ending now logs this fight and puts you back at day zero.`;
+    $('towelModal').classList.add('open');
+};
+$('keepFighting').onclick = () => { $('towelModal').classList.remove('open'); toast('Good. Back to work.'); punch(true); };
+$('reasonChoice').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    reason = b.dataset.r; [...$('reasonChoice').children].forEach(x => x.classList.toggle('on', x === b));
+};
+let holdRaf = null, holdStart = 0;
+function holdDown(e) {
+    e.preventDefault(); holdStart = performance.now(); buzz(20);
+    const step = now => {
+        const p = Math.min(1, (now - holdStart) / 1600);
+        $('holdFill').style.width = (p * 100) + '%';
+        if (p >= 1) { holdUp(); endStreak(); return; }
+        holdRaf = requestAnimationFrame(step);
+    };
+    holdRaf = requestAnimationFrame(step);
+}
+function holdUp() { cancelAnimationFrame(holdRaf); holdRaf = null; $('holdFill').style.width = '0%'; }
+$('holdBtn').addEventListener('pointerdown', holdDown);
+['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => $('holdBtn').addEventListener(ev, holdUp));
+$('holdBtn').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && !holdRaf) holdDown(e); });
+$('holdBtn').addEventListener('keyup', holdUp);
+
+function endStreak() {
+    $('towelModal').classList.remove('open');
+    const len = elapsed();
+    S.history.push({ start: S.start, end: Date.now(), reason });
+    S.start = null; S.koSeen = 0; save();
+    if (urge.on) { clearInterval(urge.timer); urge.on = false; $('arena').classList.remove('urge'); $('urgeBtn').disabled = false; $('urgeBtn').style.opacity = 1; }
+    curEnemyIdx = -1;
+    thudLow(); buzz([200, 100, 400]);
+    const d = daysOf(len);
+    $('downMsg').textContent = reason === 'reset'
+        ? `${d} day${d === 1 ? '' : 's'} logged. Reset the clock and come back harder.`
+        : `${d} day${d === 1 ? '' : 's'} logged. Every fighter hits the canvas. Champions get up.`;
+    const f = $('downFlash'); f.classList.remove('open'); void f.offsetWidth; f.classList.add('open');
+    setTimeout(() => f.classList.remove('open'), 2600);
+    renderAll();
+    window.scrollTo({ top: 0 });
+}
+
+$('koNext').onclick = () => { $('koOverlay').classList.remove('open'); punch(true); };
+
+// Settings
+$('settingsBtn').onclick = () => { if (S.start) $('adjustAt').value = toLocalInput(S.start); $('adjustAt').max = toLocalInput(Date.now()); $('settingsModal').classList.add('open'); };
+$('closeSettings').onclick = () => $('settingsModal').classList.remove('open');
+$('soundToggle').onclick = () => { S.sound = !S.sound; save(); renderAll(); if (S.sound) punchSound(); };
+$('buzzToggle').onclick = () => { S.buzz = !S.buzz; save(); renderAll(); buzz(40); };
+$('adjustSave').onclick = () => {
+    const v = new Date($('adjustAt').value).getTime();
+    if (isNaN(v)) return toast('Pick a valid date and time.');
+    if (v > Date.now()) return toast("The start can't be in the future.");
+    S.start = v; S.koSeen = kosFor(daysOf(Date.now() - v)); save();
+    curEnemyIdx = -1; renderTick.ran = false; renderAll();
+    $('settingsModal').classList.remove('open'); toast('Start time updated.');
+};
+$('wipeBtn').onclick = () => {
+    if (!confirm('Erase your streak, fight log and urge count? This cannot be undone.')) return;
+    S = fresh(); save(); curEnemyIdx = -1; renderAll();
+    $('settingsModal').classList.remove('open'); toast('Clean slate.');
+};
+document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open')); });
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+renderAll();
+setInterval(renderTick, 1000);
+idleLoop(); tauntLoop();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) renderTick(); });
+
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
