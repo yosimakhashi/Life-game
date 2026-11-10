@@ -1,0 +1,17 @@
+{
+  "name": "Heart Quest — Level Up to Win Her",
+  "short_name": "Heart Quest",
+  "description": "A life game where every good habit wins her affection. Reach 5,000 points to win her heart and unlock the next level.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#140a12",
+  "theme_color": "#140a12",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
