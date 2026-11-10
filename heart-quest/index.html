@@ -216,6 +216,13 @@ h2 span { color: var(--rose); }
 .toggle.on { background: var(--rose); }
 .toggle.on::after { left: 27px; }
 .linkBtn { display: block; width: 100%; background: none; border: none; color: var(--dim); font-family: inherit; font-size: 14px; padding: 12px; cursor: pointer; margin-top: 6px; }
+.bonus { margin-top: 12px; padding: 12px; }
+.bonusHead { font-weight: 600; font-size: 16px; margin-bottom: 8px; }
+.bonusHead span { display: block; font-weight: 400; font-size: 12px; color: var(--dim); margin-top: 1px; }
+.bonusRow { display: grid; grid-template-columns: 96px 1fr; gap: 8px; }
+.bonusRow input { min-width: 0; }
+input[type=number] { width: 100%; background: var(--card-2); color: var(--gold); border: 1px solid var(--line); padding: 10px 12px; font-family: inherit; font-size: 16px; font-weight: 600; border-radius: 10px; }
+input::placeholder { color: var(--dim); font-weight: 400; opacity: .8; }
 input[type=text] { width: 100%; background: var(--card-2); color: var(--text); border: 1px solid var(--line); padding: 10px 12px; font-family: inherit; font-size: 16px; border-radius: 10px; }
 
 /* ---------- Win overlay ---------- */
@@ -292,6 +299,16 @@ input[type=text] { width: 100%; background: var(--card-2); color: var(--text); b
         <button class="btn rose" id="charmBtn">💘 Charm her<small id="charmSub">30-second heart catch</small></button>
         <button class="btn" id="flagBtn">🚩 Red flag<small>I messed up today</small></button>
     </div>
+
+    <!-- ============ EXTRA POINTS ============ -->
+    <form class="card bonus" id="bonusForm" autocomplete="off" novalidate>
+        <div class="bonusHead">⭐ Extra points <span>Did something special? Add it here.</span></div>
+        <div class="bonusRow">
+            <input type="number" id="bonusPts" inputmode="numeric" min="1" max="5000" step="1" placeholder="Points" aria-label="How many points">
+            <input type="text" id="bonusWhy" maxlength="60" placeholder="Reason, e.g. ran 5 km" aria-label="Reason for the points">
+        </div>
+        <button class="btn rose" type="submit" style="width:100%;margin-top:8px">Add points</button>
+    </form>
 
     <!-- ============ DAILY QUESTS ============ -->
     <h2>Today's <span>Quests</span></h2>
@@ -977,6 +994,24 @@ function endCharm() {
     renderAll();
 }
 $('charmBtn').onclick = startCharm;
+
+/* ============================================================
+   EXTRA POINTS: any amount, with a reason
+   ============================================================ */
+$('bonusForm').addEventListener('submit', e => {
+    e.preventDefault();
+    rollDay();
+    const pts = Math.round(Number($('bonusPts').value)), why = $('bonusWhy').value.trim();
+    if (!Number.isFinite(pts) || pts < 1) { $('bonusPts').focus(); return toast('Type how many points (1 or more).'); }
+    if (pts > 5000) { $('bonusPts').focus(); return toast('5,000 is the most you can add at once.'); }
+    if (!why) { $('bonusWhy').focus(); return toast('Add the reason too, so the log remembers why.'); }
+    $('bonusPts').value = ''; $('bonusWhy').value = '';
+    document.activeElement && document.activeElement.blur();
+    award(pts, `⭐ ${why}`);
+    chime(); buzz(25); react('hop'); floatHearts(pts >= 300 ? 6 : 3);
+    if (!finished()) sayHer(pts >= 300 ? 'You did THAT? I\'m impressed ❤' : 'Ooh, that\'s sweet of you.');
+    toast(`+${fmt(pts)} points added.`);
+});
 
 /* ============================================================
    RED FLAGS
