@@ -99,7 +99,7 @@ body {
 .bench::before { left: 8px; } .bench::after { right: 8px; }
 .floorText { position: absolute; bottom: 8px; left: 0; right: 0; text-align: center; font-size: 11px; color: rgba(251,234,242,.35); letter-spacing: .3em; }
 
-.person { position: absolute; bottom: 22px; width: 104px; height: 156px; z-index: 3; transition: left 1.2s cubic-bezier(.3,.8,.3,1); }
+.person { position: absolute; bottom: 18px; width: 124px; height: 186px; z-index: 3; transition: left 1.2s cubic-bezier(.3,.8,.3,1); }
 .person svg { width: 100%; height: 100%; overflow: visible; }
 .person .body { animation: bob 1.4s ease-in-out infinite; transform-box: view-box; }
 .her .body { animation-duration: 1.6s; }
@@ -382,25 +382,25 @@ const FLAGS = [
 
 // Each girl is a level. Likes = quests that earn double points with her.
 const GIRLS = [
-    { name: 'Meera',  title: 'The Girl Next Door', hair: '#1b1210', style: 'long', skin: '#e8b894', dress: '#ffcf4a', likes: ['talk', 'sleep'],
+    { name: 'Meera',  title: 'The Girl Next Door', hair: '#1b1210', style: 'long', skin: '#e8b894', dress: '#ffcf4a', outfit: 'kurti', accent: '#e0185f', earrings: 'jhumka', bindi: true, bangles: true, lip: '#c93a52', iris: '#4a2a18', likes: ['talk', 'sleep'],
       lines: ['You remembered my chai order?', 'My mom asked about you today…', 'You look different lately. Good different.'] },
-    { name: 'Ananya', title: 'The Bookworm',       hair: '#4a2a1a', style: 'bun',  skin: '#f0c7a0', dress: '#2bb3a3', glasses: true, likes: ['read', 'learn'],
+    { name: 'Ananya', title: 'The Bookworm',       hair: '#4a2a1a', style: 'bun',  skin: '#f0c7a0', dress: '#2bb3a3', glasses: true, pencil: true, accent: '#ffe08a', earrings: 'stud', necklace: 'gold', lip: '#d65a6e', iris: '#6b4a2a', shoe: '#5a3a22', likes: ['read', 'learn'],
       lines: ['Have you read anything good lately?', 'You\'d make a great main character.', 'Library date? 📖'] },
-    { name: 'Riya',   title: 'The Gym Queen',      hair: '#2a1a12', style: 'pony', skin: '#d9a37c', dress: '#ff4757', likes: ['gym', 'food'],
+    { name: 'Riya',   title: 'The Gym Queen',      hair: '#2a1a12', style: 'pony', skin: '#d9a37c', dress: '#ff4757', outfit: 'sport', headband: true, accent: '#ffffff', earrings: 'stud', lip: '#c2405e', iris: '#3a2214', likes: ['gym', 'food'],
       lines: ['Leg day together?', 'Discipline is my love language.', 'You didn\'t skip today, right?'] },
-    { name: 'Zara',   title: 'The Artist',         hair: '#6b2f8a', style: 'bob',  skin: '#f3d0b4', dress: '#5865f2', likes: ['learn', 'calm'],
+    { name: 'Zara',   title: 'The Artist',         hair: '#6b2f8a', style: 'bob',  skin: '#f3d0b4', dress: '#5865f2', beret: true, accent: '#e8344f', earrings: 'hoop', lip: '#b8325a', iris: '#2f6b5a', shoe: '#e8344f', likes: ['learn', 'calm'],
       lines: ['Can I sketch you sometime?', 'You see the world differently.', 'Gallery this weekend?'] },
-    { name: 'Nila',   title: 'The Singer',         hair: '#120d0c', style: 'long', skin: '#c98f6a', dress: '#9b5de5', likes: ['calm', 'talk'],
+    { name: 'Nila',   title: 'The Singer',         hair: '#120d0c', style: 'waves', skin: '#c98f6a', dress: '#9b5de5', flower: '#ff5fa2', accent: '#ffc861', earrings: 'hoop', necklace: 'gold', lip: '#a3164a', iris: '#3a2214', likes: ['calm', 'talk'],
       lines: ['I wrote a song… don\'t laugh.', 'Your voice calms me down.', 'Come to my show tonight?'] },
-    { name: 'Isha',   title: 'The Doctor',         hair: '#3b2416', style: 'pony', skin: '#e6b48e', dress: '#e9f1f7', glasses: true, likes: ['sleep', 'food'],
+    { name: 'Isha',   title: 'The Doctor',         hair: '#3b2416', style: 'pony', skin: '#e6b48e', dress: '#5fb3d9', outfit: 'coat', glasses: true, accent: '#5fb3d9', earrings: 'stud', lip: '#d65a6e', iris: '#4a3020', likes: ['sleep', 'food'],
       lines: ['Did you drink water today?', 'Doctor\'s orders: smile more.', 'My shift ends at 8. Just saying.'] },
-    { name: 'Sana',   title: 'The Traveller',      hair: '#8a4b22', style: 'bob',  skin: '#f1c6a2', dress: '#ff9f1c', likes: ['money', 'gym'],
+    { name: 'Sana',   title: 'The Traveller',      hair: '#8a4b22', style: 'waves', skin: '#f1c6a2', dress: '#ff9f1c', sunnies: true, bag: true, accent: '#ffffff', earrings: 'drop', lip: '#d9534f', iris: '#2f6b8a', shoe: '#8a5530', likes: ['money', 'gym'],
       lines: ['Next trip: you\'re coming.', 'Mountains or beaches?', 'I\'ve never met anyone like you.'] },
-    { name: 'Kavya',  title: 'The Dancer',         hair: '#1a1110', style: 'bun',  skin: '#d49b74', dress: '#ff5fa2', likes: ['gym', 'dress'],
+    { name: 'Kavya',  title: 'The Dancer',         hair: '#1a1110', style: 'bun',  skin: '#d49b74', dress: '#ff5fa2', flower: '#ffffff', anklets: true, bangles: true, accent: '#ffc861', earrings: 'jhumka', bindi: true, lip: '#c2185b', iris: '#3a2214', shoe: '#c98a1a', likes: ['gym', 'dress'],
       lines: ['Dance with me?', 'You\'ve got rhythm, admit it.', 'Don\'t step on my feet 😄'] },
-    { name: 'Aisha',  title: 'The CEO',            hair: '#241612', style: 'bob',  skin: '#e2ad86', dress: '#23233a', likes: ['money', 'scroll'],
+    { name: 'Aisha',  title: 'The CEO',            hair: '#241612', style: 'bob',  skin: '#e2ad86', dress: '#23233a', outfit: 'blazer', accent: '#ffc861', earrings: 'stud', necklace: 'pearl', lip: '#9e1b3c', iris: '#3a2214', shoe: '#9e1b3c', likes: ['money', 'scroll'],
       lines: ['I don\'t have time for boys. Men, maybe.', 'Impress me.', 'Dinner. Friday. Don\'t be late.'] },
-    { name: 'The One', title: 'Final Level',       hair: '#2a1712', style: 'long', skin: '#e9b993', dress: '#ffffff', crown: true, likes: ['talk', 'calm'],
+    { name: 'The One', title: 'Final Level',       hair: '#2a1712', style: 'waves', skin: '#e9b993', dress: '#ffe4ef', outfit: 'gown', crown: true, accent: '#ffc861', earrings: 'drop', necklace: 'gold', lip: '#d6336c', iris: '#5a3420', shoe: '#ffc861', likes: ['talk', 'calm'],
       lines: ['I\'ve been waiting for this version of you.', 'Everything led you here.', 'Forever sounds nice.'] }
 ];
 
@@ -444,37 +444,153 @@ const fmt = n => n.toLocaleString('en-US');
 /* ============================================================
    CHARACTERS (inline SVG)
    ============================================================ */
+let svgUid = 0;
+function shade(hex, amt) {
+    const n = parseInt(hex.slice(1), 16);
+    const f = c => Math.max(0, Math.min(255, Math.round(c + (amt > 0 ? (255 - c) : c) * amt)));
+    return '#' + [n >> 16, (n >> 8) & 255, n & 255].map(f).map(c => c.toString(16).padStart(2, '0')).join('');
+}
 function girlSVG(g, stage, opts = {}) {
-    const h = g.hair, s = g.skin, d = g.dress;
-    let back = '', front = `<path d="M35 39 Q36 24 50 24 Q64 24 65 39 Q60 31 50 31 Q41 31 35 39Z" fill="${h}"/>`;
-    if (g.style === 'long') back = `<path d="M31 40 Q28 19 50 18 Q72 19 69 40 L73 86 Q50 93 27 86Z" fill="${h}"/>`;
-    if (g.style === 'bob')  back = `<path d="M32 42 Q30 19 50 19 Q70 19 68 42 L70 60 Q50 64 30 60Z" fill="${h}"/>`;
-    if (g.style === 'pony') back = `<circle cx="50" cy="36" r="17" fill="${h}"/><path d="M64 28 Q88 40 78 80 Q72 62 64 46Z" fill="${h}"/>`;
-    if (g.style === 'bun')  back = `<circle cx="50" cy="36" r="17" fill="${h}"/><circle cx="50" cy="17" r="9" fill="${h}"/>`;
-    const eyes = stage >= 5
-        ? `<text x="44.5" y="44" font-size="7" text-anchor="middle" fill="#ff2d6f">♥</text><text x="55.5" y="44" font-size="7" text-anchor="middle" fill="#ff2d6f">♥</text>`
-        : stage >= 3
-        ? `<path d="M42 42 Q44.5 39.5 47 42 M53 42 Q55.5 39.5 58 42" stroke="#2a1520" stroke-width="1.6" fill="none" stroke-linecap="round"/>`
-        : `<circle cx="44.5" cy="41" r="1.9" fill="#2a1520"/><circle cx="55.5" cy="41" r="1.9" fill="#2a1520"/>`;
-    const mouth = stage === 0 ? `<path d="M46.5 48.5 H53.5" stroke="#8a3a4a" stroke-width="1.4" stroke-linecap="round"/>`
-        : stage <= 2 ? `<path d="M46 47.5 Q50 50.5 54 47.5" stroke="#8a3a4a" stroke-width="1.5" fill="none" stroke-linecap="round"/>`
-        : `<path d="M45.5 47 Q50 52.5 54.5 47Z" fill="#c2405e"/>`;
-    const blush = stage >= 2 ? `<ellipse cx="41" cy="46" rx="3.2" ry="1.7" fill="#ff6b9a" opacity="${.25 + stage * .1}"/><ellipse cx="59" cy="46" rx="3.2" ry="1.7" fill="#ff6b9a" opacity="${.25 + stage * .1}"/>` : '';
-    const glasses = g.glasses ? `<g stroke="#2a1520" stroke-width="1.1" fill="rgba(255,255,255,.15)"><circle cx="44.5" cy="41" r="4.3"/><circle cx="55.5" cy="41" r="4.3"/><path d="M48.8 41 H51.2" fill="none"/></g>` : '';
-    const crown = g.crown ? `<path d="M41 22 L43 14 L47 19 L50 12 L53 19 L57 14 L59 22Z" fill="#ffc861" stroke="#c98a1a" stroke-width=".8"/>` : '';
-    // Left arm reaches toward him when holding hands
-    const armL = opts.hold ? `<path d="M39 64 Q26 80 8 92" stroke="${s}" stroke-width="6" fill="none" stroke-linecap="round"/>`
-                           : `<path d="M39 64 Q32 82 31 100" stroke="${s}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
-    return `<svg viewBox="0 0 100 150" aria-hidden="true"><g class="body">
+    const id = 'q' + (++svgUid);
+    const h = g.hair, s = g.skin, d = g.dress, acc = g.accent || '#ffc861', lip = g.lip || '#d63a64', iris = g.iris || '#5a3420';
+    const sd = shade(s, -.14), hd = shade(h, -.35);
+    const defs = `<defs>
+        <linearGradient id="${id}h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(h, .28)}"/><stop offset=".45" stop-color="${h}"/><stop offset="1" stop-color="${hd}"/></linearGradient>
+        <linearGradient id="${id}d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${shade(d, .22)}"/><stop offset="1" stop-color="${shade(d, -.22)}"/></linearGradient>
+        <radialGradient id="${id}i" cx=".5" cy=".35" r=".7"><stop offset="0" stop-color="${shade(iris, .45)}"/><stop offset="1" stop-color="${shade(iris, -.3)}"/></radialGradient>
+    </defs>`;
+    const H = `url(#${id}h)`, D = `url(#${id}d)`;
+
+    // ---- Hair (back layer)
+    let back = '';
+    if (g.style === 'long') back = `<path d="M31 40 Q26 16 50 15 Q74 16 69 40 Q75 62 72 88 Q66 94 61 89 Q56 96 50 91 Q44 96 39 89 Q34 94 28 88 Q25 62 31 40Z" fill="${H}"/>
+        <path d="M33 50 Q31 70 34 86 M66 50 Q69 70 66 86 M40 60 Q39 76 42 88" stroke="${hd}" stroke-width=".8" fill="none" opacity=".6"/>`;
+    if (g.style === 'bob') back = `<path d="M32 44 Q28 17 50 16 Q72 17 68 44 Q71 55 69 61 Q63 64 58 59 L42 59 Q37 64 31 61 Q29 55 32 44Z" fill="${H}"/>`;
+    if (g.style === 'pony') back = `<ellipse cx="50" cy="35" rx="17.5" ry="18" fill="${H}"/>
+        <path d="M63 24 Q90 30 82 62 Q79 80 70 90 Q74 70 69 52 Q66 40 62 34Z" fill="${H}"/>
+        <path d="M70 40 Q79 55 73 80" stroke="${hd}" stroke-width=".8" fill="none" opacity=".6"/>`;
+    if (g.style === 'bun') back = `<ellipse cx="50" cy="35" rx="17.5" ry="18" fill="${H}"/><circle cx="50" cy="15" r="9.5" fill="${H}"/>
+        <path d="M43 13 Q50 8 57 13 M42 17 Q50 22 58 17" stroke="${hd}" stroke-width=".8" fill="none" opacity=".7"/>`;
+    if (g.style === 'waves') back = `<path d="M30 40 Q25 15 50 14 Q75 15 70 40 Q78 52 72 64 Q78 76 70 86 Q64 92 58 86 Q52 94 46 86 Q40 92 32 86 Q24 76 30 64 Q22 52 30 40Z" fill="${H}"/>`;
+
+    // ---- Legs + shoes
+    const sport = g.outfit === 'sport';
+    const legC = sport ? '#24202e' : s;
+    const shoe = sport
+        ? `<path d="M37 139 Q37 136 42 136 L46 136 Q48 140 48 143 L37 143Z" fill="#fff"/><path d="M53 139 Q53 136 58 136 L62 136 Q64 140 64 143 L53 143Z" fill="#fff"/><path d="M38 141 H47 M54 141 H63" stroke="${acc}" stroke-width="1.3"/>`
+        : `<path d="M40 138 L46 138 Q49 141 48 143.5 L38.5 143.5 Q38 140 40 138Z M44 143 L44.5 146" fill="${g.shoe || '#2a1520'}" stroke="${g.shoe || '#2a1520'}" stroke-width="1"/>
+           <path d="M54 138 L60 138 Q63 141 62 143.5 L52.5 143.5 Q52 140 54 138Z M58 143 L58.5 146" fill="${g.shoe || '#2a1520'}" stroke="${g.shoe || '#2a1520'}" stroke-width="1"/>`;
+    const legs = `<path d="M42.5 108 L41 139 L45.5 139 L47.5 108Z" fill="${legC}"/><path d="M52.5 108 L54.5 139 L59 139 L57.5 108Z" fill="${legC}"/>
+        ${g.anklets ? `<path d="M41 135 H45.5 M54.5 135 H59" stroke="${acc}" stroke-width="1.2" stroke-dasharray="1 .8"/>` : ''}${shoe}`;
+
+    // ---- Arms. Left (viewer's left) hangs or reaches to him; right rests on her hip.
+    const armL = opts.hold
+        ? `<path d="M40 58 Q28 76 9 90" stroke="${s}" stroke-width="4.6" fill="none" stroke-linecap="round"/><circle cx="8.5" cy="90.5" r="3" fill="${s}"/>`
+        : `<path d="M40 58 Q33 76 34 96" stroke="${s}" stroke-width="4.6" fill="none" stroke-linecap="round"/><ellipse cx="34" cy="98" rx="2.6" ry="3.2" fill="${s}"/>`;
+    const armR = `<path d="M60 58 Q71 68 64 79" stroke="${s}" stroke-width="4.6" fill="none" stroke-linecap="round"/><ellipse cx="62.5" cy="79.5" rx="2.8" ry="2.4" fill="${s}"/>`;
+    const bangles = g.bangles ? `<path d="M32.5 90 H37.5 M32.4 92 H37.4" stroke="${acc}" stroke-width="1.3" stroke-linecap="round"/><path d="M65 74 l3.5 2.2" stroke="${acc}" stroke-width="1.3"/>` : '';
+    const sleeves = (g.outfit === 'blazer' || g.outfit === 'coat')
+        ? `<path d="M40 57 Q32 74 33 92" stroke="${g.outfit === 'coat' ? '#f4f7fb' : D}" stroke-width="6.4" fill="none" stroke-linecap="round"/>
+           <path d="M60 57 Q71 68 65 77" stroke="${g.outfit === 'coat' ? '#f4f7fb' : D}" stroke-width="6.4" fill="none" stroke-linecap="round"/>` : '';
+
+    // ---- Outfit
+    let outfit = '';
+    const bodice = `<path d="M40 55 Q50 52 60 55 L59 63 Q58 70 57.5 76 L42.5 76 Q42 70 41 63Z" fill="${D}"/>`;
+    const neckline = `<path d="M44 55.5 Q50 62 56 55.5" fill="${s}"/>`;
+    if (g.outfit === 'dress' || g.outfit === 'kurti' || !g.outfit) {
+        outfit = `${bodice}${neckline}
+          <path d="M42.5 75 L57.5 75 L72 112 Q67 116 61.5 113 Q56 117 50 114 Q44 117 38.5 113 Q33 116 28 112Z" fill="${D}"/>
+          <path d="M46 79 L41 112 M50 79 L50 113 M54 79 L59 112" stroke="rgba(0,0,0,.14)" stroke-width="1" fill="none"/>
+          <path d="M28 112 Q33 116 38.5 113 Q44 117 50 114 Q56 117 61.5 113 Q67 116 72 112" stroke="${acc}" stroke-width="1.4" fill="none"/>
+          <rect x="42" y="74" width="16" height="3" rx="1.2" fill="${acc}"/><circle cx="50" cy="75.5" r="1.8" fill="${shade(acc, .4)}"/>`;
+        if (g.outfit === 'kurti') outfit += `<path d="M58 54 Q50 70 40 80 Q34 92 30 106" stroke="${acc}" stroke-width="5" fill="none" opacity=".75" stroke-linecap="round"/>
+          <path d="M58 54 Q50 70 40 80 Q34 92 30 106" stroke="#fff" stroke-width="5" fill="none" opacity=".25" stroke-dasharray="1 2.5"/>`;
+    }
+    if (sport) outfit = `<path d="M40 55 Q50 52 60 55 L59 69 L41 69Z" fill="${D}"/><path d="M44 55 Q50 60 56 55" fill="${s}"/>
+          <path d="M41 69 L59 69 L58 77 L42 77Z" fill="${s}"/><path d="M47 73 Q50 74 53 73" stroke="${sd}" stroke-width=".6" fill="none"/>
+          <path d="M41.5 77 L58.5 77 L59 82 L41 82Z" fill="#24202e"/><path d="M41.5 77 H58.5" stroke="${acc}" stroke-width="1.6"/>
+          <path d="M41 82 L42.5 108 L47.5 108 L50 86 L52.5 108 L57.5 108 L59 82Z" fill="#24202e"/>
+          <path d="M42 84 L43.5 136 M58 84 L56.5 136" stroke="${d}" stroke-width="1" opacity=".9"/>`;
+    if (g.outfit === 'blazer') outfit = `<path d="M43 55 L57 55 L56 76 L44 76Z" fill="#f4eee8"/>
+          <path d="M40 55 Q45 53 47 54 L50 72 L44 92 L39 92 Q38 72 40 55Z" fill="${D}"/><path d="M60 55 Q55 53 53 54 L50 72 L56 92 L61 92 Q62 72 60 55Z" fill="${D}"/>
+          <path d="M47 54 L45 62 L49 66 M53 54 L55 62 L51 66" stroke="${shade(d, .3)}" stroke-width="1" fill="none"/>
+          <path d="M41 90 L59 90 L61 112 L39 112Z" fill="${shade(d, -.1)}"/><path d="M50 98 V112" stroke="rgba(0,0,0,.3)" stroke-width=".8"/>
+          <circle cx="49" cy="80" r="1" fill="${acc}"/><circle cx="49" cy="85" r="1" fill="${acc}"/>`;
+    if (g.outfit === 'coat') outfit = `${bodice}${neckline}<path d="M42.5 75 L57.5 75 L63 110 L37 110Z" fill="${D}"/>
+          <path d="M40 55 Q45 53 47 55 L49 80 L45 116 L35 116 Q36 80 40 55Z" fill="#f4f7fb"/><path d="M60 55 Q55 53 53 55 L51 80 L55 116 L65 116 Q64 80 60 55Z" fill="#f4f7fb"/>
+          <path d="M47 55 L44 64 L48 68 M53 55 L56 64 L52 68" stroke="#cdd6e0" stroke-width="1" fill="none"/>
+          <rect x="54" y="84" width="7" height="6" rx="1" fill="none" stroke="#cdd6e0" stroke-width=".8"/>
+          <path d="M44 56 Q42 74 49 78 Q56 74 56 56" stroke="#3a3f4a" stroke-width="1.2" fill="none"/><circle cx="49" cy="79" r="2" fill="#9aa4b2" stroke="#3a3f4a" stroke-width=".8"/>`;
+    if (g.outfit === 'gown') outfit = `${bodice}${neckline}
+          <path d="M42.5 75 L57.5 75 Q66 100 78 136 Q64 142 50 140 Q36 142 22 136 Q34 100 42.5 75Z" fill="${D}"/>
+          <path d="M46 80 Q40 110 34 138 M50 80 V140 M54 80 Q60 110 66 138" stroke="rgba(0,0,0,.08)" stroke-width="1.2" fill="none"/>
+          <path d="M22 136 Q36 142 50 140 Q64 142 78 136" stroke="${acc}" stroke-width="1.2" fill="none"/>
+          <g fill="#fff"><circle cx="38" cy="110" r=".8"/><circle cx="60" cy="100" r=".7"/><circle cx="52" cy="124" r=".8"/><circle cx="44" cy="92" r=".6"/><circle cx="64" cy="122" r=".7"/></g>
+          <rect x="42" y="74" width="16" height="2.4" rx="1" fill="${acc}"/>`;
+    const bag = g.bag ? `<path d="M58 55 L38 92" stroke="#6b3e22" stroke-width="1.6"/><rect x="33" y="90" width="10" height="8" rx="2" fill="#8a5530"/><path d="M33 93 H43" stroke="#5a3218" stroke-width=".8"/>` : '';
+
+    // ---- Neck, face, ears, earrings
+    const neck = `<path d="M46 49 L46 56 Q50 58 54 56 L54 49Z" fill="${s}"/><path d="M46 52 Q50 55 54 52" stroke="${sd}" stroke-width="1.2" fill="none" opacity=".7"/>`;
+    const necklace = g.necklace === 'pearl' ? `<path d="M45 56 Q50 62 55 56" stroke="#fff" stroke-width="1.5" stroke-dasharray=".1 1.8" stroke-linecap="round" fill="none"/>`
+                   : g.necklace === 'gold' ? `<path d="M45 56 Q50 61 55 56" stroke="${acc}" stroke-width=".7" fill="none"/><path d="M50 60 l1.6 2 -1.6 2 -1.6 -2Z" fill="${acc}"/>` : '';
+    const ears = `<ellipse cx="36.6" cy="41" rx="2" ry="3" fill="${s}"/><ellipse cx="63.4" cy="41" rx="2" ry="3" fill="${s}"/>`;
+    let ear = '';
+    if (g.earrings === 'jhumka') ear = `<g fill="${acc}"><path d="M35 44 h3 l1.5 4 h-6Z"/><path d="M62 44 h3 l1.5 4 h-6Z"/></g><g fill="${shade(acc, .4)}"><circle cx="34.5" cy="49" r=".6"/><circle cx="36.5" cy="49.3" r=".6"/><circle cx="38.5" cy="49" r=".6"/><circle cx="61.5" cy="49" r=".6"/><circle cx="63.5" cy="49.3" r=".6"/><circle cx="65.5" cy="49" r=".6"/></g>`;
+    if (g.earrings === 'hoop')   ear = `<circle cx="36.3" cy="47" r="3" fill="none" stroke="${acc}" stroke-width=".9"/><circle cx="63.7" cy="47" r="3" fill="none" stroke="${acc}" stroke-width=".9"/>`;
+    if (g.earrings === 'stud')   ear = `<circle cx="36.4" cy="43.6" r="1" fill="#fff"/><circle cx="63.6" cy="43.6" r="1" fill="#fff"/>`;
+    if (g.earrings === 'drop')   ear = `<path d="M36.4 43.5 V46" stroke="${acc}" stroke-width=".6"/><path d="M36.4 46 l1.3 2 -1.3 2 -1.3 -2Z" fill="${acc}"/><path d="M63.6 43.5 V46" stroke="${acc}" stroke-width=".6"/><path d="M63.6 46 l1.3 2 -1.3 2 -1.3 -2Z" fill="${acc}"/>`;
+    const face = `<path d="M37 37 Q37 23 50 23 Q63 23 63 37 Q63 47 57 52 Q53 55 50 55 Q47 55 43 52 Q37 47 37 37Z" fill="${s}"/>`;
+
+    // ---- Eyes (anime style)
+    const eyeOpen = (x, flip) => {
+        const o = flip ? 1 : -1;
+        return `<ellipse cx="${x}" cy="41.2" rx="3.4" ry="4" fill="#fff"/>
+          <ellipse cx="${x}" cy="41.6" rx="2.7" ry="3.4" fill="url(#${id}i)"/>
+          <ellipse cx="${x}" cy="42" rx="1.3" ry="1.7" fill="#140a0c"/>
+          <circle cx="${x + .9}" cy="40.2" r="1" fill="#fff"/><circle cx="${x - 1}" cy="43.2" r=".5" fill="#fff" opacity=".85"/>
+          <path d="M${x - 3.7} 39.6 Q${x} 36 ${x + 3.7} 39.6" stroke="#1a0c10" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <path d="M${x + o * 3.6} 39.4 l${o * 1.4} -1.3 M${x + o * 3.2} 38.6 l${o * 1} -1.6" stroke="#1a0c10" stroke-width=".8" stroke-linecap="round"/>`;
+    };
+    const eyeHappy = (x, flip) => { const o = flip ? 1 : -1;
+        return `<path d="M${x - 3.4} 42 Q${x} 38 ${x + 3.4} 42" stroke="#1a0c10" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M${x + o * 3.3} 41.6 l${o * 1.3} -.9" stroke="#1a0c10" stroke-width=".8" stroke-linecap="round"/>`; };
+    const eyeHeart = x => `<path d="M${x} 44.6 C${x - 5} 41 ${x - 3.4} 37 ${x} 39.4 C${x + 3.4} 37 ${x + 5} 41 ${x} 44.6Z" fill="#ff2d6f"/><circle cx="${x - 1.2}" cy="39.8" r=".7" fill="#fff"/>
+        <path d="M${x - 3.6} 38.6 Q${x} 35.6 ${x + 3.6} 38.6" stroke="#1a0c10" stroke-width="1.1" fill="none" stroke-linecap="round"/>`;
+    const eyes = stage >= 5 ? eyeHeart(44.2) + eyeHeart(55.8)
+               : stage >= 3 ? eyeHappy(44.2, false) + eyeHappy(55.8, true)
+               : eyeOpen(44.2, false) + eyeOpen(55.8, true);
+    const brows = `<path d="M40.4 ${stage === 0 ? 34.4 : 33.8} Q44 ${stage === 0 ? 33.4 : 32.2} 47 33.6 M53 33.6 Q56 ${stage === 0 ? 33.4 : 32.2} 59.6 ${stage === 0 ? 34.4 : 33.8}" stroke="${hd}" stroke-width="1" fill="none" stroke-linecap="round"/>`;
+    const nose = `<path d="M50.2 45.4 Q51 46.6 49.8 47" stroke="${sd}" stroke-width=".8" fill="none" stroke-linecap="round"/>`;
+    const mouth = stage === 0 ? `<path d="M47.6 50.2 Q50 50.8 52.4 50.2 Q50 51.8 47.6 50.2Z" fill="${lip}"/>`
+        : stage <= 2 ? `<path d="M47 49.6 Q50 52.6 53 49.6 Q50 50.4 47 49.6Z" fill="${lip}" stroke="${lip}" stroke-width=".6" stroke-linejoin="round"/>`
+        : `<path d="M46.4 49.2 Q50 49.9 53.6 49.2 Q52.6 54 50 54 Q47.4 54 46.4 49.2Z" fill="#7a1f35"/><path d="M47 49.4 Q50 50 53 49.4 L52.6 50.6 Q50 51 47.4 50.6Z" fill="#fff"/><path d="M48 52.8 Q50 51.8 52 52.8 Q50 54 48 52.8Z" fill="#ff7d9a"/>`;
+    const blushOp = stage >= 1 ? Math.min(.75, .2 + stage * .11) : 0;
+    const blush = blushOp ? `<ellipse cx="40.8" cy="46.4" rx="3" ry="1.6" fill="#ff5f8f" opacity="${blushOp}"/><ellipse cx="59.2" cy="46.4" rx="3" ry="1.6" fill="#ff5f8f" opacity="${blushOp}"/>
+        ${stage >= 4 ? '<path d="M39.6 45.8 l.6 -.9 M41 45.8 l.6 -.9 M58.4 45.8 l.6 -.9 M59.8 45.8 l.6 -.9" stroke="#e63c6e" stroke-width=".5"/>' : ''}` : '';
+    const bindi = g.bindi ? `<circle cx="50" cy="31.6" r=".9" fill="#d61a3c"/>` : '';
+
+    // ---- Front hair: swept bangs + face-framing locks + shine
+    let front = `<path d="M36.4 40 Q35 21 51 20.5 Q64.5 21 64 38 Q61 28.5 54 27.5 Q52 33 43 34.5 Q39 35.5 36.4 40Z" fill="${H}"/>
+        <path d="M54 27.5 Q57 32 61.5 33" stroke="${hd}" stroke-width=".7" fill="none" opacity=".6"/>
+        <path d="M41 24.5 Q50 19.6 59 23.6" stroke="#fff" stroke-width="1.6" fill="none" opacity=".28" stroke-linecap="round"/>`;
+    if (g.style !== 'bun' && g.style !== 'pony') front += `<path d="M37 33 Q32.5 47 35 60 Q37.5 52 38.6 42Z" fill="${H}"/><path d="M63 33 Q67.5 47 65 60 Q62.5 52 61.4 42Z" fill="${H}"/>`;
+    else front += `<path d="M37.2 35 Q35.4 44 37 50 Q38.4 44 38.8 39Z" fill="${H}"/><path d="M62.8 35 Q64.6 44 63 50 Q61.6 44 61.2 39Z" fill="${H}"/>`;
+
+    // ---- Head accessories
+    let top = '';
+    if (g.glasses) top += `<g stroke="#2a1520" stroke-width=".9" fill="rgba(255,255,255,.12)"><circle cx="44.2" cy="41.4" r="4.6"/><circle cx="55.8" cy="41.4" r="4.6"/></g><path d="M48.8 41 Q50 40 51.2 41 M39.6 40.6 L37.4 39.8 M60.4 40.6 L62.6 39.8" stroke="#2a1520" stroke-width=".9" fill="none"/>`;
+    if (g.headband) top += `<path d="M35.6 32 Q50 18 64.4 32" stroke="${acc}" stroke-width="2.6" fill="none"/>`;
+    if (g.style === 'pony') top += `<path d="M62.4 27 Q65 24 67 27.4 Q65 30 62.4 27Z" fill="${acc}"/>`;
+    if (g.style === 'bun' && g.pencil) top += `<path d="M42 10 L58 21" stroke="#ffcf4a" stroke-width="1.8"/><path d="M58 21 l1.6 1.1" stroke="#2a1520" stroke-width="1.8"/><path d="M42 10 l-1 -.7" stroke="#ff8fa3" stroke-width="1.8"/>`;
+    if (g.beret) top += `<path d="M33 27 Q34 13 52 13 Q68 14 66 25 Q58 22 48 23 Q38 24 33 27Z" fill="${acc}"/><circle cx="52" cy="12.6" r="1.2" fill="${acc}"/>`;
+    if (g.flower) top += `<g transform="translate(${g.style === 'bun' ? '58 12' : '62 25'})"><circle r="2.4" cx="0" cy="-2.4" fill="${g.flower}"/><circle r="2.4" cx="2.3" cy="-.7" fill="${g.flower}"/><circle r="2.4" cx="1.4" cy="2" fill="${g.flower}"/><circle r="2.4" cx="-1.4" cy="2" fill="${g.flower}"/><circle r="2.4" cx="-2.3" cy="-.7" fill="${g.flower}"/><circle r="1.4" fill="#ffd34d"/></g>`;
+    if (g.sunnies) top += `<g transform="translate(0 -6)"><rect x="39" y="22" width="9" height="5" rx="2.4" fill="#1a1a22"/><rect x="52" y="22" width="9" height="5" rx="2.4" fill="#1a1a22"/><path d="M48 23.6 H52" stroke="#1a1a22" stroke-width="1"/><path d="M40.5 23.2 l2 0" stroke="#fff" stroke-width=".7" opacity=".6"/></g>`;
+    if (g.crown) top += `<path d="M40 22.5 L42 13.5 L46 18.5 L50 11 L54 18.5 L58 13.5 L60 22.5 Q50 20 40 22.5Z" fill="#ffc861" stroke="#c98a1a" stroke-width=".7"/><circle cx="50" cy="17" r="1.3" fill="#ff4f8b"/><circle cx="44.6" cy="19" r=".8" fill="#7be0e8"/><circle cx="55.4" cy="19" r=".8" fill="#7be0e8"/>`;
+
+    const shadow = `<ellipse cx="50" cy="146" rx="18" ry="2.4" fill="rgba(0,0,0,.35)"/>`;
+    return `<svg viewBox="0 0 100 150" aria-hidden="true">${defs}${shadow}<g class="body">
         <g class="hairBack">${back}</g>
-        <rect x="41" y="116" width="6" height="26" rx="3" fill="${s}"/><rect x="53" y="116" width="6" height="26" rx="3" fill="${s}"/>
-        <ellipse cx="43" cy="143" rx="5.5" ry="3" fill="#2a1520"/><ellipse cx="57" cy="143" rx="5.5" ry="3" fill="#2a1520"/>
-        ${armL}<path d="M61 64 Q68 82 69 100" stroke="${s}" stroke-width="6" fill="none" stroke-linecap="round"/>
-        <path d="M38 60 Q50 55 62 60 L66 82 L76 120 Q50 127 24 120 L34 82Z" fill="${d}"/>
-        <path d="M38 60 Q50 55 62 60 L64 70 Q50 74 36 70Z" fill="rgba(0,0,0,.12)"/>
-        <rect x="46" y="51" width="8" height="9" fill="${s}"/>
-        <circle cx="50" cy="40" r="15" fill="${s}"/>
-        ${front}${crown}${eyes}${glasses}${blush}${mouth}
+        ${legs}${armL}${outfit}${bag}${sleeves}${armR}${bangles}
+        ${neck}${necklace}${ears}${ear}${face}${blush}${eyes}${brows}${nose}${mouth}${bindi}${front}${top}
     </g></svg>`;
 }
 function meSVG(stage, opts = {}) {
@@ -767,7 +883,7 @@ function renderAll(bumped) {
     const me = $('me'), her = $('her');
     me.innerHTML = meSVG(st, { hold: done });
     her.innerHTML = girlSVG(g, st, { hold: done });
-    me.style.left = 'calc(50% - 118px)';
+    me.style.left = 'calc(50% - 132px)';
     her.style.left = `calc(50% + ${Math.round(done ? -22 : 70 - pct * .8)}px)`;
 
     renderQuests();
