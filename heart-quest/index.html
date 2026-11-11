@@ -14,7 +14,7 @@
 <title>Heart Quest</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Fredoka:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Caveat:wght@500;700&family=Fredoka:wght@400;500;600;700&display=swap">
 <style>
 /* Heart Quest: a level-up life game dressed as a romance chase.
    Every good habit earns her affection. 5,000 points wins her heart, and the
@@ -238,6 +238,26 @@ input[type=text] { width: 100%; background: var(--card-2); color: var(--text); b
 .win .msg { color: var(--text); font-size: 16px; max-width: 360px; line-height: 1.5; margin: 6px 0 4px; }
 .win .next { color: var(--gold); font-weight: 600; margin: 8px 0 18px; }
 .win .bigBtn { max-width: 340px; }
+.letterBtn { display: block; width: 100%; max-width: 340px; margin: 0 0 12px; padding: 13px; border-radius: 14px; border: 2px solid #fff; background: rgba(255,255,255,.14); color: #fff; font-family: inherit; font-size: 18px; font-weight: 600; cursor: pointer; animation: nudge 1.8s ease-in-out infinite; }
+@keyframes nudge { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+.girlRow.won { cursor: pointer; }
+.girlRow .letterLink { display: inline-block; margin-top: 5px; font-size: 12px; font-weight: 600; color: var(--gold); }
+#letterModal { z-index: 48; }
+.paper { position: relative; width: 100%; max-width: 420px; max-height: calc(100vh - 32px); overflow-y: auto; padding: 22px 22px 18px; border-radius: 6px; color: #4a2433;
+    background: repeating-linear-gradient(180deg, transparent 0 31px, rgba(180,120,140,.28) 31px 32px), linear-gradient(180deg, #fffaf0, #fdeedd);
+    box-shadow: 0 20px 50px rgba(0,0,0,.6); animation: unfold .45s ease-out; }
+@keyframes unfold { from { transform: scaleY(.2) translateY(-30px); opacity: 0; } }
+.paper::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--rose); border-radius: 6px 0 0 6px; }
+.paperHead { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.paperHead .av { width: 54px; height: 64px; flex: none; border-radius: 10px; overflow: hidden; background: radial-gradient(circle at 50% 35%, #ffd6e8, #c98ad8 60%, #6a3a9a); }
+.paperHead .av svg { width: 54px; height: 64px; display: block; }
+.paperHead .from { font-family: 'Fredoka', sans-serif; font-size: 12px; color: #a06a80; line-height: 1.4; }
+.paperHead .from b { display: block; font-size: 15px; color: #4a2433; }
+.letterText { font-family: 'Caveat', 'Segoe Script', 'Bradley Hand', cursive; font-size: 23px; line-height: 32px; }
+.letterText p { margin: 0 0 32px; }
+.letterText .sign { text-align: right; font-weight: 700; font-size: 27px; color: var(--rose-dark); margin-bottom: 8px; }
+.paper .seal { position: absolute; right: 16px; top: 14px; font-size: 26px; transform: rotate(12deg); }
+.paper .linkBtn { color: #a06a80; font-family: 'Fredoka', sans-serif; }
 .confetti { position: absolute; top: -40px; font-size: 22px; pointer-events: none; animation: fall linear forwards; }
 @keyframes fall { to { transform: translateY(110vh) rotate(540deg); } }
 
@@ -342,6 +362,16 @@ input[type=text] { width: 100%; background: var(--card-2); color: var(--text); b
     </div>
 </div>
 
+<!-- Love letter -->
+<div class="modal" id="letterModal" role="dialog" aria-modal="true" aria-labelledby="letterFrom">
+    <div class="paper">
+        <div class="seal">💌</div>
+        <div class="paperHead"><div class="av" id="letterAv"></div><div class="from"><b id="letterFrom"></b><span id="letterDate"></span></div></div>
+        <div class="letterText" id="letterText"></div>
+        <button class="linkBtn" id="closeLetter">Close letter</button>
+    </div>
+</div>
+
 <!-- Settings modal -->
 <div class="modal" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="setTitle">
     <div class="sheet">
@@ -362,6 +392,7 @@ input[type=text] { width: 100%; background: var(--card-2); color: var(--text); b
     <div class="yes" id="winYes">She's yours!</div>
     <div class="msg" id="winMsg"></div>
     <div class="next" id="winNext"></div>
+    <button class="letterBtn" id="winLetter">💌 Read her letter</button>
     <button class="bigBtn" id="winBtn">Unlock next level →</button>
 </div>
 
@@ -423,6 +454,61 @@ const GIRLS = [
       lines: ['I\'ve been waiting for this version of you.', 'Everything led you here.', 'Forever sounds nice.'] }
 ];
 
+const LETTERS = [
+    ["Dear you,",
+     "I still remember when you were just the boy I waved at from my balcony. Then something changed. {noticed} I don't think you knew I was watching, but I was.",
+     "It took you {days} to win me over. Honestly? You had me a little earlier than that. I just wanted to see if you'd keep going. {flags}",
+     "Come over for chai this evening. Amma already likes you.",
+     "Yours, {name}"],
+    ["Hi. Um.",
+     "I've rewritten this letter four times, so please don't laugh. I used to read about people like you in novels and assume the authors made them up.",
+     "{noticed} I pretended to be reading, but I was looking over the top of my book the whole time. It took {days}. I counted, obviously. {flags}",
+     "There's an empty seat next to mine at the library. It's yours now.",
+     "{name}  (P.S. I underlined my favourite line for you.)"],
+    ["Okay, listen.",
+     "I'm bad at the mushy stuff, so I'll say it straight. Plenty of guys talk big. You showed up. {noticed} That's what got me.",
+     "{days}. Not bad. I'd have made you work longer, but you didn't quit once, and I respect that more than anything. {flags}",
+     "Leg day is Thursday. Don't be late, boyfriend.",
+     "{name} 💪"],
+    ["Hey.",
+     "I don't write letters. I'm making an exception, so don't make it weird. I've drawn you eleven times without telling you.",
+     "{noticed} That's the version of you I kept sketching. It took you {days}. I noticed on day two. I just didn't say. {flags}",
+     "Come to the studio. Bring coffee. Stay.",
+     "{name}"],
+    ["Hiii!",
+     "I tried to write you a song but it isn't finished, so you get a letter instead! Every time I looked out from the stage, I looked for you.",
+     "{noticed} Knowing that made me sing louder. {days}, and now you're stuck with me. No refunds! {flags}",
+     "The front row is yours forever.",
+     "♪ {name} ♪"],
+    ["To my favourite patient,",
+     "I'm told letters are good for the heart. As a doctor, I approve. Here are my observations.",
+     "{noticed} My conclusion: a man who takes care of himself can be trusted to take care of someone else. It took {days}, and my heart rate has not been normal since. {flags}",
+     "Prescription: dinner with me, twice a week, for the foreseeable future.",
+     "Dr. {name}"],
+    ["Hey you!",
+     "I'm writing this on a train, so sorry about the handwriting. I've met people in a lot of places, and most of them only talk about the life they want.",
+     "{noticed} You went and built yours. {days}! That's faster than my last visa. {flags}",
+     "Pack a bag. I have two tickets and I'm not telling you where.",
+     "{name} ✈"],
+    ["My dear,",
+     "A dancer learns to read people by how they move. I read you long before you ever spoke to me.",
+     "{noticed} Discipline like that has a rhythm, and I found myself keeping time with it. {days}, and you never once stepped on my feet. {flags}",
+     "The next dance is yours. So is every one after it.",
+     "{name}"],
+    ["To you,",
+     "I don't put things in writing unless I mean them, so consider this binding. I've turned down men with more money and bigger titles than you.",
+     "{noticed} None of them did that. I expected you to give up early. It took you {days}. I'm rarely wrong, and I'm glad I was. {flags}",
+     "Friday. Eight o'clock. This time, I'm paying.",
+     "{name}"],
+    ["My love,",
+     "I've waited a long time to write this. There were nine hearts before mine, and every one of them made you a little better.",
+     "{noticed} That is who I fell for: the man you built, one day at a time. It took {days} to reach me, but really it took all of it. {flags}",
+     "You didn't win me. You became someone worth staying for. So stay.",
+     "Forever, {name}"]
+];
+const NOTICED = { gym: 'hit the gym', read: 'sit down with a book', dress: 'show up looking sharp', learn: 'learn something new', talk: 'make the first move',
+    food: 'eat clean', sleep: 'get to bed on time', scroll: 'put your phone down', money: 'put in the work on your career', calm: 'take a quiet moment for yourself' };
+
 const STAGES = [
     { at: 0,    nm: 'Stranger',     ic: '💭', lines: ['Do I know you?', '…', 'Sorry, I\'m kind of busy.'] },
     { at: 500,  nm: 'Noticed you',  ic: '👀', lines: ['Oh, hi. You again?', 'You seem… interesting.'] },
@@ -443,6 +529,7 @@ const fresh = () => ({
     won: [], names: {}, log: [],
     day: { date: today(), done: {}, charm: 0, bonus: false },
     streak: { last: null, n: 0 },
+    tally: {},                              // what you did while chasing the current woman; saved into her letter
     sound: true, buzz: true
 });
 function load() {
@@ -906,12 +993,14 @@ function toggleQuest(id) {
     const q = QMAP[id];
     if (S.day.done[id] != null) {
         const was = S.day.done[id]; delete S.day.done[id];
+        S.tally[id] = Math.max(0, (S.tally[id] || 0) - 1);
         award(-was, `↩ Undid: ${q.nm}`, true);
         toast('Undone.');
         return;
     }
     const pts = questPts(q);
     S.day.done[id] = pts;
+    S.tally[id] = (S.tally[id] || 0) + 1;
     const fav = girl().likes.includes(id) && !finished();
     award(pts, `${q.ic} ${q.nm}${fav ? ' (she loves this ×2)' : ''}`);
     chime(); buzz(25); react('hop');
@@ -1021,6 +1110,7 @@ $('flags').addEventListener('click', e => {
     const b = e.target.closest('.flag'); if (!b) return;
     const f = FLAGS[+b.dataset.f];
     $('flagModal').classList.remove('open');
+    S.tally.flags = (S.tally.flags || 0) + 1;
     award(f.pts, `🚩 ${f.nm}`);
     chime(false); buzz([60, 40, 60]); react('sad'); sayHer(f.say);
     toast('Owned it. Now make it right tomorrow.');
@@ -1037,7 +1127,8 @@ function winHer() {
     winning = true;
     const i = S.level, g = GIRLS[i];
     const days = Math.max(1, Math.ceil((Date.now() - S.startedAt) / 864e5));
-    S.won.push({ i, name: nameOf(i), at: Date.now(), days });
+    S.won.push({ i, name: nameOf(i), at: Date.now(), days, tally: S.tally });
+    S.tally = {};
     S.points -= GOAL;                      // extra points carry over to the next girl
     S.level++;
     S.startedAt = Date.now();
@@ -1080,6 +1171,37 @@ $('winBtn').onclick = () => {
     if (!finished()) setTimeout(() => sayHer(STAGES[stageOf(S.points)].lines[0]), 1100);
     if (S.points >= GOAL) setTimeout(winHer, 1500);
 };
+
+/* ============================================================
+   LOVE LETTERS: one from each woman, filled in with what you really did
+   ============================================================ */
+function letterHTML(w) {
+    const t = w.tally || {};
+    const top = Object.keys(NOTICED).filter(k => t[k] > 0).sort((a, b) => t[b] - t[a])[0];
+    const times = n => n === 1 ? 'once' : n === 2 ? 'twice' : `${n} times`;
+    const noticed = top ? `I saw you ${NOTICED[top]}${t[top] >= 3 ? ' ' + times(t[top]) : ''} while you were chasing me.` : 'I saw how hard you worked on yourself while you were chasing me.';
+    const flags = t.flags ? `(And yes, I saw the ${t.flags === 1 ? 'red flag' : t.flags + ' red flags'}. I forgave you.)` : '';
+    const days = w.days === 1 ? 'one day' : `${w.days} days`;
+    const fill = x => esc(x.replace('{noticed}', noticed).replace('{days}', days).replace('{flags}', flags).replace('{name}', w.name).replace(/\s+/g, ' ').trim());
+    const L = LETTERS[w.i].slice();
+    if (w.i === GIRLS.length - 1 && w.name === GIRLS[w.i].name) L[L.length - 1] = 'Forever yours.';
+    // a sentence can start with the day count, so capitalise it
+    const cap = x => x.replace(/(^|[.!?] )([a-z])/g, (m, a, b) => a + b.toUpperCase());
+    return L.map((p, k) => `<p${k === L.length - 1 ? ' class="sign"' : ''}>${cap(fill(p))}</p>`).join('');
+}
+function openLetter(i) {
+    const w = S.won.find(x => x.i === i); if (!w) return;
+    $('letterAv').innerHTML = girlPortrait(GIRLS[i]);
+    $('letterFrom').textContent = `From ${w.name}`;
+    $('letterDate').textContent = `${GIRLS[i].title} · ${new Date(w.at).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}`;
+    $('letterText').innerHTML = letterHTML(w);
+    $('letterModal').classList.add('open');
+    $('letterModal').querySelector('.paper').scrollTop = 0;
+}
+$('closeLetter').onclick = () => $('letterModal').classList.remove('open');
+$('winLetter').onclick = () => { const w = S.won[S.won.length - 1]; if (w) openLetter(w.i); };
+$('hall').addEventListener('click', e => { const r = e.target.closest('[data-letter]'); if (r) openLetter(+r.dataset.letter); });
+$('hall').addEventListener('keydown', e => { if (e.key !== 'Enter' && e.key !== ' ') return; const r = e.target.closest('[data-letter]'); if (r) { e.preventDefault(); openLetter(+r.dataset.letter); } });
 
 /* ============================================================
    RENDER
@@ -1135,8 +1257,8 @@ function renderHall() {
                   : `Level ${i + 1} · ${g.title}`;
         const tag = w ? '❤ Together' : now ? 'Chasing' : '🔒 Locked';
         const bar = now ? `<div class="mini"><i style="width:${Math.min(100, S.points / GOAL * 100)}%"></i></div>` : '';
-        return `<div class="girlRow ${cls}"><div class="av">${girlPortrait(g)}</div>
-            <div class="info"><div class="t">${esc(nm)}</div><div class="q">${sub}</div>${bar}</div><span class="st">${tag}</span></div>`;
+        return `<div class="girlRow ${cls}"${w ? ` data-letter="${i}" role="button" tabindex="0" aria-label="Read ${esc(nm)}'s letter"` : ''}><div class="av">${girlPortrait(g)}</div>
+            <div class="info"><div class="t">${esc(nm)}</div><div class="q">${sub}</div>${bar}${w ? '<span class="letterLink">💌 Read her letter</span>' : ''}</div><span class="st">${tag}</span></div>`;
     }).join('');
 }
 function renderLog() {
