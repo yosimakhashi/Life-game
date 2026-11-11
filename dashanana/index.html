@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d0907">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dashanana">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Dashanana</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Alegreya:ital,wght@0,400;0,600;1,400&family=Alegreya+Sans+SC:wght@500;700&display=swap">
+<style>
+/* Dashanana: a character development system built on Ravana's strengths.
+   Each of his ten heads is a trait with its own skill tree (levels 0-10).
+   Daily deeds feed XP into a head; his downfalls (the Shadows) drain it.
+   Layout: rank header, the ten-head crown, head cards, shadows, chronicle. */
+:root {
+    --bg: #0d0907;
+    --panel: #1a1310;
+    --panel-2: #231915;
+    --line: #3b2a22;
+    --gold: #e0b84c;
+    --gold-hi: #f6dc8a;
+    --gold-dim: #8f7330;
+    --blood: #b8322b;
+    --blood-hi: #e2544a;
+    --text: #f1e6d4;
+    --dim: #a8978a;
+    --ok: #7fd1a8;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; }
+body {
+    min-height: 100vh;
+    background-color: var(--bg);
+    background-image:
+        radial-gradient(ellipse at 50% -5%, rgba(224, 184, 76, 0.22), transparent 55%),
+        radial-gradient(ellipse at 50% 110%, rgba(184, 50, 43, 0.18), transparent 55%);
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: 'Alegreya', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.45;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+.wrap { max-width: 640px; margin: 0 auto; padding: 14px 16px 60px; }
+a { color: var(--gold); }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+.topbar { display: flex; justify-content: space-between; align-items: center; font-family: 'Alegreya Sans SC', sans-serif; font-size: 14px; }
+.topbar a { text-decoration: none; color: var(--dim); }
+
+h1 {
+    font-family: 'Cinzel', serif; font-weight: 900; letter-spacing: 4px;
+    text-align: center; margin: 10px 0 0; font-size: clamp(30px, 9vw, 44px);
+    background: linear-gradient(180deg, var(--gold-hi), var(--gold) 55%, var(--gold-dim));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.sub { text-align: center; color: var(--dim); font-style: italic; margin: 2px 0 14px; font-size: 15px; }
+h2 {
+    font-family: 'Cinzel', serif; font-weight: 800; letter-spacing: 2px; font-size: 17px;
+    color: var(--gold); margin: 26px 0 10px; display: flex; align-items: center; gap: 10px;
+}
+h2::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--gold-dim), transparent); }
+
+/* rank card */
+.rank { background: linear-gradient(180deg, var(--panel-2), var(--panel)); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+.rankTitle { font-family: 'Cinzel', serif; font-weight: 800; font-size: 22px; color: var(--gold-hi); text-align: center; }
+.rankNext { text-align: center; color: var(--dim); font-size: 14px; margin-bottom: 8px; }
+.bar { height: 10px; background: #0a0705; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--gold-dim), var(--gold-hi)); transition: width .5s; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; }
+.stat { text-align: center; background: #0f0a08; border: 1px solid var(--line); border-radius: 10px; padding: 7px 2px; }
+.stat b { display: block; font-family: 'Cinzel', serif; font-size: 18px; color: var(--gold-hi); }
+.stat span { font-family: 'Alegreya Sans SC', sans-serif; font-size: 11px; color: var(--dim); letter-spacing: .5px; }
+
+/* crown of ten heads */
+.crown { margin: 14px 0 0; }
+.crown svg { width: 100%; height: auto; display: block; overflow: visible; }
+.crown .head { cursor: pointer; }
+.crown .head:focus { outline: none; }
+.crown .head:focus-visible circle.ring { stroke-width: 3; }
+.crownHint { text-align: center; font-size: 13px; color: var(--dim); margin-top: 2px; }
+
+/* head cards */
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.card {
+    text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 10px; display: flex; flex-direction: column; gap: 6px; position: relative; overflow: hidden;
+}
+.card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--c); opacity: .85; }
+.cardTop { display: flex; align-items: center; gap: 8px; }
+.cardIcon { font-size: 22px; width: 32px; text-align: center; }
+.cardName { font-family: 'Cinzel', serif; font-weight: 800; font-size: 14px; line-height: 1.15; }
+.cardEn { font-size: 12px; color: var(--dim); font-family: 'Alegreya Sans SC', sans-serif; }
+.cardLv { margin-left: auto; font-family: 'Cinzel', serif; font-weight: 900; font-size: 20px; color: var(--c); }
+.card .bar { height: 6px; }
+.card .bar > i { background: var(--c); }
+.cardMeta { display: flex; justify-content: space-between; font-size: 12px; color: var(--dim); }
+.card.todayDone .cardMeta em { color: var(--ok); font-style: normal; }
+
+/* shadows */
+.shadowIntro { color: var(--dim); font-size: 14px; margin: -2px 0 10px; }
+.meter { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+.meterTop { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.meterState { font-family: 'Cinzel', serif; font-weight: 800; }
+.meter .bar > i { background: linear-gradient(90deg, #6b1a16, var(--blood-hi)); }
+.meterNote { font-size: 13px; color: var(--dim); margin-top: 6px; }
+.flaws { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.flaw {
+    display: flex; align-items: center; gap: 10px; text-align: left; background: #170d0b;
+    border: 1px solid #47201b; border-radius: 10px; padding: 9px 10px;
+}
+.flaw:active { background: #2a1210; }
+.flawIcon { font-size: 20px; width: 28px; text-align: center; }
+.flawName { font-family: 'Cinzel', serif; font-weight: 800; font-size: 14px; color: #f0b7ae; }
+.flawLesson { font-size: 13px; color: var(--dim); }
+.flawCost { margin-left: auto; font-family: 'Cinzel', serif; color: var(--blood-hi); font-weight: 800; white-space: nowrap; font-size: 14px; }
+
+/* chronicle */
+.log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.log li { display: flex; gap: 8px; font-size: 14px; padding: 6px 10px; background: var(--panel); border-radius: 8px; border-left: 3px solid var(--c, var(--gold-dim)); }
+.log li .t { color: var(--dim); font-size: 12px; white-space: nowrap; min-width: 62px; }
+.log li .x { margin-left: auto; font-weight: 600; white-space: nowrap; }
+.log li .x.pos { color: var(--ok); }
+.log li .x.neg { color: var(--blood-hi); }
+.empty { color: var(--dim); font-style: italic; font-size: 14px; }
+
+.tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.btn {
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 9px 14px;
+    font-family: 'Alegreya Sans SC', sans-serif; font-size: 14px; letter-spacing: .5px;
+}
+.btn.gold { background: linear-gradient(180deg, var(--gold), var(--gold-dim)); color: #1a1105; border-color: var(--gold-dim); font-weight: 700; }
+.btn.danger { color: var(--blood-hi); border-color: #47201b; }
+
+/* sheet */
+.sheetBack {
+    position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 20; display: none;
+    align-items: flex-end; justify-content: center;
+}
+.sheetBack.open { display: flex; }
+.sheet {
+    width: 100%; max-width: 640px; max-height: 92vh; overflow-y: auto; background: var(--panel);
+    border: 1px solid var(--line); border-bottom: 0; border-radius: 18px 18px 0 0;
+    padding: 16px 16px calc(24px + env(safe-area-inset-bottom)); animation: up .22s ease-out;
+}
+@keyframes up { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+.sheetHead { display: flex; align-items: center; gap: 10px; }
+.sheetIcon { font-size: 34px; }
+.sheetName { font-family: 'Cinzel', serif; font-weight: 900; font-size: 22px; color: var(--c); line-height: 1.1; }
+.sheetEn { color: var(--dim); font-family: 'Alegreya Sans SC', sans-serif; font-size: 14px; }
+.close { margin-left: auto; background: none; border: 0; font-size: 26px; color: var(--dim); padding: 4px 8px; }
+.lore { font-style: italic; color: #d9c9b3; border-left: 2px solid var(--c); padding: 2px 0 2px 10px; margin: 12px 0; font-size: 15px; }
+.lvLine { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 4px; }
+.lvLine b { font-family: 'Cinzel', serif; color: var(--c); }
+.sheet .bar > i { background: var(--c); }
+.ladder { display: flex; justify-content: space-between; margin: 12px 2px 4px; position: relative; }
+.ladder::before { content: ""; position: absolute; left: 8px; right: 8px; top: 50%; height: 2px; background: var(--line); }
+.node {
+    position: relative; width: 22px; height: 22px; border-radius: 50%; background: #0f0a08;
+    border: 2px solid var(--line); display: grid; place-items: center; font-size: 10px;
+    font-family: 'Cinzel', serif; color: var(--dim);
+}
+.node.on { background: var(--c); border-color: var(--c); color: #120c08; font-weight: 900; }
+.tierNames { display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); }
+.sheet h3 { font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 1.5px; color: var(--gold); margin: 18px 0 8px; }
+.deeds { display: flex; flex-direction: column; gap: 6px; }
+.deed {
+    display: flex; align-items: center; gap: 10px; background: #0f0a08; border: 1px solid var(--line);
+    border-radius: 10px; padding: 10px; text-align: left; width: 100%;
+}
+.deed .box { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--c); flex-shrink: 0; display: grid; place-items: center; font-size: 14px; color: #120c08; }
+.deed.done { border-color: var(--c); background: color-mix(in srgb, var(--c) 12%, #0f0a08); }
+.deed.done .box { background: var(--c); }
+.deed .dx { margin-left: auto; color: var(--c); font-weight: 600; font-size: 14px; white-space: nowrap; }
+.deedRow { display: flex; gap: 6px; align-items: stretch; }
+.deedRow .deed { flex: 1; }
+.del { background: #0f0a08; border: 1px solid var(--line); border-radius: 10px; color: var(--dim); padding: 0 12px; font-size: 18px; }
+.addForm { display: flex; gap: 6px; margin-top: 8px; }
+.addForm input, .addForm select {
+    background: #0f0a08; border: 1px solid var(--line); border-radius: 10px; color: var(--text);
+    font: inherit; font-size: 15px; padding: 9px 10px; min-width: 0;
+}
+.addForm input { flex: 1; }
+
+/* toast */
+.toast {
+    position: fixed; left: 50%; top: calc(14px + env(safe-area-inset-top)); transform: translate(-50%, -140%);
+    background: linear-gradient(180deg, #2b1f12, #1a120b); border: 1px solid var(--gold); color: var(--gold-hi);
+    padding: 10px 16px; border-radius: 12px; z-index: 40; font-family: 'Cinzel', serif; font-weight: 800;
+    text-align: center; max-width: calc(100% - 32px); transition: transform .3s; box-shadow: 0 6px 24px rgba(0,0,0,.6);
+}
+.toast.show { transform: translate(-50%, 0); }
+.toast.bad { border-color: var(--blood-hi); color: #f0b7ae; background: linear-gradient(180deg, #2a1210, #170b09); }
+.toast small { display: block; font-family: 'Alegreya', serif; font-weight: 400; font-size: 13px; color: var(--text); }
+
+@media (max-width: 380px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+    <div class="topbar">
+        <a href="../index.html">← Main menu</a>
+        <span id="today"></span>
+    </div>
+
+    <h1>DASHANANA</h1>
+    <p class="sub">Take Ravana's greatness. Leave his downfall.</p>
+
+    <section class="rank">
+        <div class="rankTitle" id="rankTitle">Seeker</div>
+        <div class="rankNext" id="rankNext"></div>
+        <div class="bar"><i id="rankBar"></i></div>
+        <div class="stats">
+            <div class="stat"><b id="sLevel">0</b><span>LEVEL /100</span></div>
+            <div class="stat"><b id="sXp">0</b><span>TOTAL XP</span></div>
+            <div class="stat"><b id="sToday">0</b><span>TODAY XP</span></div>
+            <div class="stat"><b id="sStreak">0</b><span>DAY STREAK</span></div>
+        </div>
+    </section>
+
+    <div class="crown">
+        <svg id="crown" viewBox="0 0 360 215" role="group" aria-label="The ten heads"></svg>
+        <div class="crownHint">Tap a head to train it. A head lights up as it grows.</div>
+    </div>
+
+    <h2>THE TEN HEADS</h2>
+    <div class="grid" id="grid"></div>
+
+    <h2>SHADOWS OF LANKA</h2>
+    <p class="shadowIntro">These are the things that brought Ravana down. Log one honestly when it shows up in you. It costs XP from the head it wounds.</p>
+    <div class="meter">
+        <div class="meterTop">
+            <span class="meterState" id="meterState">Lanka stands</span>
+            <span class="cardEn" id="meterCount">0 in 7 days</span>
+        </div>
+        <div class="bar" style="margin-top:6px"><i id="meterBar"></i></div>
+        <div class="meterNote" id="meterNote"></div>
+    </div>
+    <div class="flaws" id="flaws"></div>
+
+    <h2>CHRONICLE</h2>
+    <ul class="log" id="log"></ul>
+
+    <div class="tools">
+        <button class="btn" id="exportBtn">Save backup</button>
+        <button class="btn" id="importBtn">Restore backup</button>
+        <button class="btn danger" id="resetBtn">Reset</button>
+        <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </div>
+</div>
+
+<div class="sheetBack" id="sheetBack">
+    <div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const STORE = 'dashanana-v1';
+const MAX_LV = 10;
+
+// Ten heads. Tradition says Ravana's ten heads stood for the four Vedas and
+// six Shastras he mastered; here each one is a strength of his to build.
+const HEADS = [
+    { id: 'gyan', name: 'Gyan', en: 'Scholarship', icon: '📜', color: '#e0b84c',
+      lore: 'He mastered the four Vedas and six Shastras. Legend says that is why he carried ten heads.',
+      deeds: [['Studied one focused hour', 20], ['Read 20 pages', 10], ['Learned something and explained it', 10]] },
+    { id: 'tapas', name: 'Tapas', en: 'Discipline', icon: '🔥', color: '#e2683a',
+      lore: 'His penance was so fierce he cut off his own heads, one by one, until Brahma appeared to grant his boon.',
+      deeds: [['Woke on time, no snooze', 10], ['Did the hardest task first', 20], ['Cold shower or fast', 10]] },
+    { id: 'bhakti', name: 'Bhakti', en: 'Devotion', icon: '🕉️', color: '#c46ad8',
+      lore: 'Pinned beneath Kailasa, he sang the Shiva Tandava Stotram. Shiva was moved and blessed him.',
+      deeds: [['Meditated 10+ minutes', 15], ['Prayer, chanting or gratitude', 10], ['An hour with no phone', 10]] },
+    { id: 'kala', name: 'Kala', en: 'Art & Music', icon: '🎻', color: '#5fb6d9',
+      lore: 'A master of the veena. The Ravanahatha, one of the oldest bowed instruments, still carries his name.',
+      deeds: [['Practised an instrument or art', 20], ['Made something new', 15], ['Listened to music with full attention', 5]] },
+    { id: 'raja', name: 'Raja Dharma', en: 'Leadership', icon: '👑', color: '#f2d06b',
+      lore: 'Under his rule Lanka became a city of gold, and its people lived in plenty.',
+      deeds: [['Took charge when it was needed', 20], ['Planned and ran my day', 10], ['Helped someone else grow', 15]] },
+    { id: 'veerya', name: 'Veerya', en: 'Valor', icon: '⚔️', color: '#d8434a',
+      lore: 'He took Lanka from Kubera and faced gods and kings without fear.',
+      deeds: [['Trained my body', 20], ['Faced something I fear', 20], ['Pushed past my limit', 10]] },
+    { id: 'kula', name: 'Kula Raksha', en: 'Family Loyalty', icon: '🛡️', color: '#6fbf73',
+      lore: 'When his sister Shurpanakha was wounded, he went to war for her without counting the cost.',
+      deeds: [['Real time with family', 15], ['Helped or protected a loved one', 20], ['Called someone I care about', 10]] },
+    { id: 'swabhimana', name: 'Swabhimana', en: 'Self-Respect', icon: '🦁', color: '#e89a3c',
+      lore: 'Even facing defeat he would not bow. He fell standing as himself.',
+      deeds: [['Kept a promise to myself', 15], ['Said no when I needed to', 15], ['Groomed and carried myself well', 10]] },
+    { id: 'vaidya', name: 'Vaidya', en: 'Healing', icon: '🌿', color: '#7fd1a8',
+      lore: 'Tradition credits him with works on Ayurveda and medicine, among them the Ravana Samhita.',
+      deeds: [['Ate clean today', 15], ['Slept 7+ hours', 10], ['Drank enough water', 5]] },
+    { id: 'jyotisha', name: 'Jyotisha', en: 'Foresight', icon: '🌌', color: '#8f9cf0',
+      lore: 'A master astrologer, he is said to have ordered the planets into place for his son’s birth.',
+      deeds: [['Planned the week ahead', 15], ['Saved or invested money', 15], ['Reviewed my goals', 10]] }
+];
+
+// Shadows: the flaws that undid him. Each wounds the head it betrays.
+const FLAWS = [
+    { id: 'ahankara', name: 'Ahankara', en: 'Arrogance', icon: '🗿', cost: 20, head: 'swabhimana',
+      lesson: 'Pride turned his self-respect into blindness.' },
+    { id: 'kama', name: 'Kama', en: 'Lust', icon: '🥀', cost: 25, head: 'tapas',
+      lesson: 'Desire for Sita undid a lifetime of penance.' },
+    { id: 'krodha', name: 'Krodha', en: 'Anger', icon: '🌋', cost: 20, head: 'raja',
+      lesson: 'In anger he threw out Vibhishana, his wisest brother.' },
+    { id: 'deaf', name: 'Deaf to Counsel', en: 'Ignoring good advice', icon: '🙉', cost: 15, head: 'jyotisha',
+      lesson: 'Vibhishana, Mandodari and Kumbhakarna all warned him. He would not listen.' },
+    { id: 'lobha', name: 'Lobha', en: 'Greed & Envy', icon: '🪙', cost: 15, head: 'kula',
+      lesson: 'Wanting what was not his dragged his whole family into ruin.' }
+];
+
+const TIERS = ['Dormant', 'Stirring', 'Kindled', 'Trained', 'Tempered', 'Proven', 'Adept', 'Master', 'Exalted', 'Radiant', 'Supreme'];
+
+// Rank by the sum of all head levels (0-100).
+const RANKS = [
+    [0, 'Seeker'], [5, 'Rakshasa Initiate'], [15, 'Warrior of Lanka'], [30, 'Scholar-Warrior'],
+    [45, 'Lord of the Golden City'], [60, 'Lankeshwara'], [80, 'Trilokajayi'], [100, 'Dashanana']
+];
+
+// Cumulative XP to reach level n: 50, 150, 300 ... 2750 at level 10.
+const need = n => 25 * n * (n + 1);
+function levelOf(xp) { let l = 0; while (l < MAX_LV && xp >= need(l + 1)) l++; return l; }
+
+const $ = id => document.getElementById(id);
+const headById = id => HEADS.find(h => h.id === id);
+
+function dayKey(d = new Date()) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function fresh() {
+    return { xp: Object.fromEntries(HEADS.map(h => [h.id, 0])), done: {}, custom: {}, shadows: [], log: [] };
+}
+function load() {
+    try {
+        const s = JSON.parse(localStorage.getItem(STORE));
+        if (s && s.xp) {
+            const f = fresh();
+            return { ...f, ...s, xp: { ...f.xp, ...s.xp } };
+        }
+    } catch (e) {}
+    return fresh();
+}
+let S = load();
+function save() { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} }
+
+function deedsOf(h) {
+    const base = h.deeds.map((d, i) => ({ key: h.id + ':b' + i, name: d[0], xp: d[1], custom: false }));
+    const own = (S.custom[h.id] || []).map(c => ({ key: h.id + ':' + c.id, name: c.name, xp: c.xp, custom: true, id: c.id }));
+    return base.concat(own);
+}
+
+function addLog(entry) {
+    S.log.unshift({ t: Date.now(), ...entry });
+    if (S.log.length > 200) S.log.length = 200;
+}
+
+function gainXp(headId, amount) {
+    const before = levelOf(S.xp[headId]);
+    S.xp[headId] = Math.max(0, S.xp[headId] + amount);
+    const after = levelOf(S.xp[headId]);
+    return { before, after };
+}
+
+function rankOf(total) {
+    let i = 0;
+    while (i + 1 < RANKS.length && total >= RANKS[i + 1][0]) i++;
+    return i;
+}
+
+function toggleDeed(h, d) {
+    const today = dayKey();
+    const day = S.done[today] || (S.done[today] = {});
+    const rankBefore = rankOf(totalLevel());
+    if (day[d.key] != null) {
+        const xp = day[d.key];
+        delete day[d.key];
+        if (!Object.keys(day).length) delete S.done[today];
+        gainXp(h.id, -xp);
+        // drop the matching log entry from today so the chronicle stays honest
+        const i = S.log.findIndex(e => e.type === 'deed' && e.key === d.key && dayKey(new Date(e.t)) === today);
+        if (i >= 0) S.log.splice(i, 1);
+    } else {
+        day[d.key] = d.xp;
+        const { before, after } = gainXp(h.id, d.xp);
+        addLog({ type: 'deed', key: d.key, head: h.id, text: d.name, xp: d.xp });
+        if (after > before) toast(`${h.icon} ${h.name} reached level ${after}`, `${TIERS[after]}${after === MAX_LV ? ' — this head is fully awakened' : ''}`);
+        const rankAfter = rankOf(totalLevel());
+        if (rankAfter > rankBefore) setTimeout(() => toast('New rank: ' + RANKS[rankAfter][1], 'Lanka bows to your growth.'), 1800);
+    }
+    save();
+    render();
+    openHead(h.id);
+}
+
+function logShadow(f) {
+    const h = headById(f.head);
+    const { before, after } = gainXp(f.head, -f.cost);
+    S.shadows.push(Date.now());
+    addLog({ type: 'shadow', head: f.head, text: `${f.name} — ${f.en}`, xp: -f.cost });
+    save();
+    render();
+    toast(`${f.icon} ${f.name} wounds ${h.name}`, after < before ? `${h.name} fell to level ${after}. ${f.lesson}` : f.lesson, true);
+}
+
+function totalLevel() { return HEADS.reduce((a, h) => a + levelOf(S.xp[h.id]), 0); }
+function totalXp() { return HEADS.reduce((a, h) => a + S.xp[h.id], 0); }
+function todayXp() { const d = S.done[dayKey()] || {}; return Object.values(d).reduce((a, b) => a + b, 0); }
+
+function streak() {
+    const d = new Date();
+    if (!S.done[dayKey(d)]) d.setDate(d.getDate() - 1);
+    let n = 0;
+    while (S.done[dayKey(d)]) { n++; d.setDate(d.getDate() - 1); }
+    return n;
+}
+
+function shadowsThisWeek() {
+    const cut = Date.now() - 7 * 864e5;
+    S.shadows = S.shadows.filter(t => t > Date.now() - 60 * 864e5);
+    return S.shadows.filter(t => t > cut).length;
+}
+
+/* ---------- rendering ---------- */
+
+function renderRank() {
+    const lv = totalLevel();
+    const ri = rankOf(lv);
+    $('rankTitle').textContent = RANKS[ri][1];
+    if (ri + 1 < RANKS.length) {
+        const [from] = RANKS[ri], [to, name] = RANKS[ri + 1];
+        $('rankNext').textContent = `${to - lv} head level${to - lv === 1 ? '' : 's'} to ${name}`;
+        $('rankBar').style.width = ((lv - from) / (to - from) * 100) + '%';
+    } else {
+        $('rankNext').textContent = 'All ten heads awakened. You are Dashanana.';
+        $('rankBar').style.width = '100%';
+    }
+    $('sLevel').textContent = lv;
+    $('sXp').textContent = totalXp();
+    $('sToday').textContent = todayXp();
+    $('sStreak').textContent = streak();
+}
+
+function renderCrown() {
+    const svg = $('crown');
+    const NS = 'http://www.w3.org/2000/svg';
+    svg.innerHTML = '';
+    // shoulders and crown band
+    const base = document.createElementNS(NS, 'path');
+    base.setAttribute('d', 'M80 215 Q180 150 280 215 Z');
+    base.setAttribute('fill', '#1a1310'); base.setAttribute('stroke', '#3b2a22');
+    svg.appendChild(base);
+
+    // order heads so the main head (Raja Dharma) sits at the centre of the arc
+    const order = ['gyan', 'tapas', 'bhakti', 'kala', 'raja', 'veerya', 'kula', 'swabhimana', 'vaidya', 'jyotisha'];
+    const labels = [];
+    order.forEach((id, i) => {
+        const h = headById(id);
+        const lv = levelOf(S.xp[id]);
+        // equal steps around a circle keep every head the same distance apart
+        const a = Math.PI * (166 - i * 152 / 9) / 180;
+        const x = 180 + Math.cos(a) * 140;
+        const y = 192 - Math.sin(a) * 136;
+        const r = (i === 4 || i === 5) ? 19 : 17;
+        const g = document.createElementNS(NS, 'g');
+        g.setAttribute('class', 'head');
+        g.setAttribute('tabindex', '0');
+        g.setAttribute('role', 'button');
+        g.setAttribute('aria-label', `${h.name}, ${h.en}, level ${lv}`);
+        const lit = lv > 0;
+        const glow = lit ? 0.18 + lv * 0.08 : 0;
+        g.innerHTML = `
+            ${lit ? `<circle cx="${x}" cy="${y}" r="${r + 3 + lv * .5}" fill="${h.color}" opacity="${glow * 0.4}"/>` : ''}
+            <path d="M${x - r * .7} ${y - r * .72} l${r * .23} ${-r * .55} l${r * .24} ${r * .32} l${r * .23} ${-r * .5} l${r * .23} ${r * .5} l${r * .24} ${-r * .32} l${r * .23} ${r * .55} Z"
+                  fill="${lit ? h.color : '#3b2a22'}" opacity="${lit ? .55 + lv * .045 : 1}"/>
+            <circle class="ring" cx="${x}" cy="${y}" r="${r}" fill="#120c08" stroke="${lit ? h.color : '#4a3a30'}" stroke-width="2"/>
+            <circle cx="${x}" cy="${y}" r="${r - 2}" fill="${h.color}" opacity="${glow}"/>
+            <text x="${x}" y="${y + 1}" text-anchor="middle" dominant-baseline="middle" font-size="${r * .95}"
+                  style="filter:${lit ? 'none' : 'grayscale(1) brightness(.6)'}">${h.icon}</text>
+`;
+        // level badge, drawn last so a neighbour's glow never covers it
+        labels.push(`<circle cx="${x}" cy="${y + r}" r="8" fill="#120c08" stroke="${lit ? h.color : '#4a3a30'}"/>
+            <text x="${x}" y="${y + r + .5}" text-anchor="middle" dominant-baseline="middle" font-family="Cinzel, serif"
+                  font-weight="800" font-size="9" fill="${lit ? h.color : '#6b5a4e'}">${lv}</text>`);
+        g.addEventListener('click', () => openHead(id));
+        g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openHead(id); } });
+        svg.appendChild(g);
+    });
+    const lg = document.createElementNS(NS, 'g');
+    lg.setAttribute('pointer-events', 'none');
+    lg.innerHTML = labels.join('');
+    svg.appendChild(lg);
+}
+
+function renderGrid() {
+    const today = S.done[dayKey()] || {};
+    $('grid').innerHTML = '';
+    HEADS.forEach(h => {
+        const xp = S.xp[h.id], lv = levelOf(xp);
+        const lo = need(lv), hi = need(Math.min(lv + 1, MAX_LV));
+        const pct = lv >= MAX_LV ? 100 : (xp - lo) / (hi - lo) * 100;
+        const doneCount = Object.keys(today).filter(k => k.startsWith(h.id + ':')).length;
+        const b = document.createElement('button');
+        b.className = 'card' + (doneCount ? ' todayDone' : '');
+        b.style.setProperty('--c', h.color);
+        b.innerHTML = `
+            <div class="cardTop">
+                <div class="cardIcon">${h.icon}</div>
+                <div><div class="cardName">${h.name}</div><div class="cardEn">${h.en}</div></div>
+                <div class="cardLv">${lv}</div>
+            </div>
+            <div class="bar"><i style="width:${pct}%"></i></div>
+            <div class="cardMeta"><span>${TIERS[lv]}</span><em>${doneCount ? '✓ ' + doneCount + ' today' : ''}</em></div>`;
+        b.addEventListener('click', () => openHead(h.id));
+        $('grid').appendChild(b);
+    });
+}
+
+function renderShadows() {
+    const n = shadowsThisWeek();
+    const states = [
+        [0, 'Lanka stands', 'No shadows this week. Keep the gates shut.'],
+        [1, 'Smoke on the walls', 'A shadow got in. Name it, learn from it, move on.'],
+        [3, 'The gates are cracking', 'This is how it started for him. Train the heads these shadows wound.'],
+        [5, 'Lanka burns', 'Too many shadows this week. Stop, reset, and listen to your Vibhishana.']
+    ];
+    let s = states[0];
+    states.forEach(st => { if (n >= st[0]) s = st; });
+    $('meterState').textContent = s[1];
+    $('meterState').style.color = n >= 3 ? 'var(--blood-hi)' : n ? '#e89a3c' : 'var(--ok)';
+    $('meterCount').textContent = `${n} in 7 days`;
+    $('meterBar').style.width = Math.min(100, n / 5 * 100) + '%';
+    $('meterNote').textContent = s[2];
+
+    $('flaws').innerHTML = '';
+    FLAWS.forEach(f => {
+        const h = headById(f.head);
+        const b = document.createElement('button');
+        b.className = 'flaw';
+        b.innerHTML = `
+            <div class="flawIcon">${f.icon}</div>
+            <div><div class="flawName">${f.name} <span class="cardEn">· ${f.en}</span></div>
+            <div class="flawLesson">${f.lesson}</div></div>
+            <div class="flawCost">−${f.cost}<br><span class="cardEn">${h.name}</span></div>`;
+        b.addEventListener('click', () => {
+            if (confirm(`Log ${f.name} (${f.en})?\nThis takes ${f.cost} XP from ${h.name}.`)) logShadow(f);
+        });
+        $('flaws').appendChild(b);
+    });
+}
+
+function renderLog() {
+    const ul = $('log');
+    ul.innerHTML = '';
+    if (!S.log.length) { ul.innerHTML = '<li class="empty" style="border:0;background:none">Your story starts with the first deed.</li>'; return; }
+    S.log.slice(0, 30).forEach(e => {
+        const h = headById(e.head);
+        const d = new Date(e.t);
+        const li = document.createElement('li');
+        li.style.setProperty('--c', e.type === 'shadow' ? 'var(--blood)' : h.color);
+        const when = dayKey(d) === dayKey() ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                            : d.toLocaleDateString([], { day: 'numeric', month: 'short' });
+        li.innerHTML = `<span class="t">${when}</span><span>${h.icon} ${esc(e.text)}</span>
+            <span class="x ${e.xp >= 0 ? 'pos' : 'neg'}">${e.xp >= 0 ? '+' : ''}${e.xp}</span>`;
+        ul.appendChild(li);
+    });
+}
+
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+function render() {
+    $('today').textContent = new Date().toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
+    renderRank(); renderCrown(); renderGrid(); renderShadows(); renderLog();
+}
+
+/* ---------- head sheet ---------- */
+
+let openId = null;
+function openHead(id) {
+    openId = id;
+    const h = headById(id);
+    const xp = S.xp[id], lv = levelOf(xp);
+    const lo = need(lv), hi = need(Math.min(lv + 1, MAX_LV));
+    const pct = lv >= MAX_LV ? 100 : (xp - lo) / (hi - lo) * 100;
+    const today = S.done[dayKey()] || {};
+    const sheet = $('sheet');
+    sheet.style.setProperty('--c', h.color);
+    const wounds = FLAWS.filter(f => f.head === id).map(f => `${f.icon} ${f.name}`).join(', ');
+
+    let ladder = '';
+    for (let i = 1; i <= MAX_LV; i++) ladder += `<div class="node ${i <= lv ? 'on' : ''}" title="${TIERS[i]}">${i}</div>`;
+
+    sheet.innerHTML = `
+        <div class="sheetHead">
+            <div class="sheetIcon">${h.icon}</div>
+            <div><div class="sheetName">${h.name}</div><div class="sheetEn">${h.en} · ${TIERS[lv]}</div></div>
+            <button class="close" aria-label="Close">×</button>
+        </div>
+        <p class="lore">${h.lore}</p>
+        <div class="lvLine"><span>Level <b>${lv}</b> / ${MAX_LV}</span>
+            <span>${lv >= MAX_LV ? 'Fully awakened' : `${xp} / ${hi} XP`}</span></div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+        <div class="ladder">${ladder}</div>
+        <div class="tierNames"><span>${TIERS[1]}</span><span>${TIERS[5]}</span><span>${TIERS[10]}</span></div>
+        <h3>TODAY'S DEEDS</h3>
+        <div class="deeds" id="deeds"></div>
+        <form class="addForm" id="addForm">
+            <input id="addName" maxlength="60" placeholder="Add your own deed" autocomplete="off">
+            <select id="addXp" aria-label="XP">
+                <option value="5">+5</option><option value="10" selected>+10</option>
+                <option value="15">+15</option><option value="20">+20</option><option value="30">+30</option>
+            </select>
+            <button class="btn gold" type="submit">Add</button>
+        </form>
+        ${wounds ? `<p class="cardEn" style="margin-top:14px">Wounded by: ${wounds}</p>` : ''}`;
+
+    const list = sheet.querySelector('#deeds');
+    deedsOf(h).forEach(d => {
+        const done = today[d.key] != null;
+        const row = document.createElement('div');
+        row.className = 'deedRow';
+        const b = document.createElement('button');
+        b.className = 'deed' + (done ? ' done' : '');
+        b.innerHTML = `<span class="box">${done ? '✓' : ''}</span><span>${esc(d.name)}</span><span class="dx">+${d.xp}</span>`;
+        b.addEventListener('click', () => toggleDeed(h, d));
+        row.appendChild(b);
+        if (d.custom) {
+            const del = document.createElement('button');
+            del.className = 'del'; del.textContent = '×'; del.setAttribute('aria-label', 'Remove deed');
+            del.addEventListener('click', () => {
+                if (!confirm(`Remove "${d.name}"? XP you already earned stays.`)) return;
+                S.custom[id] = S.custom[id].filter(c => c.id !== d.id);
+                save(); openHead(id);
+            });
+            row.appendChild(del);
+        }
+        list.appendChild(row);
+    });
+
+    sheet.querySelector('.close').addEventListener('click', closeSheet);
+    sheet.querySelector('#addForm').addEventListener('submit', e => {
+        e.preventDefault();
+        const name = sheet.querySelector('#addName').value.trim();
+        if (!name) return;
+        (S.custom[id] || (S.custom[id] = [])).push({ id: 'c' + Date.now().toString(36), name, xp: +sheet.querySelector('#addXp').value });
+        save(); openHead(id);
+    });
+    $('sheetBack').classList.add('open');
+}
+function closeSheet() { $('sheetBack').classList.remove('open'); openId = null; }
+$('sheetBack').addEventListener('click', e => { if (e.target === $('sheetBack')) closeSheet(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && openId) closeSheet(); });
+
+/* ---------- toast ---------- */
+
+let toastTimer;
+function toast(title, sub, bad) {
+    const t = $('toast');
+    t.className = 'toast' + (bad ? ' bad' : '');
+    t.innerHTML = esc(title) + (sub ? `<small>${esc(sub)}</small>` : '');
+    requestAnimationFrame(() => t.classList.add('show'));
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+/* ---------- backup ---------- */
+
+$('exportBtn').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `dashanana-${dayKey()}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+$('importBtn').addEventListener('click', () => $('importFile').click());
+$('importFile').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+        const data = JSON.parse(await file.text());
+        if (!data || !data.xp) throw 0;
+        if (!confirm('Replace your current progress with this backup?')) return;
+        const f = fresh();
+        S = { ...f, ...data, xp: { ...f.xp, ...data.xp } };
+        save(); render(); toast('Backup restored');
+    } catch (err) { toast('That file is not a Dashanana backup', '', true); }
+    e.target.value = '';
+});
+$('resetBtn').addEventListener('click', () => {
+    if (!confirm('Erase all progress and start again?')) return;
+    if (!confirm('Really? This cannot be undone.')) return;
+    S = fresh(); save(); render();
+});
+
+render();
+// re-render after midnight so today's deeds clear
+setInterval(() => { const k = dayKey(); if (k !== render.lastDay) { render.lastDay = k; render(); } }, 60000);
+render.lastDay = dayKey();
+
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
