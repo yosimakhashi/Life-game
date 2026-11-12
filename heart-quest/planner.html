@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#140a12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Heart Quest Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Caveat:wght@500;700&family=Fredoka:wght@400;500;600;700&display=swap">
+<style>
+/* Heart Quest Planner: a to-do list and diary for any day. Ticking a task
+   sends +20 points to the woman you are chasing in Heart Quest. The planner
+   saves into its own storage; Heart Quest reads it and adds the points. */
+:root {
+    --bg: #140a12; --card: #1f1020; --card-2: #2a1529; --line: #43233f;
+    --text: #fbeaf2; --dim: #b897aa; --rose: #ff4f8b; --rose-dark: #a3164a;
+    --gold: #ffc861; --ok: #7be0a4; --bad: #ff6b6b; --gutter: 16px;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--text); }
+body { font-family: 'Fredoka', system-ui, sans-serif; min-height: 100vh; overflow-x: hidden; padding-bottom: env(safe-area-inset-bottom);
+    background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(255,79,139,.16), transparent 70%), var(--bg); }
+.wrap { max-width: 560px; margin: 0 auto; padding: 0 var(--gutter) 48px; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 0 6px; }
+.back { color: var(--dim); text-decoration: none; font-size: 14px; }
+.brand { font-family: 'Pacifico', cursive; font-size: 24px; }
+.brand span { color: var(--rose); }
+.spacer { width: 60px; }
+.card { background: linear-gradient(180deg, var(--card-2), var(--card)); border: 1px solid var(--line); border-radius: 16px; }
+
+/* day picker */
+.dayBar { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 8px; }
+.arrow { flex: none; width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--text); font-size: 18px; cursor: pointer; }
+.dayMid { flex: 1; text-align: center; min-width: 0; }
+.dayName { font-family: 'Pacifico', cursive; font-size: 24px; line-height: 1.2; }
+.dayDate { font-size: 13px; color: var(--dim); }
+.quick { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
+.pill { border: 1px solid var(--line); background: var(--card); color: var(--dim); font-family: inherit; font-size: 13px; padding: 6px 14px; border-radius: 20px; cursor: pointer; }
+.pill.on { background: var(--rose); border-color: var(--rose); color: #fff; }
+
+h2 { font-family: 'Pacifico', cursive; font-weight: 400; font-size: 24px; margin: 24px 0 2px; }
+h2 span { color: var(--rose); }
+.sub { color: var(--dim); font-size: 13px; margin-bottom: 10px; }
+
+/* tasks */
+.addRow { display: flex; gap: 8px; }
+input[type=text], textarea { width: 100%; background: var(--card-2); color: var(--text); border: 1px solid var(--line); padding: 11px 12px; font-family: inherit; font-size: 16px; border-radius: 12px; }
+input::placeholder, textarea::placeholder { color: var(--dim); opacity: .8; }
+.addBtn { flex: none; padding: 0 16px; border-radius: 12px; border: none; background: var(--rose); color: #fff; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: 0 3px 0 var(--rose-dark); }
+.tasks { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.task { display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 12px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); }
+.task .box { flex: none; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line); background: none; color: #fff; font-size: 15px; cursor: pointer; display: grid; place-items: center; padding: 0; }
+.task .txt { flex: 1; min-width: 0; font-size: 16px; overflow-wrap: anywhere; }
+.task .pts { flex: none; font-size: 12px; font-weight: 600; color: var(--gold); }
+.task .del { flex: none; width: 30px; height: 30px; border: none; background: none; color: var(--dim); font-size: 18px; cursor: pointer; border-radius: 8px; }
+.task.done { border-color: rgba(255,79,139,.5); background: linear-gradient(180deg, rgba(255,79,139,.2), rgba(255,79,139,.07)); }
+.task.done .box { background: var(--rose); border-color: var(--rose); }
+.task.done .txt { text-decoration: line-through; text-decoration-color: var(--rose); color: var(--dim); }
+.task.future .box { border-style: dashed; cursor: default; opacity: .6; }
+.task.pop { animation: pop .4s; }
+@keyframes pop { 40% { transform: scale(1.04); } }
+.empty { color: var(--dim); font-size: 14px; padding: 12px 0; text-align: center; }
+.taskFoot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px; font-size: 13px; color: var(--dim); }
+.linkBtn { background: none; border: none; color: var(--gold); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; padding: 4px 0; }
+
+/* diary */
+.diary { padding: 14px; background: repeating-linear-gradient(180deg, transparent 0 31px, rgba(255,255,255,.04) 31px 32px), linear-gradient(180deg, var(--card-2), var(--card)); }
+.moods { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 12px; }
+.mood { flex: 1; aspect-ratio: 1; max-width: 58px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); font-size: 26px; cursor: pointer; padding: 0; filter: grayscale(.7); opacity: .7; }
+.mood.on { filter: none; opacity: 1; border: 2px solid var(--gold); background: rgba(255,200,97,.12); transform: scale(1.06); }
+.q { display: block; font-size: 14px; font-weight: 600; margin: 12px 0 6px; }
+.q:first-of-type { margin-top: 0; }
+textarea { min-height: 84px; resize: vertical; font-family: 'Caveat', 'Segoe Script', cursive; font-size: 22px; line-height: 1.3; }
+.saved { font-size: 12px; color: var(--dim); text-align: right; margin-top: 8px; min-height: 16px; }
+
+/* past entries */
+.past { display: flex; flex-direction: column; gap: 8px; }
+.entry { display: flex; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); cursor: pointer; color: var(--text); font-family: inherit; text-align: left; width: 100%; }
+.entry .m { font-size: 26px; flex: none; }
+.entry .info { flex: 1; min-width: 0; }
+.entry .d { font-weight: 600; font-size: 14px; }
+.entry .s { font-size: 13px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.entry .c { flex: none; font-size: 12px; color: var(--gold); font-weight: 600; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #fff; color: #3a1530; padding: 10px 16px; font-size: 14px; font-weight: 500; z-index: 60; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.6); display: none; max-width: calc(100% - 32px); text-align: center; }
+.toast.show { display: block; animation: fadeUp .25s; }
+@keyframes fadeUp { from { transform: translate(-50%, 10px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <div class="topbar">
+        <a class="back" href="./">← Heart Quest</a>
+        <div class="brand">My <span>Planner</span></div>
+        <div class="spacer"></div>
+    </div>
+
+    <div class="card dayBar">
+        <button class="arrow" id="prevDay" aria-label="Previous day">‹</button>
+        <div class="dayMid">
+            <div class="dayName" id="dayName">Today</div>
+            <div class="dayDate" id="dayDate"></div>
+        </div>
+        <button class="arrow" id="nextDay" aria-label="Next day">›</button>
+    </div>
+    <div class="quick">
+        <button class="pill" id="goToday">Today</button>
+        <button class="pill" id="goTomorrow">Plan tomorrow</button>
+    </div>
+
+    <h2>To-do <span>list</span></h2>
+    <div class="sub" id="taskSub">Each task you finish gives her +20 ❤ in Heart Quest.</div>
+    <form class="addRow" id="addForm" autocomplete="off">
+        <input type="text" id="taskIn" maxlength="80" placeholder="Add a task…" aria-label="New task">
+        <button class="addBtn" type="submit">Add</button>
+    </form>
+    <ul class="tasks" id="tasks"></ul>
+    <div class="taskFoot"><span id="taskCount"></span><button class="linkBtn" id="carryBtn" hidden>Move unfinished to tomorrow →</button></div>
+
+    <h2>Diary</h2>
+    <div class="sub" id="diarySub">Write about your day. Only you can see this.</div>
+    <div class="card diary">
+        <div class="moods" id="moods" role="radiogroup" aria-label="How was the day"></div>
+        <label class="q" for="d1" id="q1">How did today go?</label>
+        <textarea id="d1" data-k="went" placeholder="Write freely…"></textarea>
+        <label class="q" for="d2" id="q2">What am I grateful for?</label>
+        <textarea id="d2" data-k="grateful" placeholder="Big or small…"></textarea>
+        <label class="q" for="d3" id="q3">What will I do better tomorrow?</label>
+        <textarea id="d3" data-k="better" placeholder="One thing is enough…"></textarea>
+        <div class="saved" id="saved"></div>
+    </div>
+
+    <h2>Past <span>pages</span></h2>
+    <div class="sub">Tap a day to open it.</div>
+    <div class="past" id="past"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const PKEY = 'heart-quest-planner-v1';
+const POINTS = 20;
+const MOODS = [['😞', 'Rough'], ['😕', 'Meh'], ['🙂', 'Okay'], ['😊', 'Good'], ['🤩', 'Amazing']];
+
+const keyOf = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const dateOf = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
+const shift = (k, n) => { const d = dateOf(k); d.setDate(d.getDate() + n); return keyOf(d); };
+const todayKey = () => keyOf(new Date());
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// Always read fresh before writing: Heart Quest also writes here when it adds the points.
+function load() { try { const v = JSON.parse(localStorage.getItem(PKEY)); if (v && v.days) return v; } catch (e) {} return { days: {}, pending: [] }; }
+function save(P) { try { localStorage.setItem(PKEY, JSON.stringify(P)); return true; } catch (e) { toast('Could not save. Is storage full or blocked?'); return false; } }
+function edit(fn) { const P = load(); P.pending = P.pending || []; const d = P.days[cur] || (P.days[cur] = { tasks: [], notes: {}, mood: null }); fn(d, P); save(P); return P; }
+const dayOf = (P, k) => P.days[k] || { tasks: [], notes: {}, mood: null };
+
+let cur = todayKey();
+let toastT;
+function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2400); }
+
+function chime() {
+    try {
+        const a = new (window.AudioContext || window.webkitAudioContext)();
+        [784, 1046].forEach((f, i) => { const o = a.createOscillator(), g = a.createGain(), t = a.currentTime + i * .08;
+            o.frequency.value = f; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.1, t + .02); g.gain.exponentialRampToValueAtTime(.001, t + .3);
+            o.connect(g).connect(a.destination); o.start(t); o.stop(t + .32); });
+    } catch (e) {}
+}
+
+/* ---------- render ---------- */
+function render() {
+    const P = load(), D = dayOf(P, cur), t = todayKey();
+    const rel = cur === t ? 'Today' : cur === shift(t, 1) ? 'Tomorrow' : cur === shift(t, -1) ? 'Yesterday' : dateOf(cur).toLocaleDateString(undefined, { weekday: 'long' });
+    $('dayName').textContent = rel;
+    $('dayDate').textContent = dateOf(cur).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    $('goToday').classList.toggle('on', cur === t);
+    $('goTomorrow').classList.toggle('on', cur === shift(t, 1));
+    const future = cur > t;
+    $('taskSub').textContent = future ? 'Planning ahead. You can tick these off on the day.' : 'Each task you finish gives her +20 ❤ in Heart Quest.';
+
+    const tasks = D.tasks;
+    $('tasks').innerHTML = tasks.length ? tasks.map(x => `<li class="task${x.done ? ' done' : ''}${future ? ' future' : ''}" data-id="${x.id}">
+        <button class="box" data-act="tick" aria-label="${x.done ? 'Mark not done' : 'Mark done'}: ${esc(x.text)}">${x.done ? '✓' : ''}</button>
+        <span class="txt">${esc(x.text)}</span><span class="pts">+${POINTS}</span>
+        <button class="del" data-act="del" aria-label="Delete task: ${esc(x.text)}">✕</button></li>`).join('')
+        : `<li class="empty">${future ? 'Nothing planned yet. What matters tomorrow?' : 'No tasks yet. Add your first one above.'}</li>`;
+    const n = tasks.filter(x => x.done).length;
+    $('taskCount').textContent = tasks.length ? `${n} of ${tasks.length} done · +${n * POINTS} ❤ earned` : '';
+    $('carryBtn').hidden = !(cur <= t && tasks.some(x => !x.done));
+
+    // diary questions change with the day
+    const plan = future;
+    $('q1').textContent = plan ? 'What do I want tomorrow to feel like?' : cur === t ? 'How did today go?' : 'How did the day go?';
+    $('q2').textContent = plan ? 'What is the one thing I must get done?' : 'What am I grateful for?';
+    $('q3').textContent = plan ? 'What might get in my way, and how will I handle it?' : 'What will I do better tomorrow?';
+    $('diarySub').textContent = plan ? 'Set your intention for the day ahead. Only you can see this.' : 'Write about your day. Only you can see this.';
+    $('moods').hidden = plan;
+    $('moods').innerHTML = MOODS.map(([e, l], i) => `<button class="mood${D.mood === i ? ' on' : ''}" data-m="${i}" role="radio" aria-checked="${D.mood === i}" aria-label="${l}" title="${l}">${e}</button>`).join('');
+    ['d1', 'd2', 'd3'].forEach(id => { const el = $(id); if (document.activeElement !== el) el.value = (D.notes || {})[el.dataset.k] || ''; });
+    renderPast(P);
+}
+function renderPast(P) {
+    const keys = Object.keys(P.days).filter(k => { const d = P.days[k]; return d.tasks.length || d.mood !== null && d.mood !== undefined || Object.values(d.notes || {}).some(v => v && v.trim()); })
+        .sort().reverse().slice(0, 40);
+    $('past').innerHTML = keys.length ? keys.map(k => {
+        const d = P.days[k], done = d.tasks.filter(x => x.done).length;
+        const snip = (d.notes && (d.notes.went || d.notes.grateful || d.notes.better)) || (d.tasks[0] ? d.tasks.map(x => x.text).join(' · ') : '');
+        return `<button class="entry" data-k="${k}"><span class="m">${d.mood != null ? MOODS[d.mood][0] : '📝'}</span><span class="info">
+            <span class="d" style="display:block">${dateOf(k).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}${k === todayKey() ? ' · today' : ''}</span>
+            <span class="s" style="display:block">${esc(snip) || '&nbsp;'}</span></span>${d.tasks.length ? `<span class="c">${done}/${d.tasks.length}</span>` : ''}</button>`;
+    }).join('') : '<div class="empty">Your past pages will show here.</div>';
+}
+
+/* ---------- actions ---------- */
+$('addForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = $('taskIn').value.trim();
+    if (!v) { $('taskIn').focus(); return; }
+    edit(d => d.tasks.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text: v, done: false, credited: false }));
+    $('taskIn').value = ''; render(); $('taskIn').focus();
+});
+$('tasks').addEventListener('click', e => {
+    const b = e.target.closest('button[data-act]'); if (!b) return;
+    const id = b.closest('.task').dataset.id;
+    if (b.dataset.act === 'tick') {
+        if (cur > todayKey()) return toast('You can tick this off on the day itself.');
+        let nowDone = false;
+        edit(d => { const t = d.tasks.find(x => x.id === id); if (t) { t.done = !t.done; nowDone = t.done; } });
+        render();
+        const li = document.querySelector(`.task[data-id="${id}"]`); if (li) li.classList.add('pop');
+        if (nowDone) { chime(); if (navigator.vibrate) try { navigator.vibrate(20); } catch (e) {} toast(`+${POINTS} ❤ added to Heart Quest`); }
+        else toast(`Unticked. ${POINTS} points will be taken back.`);
+    } else {
+        edit((d, P) => {
+            const i = d.tasks.findIndex(x => x.id === id); if (i < 0) return;
+            const t = d.tasks[i];
+            // a finished task keeps its points even if you delete it
+            if (t.done && !t.credited) P.pending.push({ text: t.text, at: Date.now() });
+            d.tasks.splice(i, 1);
+        });
+        render();
+    }
+});
+$('carryBtn').onclick = () => {
+    const to = cur < todayKey() ? todayKey() : shift(cur, 1);
+    let moved = 0;
+    const P = load(); const from = dayOf(P, cur);
+    const keep = [], go = [];
+    from.tasks.forEach(x => (x.done ? keep : go).push(x));
+    if (!go.length) return;
+    from.tasks = keep; P.days[cur] = from;
+    const dest = P.days[to] || (P.days[to] = { tasks: [], notes: {}, mood: null });
+    go.forEach(x => { dest.tasks.push(x); moved++; });
+    save(P); render();
+    toast(`Moved ${moved} task${moved > 1 ? 's' : ''} to ${to === todayKey() ? 'today' : 'tomorrow'}.`);
+};
+$('moods').addEventListener('click', e => {
+    const b = e.target.closest('.mood'); if (!b) return;
+    const m = +b.dataset.m;
+    edit(d => { d.mood = d.mood === m ? null : m; });
+    render();
+});
+let saveT;
+['d1', 'd2', 'd3'].forEach(id => $(id).addEventListener('input', e => {
+    const el = e.target;
+    $('saved').textContent = 'Saving…';
+    clearTimeout(saveT);
+    saveT = setTimeout(() => { edit(d => { d.notes = d.notes || {}; d.notes[el.dataset.k] = el.value; }); $('saved').textContent = 'Saved ✓'; renderPast(load()); }, 400);
+}));
+function go(k) { clearTimeout(saveT); flushNotes(); cur = k; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function flushNotes() {
+    const vals = {}; let any = false;
+    ['d1', 'd2', 'd3'].forEach(id => { const el = $(id); vals[el.dataset.k] = el.value; });
+    const D = dayOf(load(), cur).notes || {};
+    for (const k in vals) if ((D[k] || '') !== vals[k]) any = true;
+    if (any) edit(d => { d.notes = Object.assign(d.notes || {}, vals); });
+    $('saved').textContent = '';
+}
+$('prevDay').onclick = () => go(shift(cur, -1));
+$('nextDay').onclick = () => go(shift(cur, 1));
+$('goToday').onclick = () => go(todayKey());
+$('goTomorrow').onclick = () => go(shift(todayKey(), 1));
+$('past').addEventListener('click', e => { const b = e.target.closest('.entry'); if (b) go(b.dataset.k); });
+window.addEventListener('pagehide', flushNotes);
+document.addEventListener('visibilitychange', () => { if (document.hidden) flushNotes(); else render(); });
+window.addEventListener('storage', e => { if (e.key === PKEY) render(); });
+
+if (location.hash === '#tomorrow') cur = shift(todayKey(), 1);
+render();
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>

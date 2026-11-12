@@ -53,6 +53,8 @@ body {
 .back { color: var(--dim); text-decoration: none; font-size: 14px; }
 .brand { font-family: 'Pacifico', cursive; font-size: 24px; }
 .brand span { color: var(--rose); }
+.topRight { display: flex; gap: 6px; }
+a.iconBtn { display: grid; place-items: center; text-decoration: none; }
 .iconBtn { background: none; border: 1px solid var(--line); color: var(--text); width: 38px; height: 38px; border-radius: 10px; font-size: 17px; cursor: pointer; }
 
 /* ---------- Level card ---------- */
@@ -288,7 +290,7 @@ input[type=text] { width: 100%; background: var(--card-2); color: var(--text); b
     <div class="topbar">
         <a class="back" href="../index.html">← BASE</a>
         <div class="brand">Heart <span>Quest</span></div>
-        <button class="iconBtn" id="settingsBtn" aria-label="Settings">⚙</button>
+        <div class="topRight"><a class="iconBtn" id="plannerBtn" href="planner.html" aria-label="Planner and diary" title="Planner and diary">📝</a><button class="iconBtn" id="settingsBtn" aria-label="Settings">⚙</button></div>
     </div>
 
     <!-- ============ LEVEL CARD ============ -->
@@ -1542,10 +1544,34 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.que
 /* ============================================================
    BOOT
    ============================================================ */
+/* ============================================================
+   PLANNER: tasks ticked on the planner page earn +20 each here
+   ============================================================ */
+const PKEY = 'heart-quest-planner-v1', PLAN_PTS = 20;
+function syncPlanner() {
+    let P; try { P = JSON.parse(localStorage.getItem(PKEY)); } catch (e) { return; }
+    if (!P || !P.days) return;
+    let gained = 0, lost = 0, n = 0, changed = false;
+    for (const k in P.days) for (const t of P.days[k].tasks || []) {
+        if (t.done && !t.credited) { award(PLAN_PTS, `📝 ${t.text}`, true); t.credited = true; gained += PLAN_PTS; n++; changed = true; }
+        else if (!t.done && t.credited) { award(-PLAN_PTS, `↩ Unticked: ${t.text}`, true); t.credited = false; lost += PLAN_PTS; changed = true; }
+    }
+    for (const t of P.pending || []) { award(PLAN_PTS, `📝 ${t.text}`, true); gained += PLAN_PTS; n++; changed = true; }
+    if (!changed) return;
+    P.pending = [];
+    try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (e) {}
+    const net = gained - lost;
+    setTimeout(() => toast(net >= 0 ? `📝 Planner: +${fmt(net)} ❤${n ? ` (${n} task${n > 1 ? 's' : ''} done)` : ''}` : `📝 Planner: ${fmt(net)} (tasks unticked)`), 700);
+    if (gained) { floatHearts(Math.min(8, 2 + n)); react('hop'); }
+}
+window.addEventListener('storage', e => { if (e.key === PKEY) syncPlanner(); });
+
 renderAll();
+syncPlanner();
 setTimeout(() => sayHer(finished() ? 'Forever. ❤' : STAGES[stageOf(S.points)].lines[0]), 800);
 idleLoop();
-document.addEventListener('visibilitychange', () => { if (!document.hidden) renderAll(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderAll(); syncPlanner(); } });
+window.addEventListener('pageshow', e => { if (e.persisted) { renderAll(); syncPlanner(); } });
 setInterval(() => { if (S.day.date !== today()) renderAll(); }, 60000);
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
