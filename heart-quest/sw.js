@@ -1,7 +1,7 @@
 // Offline support. The app shell is cached on install; pages load from the
 // network first so updates arrive, and fall back to the cache when offline.
-const CACHE = 'heart-quest-v7';
-const SHELL = ['./', 'index.html', 'planner.html', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
+const CACHE = 'heart-quest-v8';
+const SHELL = ['./', 'index.html', 'planner.html', 'streaks.html', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
     e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
