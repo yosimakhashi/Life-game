@@ -77,6 +77,29 @@ h2 span { color: var(--rose); }
 .check.done { background: var(--card); color: var(--ok); border: 1px solid var(--ok); box-shadow: none; }
 .note { margin-top: 10px; font-size: 13px; color: var(--dim); font-style: italic; overflow-wrap: anywhere; }
 .empty { color: var(--dim); font-size: 14px; padding: 16px; text-align: center; }
+.tipsBtn { width: 100%; margin-top: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255,200,97,.45); background: rgba(255,200,97,.08); color: var(--gold); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; text-align: left; }
+.tipsBtn span:last-child { flex: none; color: var(--dim); font-weight: 500; font-size: 13px; }
+.tipsBtn .peek { display: block; font-weight: 400; color: var(--text); font-size: 13px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tipsBtn > span:first-child { min-width: 0; }
+.tipsHead { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.tipsHead .ic { font-size: 28px; }
+.tipsHead h3 { margin: 0; overflow-wrap: anywhere; }
+.tipsSub { font-size: 13px; color: var(--dim); margin-bottom: 12px; }
+.tipAdd { display: flex; flex-direction: column; gap: 8px; }
+.kinds { display: flex; gap: 6px; flex-wrap: wrap; }
+.kind { border: 1px solid var(--line); background: var(--card-2); color: var(--dim); font-family: inherit; font-size: 13px; padding: 6px 12px; border-radius: 20px; cursor: pointer; }
+.kind.on { background: var(--gold); border-color: var(--gold); color: #3a1530; font-weight: 600; }
+.tipList { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.tip { position: relative; padding: 10px 40px 10px 12px; border-radius: 12px; background: var(--card-2); border: 1px solid var(--line); border-left: 4px solid var(--gold); }
+.tip.k-why { border-left-color: var(--rose); }
+.tip.k-trick { border-left-color: var(--ok); }
+.tip.k-lesson { border-left-color: #9ad0ff; }
+.tip .t { font-size: 15px; line-height: 1.4; overflow-wrap: anywhere; white-space: pre-wrap; }
+.tip .m { font-size: 11px; color: var(--dim); margin-top: 4px; }
+.tip .x { position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; border: none; background: none; color: var(--dim); font-size: 16px; cursor: pointer; border-radius: 8px; }
+.tip .pin { position: absolute; bottom: 6px; right: 6px; width: 30px; height: 26px; border: none; background: none; font-size: 14px; cursor: pointer; opacity: .45; }
+.tip.pinned .pin { opacity: 1; }
+.tip.pinned { box-shadow: 0 0 0 1px rgba(255,200,97,.5); }
 
 .addBtn { width: 100%; margin-top: 12px; padding: 14px; border-radius: 14px; border: 2px dashed var(--line); background: none; color: var(--text); font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
 
@@ -123,6 +146,20 @@ textarea { min-height: 60px; resize: vertical; }
     <div class="sub">Track when you started something, set a deadline, and check in each day to build a streak.</div>
     <div class="list" id="list"></div>
     <button class="addBtn" id="addBtn">＋ Add something to track</button>
+</div>
+
+<div class="modal" id="tipsModal" role="dialog" aria-modal="true" aria-labelledby="tipsTitle">
+    <div class="sheet">
+        <div class="tipsHead"><span class="ic" id="tipsIc"></span><h3 id="tipsTitle">Tips &amp; notes</h3></div>
+        <div class="tipsSub">Things that help you keep this streak going. Read them on the hard days. 📌 pins a note to the card.</div>
+        <form class="tipAdd" id="tipForm" autocomplete="off" novalidate>
+            <div class="kinds" id="kinds"></div>
+            <textarea id="tipIn" maxlength="300" placeholder="e.g. Study 25 minutes, then a 5-minute break."></textarea>
+            <button class="btn rose" type="submit">Add note</button>
+        </form>
+        <ul class="tipList" id="tipList"></ul>
+        <div class="btns"><button type="button" class="btn" id="tipsClose">Close</button></div>
+    </div>
 </div>
 
 <div class="modal" id="formModal" role="dialog" aria-modal="true" aria-labelledby="formTitle">
@@ -222,7 +259,7 @@ function render() {
         return `<div class="card trk" data-id="${it.id}">
             <div class="head"><span class="ic">${it.icon}</span><span class="nm"><b>${esc(it.name)}</b><span>${notYet ? `Starts ${nice(it.start)}` : `Since ${nice(it.start)}`}${it.restarts ? ` · restarted ${plural(it.restarts, 'time')}` : ''}</span></span>
             <button class="menu" data-act="edit" aria-label="Edit ${esc(it.name)}">⋯</button></div>
-            <div class="nums">${nums}</div>${dl}${days}${btn}${it.note ? `<div class="note">“${esc(it.note)}”</div>` : ''}</div>`;
+            <div class="nums">${nums}</div>${dl}${days}${btn}${it.note ? `<div class="note">“${esc(it.note)}”</div>` : ''}${tipsButton(it)}</div>`;
     }).join('');
 }
 
@@ -231,6 +268,7 @@ $('list').addEventListener('click', e => {
     const it = T.items.find(x => x.id === card.dataset.id); if (!it) return;
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.act === 'edit') return openForm(it);
+    if (b.dataset.act === 'tips') return openTips(it);
     const day = b.dataset.act === 'check' ? today() : b.dataset.day;
     if (!day || day < it.start || day > today()) return;
     it.checks = it.checks || [];
@@ -292,8 +330,50 @@ $('fDelete').onclick = () => {
     save(); closeForm(); render(); toast('Deleted.');
 };
 $('formModal').addEventListener('click', e => { if (e.target === $('formModal')) closeForm(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeForm(); });
-window.addEventListener('storage', e => { if (e.key === KEY) { T = load(); render(); } else if (e.key === HQKEY) renderHQ(); });
+
+/* ---------- tips & notes for each streak ---------- */
+const KINDS = [['tip', '💡 Tip', 'e.g. Study 25 minutes, then a 5-minute break.'], ['why', '❤ Why', 'e.g. I want to make my parents proud.'],
+    ['trick', '🛠 Trick', 'e.g. Phone in another room before I start.'], ['lesson', '📘 Lesson', 'e.g. I broke the streak when I stayed up late.']];
+const KMAP = Object.fromEntries(KINDS.map(k => [k[0], k]));
+function tipsButton(it) {
+    const tips = it.tips || [], n = tips.length;
+    const show = tips.find(t => t.pin) || tips[0];
+    return `<button class="tipsBtn" data-act="tips"><span>💡 Tips &amp; notes${show ? `<span class="peek">${show.pin ? '📌 ' : ''}${esc(show.text)}</span>` : ''}</span><span>${n ? `${n} ›` : 'Add ›'}</span></button>`;
+}
+let tipsFor = null, kind = 'tip';
+function drawKinds() {
+    $('kinds').innerHTML = KINDS.map(([k, l]) => `<button type="button" class="kind${k === kind ? ' on' : ''}" data-k="${k}">${l}</button>`).join('');
+    $('tipIn').placeholder = KMAP[kind][2];
+}
+function drawTips() {
+    const it = tipsFor; if (!it) return;
+    const tips = (it.tips || []).slice().sort((a, b) => (b.pin ? 1 : 0) - (a.pin ? 1 : 0) || b.at - a.at);
+    $('tipList').innerHTML = tips.length ? tips.map(t => `<li class="tip k-${t.kind}${t.pin ? ' pinned' : ''}" data-id="${t.id}">
+        <div class="t">${esc(t.text)}</div><div class="m">${KMAP[t.kind] ? KMAP[t.kind][1] : '💡 Tip'} · ${new Date(t.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+        <button class="x" data-act="del" aria-label="Delete note">✕</button><button class="pin" data-act="pin" aria-label="${t.pin ? 'Unpin' : 'Pin to card'}">📌</button></li>`).join('')
+        : '<li class="empty">No notes yet. Write down what keeps you going.</li>';
+}
+function openTips(it) { tipsFor = it; kind = 'tip'; $('tipsIc').textContent = it.icon; $('tipsTitle').textContent = it.name; $('tipIn').value = ''; drawKinds(); drawTips(); $('tipsModal').classList.add('open'); }
+const closeTips = () => { $('tipsModal').classList.remove('open'); tipsFor = null; };
+$('kinds').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) { kind = b.dataset.k; drawKinds(); $('tipIn').focus(); } });
+$('tipForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = $('tipIn').value.trim(); if (!v) { $('tipIn').focus(); return toast('Write the note first.'); }
+    tipsFor.tips = tipsFor.tips || [];
+    tipsFor.tips.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), text: v, kind, at: Date.now(), pin: false });
+    save(); $('tipIn').value = ''; drawTips(); render(); toast('Note saved.');
+});
+$('tipList').addEventListener('click', e => {
+    const b = e.target.closest('button[data-act]'); if (!b || !tipsFor) return;
+    const id = b.closest('.tip').dataset.id, tips = tipsFor.tips || [], t = tips.find(x => x.id === id); if (!t) return;
+    if (b.dataset.act === 'del') { if (!confirm('Delete this note?')) return; tipsFor.tips = tips.filter(x => x !== t); }
+    else { const was = t.pin; tips.forEach(x => { x.pin = false; }); t.pin = !was; }
+    save(); drawTips(); render();
+});
+$('tipsClose').onclick = closeTips;
+$('tipsModal').addEventListener('click', e => { if (e.target === $('tipsModal')) closeTips(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeForm(); closeTips(); } });
+window.addEventListener('storage', e => { if (e.key === KEY) { T = load(); if (tipsFor) { tipsFor = T.items.find(x => x.id === tipsFor.id) || null; if (tipsFor) drawTips(); else closeTips(); } render(); } else if (e.key === HQKEY) renderHQ(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
 
 render();
