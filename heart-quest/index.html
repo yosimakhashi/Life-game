@@ -76,6 +76,9 @@ a.iconBtn { display: grid; place-items: center; text-decoration: none; }
 .stageTag { display: inline-block; margin-top: 10px; background: var(--rose); color: #fff; padding: 4px 14px; border-radius: 20px; font-weight: 600; font-size: 14px; box-shadow: 0 4px 14px rgba(255,79,139,.35); }
 .likes { margin-top: 10px; font-size: 13px; color: var(--dim); }
 .likes b { color: var(--gold); font-weight: 600; }
+.since { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 12px auto 0; padding: 8px 14px; border-radius: 20px; border: 1px solid var(--line); background: var(--card); color: var(--text); text-decoration: none; font-size: 13px; width: fit-content; max-width: 100%; }
+.since b { color: var(--gold); font-weight: 600; }
+.since::after { content: "›"; color: var(--dim); font-size: 18px; line-height: 1; }
 
 /* ---------- Scene ---------- */
 .scene {
@@ -303,6 +306,7 @@ input[type=text] { width: 100%; background: var(--card-2); color: var(--text); b
         <div class="meterRow"><span id="meterLeft">Stranger</span><span id="meterRight">5,000 to win her heart</span></div>
         <div class="stageTag" id="stageTag">💭 Stranger</div>
         <div class="likes" id="likes"></div>
+        <a class="since" id="sinceLink" href="streaks.html"></a>
     </div>
 
     <!-- ============ SCENE ============ -->
@@ -764,6 +768,11 @@ function load() {
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 let S = load();
+if (!S.gameStart) {
+    const known = [S.startedAt, ...(S.won || []).map(w => w.at - (w.days || 1) * 864e5), ...(S.log || []).map(l => l.t)].filter(n => Number.isFinite(n));
+    S.gameStart = Math.min(Date.now(), ...known);
+    save();
+}
 
 function rollDay() {
     if (S.day.date !== today()) { S.day = { date: today(), done: {}, charm: 0, bonus: false }; save(); }
@@ -1460,6 +1469,9 @@ function renderAll(bumped) {
     me.style.left = 'calc(50% - 150px)';
     her.style.left = `calc(50% + ${Math.round(done ? -14 : 62 - pct * .7)}px)`;
 
+    const dayNo = ms => { const a = new Date(ms); a.setHours(0, 0, 0, 0); const b = new Date(); b.setHours(0, 0, 0, 0); return Math.round((b - a) / 864e5) + 1; };
+    $('sinceLink').innerHTML = `📅 Challenge started <b>${new Date(S.gameStart).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</b> · day ${dayNo(S.gameStart)}`;
+
     renderQuests();
     const left = CHARM_RUNS - S.day.charm;
     $('charmBtn').disabled = done || left <= 0;
@@ -1535,7 +1547,7 @@ $('renameSave').onclick = () => {
 };
 $('wipeBtn').onclick = () => {
     if (!confirm('Erase every level, point and log entry? This cannot be undone.')) return;
-    S = fresh(); save(); renderAll();
+    S = fresh(); S.gameStart = Date.now(); save(); renderAll();
     $('settingsModal').classList.remove('open'); toast('Fresh start. Level 1.');
 };
 document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));
