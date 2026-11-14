@@ -26,7 +26,7 @@ header a { color: var(--dim); text-decoration: none; font-weight: 600; }
 h1 { font-size: 20px; margin: 0; flex: 1; }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 20px; }
 .portrait { display: flex; justify-content: center; }
-.portrait svg { width: 200px; height: 200px; border-radius: 50%; background: var(--panel-2); }
+.portrait svg { width: 200px; height: 340px; border-radius: 20px; background: var(--panel-2); }
 .name { text-align: center; font-size: 26px; font-weight: 800; margin: 14px 0 2px; }
 .sub { text-align: center; color: var(--dim); margin-bottom: 16px; }
 .tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 16px; }
@@ -120,13 +120,21 @@ function makeGirl() {
         traits: pickN(TRAITS, 3), hobbies: pickN(HOBBY, 2), food: pick(FOOD), movie: pick(MOVIE),
         quirk: pick(QUIRK), dream: pick(DREAM), zodiac: pick(ZODIAC), height: rand(150, 178),
         skin: rand(0, SKIN.length - 1), hairColour, hairStyle: pick(HAIR_STYLES),
-        eyes: pick(Object.keys(EYES)), fav, glasses: Math.random() < .25, blush: Math.random() < .6,
+        eyes: pick(Object.keys(EYES)), fav, body: pick(Object.keys(BODY)), outfit: pick(OUTFITS), glasses: Math.random() < .25, blush: Math.random() < .6,
         earrings: Math.random() < .5, smile: rand(0, 2)
     };
 }
 
-function portrait(g) {
-    const s = SKIN[g.skin], h = HAIR[g.hairColour], e = EYES[g.eyes], c = COLOURS[g.fav];
+const BODY = {  // half-widths: shoulders, chest, waist, hips; arm thickness
+    "Slim":      {sw: 25, cw: 22, ww: 17, hw: 23, arm: 8},
+    "Athletic":  {sw: 30, cw: 26, ww: 21, hw: 25, arm: 10},
+    "Curvy":     {sw: 27, cw: 27, ww: 19, hw: 32, arm: 9},
+    "Plus-size": {sw: 32, cw: 32, ww: 30, hw: 36, arm: 12}
+};
+const OUTFITS = ["Dress","Top & jeans","Top & skirt","Kurti & leggings"];
+
+function head(g) {
+    const s = SKIN[g.skin], h = HAIR[g.hairColour], e = EYES[g.eyes];
     const back = {
         "Long straight": `<path d="M48 90 Q46 40 100 36 Q154 40 152 90 L156 170 L44 170 Z" fill="${h}"/>`,
         "Long wavy": `<path d="M48 90 Q44 38 100 34 Q156 38 152 90 Q162 120 150 140 Q162 160 148 175 L52 175 Q38 160 50 140 Q38 120 48 90Z" fill="${h}"/>`,
@@ -142,10 +150,8 @@ function portrait(g) {
     const mouth = [`<path d="M88 122 Q100 132 112 122" stroke="#8a3b3b" stroke-width="3" fill="none" stroke-linecap="round"/>`,
                    `<path d="M86 120 Q100 136 114 120 Z" fill="#a8434b"/>`,
                    `<path d="M92 124 Q100 128 108 124" stroke="#8a3b3b" stroke-width="3" fill="none" stroke-linecap="round"/>`][g.smile];
-    return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-        ${back}
-        <path d="M40 200 Q44 160 100 156 Q156 160 160 200Z" fill="${c}"/>
-        <rect x="88" y="132" width="24" height="28" rx="8" fill="${s}"/>
+    const front = `
+        <rect x="88" y="132" width="24" height="34" rx="8" fill="${s}"/>
         <ellipse cx="100" cy="98" rx="44" ry="50" fill="${s}"/>
         ${g.earrings ? `<circle cx="56" cy="112" r="4" fill="#f4c430"/><circle cx="144" cy="112" r="4" fill="#f4c430"/>` : ""}
         <ellipse cx="82" cy="100" rx="6" ry="7" fill="#fff"/><ellipse cx="118" cy="100" rx="6" ry="7" fill="#fff"/>
@@ -156,8 +162,43 @@ function portrait(g) {
         <path d="M100 104 Q97 112 101 114" stroke="#00000033" stroke-width="2" fill="none" stroke-linecap="round"/>
         ${mouth}
         ${g.glasses ? `<g stroke="#333" stroke-width="2.5" fill="none"><circle cx="82" cy="101" r="12"/><circle cx="118" cy="101" r="12"/><path d="M94 101 H106"/></g>` : ""}
-        ${fringe}
-    </svg>`;
+        ${fringe}`;
+    return {back, front};
+}
+
+// Full-body figure on a 200x340 canvas; thumb=true crops to the face.
+function portrait(g, thumb) {
+    const s = SKIN[g.skin], c = COLOURS[g.fav];
+    const b = BODY[g.body || "Slim"], outfit = g.outfit || "Dress";
+    const {back, front} = head(g);
+    const H = 'transform="translate(45 8) scale(.55)"';
+    const L = x => 100 - x, R = x => 100 + x;
+    const torso = `M${L(b.sw)} 104 Q100 98 ${R(b.sw)} 104 Q${R(b.cw + 2)} 118 ${R(b.cw)} 132
+        Q${R(b.ww + 1)} 150 ${R(b.ww)} 160 Q${R(b.hw)} 172 ${R(b.hw)} 192 L${L(b.hw)} 192
+        Q${L(b.hw)} 172 ${L(b.ww)} 160 Q${L(b.ww + 1)} 150 ${L(b.cw)} 132 Q${L(b.cw + 2)} 118 ${L(b.sw)} 104Z`;
+    const legs = `M${L(b.hw - 1)} 188 L98 188 L${L(6)} 318 L${L(18)} 318Z M${R(b.hw - 1)} 188 L102 188 L${R(6)} 318 L${R(18)} 318Z`;
+    const second = {"Top & jeans": "#3d5a8a", "Top & skirt": "#2b2b3a", "Kurti & leggings": "#f1e6d2"}[outfit];
+    let lower = "";
+    if (outfit === "Dress")            lower = `<path d="M${L(b.hw)} 188 L${R(b.hw)} 188 L${R(b.hw + 22)} 262 L${L(b.hw + 22)} 262Z" fill="${c}"/>`;
+    if (outfit === "Top & skirt")      lower = `<path d="M${L(b.hw)} 184 L${R(b.hw)} 184 L${R(b.hw + 14)} 246 L${L(b.hw + 14)} 246Z" fill="${second}"/>`;
+    if (outfit === "Top & jeans")      lower = `<path d="${legs}" fill="${second}" transform="translate(0 -2)"/>`;
+    if (outfit === "Kurti & leggings") lower = `<path d="${legs}" fill="${second}"/><path d="M${L(b.hw)} 186 L${R(b.hw)} 186 L${R(b.hw + 8)} 250 L${L(b.hw + 8)} 250Z" fill="${c}"/>`;
+    const arms = [[-1, b.sw], [1, b.sw]].map(([d, w]) => {
+        const x1 = 100 + d * (w - 3), x2 = 100 + d * (b.hw + 9);
+        return `<path d="M${x1} 110 L${x2} 196" stroke="${s}" stroke-width="${b.arm}" stroke-linecap="round"/>
+            <path d="M${x1} 110 L${x1 + (x2 - x1) * .35} 140" stroke="${c}" stroke-width="${b.arm + 3}" stroke-linecap="round"/>
+            <circle cx="${x2}" cy="198" r="${b.arm * .6 + 2}" fill="${s}"/>`;
+    }).join("");
+    const body = `
+        <path d="${legs}" fill="${s}"/>
+        ${lower}
+        <path d="${torso}" fill="${c}"/>
+        <path d="M90 100 Q100 112 110 100" fill="${s}"/>
+        ${arms}
+        <ellipse cx="${L(13)}" cy="320" rx="11" ry="5" fill="#2b2b2b"/><ellipse cx="${R(13)}" cy="320" rx="11" ry="5" fill="#2b2b2b"/>`;
+    const vb = thumb ? "50 10 100 100" : "0 0 200 340";
+    return `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">
+        <g ${H}>${back}</g>${body}<g ${H}>${front}</g></svg>`;
 }
 
 function bio(g) {
@@ -180,6 +221,8 @@ function render(g) {
         <div class="grid">
             <div class="cell"><b>Zodiac</b>${g.zodiac}</div>
             <div class="cell"><b>Height</b>${g.height} cm</div>
+            <div class="cell"><b>Body type</b>${g.body || "Slim"}</div>
+            <div class="cell"><b>Outfit</b>${g.outfit || "Dress"}</div>
             <div class="cell"><b>Hair</b>${g.hairColour}, ${g.hairStyle.toLowerCase()}</div>
             <div class="cell"><b>Eyes</b>${g.eyes}</div>
             <div class="cell"><b>Hobbies</b>${g.hobbies.join(", ")}</div>
@@ -201,7 +244,7 @@ function renderSaved() {
     const list = loadSaved(), box = document.getElementById("saved");
     if (!list.length) { box.innerHTML = `<div class="empty">Tap ♡ Save to keep characters you like.</div>`; return; }
     box.innerHTML = list.map((g, i) => `
-        <div class="row" data-i="${i}">${portrait(g)}
+        <div class="row" data-i="${i}">${portrait(g, true)}
             <div><strong>${esc(g.first)} ${esc(g.last)}</strong><br><small>${g.age} · ${esc(g.job)}</small></div>
             <button data-del="${i}" aria-label="Remove">✕</button>
         </div>`).join("");
