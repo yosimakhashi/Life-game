@@ -34,6 +34,18 @@ enum ControlKind: String, CaseIterable, Identifiable {
     }
 }
 
+enum StabilizationOption: String, CaseIterable, Identifiable {
+    case off = "Off", standard = "Standard", cinematic = "Cinematic"
+    var id: String { rawValue }
+    var mode: AVCaptureVideoStabilizationMode {
+        switch self {
+        case .off: return .off
+        case .standard: return .standard
+        case .cinematic: return .cinematic
+        }
+    }
+}
+
 struct LensOption: Identifiable, Hashable {
     let id: String
     let label: String
@@ -89,11 +101,25 @@ final class CameraManager: NSObject, ObservableObject {
     }
     @Published var bakeLUTIntoRecording = true
 
+    @Published private(set) var hasTorch = false
+    @Published private(set) var torchOn = false
+    @Published private(set) var stabilization: StabilizationOption = .off
+    @Published private(set) var freeBytes: Int64 = 0
+
+    /// Rough minutes of recording left at the current format and codec.
+    var minutesRemaining: Int {
+        let bits = codec.estimatedBitsPerSecond(
+            width: Int(resolution.width), height: Int(resolution.height), fps: frameRate) + 256_000
+        return Int(Double(freeBytes) * 8 / bits / 60)
+    }
+
     // MARK: Pipeline
 
     let session = AVCaptureSession()
     let processor = FrameProcessor()
     let previewStore = PreviewStore()
+    let histogram = HistogramModel()
+    let audioMeter = AudioMeterModel()
 
     private let sessionQueue = DispatchQueue(label: "lutcam.session")
     private let dataQueue = DispatchQueue(label: "lutcam.data", qos: .userInitiated)
@@ -113,6 +139,10 @@ final class CameraManager: NSObject, ObservableObject {
     // dataQueue-confined
     private var recorder: Recorder?
     private var monitorShowsLUT = true
+
+    // sessionQueue-confined
+    private var stabilizationMode: AVCaptureVideoStabilizationMode = .off
+    private var pollCount = 0
 
     // main-thread
     private var pollTimer: Timer?
@@ -290,7 +320,7 @@ final class CameraManager: NSObject, ObservableObject {
         if let connection = videoOutput.connection(with: .video) {
             // The UI is locked to landscape-right, which is the sensor's native orientation.
             if connection.isVideoRotationAngleSupported(0) { connection.videoRotationAngle = 0 }
-            if connection.isVideoStabilizationSupported { connection.preferredVideoStabilizationMode = .off }
+            if connection.isVideoStabilizationSupported { connection.preferredVideoStabilizationMode = stabilizationMode }
         }
 
         activeFormat = ActiveFormat(width: Int(resolution.width), height: Int(resolution.height), fps: fps, tenBit: tenBit)
@@ -317,7 +347,10 @@ final class CameraManager: NSObject, ObservableObject {
         let writerCodecs = videoOutput.availableVideoCodecTypesForAssetWriter(writingTo: .mov)
         let codecs = VideoCodec.allCases.filter { writerCodecs.contains($0.avCodec) }
 
+        let torch = device.hasTorch && device.isTorchModeSupported(.on)
         DispatchQueue.main.async {
+            self.hasTorch = torch
+            if !torch { self.torchOn = false }
             self.resolution = resolution
             self.frameRate = fps
             self.colorProfile = profile
@@ -376,6 +409,41 @@ final class CameraManager: NSObject, ObservableObject {
                 self.currentLensID = current
                 self.reapplyManualControls()
             }
+        }
+    }
+
+    func toggleTorch() {
+        let on = !torchOn
+        torchOn = on
+        sessionQueue.async {
+            guard let d = self.device, d.hasTorch else { return }
+            do { try d.lockForConfiguration() } catch { return }
+            if on {
+                try? d.setTorchModeOn(level: AVCaptureDevice.maxAvailableTorchLevel)
+            } else {
+                d.torchMode = .off
+            }
+            d.unlockForConfiguration()
+        }
+    }
+
+    func setStabilization(_ option: StabilizationOption) {
+        guard !isRecording else { return }
+        stabilization = option
+        sessionQueue.async {
+            self.stabilizationMode = option.mode
+            if let c = self.videoOutput.connection(with: .video), c.isVideoStabilizationSupported {
+                c.preferredVideoStabilizationMode = option.mode
+            }
+        }
+    }
+
+    private func refreshFreeSpace() {
+        let url = FileManager.default.temporaryDirectory
+        DispatchQueue.global(qos: .utility).async {
+            let values = try? url.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
+            let bytes = values?.volumeAvailableCapacityForImportantUsage ?? 0
+            DispatchQueue.main.async { self.freeBytes = bytes }
         }
     }
 
@@ -517,12 +585,15 @@ final class CameraManager: NSObject, ObservableObject {
     /// Keeps the readouts of auto values live.
     private func startPolling() {
         pollTimer?.invalidate()
+        audioMeter.start(output: audioOutput)
         pollTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
             self?.poll()
         }
     }
 
     private func poll() {
+        pollCount += 1
+        if pollCount % 20 == 1 { refreshFreeSpace() }
         guard let d = device else { return }
         if isoAuto, abs(d.iso - iso) > 0.5 { iso = d.iso }
         if shutterAuto {
@@ -653,7 +724,9 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate, AVCapture
             guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
             let source = CIImage(cvPixelBuffer: pixelBuffer)
             let graded = processor.grade(source)
-            previewStore.update(source: source, graded: graded, monitor: monitorShowsLUT ? graded : source)
+            let monitor = monitorShowsLUT ? graded : source
+            previewStore.update(source: source, graded: graded, monitor: monitor)
+            histogram.submit(monitor, context: processor.context)
             if let recorder {
                 recorder.appendVideo(sampleBuffer, graded: recorder.bakesLUT ? graded : nil)
             }

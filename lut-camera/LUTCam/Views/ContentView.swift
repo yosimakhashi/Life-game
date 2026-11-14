@@ -26,6 +26,8 @@ enum FrameGuide: String, CaseIterable, Identifiable {
 struct ContentView: View {
     @StateObject private var camera = CameraManager()
     @StateObject private var library = LUTLibrary()
+    @StateObject private var monitor = MonitorOptions()
+    @StateObject private var horizon = HorizonModel()
     @Environment(\.scenePhase) private var scenePhase
 
     @State private var activeControl: ControlKind?
@@ -41,7 +43,7 @@ struct ContentView: View {
     var body: some View {
         HStack(spacing: 0) {
             VStack(spacing: 6) {
-                StatusBar(camera: camera)
+                StatusBar(camera: camera, monitor: monitor)
                 preview
                 ControlBar(camera: camera, active: $activeControl)
             }
@@ -69,6 +71,7 @@ struct ContentView: View {
         .persistentSystemOverlays(.hidden)
         .onAppear {
             UIApplication.shared.isIdleTimerDisabled = true
+            camera.histogram.enabled = monitor.histogram
             camera.selectedLUT = library.lut(withID: lastLUTID)
             camera.start()
         }
@@ -78,6 +81,7 @@ struct ContentView: View {
             }
         }
         .onChange(of: camera.selectedLUT) { _, lut in lastLUTID = lut?.id ?? "" }
+        .onChange(of: monitor.histogram) { _, on in camera.histogram.enabled = on }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active && camera.isRecording { camera.toggleRecording() }
         }
@@ -85,7 +89,7 @@ struct ContentView: View {
             LUTBrowserView(camera: camera, library: library)
         }
         .sheet(isPresented: $showSettings) {
-            SettingsView(camera: camera, showGrid: $showGrid, frameGuideRaw: $frameGuideRaw)
+            SettingsView(camera: camera, monitor: monitor, showGrid: $showGrid, frameGuideRaw: $frameGuideRaw)
         }
         .alert("Camera access needed", isPresented: $camera.authorizationDenied) {
             Button("Open Settings") {
@@ -99,7 +103,7 @@ struct ContentView: View {
 
     private var preview: some View {
         ZStack {
-            MetalPreviewView(store: camera.previewStore, processor: camera.processor) { point in
+            MetalPreviewView(store: camera.previewStore, processor: camera.processor, monitor: monitor) { point in
                 camera.focus(at: point)
                 activeControl = nil
                 focusPoint = point
@@ -109,6 +113,21 @@ struct ContentView: View {
             }
 
             GuideOverlay(showGrid: showGrid, guide: FrameGuide(rawValue: frameGuideRaw) ?? .off)
+
+            if monitor.horizon {
+                HorizonView(model: horizon)
+            }
+
+            VStack {
+                HStack(alignment: .top) {
+                    if monitor.histogram { HistogramView(model: camera.histogram) }
+                    Spacer()
+                    if monitor.audioMeters { AudioMeterView(model: camera.audioMeter) }
+                }
+                Spacer()
+            }
+            .padding(8)
+            .allowsHitTesting(false)
 
             GeometryReader { geo in
                 if let p = focusPoint {
@@ -158,6 +177,7 @@ struct ContentView: View {
 
 struct StatusBar: View {
     @ObservedObject var camera: CameraManager
+    @ObservedObject var monitor: MonitorOptions
 
     var body: some View {
         HStack(spacing: 12) {
@@ -169,11 +189,16 @@ struct StatusBar: View {
                     .font(.system(size: 15, weight: .semibold, design: .monospaced))
                     .foregroundStyle(camera.isRecording ? Color.red : Color.white)
             }
-            Spacer()
-            Text("\(camera.resolution.rawValue) · \(camera.frameRate)p · \(camera.codec.rawValue) · \(camera.colorProfile.rawValue)")
-                .font(.system(size: 12, weight: .medium, design: .monospaced))
-                .foregroundStyle(.secondary)
-            Spacer()
+            VStack(alignment: .leading, spacing: 1) {
+                Text("\(camera.resolution.rawValue) · \(camera.frameRate)p · \(camera.codec.rawValue) · \(camera.colorProfile.rawValue)")
+                Text(storageText)
+                    .foregroundStyle(camera.freeBytes > 0 && camera.minutesRemaining < 5 ? Color.red : Color.secondary)
+            }
+            .font(.system(size: 10, weight: .medium, design: .monospaced))
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            Spacer(minLength: 6)
+            ToolStrip(monitor: monitor, camera: camera)
             Label(camera.selectedLUT?.name ?? "No LUT", systemImage: "cube.transparent")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(camera.selectedLUT == nil ? Color.secondary : Color.yellow)
@@ -181,6 +206,14 @@ struct StatusBar: View {
         }
         .padding(.horizontal, 6)
         .padding(.top, 6)
+    }
+
+    private var storageText: String {
+        guard camera.freeBytes > 0 else { return "—" }
+        let gb = Double(camera.freeBytes) / 1_000_000_000
+        let minutes = camera.minutesRemaining
+        let time = minutes >= 60 ? "\(minutes / 60)h \(minutes % 60)m" : "\(minutes) min"
+        return String(format: "%.0f GB free · ", gb) + time
     }
 
     private func timecode(_ t: TimeInterval) -> String {

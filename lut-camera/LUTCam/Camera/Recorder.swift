@@ -20,6 +20,18 @@ enum VideoCodec: String, CaseIterable, Identifiable {
     }
 
     var isProRes: Bool { self == .proRes422 || self == .proRes422HQ }
+
+    /// Approximate data rate; ProRes figures follow Apple's ProRes white paper.
+    func estimatedBitsPerSecond(width: Int, height: Int, fps: Int) -> Double {
+        let bitsPerPixel: Double
+        switch self {
+        case .hevc: bitsPerPixel = 0.2
+        case .h264: bitsPerPixel = 0.3
+        case .proRes422: bitsPerPixel = 1.9
+        case .proRes422HQ: bitsPerPixel = 2.85
+        }
+        return Double(width * height * fps) * bitsPerPixel
+    }
 }
 
 enum RecorderError: LocalizedError {
@@ -74,10 +86,10 @@ final class Recorder {
             AVVideoHeightKey: config.height,
         ]
         if !config.codec.isProRes {
-            let pixelsPerSecond = Double(config.width * config.height * config.fps)
-            let bitsPerPixel = config.codec == .hevc ? 0.2 : 0.3 // ≈50 Mb/s HEVC, 75 Mb/s H.264 at 4K30
+            // ≈50 Mb/s HEVC, 75 Mb/s H.264 at 4K30
+            let bitrate = config.codec.estimatedBitsPerSecond(width: config.width, height: config.height, fps: config.fps)
             var props: [String: Any] = [
-                AVVideoAverageBitRateKey: Int(pixelsPerSecond * bitsPerPixel),
+                AVVideoAverageBitRateKey: Int(bitrate),
                 AVVideoExpectedSourceFrameRateKey: config.fps,
                 AVVideoMaxKeyFrameIntervalKey: config.fps,
             ]

@@ -17,6 +17,16 @@ Blackmagic Camera / Filmic-style pro apps, built around **real-time 3D LUTs**.
 - **Apple Log** on iPhone 15 Pro and newer (10-bit). Switching to it automatically loads the Apple Log → Rec.709 LUT.
 - **Manual controls:** ISO, shutter speed (with a 180° hint), white balance (Kelvin + tint), manual focus, EV compensation. Each has an AUTO toggle. Tap the preview to focus.
 - **Formats:** 1080p / 4K at 24, 25, 30, 48, 50 or 60 fps (whatever the lens supports). Codecs: HEVC, H.264, and ProRes 422 / 422 HQ on Pro iPhones.
+- **Monitoring tools** (quick toggles in the top bar):
+  - **Zebras** with an adjustable level (70–100%)
+  - **Focus peaking**: red, green, blue, yellow or white, with adjustable sensitivity
+  - **False color**: purple = crushed, blue = near black, green = 18% grey, pink = skin, yellow = near clip, red = clipped
+  - Live **RGB histogram**
+  - **Audio meters** (average + peak hold, dBFS)
+  - **Horizon level**, which turns green when level
+- **Anamorphic desqueeze** for the monitor: 1.33×, 1.5×, 1.8×, 2×
+- **Stabilization**: off, standard or cinematic. **Torch** toggle.
+- **Storage readout**: free space and estimated record time for the current codec and format
 - Lens switching (0.5× / 1× / tele), rule-of-thirds grid, frame guides (2.39, 1.85, 4:3, 1:1, 9:16), REC timecode
 - Clips and stills (with the LUT applied) are saved to Photos
 
@@ -51,6 +61,9 @@ lut-camera/
     │   ├── CameraManager.swift   # AVCaptureSession, formats, Apple Log, manual controls, recording
     │   ├── FrameProcessor.swift  # LUT application (CIColorCube), preview frame store, thumbnails
     │   └── Recorder.swift        # AVAssetWriter: baked or clean, HEVC/H.264/ProRes + audio
+    ├── Monitoring/
+    │   ├── MonitorKernels.metal  # zebra, false colour, focus peaking (Core Image Metal kernels)
+    │   └── Monitoring.swift      # options, kernel loading, histogram, audio meter, horizon level
     ├── LUT/
     │   ├── LUT.swift             # .cube parser, trilinear resampling, cube data
     │   ├── BuiltInLUTs.swift     # procedurally generated looks + Apple Log → Rec.709
@@ -58,6 +71,7 @@ lut-camera/
     └── Views/
         ├── ContentView.swift     # landscape camera UI, control strip, sliders, guides
         ├── MetalPreviewView.swift
+        ├── ScopesViews.swift     # histogram, meters, level, tool strip
         ├── LUTBrowserView.swift
         └── SettingsView.swift
 ```

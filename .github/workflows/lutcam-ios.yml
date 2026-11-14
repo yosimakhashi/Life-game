@@ -35,6 +35,14 @@ jobs:
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
             build
 
+      - name: Check Core Image kernels were compiled
+        run: |
+          LIB=build/Build/Products/Release-iphoneos/LUTCam.app/default.metallib
+          test -f "$LIB"
+          for k in zebraKernel falseColorKernel peakingKernel; do
+            grep -q "$k" "$LIB" || { echo "missing $k"; exit 1; }
+          done
+
       - name: Package unsigned IPA
         run: |
           mkdir -p Payload
