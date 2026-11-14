@@ -1,0 +1,7 @@
+LUTCam.xcodeproj/
+LUTCam/Info.plist
+build/
+Payload/
+*.ipa
+xcuserdata/
+DerivedData/
