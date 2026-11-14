@@ -194,7 +194,7 @@ let timerInt = null;  // interval for quiz clock or focus timer
 let focus = null;     // running focus session
 function route() {
     clearInterval(timerInt); timerInt = null;
-    const parts = (location.hash.slice(2) || 'home').split('/');
+    const parts = (curPath().slice(2) || 'home').split('/');
     const [view, a, b] = parts;
     const tab = { home: 'home', plan: 'plan', learn: 'learn', sec: 'learn', lesson: 'learn', tips: 'learn', pattern: 'learn', drill: 'drill', quiz: 'drill', result: 'drill', mistakes: 'drill', mocks: 'mocks', mockedit: 'mocks' }[view] || '';
     document.querySelectorAll('nav.tabbar a').forEach(x => x.classList.toggle('on', x.dataset.tab === tab));
@@ -202,12 +202,35 @@ function route() {
     (views[view] || home)();
     window.scrollTo(0, 0);
 }
-window.addEventListener('hashchange', route);
-const go = h => { if (location.hash === h) route(); else location.hash = h; };
+// The hosted app routes on the URL hash. The standalone build (a single file,
+// or an embedded page that cannot use #/path hashes) keeps the path in memory.
+const STANDALONE = !!window.SSC_STANDALONE;
+let memPath = '#/home';
+const curPath = () => STANDALONE ? memPath : (location.hash || '#/home');
+function go(h) {
+    if (STANDALONE) { memPath = h; route(); return; }
+    if (location.hash === h) route(); else location.hash = h;
+}
+if (STANDALONE) document.addEventListener('click', e => {
+    const a = e.target.closest('a[href^="#/"]');
+    if (a) { e.preventDefault(); go(a.getAttribute('href')); }
+});
+else window.addEventListener('hashchange', route);
+
+// In-page confirmation (native confirm() is blocked in some embedded frames).
+function ask(msg, yes, onYes) {
+    const box = document.getElementById('ask');
+    box.querySelector('p').textContent = msg;
+    const ok = box.querySelector('[data-ok]');
+    ok.textContent = yes;
+    box.hidden = false; ok.focus();
+    ok.onclick = () => { box.hidden = true; onYes(); };
+    box.querySelector('[data-cancel]').onclick = () => { box.hidden = true; };
+}
 
 // ---------- home ----------
 function home() {
-    header('SSC Edge', '../');
+    header('SSC Edge', STANDALONE ? null : '../');
     const ph = phaseInfo();
     const tasks = todayTasks();
     const doneN = tasks.list.filter(t => tasks.done[t.id]).length;
@@ -356,7 +379,7 @@ function endFocus(early) {
     if (mins > 0) addStudy(mins);
     toast(early ? `Logged ${mins} min` : `Session done: ${mins} min logged. Take a 10-minute break.`);
     if (!early && navigator.vibrate) navigator.vibrate([200, 100, 200]);
-    if (location.hash.startsWith('#/plan')) plan();
+    if (curPath().startsWith('#/plan')) plan();
 }
 
 // ---------- learn ----------
@@ -508,9 +531,9 @@ function quizView() {
     const nx = document.getElementById('next'); if (nx) nx.onclick = () => nav(quiz.cur + 1);
     const cl = document.getElementById('clear'); if (cl) cl.onclick = () => { quiz.ans[quiz.cur] = null; quizView(); };
     const fin = document.getElementById('finish');
-    if (fin) fin.onclick = () => { const un = quiz.ans.filter(a => a === null).length; if (!un || confirm(`${un} unanswered. Submit anyway?`)) finishQuiz(); };
+    if (fin) fin.onclick = () => { const un = quiz.ans.filter(a => a === null).length; if (!un) finishQuiz(); else ask(`${un} question${un > 1 ? 's' : ''} unanswered. Submit anyway?`, 'Submit', finishQuiz); };
     $app.querySelectorAll('[data-j]').forEach(b => b.onclick = () => nav(Number(b.dataset.j)));
-    document.getElementById('quit').onclick = () => { if (confirm('Quit this drill? Nothing will be saved.')) { const back = quiz.back; quiz = null; go(back); } };
+    document.getElementById('quit').onclick = () => ask('Quit this drill? Nothing will be saved.', 'Quit', () => { clearInterval(timerInt); const back = quiz.back; quiz = null; go(back); });
     clearInterval(timerInt);
     const tick = () => {
         if (!quiz) return;
@@ -725,7 +748,7 @@ function mockEdit(id) {
         markActive(); save(); toast('Mock saved'); go('#/mocks');
     };
     const del = document.getElementById('mDel');
-    if (del) del.onclick = () => { if (confirm('Delete this mock?')) { S.mocks = S.mocks.filter(y => y.id !== m.id); save(); go('#/mocks'); } };
+    if (del) del.onclick = () => ask('Delete this mock?', 'Delete', () => { S.mocks = S.mocks.filter(y => y.id !== m.id); save(); go('#/mocks'); });
 }
 
 // ---------- settings ----------
@@ -735,7 +758,10 @@ function settings() {
     <section class="card">
         <h2>Backup</h2>
         <p class="small muted" style="margin:0 0 10px">Your progress is stored only in this browser. Export it now and then, especially before clearing browser data or switching phones.</p>
-        <div class="grid2"><button class="btn" id="exp">⬇ Export</button><label class="btn">⬆ Import<input type="file" id="imp" accept="application/json" hidden></label></div>
+        <div class="grid2"><button class="btn" id="exp">⬇ Export file</button><label class="btn">⬆ Import file<input type="file" id="imp" accept="application/json" hidden></label></div>
+        <p class="small muted" style="margin:12px 0 6px">Or copy your backup as text (paste it into a note or chat to yourself), and paste it back here to restore.</p>
+        <textarea id="bk" rows="4" placeholder="Paste a backup here to restore"></textarea>
+        <div class="grid2" style="margin-top:8px"><button class="btn" id="copy">📋 Copy backup</button><button class="btn" id="restore">Restore pasted</button></div>
     </section>
     <section class="card">
         <h2>Reset</h2>
@@ -747,12 +773,24 @@ function settings() {
         a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' }));
         a.download = 'ssc-edge-' + today() + '.json'; a.click();
     };
+    const load = t => { const d = JSON.parse(t); if (!d || typeof d !== 'object' || !d.profile) throw new Error('bad'); S = Object.assign(blank(), d); S.profile = Object.assign(blank().profile, d.profile); save(); toast('Progress restored'); go('#/home'); };
     document.getElementById('imp').onchange = ev => {
         const f = ev.target.files[0]; if (!f) return;
-        f.text().then(t => { const d = JSON.parse(t); S = Object.assign(blank(), d); S.profile = Object.assign(blank().profile, d.profile || {}); save(); toast('Imported'); go('#/home'); }).catch(() => toast('That file could not be read'));
+        f.text().then(load).catch(() => toast('That file is not an SSC Edge backup'));
     };
-    document.getElementById('reset').onclick = () => { if (confirm('Erase all progress? This cannot be undone.')) { S = blank(); save(); go('#/home'); } };
+    const bk = document.getElementById('bk');
+    document.getElementById('copy').onclick = () => {
+        const txt = JSON.stringify(S);
+        bk.value = txt;
+        const sel = () => { bk.focus(); bk.select(); toast('Backup selected. Copy it from the box.'); };
+        if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => toast('Backup copied'), sel); else sel();
+    };
+    document.getElementById('restore').onclick = () => {
+        if (!bk.value.trim()) { toast('Paste a backup into the box first'); return; }
+        ask('Replace your current progress with the pasted backup?', 'Restore', () => { try { load(bk.value); } catch (e) { toast('That text is not an SSC Edge backup'); } });
+    };
+    document.getElementById('reset').onclick = () => ask('Erase all progress? This cannot be undone.', 'Erase', () => { S = blank(); save(); go('#/home'); });
 }
 
 route();
-if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+if (!STANDALONE && 'serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
