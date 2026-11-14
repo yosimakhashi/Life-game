@@ -1,7 +1,7 @@
 // Offline support: cache the app shell, load from network first so updates
 // arrive, fall back to cache when offline. Videos need a connection.
-const CACHE = 'psc-padanam-v1';
-const SHELL = ['./', 'index.html', 'app.js', 'data.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
+const CACHE = 'psc-padanam-v2';
+const SHELL = ['./', 'index.html', 'app.js', 'data.js', 'questions.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
     e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
