@@ -32,7 +32,7 @@
     --blue: #6cb2ef;
 }
 @media (prefers-color-scheme: light) {
-    :root {
+    :root:not([data-theme="dark"]) {
         --bg: #f4f1e8;
         --panel: #ffffff;
         --panel-2: #f1ede1;
@@ -46,6 +46,19 @@
         --blue: #2c78bd;
     }
 }
+:root[data-theme="light"] {
+        --bg: #f4f1e8;
+        --panel: #ffffff;
+        --panel-2: #f1ede1;
+        --line: #e0d9c6;
+        --fg: #1b2a24;
+        --dim: #5f7168;
+        --accent: #b9850f;
+        --on-accent: #ffffff;
+        --green: #1f9a5c;
+        --red: #c94a3a;
+        --blue: #2c78bd;
+    }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 [hidden] { display: none !important; }
 html, body { margin: 0; background: var(--bg); color: var(--fg); }
@@ -194,6 +207,7 @@ nav.tabbar a.on { color: var(--accent); }
 </div></nav>
 <div class="toast" id="toast" hidden></div>
 <script src="data.js"></script>
+<script src="questions.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

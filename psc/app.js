@@ -7,11 +7,13 @@ const $top = document.getElementById('top');
 
 // ---------- state ----------
 function blank() {
-    return { done: {}, videos: {}, mynotes: {}, exams: [], wrong: {}, attempts: [], study: {}, log: [], last: null, goal: 60 };
+    return { done: {}, videos: {}, mynotes: {}, exams: [], wrong: {}, attempts: [], study: {}, log: [], last: null, goal: 60, daily: {}, marks: {}, theme: 'auto' };
 }
 let S = blank();
 try { S = Object.assign(blank(), JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* storage blocked: start fresh */ }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignore */ } }
+function applyTheme() { if (S.theme === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = S.theme; }
+applyTheme();
 
 // ---------- helpers ----------
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -28,7 +30,26 @@ function fmtDate(dateStr) {
     const [y, m, d] = dateStr.split('-').map(Number);
     return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 }
-function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+// Seeded random so everyone gets the same daily challenge on the same date.
+function seeded(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function shuffle(a, rnd) { rnd = rnd || Math.random; a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function dailyStreak() {
+    let n = 0; const d = new Date();
+    if (!S.daily[dayKey(d)]) d.setDate(d.getDate() - 1);
+    while (S.daily[dayKey(d)]) { n++; d.setDate(d.getDate() - 1); }
+    return n;
+}
+// Study plan: spread unfinished topics (high-weight subjects first) over the
+// days left, keeping the final week for revision and mock tests.
+function studyPlan(ex) {
+    const order = { High: 0, Medium: 1, Low: 2 };
+    const left = allTopics().filter(x => !S.done[tkey(x.s.id, x.t.id)] && x.s.id !== 'current-affairs')
+        .sort((a, b) => order[a.s.weight] - order[b.s.weight]);
+    const days = daysUntil(ex.date);
+    const studyDays = Math.max(1, days - 7);
+    const perDay = days <= 7 ? left.length : Math.max(1, Math.ceil(left.length / studyDays));
+    return { left, perDay, revision: days <= 7, todays: left.slice(0, perDay), days };
+}
 function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2200); }
 function uid() { return Math.random().toString(36).slice(2, 9); }
 
@@ -74,10 +95,10 @@ function route() {
     const [view, a, b, c] = parts.length ? parts : ['home'];
     document.querySelectorAll('nav.tabbar a').forEach(el => {
         const tab = el.dataset.tab;
-        el.classList.toggle('on', tab === view || (tab === 'learn' && (view === 'subject' || view === 'topic')) || (tab === 'practice' && ['quiz', 'flash', 'log', 'mistakes', 'result'].includes(view)));
+        el.classList.toggle('on', tab === view || (tab === 'learn' && (view === 'subject' || view === 'topic')) || (tab === 'practice' && ['quiz', 'flash', 'log', 'mistakes', 'result', 'marks', 'stats'].includes(view)));
     });
     if (view !== 'quiz' && quiz && quiz.tick) { clearInterval(quiz.tick); quiz.tick = null; }
-    const views = { home, learn, subject, topic: topicView, videos, practice, quiz: quizView, result: resultView, flash, log: logView, mistakes, exams, exam: examEdit, settings, timer: timerView };
+    const views = { home, learn, subject, topic: topicView, videos, practice, quiz: quizView, result: resultView, flash, log: logView, mistakes, marks: marksView, stats: statsView, exams, exam: examEdit, settings, timer: timerView };
     (views[view] || home)(a, b, c);
     window.scrollTo(0, 0);
 }
@@ -103,6 +124,9 @@ function home() {
         <p style="margin:6px 0 12px">Add your exam date and the app will count down and remind you what to do before it.</p>
         <a class="btn primary" href="#/exam/new">+ Add my exam</a></div>`}
 
+    ${dailyCard()}
+    ${ex ? planCard(ex, true) : ''}
+
     <div class="grid2">
         <div class="stat"><span class="label">Syllabus done</span><b>${o.pct}%</b><div class="bar green" style="margin-top:6px"><i style="width:${o.pct}%"></i></div><span class="small muted">${o.d} of ${o.n} topics</span></div>
         <div class="stat"><span class="label">Studied today</span><b>${min} min</b><div class="bar" style="margin-top:6px"><i style="width:${Math.min(100, min / goal * 100)}%"></i></div><span class="small muted">Goal ${goal} min</span></div>
@@ -121,6 +145,20 @@ function home() {
 
     <div class="card"><h2>Last 7 days</h2>${weekChart()}</div>
     `;
+}
+function dailyCard() {
+    const d = S.daily[today()];
+    return `<a class="item" href="#/quiz/daily" style="${d ? '' : 'border-color:var(--accent)'}"><div class="ico">📅</div><div class="txt"><span class="label">Daily challenge · 🔥 ${dailyStreak()} day${dailyStreak() === 1 ? '' : 's'}</span>
+        <b>${d ? `Done today: ${d.right}/${d.n}` : "Today's 10 questions"}</b><span class="small muted">${d ? 'Come back tomorrow for a new set. Tap to retry.' : 'New set every day. Keep your streak going.'}</span></div><span class="chev">›</span></a>`;
+}
+function planCard(ex, compact) {
+    const p = studyPlan(ex);
+    if (!p.left.length) return `<div class="card"><div class="label">Study plan</div><p style="margin:6px 0 0">🎉 Every topic is done. Spend each day on a full mock test and your mistakes list.</p></div>`;
+    const list = compact ? p.todays.slice(0, 3) : p.left;
+    return `<div class="card"><div class="row"><div class="label" style="flex:1">${p.revision ? 'Final week: revise these' : "Today's study plan"}</div><span class="small muted">${p.left.length} topics left · ${p.perDay}/day</span></div>
+        <div class="list" style="margin-top:8px">${list.map((x, i) => `<a class="row" href="#/topic/${x.s.id}/${x.t.id}" style="text-decoration:none;padding:6px 0;${i >= p.perDay ? 'opacity:.6' : ''}"><span>${x.s.icon}</span><span style="flex:1"><b class="small">${esc(x.t.title)}</b><span class="small muted"> · ${esc(x.s.name)}</span></span><span class="chev muted">›</span></a>`).join('')}</div>
+        ${compact && p.todays.length > 3 ? `<a class="small muted" href="#/exams">+${p.todays.length - 3} more today › full plan</a>` : ''}
+        ${!compact ? `<p class="small muted" style="margin-bottom:0">Faded topics are for the coming days. Last 7 days before the exam are kept for revision and mock tests.</p>` : ''}</div>`;
 }
 function weekChart() {
     const days = []; const d = new Date(); d.setDate(d.getDate() - 6);
@@ -294,17 +332,26 @@ function practice() {
     const nWrong = Object.keys(S.wrong).length;
     const recent = S.attempts.slice(-5).reverse();
     $app.innerHTML = `
-    <a class="item" href="#/quiz/mock"><div class="ico">🧾</div><div class="txt"><b>Mock test</b><span class="small muted">25 questions · 25 minutes · +1 right, −⅓ wrong (Kerala PSC style)</span></div><span class="chev">›</span></a>
+    <div class="small muted">${allQuestions().length} questions in the bank</div>
+    ${dailyCard()}
+    <a class="item" href="#/quiz/full"><div class="ico">🏛️</div><div class="txt"><b>Full exam: 100 questions</b><span class="small muted">75 minutes · +1 right, −⅓ wrong · just like the real OMR exam</span></div><span class="chev">›</span></a>
+    <a class="item" href="#/quiz/mock"><div class="ico">🧾</div><div class="txt"><b>Mini mock test</b><span class="small muted">25 questions · 20 minutes · same marking</span></div><span class="chev">›</span></a>
     <a class="item" href="#/quiz/quick"><div class="ico">⚡</div><div class="txt"><b>Quick quiz</b><span class="small muted">10 random questions with instant answers</span></div><span class="chev">›</span></a>
     <a class="item" href="#/mistakes"><div class="ico">🎯</div><div class="txt"><b>Revise my mistakes</b><span class="small muted">${nWrong ? nWrong + ' questions you got wrong' : 'Nothing yet. Wrong answers collect here.'}</span></div><span class="chev">›</span></a>
+    <a class="item" href="#/marks"><div class="ico">⭐</div><div class="txt"><b>Saved questions</b><span class="small muted">${Object.keys(S.marks).length ? Object.keys(S.marks).length + ' starred' : 'Tap ☆ on any question to save it here'}</span></div><span class="chev">›</span></a>
+    <a class="item" href="#/stats"><div class="ico">📊</div><div class="txt"><b>My performance</b><span class="small muted">Accuracy by subject and score history</span></div><span class="chev">›</span></a>
     <a class="item" href="#/flash"><div class="ico">🃏</div><div class="txt"><b>Flashcards</b><span class="small muted">Rapid revision of every note</span></div><span class="chev">›</span></a>
     <a class="item" href="#/log"><div class="ico">📰</div><div class="txt"><b>My current affairs log</b><span class="small muted">${S.log.length} facts saved</span></div><span class="chev">›</span></a>
     <div class="card"><h2>Practise by subject</h2><div class="row wrap">${SUBJECTS.filter(s => s.topics.some(t => t.qs.length)).map(s => `<a class="btn" href="#/quiz/subject/${s.id}">${s.icon} ${esc(s.name.split(' ')[0])}</a>`).join('')}</div></div>
-    ${recent.length ? `<div class="card"><h2>Recent scores</h2>${recent.map(a => `<div class="row small" style="padding:6px 0;border-top:1px solid var(--line)"><span>${esc(a.label)}</span><span class="spacer"></span><b>${a.mode === 'mock' ? a.score.toFixed(2) + ' / ' + a.n : a.right + ' / ' + a.n}</b><span class="muted">${a.date.slice(5)}</span></div>`).join('')}</div>` : ''}`;
+    ${recent.length ? `<div class="card"><h2>Recent scores</h2>${recent.map(a => `<div class="row small" style="padding:6px 0;border-top:1px solid var(--line)"><span>${esc(a.label)}</span><span class="spacer"></span><b>${isExam(a.mode) ? a.score.toFixed(2) + ' / ' + a.n : a.right + ' / ' + a.n}</b><span class="muted">${a.date.slice(5)}</span></div>`).join('')}</div>` : ''}`;
 }
+const isExam = m => m === 'mock' || m === 'full';
 function startQuiz(mode, a, b) {
     let pool = allQuestions(), label = 'Quick quiz', n = 10, limit = 0;
-    if (mode === 'mock') { n = 25; limit = 25 * 60; label = 'Mock test'; }
+    if (mode === 'mock') { n = 25; limit = 20 * 60; label = 'Mini mock test'; }
+    if (mode === 'full') { n = 100; limit = 75 * 60; label = 'Full exam (100)'; }
+    if (mode === 'marks') { pool = pool.filter(q => S.marks[q.key]); n = pool.length; label = 'Saved questions'; }
+    if (mode === 'daily') { const seed = Number(today().replace(/-/g, '')); pool = shuffle(pool, seeded(seed)).slice(0, 10); n = 10; label = 'Daily challenge'; }
     if (mode === 'subject') { pool = pool.filter(q => q.sid === a); n = pool.length; label = SUBJ[a] ? SUBJ[a].name : 'Subject'; }
     if (mode === 'topic') { pool = pool.filter(q => q.sid === a && q.tid === b); n = pool.length; const t = topic(a, b); label = t ? t.title : 'Topic'; }
     if (mode === 'mistakes') { pool = pool.filter(q => S.wrong[q.key]); n = pool.length; label = 'Mistakes'; }
@@ -314,14 +361,14 @@ function startQuiz(mode, a, b) {
 function quizView(mode, a, b) {
     if (!quiz || quiz.done || quiz.key !== location.hash) { startQuiz(mode || 'quick', a, b); quiz.key = location.hash; }
     if (!quiz.qs.length) { header('Quiz', '#/practice'); $app.innerHTML = '<div class="card">No questions here yet.</div>'; return; }
-    const isMock = quiz.mode === 'mock';
+    const isMock = isExam(quiz.mode);
     header(quiz.label, quiz.back, isMock ? `<span class="chip" id="clock">--:--</span>` : `<span class="chip">${quiz.i + 1}/${quiz.qs.length}</span>`);
     const q = quiz.qs[quiz.i], pick = quiz.picks[quiz.i];
     const reveal = !isMock && pick !== null;
     $app.innerHTML = `
     ${isMock ? `<div class="dots">${quiz.qs.map((_, i) => `<button class="${quiz.picks[i] !== null ? 'ans' : ''} ${i === quiz.i ? 'cur' : ''}" data-go="${i}">${i + 1}</button>`).join('')}</div>` : `<div class="bar"><i style="width:${(quiz.i) / quiz.qs.length * 100}%"></i></div>`}
     <div class="card">
-        <div class="small muted">${esc(q.subj)} · Question ${quiz.i + 1} of ${quiz.qs.length}</div>
+        <div class="row"><div class="small muted" style="flex:1">${esc(q.subj)} · Question ${quiz.i + 1} of ${quiz.qs.length}</div>${star(q.key)}</div>
         <p class="q">${esc(q.q)}</p>
         <div class="opts">${q.order.map((oi, idx) => {
             let cls = '';
@@ -338,6 +385,7 @@ function quizView(mode, a, b) {
         ${quiz.i < quiz.qs.length - 1 ? `<button class="btn ${reveal || isMock ? 'primary' : ''}" id="next">${isMock || reveal ? 'Next ›' : 'Skip ›'}</button>` : `<button class="btn primary" id="finish">Finish</button>`}
     </div>`;
     $app.querySelectorAll('[data-o]').forEach(el => el.onclick = () => { quiz.picks[quiz.i] = +el.dataset.o; quizView(); });
+    bindStars();
     $app.querySelectorAll('[data-go]').forEach(el => el.onclick = () => { quiz.i = +el.dataset.go; quizView(); });
     const on = (id, f) => { const el = document.getElementById(id); if (el) el.onclick = f; };
     on('prev', () => { quiz.i--; quizView(); });
@@ -369,6 +417,7 @@ function finishQuiz() {
     });
     const score = right - wrong / 3;
     const mins = Math.max(1, Math.round((Date.now() - quiz.start) / 60000));
+    if (quiz.mode === 'daily') { const prev = S.daily[today()]; if (!prev || right > prev.right) S.daily[today()] = { right, n: quiz.qs.length }; }
     S.attempts.push({ mode: quiz.mode, label: quiz.label, n: quiz.qs.length, right, wrong, score, date: today(), per: per.filter(p => !p.skip) });
     if (S.attempts.length > 200) S.attempts = S.attempts.slice(-200);
     addStudy(mins);
@@ -384,7 +433,7 @@ function resultView() {
     $app.innerHTML = `
     <div class="card hero" style="text-align:center">
         <div class="label">${esc(a.label)}</div>
-        <div class="big" style="margin:8px 0">${a.mode === 'mock' ? a.score.toFixed(2) : a.right}<span style="font-size:20px" class="muted"> / ${a.n}</span></div>
+        <div class="big" style="margin:8px 0">${isExam(a.mode) ? a.score.toFixed(2) : a.right}<span style="font-size:20px" class="muted"> / ${a.n}</span></div>
         <div>${pct >= 80 ? '🏆 Excellent!' : pct >= 50 ? '👍 Good, keep going.' : '💪 Revise the notes and try again.'}</div>
     </div>
     <div class="grid2" style="grid-template-columns:repeat(3,1fr)">
@@ -392,14 +441,50 @@ function resultView() {
         <div class="stat"><span class="label">Wrong</span><b style="color:var(--red)">${a.wrong}</b></div>
         <div class="stat"><span class="label">Skipped</span><b>${skipped}</b></div>
     </div>
-    ${a.mode === 'mock' ? `<p class="small muted" style="margin:0">Score = right − wrong ÷ 3 = ${a.right} − ${(a.wrong / 3).toFixed(2)}.</p>` : ''}
+    ${isExam(a.mode) ? `<p class="small muted" style="margin:0">Score = right − wrong ÷ 3 = ${a.right} − ${(a.wrong / 3).toFixed(2)}.</p>` : ''}
     <div class="row"><a class="btn primary" style="flex:1" href="${quiz.key}" id="again">Try again</a><a class="btn" style="flex:1" href="#/practice">Practice menu</a></div>
     <h2 style="margin:8px 0 0;font-size:16px">Review answers</h2>
     ${quiz.qs.map((q, i) => { const p = quiz.picks[i]; const ok = p === q.ans; return `
-        <div class="card"><div class="small muted">${i + 1}. ${esc(q.subj)}</div><b>${esc(q.q)}</b>
+        <div class="card"><div class="row"><div class="small muted" style="flex:1">${i + 1}. ${esc(q.subj)}</div>${star(q.key)}</div><b>${esc(q.q)}</b>
         <div class="small" style="margin-top:6px">${p === null ? '⏭ Skipped' : ok ? '✅ ' + esc(q.opts[p]) : '❌ You: ' + esc(q.opts[p])}${ok ? '' : ` · Answer: <b style="color:var(--green)">${esc(q.opts[q.ans])}</b>`}</div>
         <div class="small muted" style="margin-top:4px">${esc(q.ex || '')} <a href="#/topic/${q.sid}/${q.tid}">Notes ›</a></div></div>`; }).join('')}`;
+    bindStars();
     document.getElementById('again').onclick = e => { e.preventDefault(); const k = quiz.key; quiz = null; if (location.hash === k) route(); else location.hash = k; };
+}
+function star(key) { return `<button class="btn ghost" data-star="${esc(key)}" aria-label="Save question" style="min-height:36px;padding:0 8px;font-size:20px;color:var(--accent)">${S.marks[key] ? '★' : '☆'}</button>`; }
+function bindStars() {
+    $app.querySelectorAll('[data-star]').forEach(b => b.onclick = e => {
+        e.stopPropagation(); const k = b.dataset.star;
+        if (S.marks[k]) delete S.marks[k]; else S.marks[k] = 1;
+        save(); b.textContent = S.marks[k] ? '★' : '☆'; toast(S.marks[k] ? 'Saved ⭐' : 'Removed');
+    });
+}
+function marksView() {
+    header('Saved questions', '#/practice');
+    const qs = allQuestions().filter(q => S.marks[q.key]);
+    $app.innerHTML = qs.length ? `<a class="btn primary block" href="#/quiz/marks">Practise all ${qs.length}</a>
+        ${qs.map(q => `<div class="card"><div class="row"><div class="small muted" style="flex:1">${esc(q.subj)}</div>${star(q.key)}</div><b>${esc(q.q)}</b><div class="small" style="margin-top:6px">Answer: <b style="color:var(--green)">${esc(q.opts[q.ans])}</b> · ${esc(q.ex)}</div></div>`).join('')}`
+        : `<div class="card">No saved questions yet. Tap ☆ next to any question in a quiz to keep it here for revision.</div>`;
+    bindStars();
+}
+function statsView() {
+    header('My performance', '#/practice');
+    const per = {}; let tot = 0, ok = 0;
+    S.attempts.forEach(a => (a.per || []).forEach(p => { const s = per[p.sid] || (per[p.sid] = { c: 0, n: 0 }); s.n++; tot++; if (p.ok) { s.c++; ok++; } }));
+    const exams = S.attempts.filter(a => isExam(a.mode)).slice(-10);
+    const days = Object.keys(S.study).length, mins = Object.values(S.study).reduce((a, b) => a + b, 0);
+    $app.innerHTML = `
+    <div class="grid2">
+        <div class="stat"><span class="label">Questions answered</span><b>${tot}</b></div>
+        <div class="stat"><span class="label">Accuracy</span><b>${tot ? Math.round(ok / tot * 100) : 0}%</b></div>
+        <div class="stat"><span class="label">Hours studied</span><b>${(mins / 60).toFixed(1)}</b><span class="small muted">over ${days} day${days === 1 ? '' : 's'}</span></div>
+        <div class="stat"><span class="label">Daily challenges</span><b>${Object.keys(S.daily).length}</b><span class="small muted">streak ${dailyStreak()}</span></div>
+    </div>
+    <div class="card"><h2>Accuracy by subject</h2>${SUBJECTS.filter(s => s.topics.some(t => t.qs.length)).map(s => { const v = per[s.id]; const pc = v ? Math.round(v.c / v.n * 100) : null; return `
+        <a href="#/quiz/subject/${s.id}" style="display:block;text-decoration:none;padding:6px 0"><div class="row small"><span>${s.icon} ${esc(s.name)}</span><span class="spacer"></span><b style="color:${pc === null ? 'var(--dim)' : pc >= 75 ? 'var(--green)' : pc >= 50 ? 'var(--accent)' : 'var(--red)'}">${pc === null ? 'not tried' : pc + '%'}</b></div>
+        <div class="bar ${pc >= 75 ? 'green' : ''}" style="margin-top:4px"><i style="width:${pc || 0}%;${pc !== null && pc < 50 ? 'background:var(--red)' : ''}"></i></div></a>`; }).join('')}
+        <p class="small muted" style="margin-bottom:0">Tap a subject to practise it. Aim for 75% or more in every subject.</p></div>
+    <div class="card"><h2>Mock test scores</h2>${exams.length ? `<div style="display:grid;grid-template-columns:repeat(${exams.length},1fr);gap:6px;align-items:end;height:130px">${exams.map(a => { const pc = Math.max(0, a.score / a.n * 100); return `<div style="display:grid;justify-items:center;gap:4px;align-content:end;height:100%"><span class="small">${Math.round(pc)}%</span><div style="width:100%;max-width:30px;height:${Math.max(4, pc)}px;border-radius:6px;background:var(--accent)"></div><span class="small muted">${a.n}</span></div>`; }).join('')}</div><p class="small muted" style="margin-bottom:0">Score as % of maximum after negative marking. Number under each bar = questions in that test.</p>` : '<p class="muted" style="margin:0">Take a mock test to see your scores here.</p>'}</div>`;
 }
 function mistakes() {
     header('My mistakes', '#/practice');
@@ -472,10 +557,13 @@ function exams() {
             <div class="label" style="margin-top:12px">Checklist ${nd}/${CHECKS.length}</div>
             <div style="display:grid;gap:6px;margin-top:6px">${CHECKS.map(([k, l]) => `<label class="row small" style="cursor:pointer"><input type="checkbox" data-e="${e.id}" data-k="${k}" ${c[k] ? 'checked' : ''} style="width:20px;height:20px">${l}</label>`).join('')}</div>
             ${e.note ? `<p class="small" style="margin-bottom:0">📝 ${esc(e.note)}</p>` : ''}
-            <div class="row" style="margin-top:10px"><a class="btn" href="#/exam/${e.id}">Edit</a><a class="btn ghost" href="#/quiz/mock">Mock test</a></div>
+            <div class="row" style="margin-top:10px"><a class="btn" href="#/exam/${e.id}">Edit</a><a class="btn ghost" href="#/quiz/full">Full mock</a></div>
         </div>`; }).join('') : `<div class="card"><p style="margin:0">No upcoming exams added. Find your exam date in the monthly exam programme on keralapsc.gov.in and add it here.</p></div>`}
     <div class="card"><h2>Before every exam</h2><ul style="margin:0;padding-left:20px;display:grid;gap:6px">${EXAM_TIPS.map(t => `<li class="small">${esc(t)}</li>`).join('')}</ul>
     <div class="row wrap" style="margin-top:12px"><a class="btn" target="_blank" rel="noopener" href="https://www.keralapsc.gov.in/">Kerala PSC website</a><a class="btn" target="_blank" rel="noopener" href="https://thulasi.psc.kerala.gov.in/thulasi/">Thulasi login</a></div></div>
+    <div class="card"><h2>Official resources</h2><p class="small muted" style="margin-top:0">All of these are on the Kerala PSC website menu. Previous question papers are the best practice: the same facts come back again and again.</p>
+    <div class="list">${[["📄","Previous question papers","Practise real past papers for your post"],["✅","Answer keys","Check provisional and final keys after each exam"],["🗓️","Exam calendar / programme","Monthly list of upcoming exams and dates"],["📘","Syllabus","Detailed syllabus for each category number"],["🏅","Rank lists & shortlists","Results after the exam"]].map(([i,t,d]) => `<a class="item" target="_blank" rel="noopener" href="https://www.keralapsc.gov.in/"><div class="ico">${i}</div><div class="txt"><b>${t}</b><span class="small muted">${d}</span></div><span class="chev">↗</span></a>`).join("")}</div></div>
+    ${up[0] ? planCard(up[0], false) : ""}
     ${past.length ? `<div class="card"><h2>Past exams</h2>${past.map(e => `<div class="row small" style="padding:6px 0;border-top:1px solid var(--line)"><span style="flex:1">${esc(e.name)}</span><span class="muted">${e.date}</span><a href="#/exam/${e.id}">Edit</a></div>`).join('')}</div>` : ''}`;
     $app.querySelectorAll('[data-e]').forEach(cb => cb.onchange = () => { const e = S.exams.find(x => x.id === cb.dataset.e); e.checks = e.checks || {}; e.checks[cb.dataset.k] = cb.checked; save(); exams(); });
 }
@@ -509,9 +597,11 @@ function settings() {
     $app.innerHTML = `
     <div class="card"><h2>Back up your progress</h2><p class="small muted" style="margin-top:0">Everything is stored on this device only. Download a backup to move it to another phone.</p>
     <div class="row wrap"><button class="btn" id="exp">⬇ Download backup</button><label class="btn">⬆ Restore backup<input type="file" id="imp" accept="application/json" hidden></label></div></div>
+    <div class="card"><h2>Theme</h2><div class="row">${[["auto","Auto"],["light","☀️ Light"],["dark","🌙 Dark"]].map(([k,l]) => `<button class="btn ${S.theme === k ? "primary" : ""}" data-th="${k}" style="flex:1">${l}</button>`).join("")}</div></div>
     <div class="card"><h2>Reset</h2><button class="btn danger" id="rst">Erase all progress</button></div>
     <div class="card small muted">PSC Padanam · notes follow the common Kerala PSC preliminary syllabus. Always confirm dates and syllabus on the official site.</div>
     <a class="btn ghost" href="../index.html">‹ Back to Life RPG</a>`;
+    $app.querySelectorAll('[data-th]').forEach(b => b.onclick = () => { S.theme = b.dataset.th; save(); applyTheme(); settings(); });
     document.getElementById('exp').onclick = () => {
         const blob = new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' });
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'psc-padanam-backup-' + today() + '.json'; a.click();
