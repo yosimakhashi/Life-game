@@ -9,7 +9,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Recording") {
+                Section {
                     Picker("Resolution", selection: Binding(
                         get: { camera.resolution },
                         set: { camera.updateFormat(resolution: $0) })) {
@@ -31,6 +31,8 @@ struct SettingsView: View {
                         }
                     }
                     .disabled(!camera.supportsAppleLog)
+                } header: {
+                    Text("Recording")
                 } footer: {
                     if !camera.supportsAppleLog {
                         Text("Apple Log needs iPhone 15 Pro or newer.")

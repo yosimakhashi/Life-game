@@ -554,7 +554,7 @@ final class CameraManager: NSObject, ObservableObject {
         let codec = self.codec
         let bake = bakeLUTIntoRecording && selectedLUT != nil
         let audioSettings = hasAudio
-            ? audioOutput.recommendedAudioSettingsForAssetWriter(writingTo: .mov) as? [String: Any]
+            ? audioOutput.recommendedAudioSettingsForAssetWriter(writingTo: .mov)
             : nil
         isRecording = true
         dataQueue.async {
