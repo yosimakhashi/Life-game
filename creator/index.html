@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#120d0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Creator Forge">
+<title>Creator Forge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap">
+<style>
+/* Creator Forge: YouTube video maker helper + motivator.
+   Single column, fixed bottom tab bar (Today, Videos, Rules, Boost).
+   All data lives in localStorage on this device. */
+:root {
+  --bg: #120d0d;
+  --panel: #1d1616;
+  --panel-2: #2a2020;
+  --line: #3b2c2c;
+  --fg: #f6eeee;
+  --dim: #b9a7a7;
+  --accent: #ff4d4d;
+  --on-accent: #1a0606;
+  --gold: #f4c15a;
+  --green: #5fcf8f;
+  --blue: #74b4f2;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #fbf6f5;
+    --panel: #ffffff;
+    --panel-2: #f3eaea;
+    --line: #e4d6d6;
+    --fg: #2a1a1a;
+    --dim: #7a6464;
+    --accent: #d92b2b;
+    --on-accent: #ffffff;
+    --gold: #b7831a;
+    --green: #23885a;
+    --blue: #2c6fb3;
+  }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: "Plus Jakarta Sans", system-ui, sans-serif; -webkit-text-size-adjust: 100%; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; touch-action: manipulation; }
+a { color: inherit; }
+header {
+  position: sticky; top: 0; z-index: 5;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+  padding: calc(env(safe-area-inset-top) + 10px) 16px 10px;
+}
+.hwrap { max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 10px; }
+.back { color: var(--dim); text-decoration: none; font-size: 13px; min-height: 36px; display: inline-flex; align-items: center; }
+.brand { font-weight: 800; font-size: 18px; flex: 1; }
+.brand span { color: var(--accent); }
+.chip { font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); white-space: nowrap; }
+main { max-width: 640px; margin: 0 auto; padding: 16px 16px calc(96px + env(safe-area-inset-bottom)); }
+h2 { font-size: 22px; margin: 4px 0 12px; }
+h3 { font-size: 16px; margin: 0 0 8px; }
+p { line-height: 1.5; }
+.muted { color: var(--dim); }
+.small { font-size: 13px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+.hero { background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, var(--panel)), var(--panel)); }
+.hero .quote { font-size: 19px; font-weight: 700; line-height: 1.4; margin: 6px 0 4px; }
+.kicker { font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.grow { flex: 1; min-width: 0; }
+.btn { min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel-2); font-weight: 700; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.ghost { background: transparent; }
+.btn.sm { min-height: 36px; padding: 0 12px; font-size: 13px; border-radius: 10px; }
+.btn:active { transform: scale(.98); }
+input[type=text], input[type=date], textarea, select {
+  width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--panel-2); font-size: 16px;
+}
+textarea { min-height: 80px; resize: vertical; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.stat { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px; text-align: center; }
+.stat b { display: block; font-size: 22px; }
+.stat span { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
+.bar { height: 8px; border-radius: 99px; background: var(--panel-2); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .3s; }
+.next { border-left: 4px solid var(--accent); }
+.proj { display: block; width: 100%; text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+.proj .t { font-weight: 800; margin-bottom: 4px; }
+.tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--panel-2); color: var(--dim); margin-right: 4px; }
+.tag.done { color: var(--green); }
+details.phase { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 10px; overflow: hidden; }
+details.phase > summary { list-style: none; padding: 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+details.phase > summary::-webkit-details-marker { display: none; }
+.pnum { width: 30px; height: 30px; flex: none; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 13px; background: var(--panel-2); border: 1px solid var(--line); }
+.pnum.ok { background: var(--green); border-color: var(--green); color: #06180e; }
+.ptitle { flex: 1; font-weight: 700; }
+.pcount { font-size: 12px; color: var(--dim); }
+.pbody { padding: 0 14px 12px; }
+.why { font-size: 13px; color: var(--dim); margin: 0 0 10px; font-style: italic; }
+.item { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.item input { width: 22px; height: 22px; flex: none; margin-top: 2px; accent-color: var(--accent); }
+.item label { flex: 1; cursor: pointer; }
+.item .it { font-weight: 600; }
+.item .tip { font-size: 13px; color: var(--dim); margin-top: 3px; line-height: 1.45; }
+.item.checked .it { text-decoration: line-through; color: var(--dim); }
+.rule { display: flex; gap: 12px; }
+.rule .n { font-weight: 800; color: var(--accent); min-width: 26px; }
+.feel { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.feel button { min-height: 52px; text-align: left; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); font-weight: 600; font-size: 14px; }
+.feel button.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--panel)); }
+.timer { font-size: 54px; font-weight: 800; text-align: center; font-variant-numeric: tabular-nums; margin: 6px 0; }
+.badges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.badge { text-align: center; padding: 10px 6px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); font-size: 12px; opacity: .45; }
+.badge.got { opacity: 1; border-color: var(--gold); }
+.badge .e { font-size: 26px; display: block; }
+.win { padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; display: flex; gap: 8px; }
+.win:first-child { border-top: 0; }
+.win .d { color: var(--dim); font-size: 12px; white-space: nowrap; }
+nav.tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  background: var(--panel); border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+nav.tabs .in { max-width: 640px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); }
+nav.tabs button { background: none; border: 0; min-height: 60px; font-size: 12px; font-weight: 700; color: var(--dim); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+nav.tabs button .ic { font-size: 20px; }
+nav.tabs button.on { color: var(--accent); }
+.toast { position: fixed; left: 50%; bottom: calc(76px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-weight: 700; font-size: 14px; z-index: 9; max-width: calc(100% - 32px); text-align: center; }
+.seg { display: flex; gap: 6px; }
+.seg button { flex: 1; min-height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); font-weight: 700; }
+.seg button.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 13px; color: var(--dim); margin-bottom: 6px; font-weight: 600; }
+</style>
+</head>
+<body>
+<header>
+  <div class="hwrap">
+    <a class="back" href="../index.html">&larr;</a>
+    <div class="brand">Creator <span>Forge</span></div>
+    <div class="chip" id="streakChip">🔥 0</div>
+    <div class="chip" id="lvlChip">Lv 1</div>
+  </div>
+</header>
+<main id="view"></main>
+<nav class="tabs">
+  <div class="in">
+    <button data-tab="today"><span class="ic">☀️</span>Today</button>
+    <button data-tab="videos"><span class="ic">🎬</span>Videos</button>
+    <button data-tab="rules"><span class="ic">🧠</span>Remember</button>
+    <button data-tab="boost"><span class="ic">⚡</span>Boost</button>
+  </div>
+</nav>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ------------------------------------------------------------------ DATA */
+
+// Step-by-step workflow for a long-form video. Each phase: why it matters + checklist items with tips.
+const LONG = [
+  { id: "idea", t: "Idea & goal", why: "A clear idea for a clear viewer beats a great camera every time.", items: [
+    ["Pick ONE specific viewer", "Picture one real person. What do they want, fear or wonder about?"],
+    ["Say the idea in one sentence", "If you can't say it simply, the video will feel messy."],
+    ["Search the topic on YouTube", "See what already gets views. Decide how yours is different, deeper, funnier or more personal."],
+    ["Ask: would I click this?", "Be honest. If not, sharpen the angle before you spend hours."],
+    ["Choose the goal & length", "Teach, entertain, inspire or tell a story? Pick a target length that fits the content, not padding."],
+  ]},
+  { id: "pack", t: "Title & thumbnail plan (before filming)", why: "Packaging decides whether anyone watches. Plan it first so the video delivers on it.", items: [
+    ["Write 10 title options", "Short (around 60 characters or less), curiosity + clear benefit. Main keyword near the start."],
+    ["Sketch the thumbnail idea", "One subject, one emotion, big contrast, 0–4 words of text."],
+    ["Title + thumbnail tell ONE story together", "Don't repeat the title on the thumbnail; make them complete each other."],
+    ["Never clickbait you can't pay off", "Overpromising kills watch time and trust."],
+  ]},
+  { id: "research", t: "Research", why: "Accuracy builds trust; good stories build attention.", items: [
+    ["Collect facts, examples & sources", "Save links in the notes below so you can cite them in the description."],
+    ["Find 1–2 stories or real examples", "People remember stories, not lists."],
+    ["Check rights for clips, images & music", "Use your own, royalty-free or properly licensed material to avoid copyright claims."],
+  ]},
+  { id: "script", t: "Script / outline", why: "The first 30 seconds decide if people stay.", items: [
+    ["Hook in the first 5–15 seconds", "Show the payoff, ask a burning question or state the stakes. No long intros."],
+    ["Structure: Hook → Context → Value → Payoff → CTA", "Each section should earn the next one."],
+    ["Add open loops", "\"…and the third one surprised me most.\" Give people a reason to keep watching."],
+    ["Plan a change every 30–60 s", "New angle, B-roll, graphic, example or sound keeps energy up."],
+    ["Read it aloud & cut 20%", "Anything that sounds like an essay, rewrite like you talk."],
+    ["Plan the ending CTA", "Point to ONE next video instead of a long goodbye."],
+  ]},
+  { id: "prep", t: "Pre-production", why: "Ten minutes of prep saves an hour of fixing.", items: [
+    ["Shot list + B-roll list", "Write every shot you need so nothing is forgotten."],
+    ["Batteries charged, storage free", "Camera, phone, mic, lights. Clear space before you start."],
+    ["Clean the lens", "The #1 cause of soft, hazy footage on phones."],
+    ["Pick a quiet spot with good light", "Face a window or soft light. Avoid bright light behind you."],
+    ["Airplane / Do Not Disturb mode", "No notifications ruining a perfect take."],
+    ["Props, outfit and background ready", "Simple, tidy background with some depth looks pro."],
+  ]},
+  { id: "film", t: "Filming", why: "Bad audio makes people leave faster than bad video.", items: [
+    ["Camera at eye level, framing set", "Eyes about one-third from the top. Leave a little headroom."],
+    ["Lock focus & exposure", "Tap-and-hold on phone, or manual on camera, so it doesn't pulse."],
+    ["Mic close to your mouth", "Closer mic = cleaner sound. Kill fans/AC if you can."],
+    ["Record a 10-second test & play it back", "Check sound, focus and light before the real takes."],
+    ["Record 10 s of room silence", "Useful for noise reduction and covering cuts later."],
+    ["Do the hook 3+ times", "It is the most important part. Try different energy levels."],
+    ["Bring more energy than feels natural", "Camera flattens energy. 120% looks like 100%."],
+    ["Shoot all B-roll on the list", "Get extra; you'll always want more cutaways."],
+    ["Back up the footage immediately", "Copy to a computer or cloud before deleting anything."],
+  ]},
+  { id: "edit", t: "Editing", why: "Editing is where a video becomes watchable. Respect the viewer's time.", items: [
+    ["Organise files & name the project", "Footage, audio, music, graphics in separate folders."],
+    ["Rough cut: remove dead air & mistakes", "Cut every pause, 'umm' and repeat that adds nothing."],
+    ["Make the first 30 seconds tight", "Get to the point fast. Show the payoff early."],
+    ["Add B-roll, zooms, text & visuals", "Show what you are saying. Change something on screen often."],
+    ["Music under voice, voice always clear", "Music clearly lower than your voice. Only use licensed / free music."],
+    ["Fix colour & exposure", "Consistent, natural skin tones. Don't overdo filters."],
+    ["Balance audio levels", "Even volume across the video. Aim around -14 LUFS, peaks below -1 dB."],
+    ["Add captions / subtitles", "Many people watch muted; captions help reach and accessibility."],
+    ["Watch the whole thing as a viewer", "At normal speed. Wherever you'd get bored, cut."],
+    ["Export at good settings", "1080p or 4K, same frame rate you filmed in, H.264 / MP4."],
+  ]},
+  { id: "thumb", t: "Thumbnail", why: "Your thumbnail is your poster. Most of the click happens here.", items: [
+    ["1280×720 px (16:9), under 2 MB", "JPG or PNG."],
+    ["Readable when tiny", "Check it at phone size. If you can't read it, simplify."],
+    ["Clear face / emotion or one strong object", "Expressive faces and clear subjects stand out."],
+    ["High contrast, bright, uncluttered", "Stand out from what's around it in search results."],
+    ["Make 2–3 versions to test", "Use YouTube's thumbnail Test & Compare if available on your channel."],
+  ]},
+  { id: "upload", t: "Upload & final checks", why: "Small details here decide how YouTube shows your video.", items: [
+    ["Final title chosen", "Main keyword early, clear promise, matches the thumbnail."],
+    ["Description: first 2 lines are strong", "These show in search. Summarise the value + keyword. Add links & sources."],
+    ["Chapters / timestamps", "Start at 0:00, at least 3 chapters, each at least 10 seconds."],
+    ["A few relevant tags & 2–3 hashtags", "Keep them honest and relevant."],
+    ["Audience setting: 'Made for kids' correct", "Required. Choose correctly for your content."],
+    ["Disclosures if needed", "Paid promotion / sponsorship, and altered or synthetic (AI) content where it looks realistic."],
+    ["End screen + cards", "Point to your best next video or playlist."],
+    ["Add to a playlist", "Playlists keep people watching your channel."],
+    ["Upload captions file or check auto-captions", "Fix wrong words, especially names and keywords."],
+    ["Schedule at your audience's active time", "Studio → Analytics → Audience → When your viewers are on YouTube."],
+    ["Watch it once on YouTube before public", "Check quality has finished processing (HD) and nothing is broken."],
+  ]},
+  { id: "promo", t: "Publish & promote", why: "The first hours matter. Show up for the people who showed up.", items: [
+    ["Pin a comment with a question", "Invite conversation; comments show the video is alive."],
+    ["Reply to comments in the first hours", "Every reply builds a real community."],
+    ["Community post / Short teaser", "Make a 30–60 s vertical clip that points to the full video."],
+    ["Share where your viewer actually hangs out", "Relevant groups, socials, friends. Don't spam."],
+  ]},
+  { id: "review", t: "Review & improve", why: "Every video is a lesson. Growth comes from small fixes, every time.", items: [
+    ["Check after 48 hours", "Impressions click-through rate (CTR) and average view duration."],
+    ["Look at the retention graph", "Find where people drop. What happened there? Fix it next time."],
+    ["Read comments for next video ideas", "Your audience tells you what they want."],
+    ["Write ONE lesson for next time", "Not ten. One thing to do better."],
+    ["Celebrate shipping it 🎉", "You finished. Most people never do. Log it as a win."],
+  ]},
+];
+
+const SHORT = [
+  { id: "s-idea", t: "Idea & hook", why: "Shorts live or die in the first second.", items: [
+    ["One idea only", "A Short does one thing: one tip, one joke, one moment."],
+    ["Hook in the first 1–2 seconds", "Start mid-action or with the most interesting line. No intros."],
+    ["Can it loop?", "An ending that flows into the start boosts rewatches."],
+  ]},
+  { id: "s-film", t: "Filming", why: "Vertical, close, clear.", items: [
+    ["Vertical 9:16, good light", "Face a window. Keep the subject in the centre (UI covers edges)."],
+    ["Clean lens, clear audio", "Mic close or quiet room."],
+    ["Keep it short", "Aim for as short as the idea allows; tighter usually performs better."],
+  ]},
+  { id: "s-edit", t: "Editing", why: "No wasted frame.", items: [
+    ["Cut every pause", "Fast pacing, every second earns its place."],
+    ["On-screen captions", "Big, readable, away from the bottom and right-side buttons."],
+    ["Licensed / YouTube audio only", "Avoid copyright problems."],
+    ["Watch it 3 times muted & unmuted", "Does it make sense both ways?"],
+  ]},
+  { id: "s-up", t: "Upload & review", why: "Ship it, learn, repeat.", items: [
+    ["Clear title + 1–3 hashtags", "Say what it is."],
+    ["Link a related long video", "Use the related-video link to send viewers to your long-form."],
+    ["Reply to early comments", "Builds community fast."],
+    ["Check viewed vs. swiped away after 48 h", "Low? Improve the first second next time."],
+  ]},
+];
+
+const RULES = [
+  ["Done is better than perfect.", "Your 100th video will be good because you published the first 99."],
+  ["The viewer's time is sacred.", "Every second must earn the next one. Cut the boring parts."],
+  ["Hook first, always.", "The first 5–15 seconds decide whether anyone sees the rest."],
+  ["Packaging is half the video.", "Great content with a weak title and thumbnail won't be seen. Plan them first."],
+  ["Audio beats video.", "People forgive average picture. They leave on bad sound."],
+  ["Make it for one person.", "Speak to 'you', not 'all of you guys'."],
+  ["Consistency builds the channel.", "A schedule you can actually keep beats bursts of motivation."],
+  ["Don't chase views; chase the viewer.", "Solve a problem, tell a story, make someone feel something."],
+  ["Study your retention graph.", "Drops tell you exactly what to fix."],
+  ["Improve one thing per video.", "Better lighting this time, better hook next time. Small steps compound."],
+  ["Never pay off less than you promise.", "Clickbait gets one click; trust gets subscribers."],
+  ["Respect copyright.", "Use your own, licensed or free-to-use music and clips."],
+  ["Comparison steals momentum.", "Compare yourself to your last video, not someone's 500th."],
+  ["Reply to your audience.", "Early comments are future community. Treat them like gold."],
+  ["Back up your footage.", "Losing a shoot hurts more than any bad comment."],
+  ["Rest is part of the work.", "Burned-out creators stop. Rested creators keep shipping."],
+];
+
+// Original motivational lines (no fake celebrity attributions).
+const QUOTES = [
+  "Nobody is waiting for a perfect video. Someone is waiting for YOUR video.",
+  "Your first videos aren't supposed to be good. They're supposed to be done.",
+  "Small channel, big heart. Every legend started at 0 subscribers.",
+  "You don't need motivation. You need the next tiny step.",
+  "Press record. Confidence comes after action, not before.",
+  "Ten minutes today beats ten hours 'someday'.",
+  "Every video teaches you something no tutorial can.",
+  "The algorithm rewards people who keep showing up.",
+  "Cringe is the price of growth. Pay it gladly.",
+  "One viewer you truly helped is worth more than a thousand who scrolled past.",
+  "Ship it, learn, repeat. That's the whole secret.",
+  "The creator you want to become is built one upload at a time.",
+  "You are not behind. You are on video number one of your own journey.",
+  "Make the video only you can make.",
+];
+
+const FEELINGS = [
+  { k: "lazy", e: "😴", t: "No energy today", talk: "Totally okay. Don't aim for the whole video. Aim for ONE checkbox. Energy usually shows up a few minutes after you start, not before.", act: "Start the 10-minute timer and just open your project." },
+  { k: "views", e: "📉", t: "Nobody watches", talk: "Every channel you admire once had videos with single-digit views. Low views now are data, not a verdict. Your skill is growing even when the numbers aren't yet.", act: "Open your last video's retention graph and write ONE thing to improve." },
+  { k: "camera", e: "😬", t: "Shy on camera", talk: "Everyone feels awkward at first; it fades with reps, not with waiting. You can also start with voice-over, screen recording or hands-only shots.", act: "Record a 30-second practice clip you never have to post." },
+  { k: "perfect", e: "🎯", t: "It's not perfect yet", talk: "Perfectionism is fear wearing a nice suit. Viewers care about value and honesty more than flawless polish. Set a deadline and ship at 'good enough'.", act: "Pick a publish date in your project and commit to it." },
+  { k: "compare", e: "👀", t: "Others are better", talk: "You're comparing your chapter 1 to someone's chapter 20. The only fair comparison is you vs. your last video.", act: "Re-watch your first video and notice how far you've come." },
+  { k: "time", e: "⏰", t: "No time", talk: "Big videos are made of small sessions. Script on the bus, shoot on the weekend, edit in 25-minute blocks.", act: "Do one 10-minute block right now on the next step." },
+  { k: "hate", e: "💬", t: "Got a mean comment", talk: "A mean comment means you're being seen. Take the useful part (if any), delete or ignore the rest. You don't owe strangers your peace.", act: "Read three kind comments or messages, then log a win." },
+  { k: "ideas", e: "💡", t: "Out of ideas", talk: "Ideas come from questions people ask, problems you've solved and things you're learning. Document, don't just create.", act: "Write 5 questions your viewer would type into YouTube." },
+  { k: "tired", e: "🥵", t: "Burned out", talk: "Rest is not quitting. Take a real break, lower the schedule, and come back for the joy, not the pressure.", act: "Take today off guilt-free. Log rest as a win. Seriously." },
+];
+
+const LEVELS = ["New Creator", "Spark", "Storyteller", "Editor", "Rising Creator", "Channel Builder", "Pro Creator", "Creator Legend"];
+
+const BADGES = [
+  { id: "first-step", e: "👣", t: "First step", ok: s => s.totalChecks >= 1 },
+  { id: "planner", e: "📝", t: "Planned a video", ok: s => s.projects.length >= 1 },
+  { id: "first-up", e: "🚀", t: "First upload", ok: s => publishedCount(s) >= 1 },
+  { id: "five", e: "🖐️", t: "5 videos", ok: s => publishedCount(s) >= 5 },
+  { id: "ten", e: "🔟", t: "10 videos", ok: s => publishedCount(s) >= 10 },
+  { id: "twentyfive", e: "🏆", t: "25 videos", ok: s => publishedCount(s) >= 25 },
+  { id: "streak3", e: "🔥", t: "3-day streak", ok: s => s.bestStreak >= 3 },
+  { id: "streak7", e: "☄️", t: "7-day streak", ok: s => s.bestStreak >= 7 },
+  { id: "focus", e: "⏱️", t: "5 focus blocks", ok: s => s.focusBlocks >= 5 },
+  { id: "wins", e: "🌟", t: "10 wins logged", ok: s => s.wins.length >= 10 },
+  { id: "short", e: "📱", t: "Shipped a Short", ok: s => s.projects.some(p => p.type === "short" && isDone(p)) },
+  { id: "hundred", e: "💯", t: "100 steps done", ok: s => s.totalChecks >= 100 },
+];
+
+/* ----------------------------------------------------------------- STATE */
+const KEY = "creatorForge.v1";
+function blank() {
+  return { projects: [], wins: [], totalChecks: 0, focusBlocks: 0, activeDays: [], bestStreak: 0, current: null, feel: null };
+}
+let S = blank();
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(blank(), JSON.parse(raw)); } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+const today = () => new Date().toISOString().slice(0, 10);
+function dayStr(d) { return d.toISOString().slice(0, 10); }
+function markActive() {
+  const t = today();
+  if (!S.activeDays.includes(t)) { S.activeDays.push(t); S.activeDays = S.activeDays.slice(-400); }
+  S.bestStreak = Math.max(S.bestStreak, streak());
+}
+function streak() {
+  const set = new Set(S.activeDays);
+  const d = new Date();
+  if (!set.has(dayStr(d))) d.setDate(d.getDate() - 1); // today not done yet: streak still alive from yesterday
+  let n = 0;
+  while (set.has(dayStr(d))) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+const xp = () => S.totalChecks * 10 + publishedCount(S) * 150 + S.focusBlocks * 20 + S.wins.length * 5;
+function level() {
+  const x = xp(); let lv = 1, need = 100, acc = 0;
+  while (x >= acc + need) { acc += need; lv++; need = Math.round(need * 1.35); }
+  return { lv, into: x - acc, need, name: LEVELS[Math.min(lv - 1, LEVELS.length - 1)] };
+}
+const tpl = p => p.type === "short" ? SHORT : LONG;
+function counts(p) {
+  let total = 0, done = 0;
+  tpl(p).forEach(ph => ph.items.forEach((_, i) => { total++; if (p.checks[ph.id + ":" + i]) done++; }));
+  return { total, done };
+}
+function isDone(p) { return !!p.published; }
+function publishedCount(s) { return s.projects.filter(isDone).length; }
+function nextStep(p) {
+  for (const ph of tpl(p)) for (let i = 0; i < ph.items.length; i++)
+    if (!p.checks[ph.id + ":" + i]) return { ph, i, item: ph.items[i] };
+  return null;
+}
+function dailyPick(arr, salt) {
+  const d = today().replace(/-/g, "");
+  return arr[(parseInt(d, 10) + (salt || 0)) % arr.length];
+}
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+/* -------------------------------------------------------------- RENDERING */
+const view = document.getElementById("view");
+let tab = "today";
+let openProject = null;
+
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), 2200);
+}
+let knownBadges = new Set(BADGES.filter(b => b.ok(S)).map(b => b.id));
+function checkBadges() {
+  BADGES.forEach(b => { if (b.ok(S) && !knownBadges.has(b.id)) { knownBadges.add(b.id); toast(`${b.e} Badge unlocked: ${b.t}!`); } });
+}
+function header() {
+  document.getElementById("streakChip").textContent = "🔥 " + streak();
+  document.getElementById("lvlChip").textContent = "Lv " + level().lv;
+  document.querySelectorAll("nav.tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+}
+function render() {
+  header();
+  if (tab === "today") renderToday();
+  else if (tab === "videos") openProject ? renderProject() : renderVideos();
+  else if (tab === "rules") renderRules();
+  else renderBoost();
+}
+function go(t) { tab = t; openProject = null; render(); window.scrollTo(0, 0); }
+
+function renderToday() {
+  const L = level();
+  const cur = S.projects.find(p => p.id === S.current && !p.published) || S.projects.find(p => !p.published);
+  const r = dailyPick(RULES, 3);
+  let curHtml;
+  if (cur) {
+    const c = counts(cur), n = nextStep(cur);
+    curHtml = `<div class="card next">
+      <div class="kicker">Your next step</div>
+      <h3 style="margin-top:6px">${esc(cur.title)}</h3>
+      <div class="bar"><i style="width:${Math.round(c.done / c.total * 100)}%"></i></div>
+      <p class="small muted" style="margin:6px 0 10px">${c.done}/${c.total} steps · ${cur.type === "short" ? "Short" : "Long video"}${cur.date ? " · Target " + esc(cur.date) : ""}</p>
+      ${n ? `<p style="margin:0 0 4px"><b>${esc(n.ph.t)} →</b> ${esc(n.item[0])}</p><p class="small muted" style="margin:0 0 12px">${esc(n.item[1])}</p>
+      <div class="row"><button class="btn primary" data-act="doNext" data-id="${cur.id}">✓ Done</button><button class="btn" data-act="open" data-id="${cur.id}">Open checklist</button></div>`
+      : `<p>All steps checked! Mark it published 🎉</p><button class="btn primary" data-act="open" data-id="${cur.id}">Open</button>`}
+    </div>`;
+  } else {
+    curHtml = `<div class="card next"><div class="kicker">Start here</div><p>No video in progress. Every channel starts with one idea.</p><button class="btn primary" data-act="newProj">+ Start a new video</button></div>`;
+  }
+  view.innerHTML = `
+    <div class="card hero">
+      <div class="kicker">Today's fuel</div>
+      <div class="quote">${esc(dailyPick(QUOTES))}</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>${streak()}</b><span>Day streak</span></div>
+      <div class="stat"><b>${publishedCount(S)}</b><span>Published</span></div>
+      <div class="stat"><b>${S.totalChecks}</b><span>Steps done</span></div>
+    </div>
+    <div class="card">
+      <div class="row"><b class="grow">Level ${L.lv} · ${L.name}</b><span class="small muted">${L.into}/${L.need} XP</span></div>
+      <div class="bar" style="margin-top:8px"><i style="width:${Math.round(L.into / L.need * 100)}%"></i></div>
+    </div>
+    ${curHtml}
+    <div class="card">
+      <div class="kicker">Remember today</div>
+      <h3 style="margin-top:6px">${esc(r[0])}</h3>
+      <p class="small muted" style="margin:0">${esc(r[1])}</p>
+    </div>
+    <div class="card">
+      <h3>Can't get started?</h3>
+      <p class="small muted" style="margin-top:0">Promise yourself just 10 minutes. You can stop after that.</p>
+      <button class="btn" data-act="toBoost">⚡ Get a boost</button>
+    </div>`;
+}
+
+function renderVideos() {
+  const active = S.projects.filter(p => !p.published), done = S.projects.filter(p => p.published);
+  const card = p => { const c = counts(p);
+    return `<button class="proj" data-act="open" data-id="${p.id}">
+      <div class="t">${esc(p.title)}</div>
+      <div style="margin-bottom:8px"><span class="tag">${p.type === "short" ? "📱 Short" : "🎬 Long"}</span>${p.published ? `<span class="tag done">✓ Published ${esc(p.published)}</span>` : p.date ? `<span class="tag">🎯 ${esc(p.date)}</span>` : ""}</div>
+      <div class="bar"><i style="width:${Math.round(c.done / c.total * 100)}%"></i></div>
+      <div class="small muted" style="margin-top:6px">${c.done}/${c.total} steps</div></button>`; };
+  view.innerHTML = `
+    <h2>Your videos</h2>
+    <div class="card" id="newCard">
+      <h3>Start a new video</h3>
+      <div class="field"><input type="text" id="newTitle" placeholder="Working title or idea" maxlength="120"></div>
+      <div class="seg field" id="newType"><button data-type="long" class="on">🎬 Long video</button><button data-type="short">📱 Short</button></div>
+      <button class="btn primary" data-act="create" style="width:100%">+ Create checklist</button>
+    </div>
+    ${active.length ? `<h3 style="margin-top:18px">In progress</h3>${active.map(card).join("")}` : ""}
+    ${done.length ? `<h3 style="margin-top:18px">Published 🎉</h3>${done.slice().reverse().map(card).join("")}` : ""}
+    ${!S.projects.length ? `<p class="muted small">Your projects will appear here. Each one gets a full step-by-step checklist from idea to review.</p>` : ""}`;
+  view.querySelectorAll("#newType button").forEach(b => b.onclick = () => view.querySelectorAll("#newType button").forEach(x => x.classList.toggle("on", x === b)));
+}
+
+function renderProject() {
+  const p = S.projects.find(x => x.id === openProject);
+  if (!p) { openProject = null; return renderVideos(); }
+  const c = counts(p), n = nextStep(p);
+  const firstOpen = n ? n.ph.id : null;
+  view.innerHTML = `
+    <button class="btn ghost sm" data-act="backList">← All videos</button>
+    <h2 style="margin-top:10px">${esc(p.title)}</h2>
+    <div class="bar"><i style="width:${Math.round(c.done / c.total * 100)}%"></i></div>
+    <p class="small muted">${c.done}/${c.total} steps · ${p.type === "short" ? "Short" : "Long video"}${p.published ? " · Published " + esc(p.published) : ""}</p>
+    <div class="card">
+      <div class="field"><label for="pDate">Target publish date (commit to it!)</label><input type="date" id="pDate" value="${esc(p.date || "")}"></div>
+      <div class="field" style="margin:0"><label for="pNotes">Notes: ideas, title options, links, lessons</label><textarea id="pNotes" placeholder="Title ideas, sources, script lines, what to improve next time…">${esc(p.notes || "")}</textarea></div>
+    </div>
+    ${tpl(p).map((ph, pi) => {
+      const done = ph.items.filter((_, i) => p.checks[ph.id + ":" + i]).length;
+      return `<details class="phase" ${ph.id === firstOpen ? "open" : ""}>
+        <summary><span class="pnum ${done === ph.items.length ? "ok" : ""}">${done === ph.items.length ? "✓" : pi + 1}</span><span class="ptitle">${esc(ph.t)}</span><span class="pcount">${done}/${ph.items.length}</span></summary>
+        <div class="pbody"><p class="why">${esc(ph.why)}</p>
+        ${ph.items.map((it, i) => { const k = ph.id + ":" + i, on = !!p.checks[k];
+          return `<div class="item ${on ? "checked" : ""}"><input type="checkbox" id="c_${k}" data-key="${k}" ${on ? "checked" : ""}>
+            <label for="c_${k}"><div class="it">${esc(it[0])}</div><div class="tip">${esc(it[1])}</div></label></div>`; }).join("")}
+        </div></details>`; }).join("")}
+    <div class="row" style="margin-top:14px">
+      ${p.published ? `<button class="btn" data-act="unpublish">Mark as not published</button>`
+        : `<button class="btn primary grow" data-act="publish">🚀 Mark as published</button>`}
+      ${!p.published ? `<button class="btn" data-act="setCurrent">⭐ Focus on this</button>` : ""}
+    </div>
+    <button class="btn ghost sm" data-act="delete" style="margin-top:18px;color:var(--accent)">Delete project</button>`;
+
+  view.querySelectorAll(".item input").forEach(cb => cb.onchange = () => {
+    const k = cb.dataset.key;
+    if (cb.checked) { p.checks[k] = true; S.totalChecks++; markActive(); }
+    else { delete p.checks[k]; S.totalChecks = Math.max(0, S.totalChecks - 1); }
+    save(); checkBadges();
+    const scroll = window.scrollY, openIds = [...view.querySelectorAll("details.phase")].map(d => d.open);
+    renderProject();
+    view.querySelectorAll("details.phase").forEach((d, i) => d.open = openIds[i]);
+    window.scrollTo(0, scroll); header();
+    if (cb.checked) { const cc = counts(p); if (cc.done === cc.total) toast("Every step done! Hit publish 🚀"); else if (Math.random() < .35) toast(dailyPick(["Nice! +10 XP", "One step closer 💪", "Momentum! Keep going", "That's how videos get made"], cc.done)); }
+  });
+  document.getElementById("pDate").onchange = e => { p.date = e.target.value; save(); };
+  document.getElementById("pNotes").oninput = e => { p.notes = e.target.value; save(); };
+}
+
+function renderRules() {
+  view.innerHTML = `
+    <h2>Things to remember</h2>
+    <p class="muted small" style="margin-top:-6px">Read these before every video. They're the difference between "another upload" and real growth.</p>
+    ${RULES.map((r, i) => `<div class="card rule"><div class="n">${i + 1}</div><div><b>${esc(r[0])}</b><p class="small muted" style="margin:4px 0 0">${esc(r[1])}</p></div></div>`).join("")}
+    <div class="card">
+      <h3>Quick pre-publish check ✅</h3>
+      <p class="small muted" style="margin-top:0">The 10 things people most often forget:</p>
+      <ol class="small" style="padding-left:18px;margin:0;line-height:1.8">
+        <li>Hook in the first seconds, no long intro</li>
+        <li>Audio clear & even, music not louder than voice</li>
+        <li>Thumbnail readable at phone size</li>
+        <li>Title & thumbnail match what the video delivers</li>
+        <li>Description: strong first 2 lines + links</li>
+        <li>Chapters start at 0:00</li>
+        <li>"Made for kids" set correctly</li>
+        <li>Paid promotion / AI-content disclosures if needed</li>
+        <li>End screen, cards & playlist added</li>
+        <li>Checked captions & HD processing</li>
+      </ol>
+    </div>`;
+}
+
+let timer = { left: 600, run: null };
+function fmt(s) { return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); }
+function renderBoost() {
+  const f = FEELINGS.find(x => x.k === S.feel);
+  view.innerHTML = `
+    <div class="card hero"><div class="kicker">Motivator</div><div class="quote">${esc(QUOTES[Math.floor(Math.random() * QUOTES.length)])}</div>
+      <button class="btn sm" data-act="reroll" style="margin-top:6px">↻ Another one</button></div>
+    <h3>How are you feeling about creating?</h3>
+    <div class="feel">${FEELINGS.map(x => `<button data-feel="${x.k}" class="${S.feel === x.k ? "on" : ""}">${x.e} ${esc(x.t)}</button>`).join("")}</div>
+    ${f ? `<div class="card next"><p style="margin-top:0">${esc(f.talk)}</p><p style="margin-bottom:0"><b>Tiny action:</b> ${esc(f.act)}</p></div>` : ""}
+    <div class="card" style="text-align:center">
+      <h3>10-minute start</h3>
+      <p class="small muted" style="margin:0">Just 10 minutes on your next step. Stopping after is allowed. (You probably won't.)</p>
+      <div class="timer" id="tm">${fmt(timer.left)}</div>
+      <div class="row" style="justify-content:center">
+        <button class="btn primary" data-act="tStart">${timer.run ? "Pause" : timer.left < 600 ? "Resume" : "Start"}</button>
+        <button class="btn" data-act="tReset">Reset</button>
+        <button class="btn" data-act="t25">25 min</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Win log 🌟</h3>
+      <p class="small muted" style="margin-top:0">Wrote a hook? Got a nice comment? Rested when you needed to? Log it. Read these on hard days.</p>
+      <div class="row"><input type="text" id="winTxt" class="grow" placeholder="Today I…" maxlength="160" style="flex:1"><button class="btn primary" data-act="addWin">Add</button></div>
+      <div style="margin-top:10px">${S.wins.length ? S.wins.slice().reverse().slice(0, 30).map(w => `<div class="win"><span class="d">${esc(w.d.slice(5))}</span><span>${esc(w.t)}</span></div>`).join("") : `<p class="small muted">No wins yet. Your first one is waiting.</p>`}</div>
+    </div>
+    <h3>Badges</h3>
+    <div class="badges">${BADGES.map(b => `<div class="badge ${b.ok(S) ? "got" : ""}"><span class="e">${b.e}</span>${esc(b.t)}</div>`).join("")}</div>
+    <div class="card" style="margin-top:14px">
+      <h3>Backup</h3>
+      <p class="small muted" style="margin-top:0">Everything is stored only on this device.</p>
+      <div class="row"><button class="btn sm" data-act="export">Copy backup</button><button class="btn sm" data-act="import">Restore backup</button></div>
+    </div>`;
+  view.querySelectorAll("[data-feel]").forEach(b => b.onclick = () => { S.feel = S.feel === b.dataset.feel ? null : b.dataset.feel; save(); renderBoost(); });
+  document.getElementById("winTxt").onkeydown = e => { if (e.key === "Enter") addWin(); };
+}
+function addWin() {
+  const i = document.getElementById("winTxt"); const t = i.value.trim(); if (!t) return;
+  S.wins.push({ d: today(), t }); S.wins = S.wins.slice(-300); markActive(); save(); checkBadges(); toast("Win logged! +5 XP 🌟"); renderBoost(); header();
+}
+function tick() {
+  timer.left--;
+  const el = document.getElementById("tm"); if (el) el.textContent = fmt(Math.max(0, timer.left));
+  if (timer.left <= 0) {
+    clearInterval(timer.run); timer.run = null; timer.left = 600;
+    S.focusBlocks++; markActive(); save(); checkBadges(); header();
+    try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {}
+    toast("Focus block done! +20 XP. Keep going?");
+    if (tab === "boost") renderBoost();
+  }
+}
+
+/* ---------------------------------------------------------------- ACTIONS */
+document.addEventListener("click", e => {
+  const tb = e.target.closest("nav.tabs button"); if (tb) return go(tb.dataset.tab);
+  const a = e.target.closest("[data-act]"); if (!a) return;
+  const act = a.dataset.act, p = S.projects.find(x => x.id === (a.dataset.id || openProject));
+  switch (act) {
+    case "newProj": go("videos"); setTimeout(() => document.getElementById("newTitle").focus(), 50); break;
+    case "create": {
+      const title = document.getElementById("newTitle").value.trim();
+      if (!title) { toast("Give it a working title first"); document.getElementById("newTitle").focus(); return; }
+      const type = view.querySelector("#newType .on").dataset.type;
+      const np = { id: Date.now().toString(36), title, type, checks: {}, notes: "", date: "", created: today(), published: null };
+      S.projects.push(np); S.current = np.id; markActive(); save(); checkBadges();
+      openProject = np.id; render(); toast("Let's make it happen 🎬"); break; }
+    case "open": tab = "videos"; openProject = a.dataset.id; render(); window.scrollTo(0, 0); break;
+    case "backList": openProject = null; render(); break;
+    case "doNext": { const n = nextStep(p); if (!n) return; p.checks[n.ph.id + ":" + n.i] = true; S.totalChecks++; markActive(); save(); checkBadges(); toast("Step done! +10 XP"); render(); break; }
+    case "setCurrent": S.current = p.id; save(); toast("This is your focus video ⭐"); break;
+    case "publish": p.published = today(); markActive(); save(); checkBadges(); render(); toast("PUBLISHED! +150 XP 🚀 Go reply to comments!"); break;
+    case "unpublish": p.published = null; save(); render(); break;
+    case "delete": if (confirm("Delete \"" + p.title + "\"? This can't be undone.")) { S.projects = S.projects.filter(x => x !== p); save(); openProject = null; render(); } break;
+    case "toBoost": go("boost"); break;
+    case "reroll": renderBoost(); break;
+    case "tStart":
+      if (timer.run) { clearInterval(timer.run); timer.run = null; }
+      else timer.run = setInterval(tick, 1000);
+      renderBoost(); break;
+    case "tReset": clearInterval(timer.run); timer.run = null; timer.left = 600; renderBoost(); break;
+    case "t25": clearInterval(timer.run); timer.run = null; timer.left = 1500; renderBoost(); break;
+    case "addWin": addWin(); break;
+    case "export": {
+      const txt = JSON.stringify(S);
+      (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Backup copied. Paste it somewhere safe."), () => prompt("Copy this backup:", txt));
+      break; }
+    case "import": {
+      const txt = prompt("Paste your backup:"); if (!txt) return;
+      try { const d = JSON.parse(txt); if (!Array.isArray(d.projects)) throw 0; S = Object.assign(blank(), d); save(); knownBadges = new Set(BADGES.filter(b => b.ok(S)).map(b => b.id)); render(); toast("Restored ✓"); }
+      catch (err) { toast("That backup didn't look right"); }
+      break; }
+  }
+});
+
+render();
+</script>
+</body>
+</html>
