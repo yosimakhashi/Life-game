@@ -140,6 +140,8 @@ button.chip.pick { width: 46px; height: 46px; font-size: 16px; }
 .hist span:last-child { margin-left: 6px; color: var(--dim); }
 .codeslots { display: flex; gap: 8px; justify-content: center; }
 .codeslots div { width: 34px; height: 34px; border-radius: 50%; border: 2px dashed var(--line); display: grid; place-items: center; }
+.hold { width: 96px; height: 50px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); font-size: 18px; touch-action: none; }
+.hold:active { background: var(--soft); }
 .breath { width: 120px; height: 120px; border-radius: 50%; background: var(--soft); border: 2px solid var(--accent); transition: transform 4s ease-in-out; }
 .ink-btn { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .ink-btn i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
@@ -728,6 +730,100 @@ const GAMES = {
             c.countdown(secs, () => { if (!done) { done = true; end(false); } });
         }
     },
+    sky: {
+        fun: true, goal: lvl => `shoot down ${10 + 3 * lvl} enemy planes before you lose your 3 lives`,
+        name: 'Sky Patrol', glyph: '✈️', domain: 'Fun · action', mins: 1.5,
+        how: lvl => 'Your plane fires on its own. Drag left and right on the sky (or hold the arrows) to line up shots and dodge. Crashing into an enemy' + (lvl >= 4 ? ' or being hit by enemy fire' : '') + ' costs a life.',
+        run(c) {
+            const W = 300, H = 400, need = 10 + 3 * c.lvl, dpr = Math.min(2, window.devicePixelRatio || 1);
+            const spawnEvery = Math.max(380, 1100 - 60 * c.lvl), speed = 60 + 12 * c.lvl;
+            c.el.innerHTML = `<div class="prompt">Shot down: <b>0</b> of ${need} · <span class="lives">♥♥♥</span></div><canvas class="board" style="width:${W}px;height:${H}px"></canvas><div class="row"><button class="hold" data-h="-1" aria-label="Left">◀</button><button class="hold" data-h="1" aria-label="Right">▶</button></div>`;
+            const cv = $('canvas', c.el), g = cv.getContext('2d');
+            cv.width = W * dpr; cv.height = H * dpr; g.scale(dpr, dpr);
+            const col = { sky: css('--soft'), cloud: css('--card'), me: css('--accent'), foe: css('--bad'), shot: css('--dawn'), ink: css('--ink') };
+            const me = { x: W / 2, y: H - 44 };
+            let tx = null, held = 0, shots = [], foes = [], fire = [], booms = [], kills = 0, lives = 3, fired = 0, hits = 0, safe = 0, tShot = 0, tSpawn = 600, over = false, last = performance.now();
+            const clouds = [...Array(5)].map(() => ({ x: rnd(W), y: rnd(H), r: 18 + rnd(18) }));
+
+            // controls: drag on the sky, hold the arrow buttons, or keyboard arrows
+            const point = e => { const r = cv.getBoundingClientRect(); tx = (e.clientX - r.left) * W / r.width; };
+            cv.onpointerdown = point; cv.onpointermove = e => { if (e.buttons || e.pointerType === 'touch') point(e); };
+            c.el.querySelectorAll('.hold').forEach(b => {
+                b.onpointerdown = () => { held = +b.dataset.h; tx = null; };
+                b.onpointerup = b.onpointerleave = b.onpointercancel = () => { held = 0; };
+            });
+            document.onkeydown = e => { const d = { ArrowLeft: -1, ArrowRight: 1 }[e.key]; if (d) { e.preventDefault(); held = d; tx = null; } };
+            document.onkeyup = e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') held = 0; };
+
+            const plane = (x, y, size, colour, down) => { // simple top-view aeroplane
+                const k = down ? -1 : 1;
+                g.fillStyle = colour; g.beginPath();
+                g.moveTo(x, y - size * k); g.lineTo(x + size * .28, y - size * .2 * k); g.lineTo(x + size, y + size * .25 * k); g.lineTo(x + size, y + size * .5 * k);
+                g.lineTo(x + size * .25, y + size * .35 * k); g.lineTo(x + size * .2, y + size * .8 * k); g.lineTo(x + size * .5, y + size * k); g.lineTo(x - size * .5, y + size * k);
+                g.lineTo(x - size * .2, y + size * .8 * k); g.lineTo(x - size * .25, y + size * .35 * k); g.lineTo(x - size, y + size * .5 * k); g.lineTo(x - size, y + size * .25 * k);
+                g.lineTo(x - size * .28, y - size * .2 * k); g.closePath(); g.fill();
+            };
+            const hud = () => { $('.prompt b', c.el).textContent = kills; $('.lives', c.el).textContent = '♥'.repeat(lives) + '♡'.repeat(3 - lives); c.progress(1 - kills / need); };
+            const end = () => {
+                if (over) return; over = true;
+                c.after(500, () => c.finish({ acc: Math.min(1, kills / need), move: kills >= need ? 1 : kills < need / 3 ? -1 : 0, stats: [['Shot down', kills + '/' + need], ['Lives left', lives], ['Hit rate', fired ? pct(hits / fired) : '–']] }));
+            };
+            const hurt = () => { if (safe > 0 || over) return; lives--; safe = 1.3; booms.push({ x: me.x, y: me.y, t: 0 }); flash(cv, false); hud(); if (lives <= 0) end(); };
+
+            const frame = now => {
+                const dt = Math.min(.05, (now - last) / 1000); last = now;
+                if (!over) {
+                    // move
+                    if (held) me.x += held * 300 * dt;
+                    else if (tx != null) me.x += clamp(tx - me.x, -420 * dt, 420 * dt);
+                    me.x = clamp(me.x, 16, W - 16); safe -= dt;
+                    // shoot
+                    tShot -= dt * 1000;
+                    if (tShot <= 0) { tShot = 260; shots.push({ x: me.x, y: me.y - 16 }); fired++; }
+                    // spawn
+                    tSpawn -= dt * 1000;
+                    if (tSpawn <= 0) {
+                        tSpawn = spawnEvery * (.7 + Math.random() * .6);
+                        const big = c.lvl >= 8 && Math.random() < .2;
+                        foes.push({ x: 20 + rnd(W - 40), y: -20, hp: big ? 3 : 1, size: big ? 18 : 12, sway: c.lvl >= 5 && Math.random() < .4 ? 40 + rnd(40) : 0, t: Math.random() * 6, gun: c.lvl >= 4 && Math.random() < .25 + c.lvl * .03 ? .4 + Math.random() : 99 });
+                    }
+                    shots.forEach(b => b.y -= 420 * dt);
+                    fire.forEach(b => b.y += (170 + 10 * c.lvl) * dt);
+                    foes.forEach(f => {
+                        f.y += speed * (f.hp > 1 ? .6 : 1) * dt; f.t += dt;
+                        if (f.sway) f.x = clamp(f.x + Math.cos(f.t * 2.2) * f.sway * dt * 2.2, 14, W - 14);
+                        f.gun -= dt; if (f.gun <= 0 && f.y > 0 && f.y < H * .6) { f.gun = 99; fire.push({ x: f.x, y: f.y + f.size }); }
+                    });
+                    // hits
+                    for (const f of foes) {
+                        for (const b of shots) if (!b.dead && Math.abs(b.x - f.x) < f.size && Math.abs(b.y - f.y) < f.size) {
+                            b.dead = true; hits++; f.hp--;
+                            if (f.hp <= 0) { f.dead = true; kills++; booms.push({ x: f.x, y: f.y, t: 0 }); hud(); if (kills >= need) end(); }
+                            break;
+                        }
+                        if (!f.dead && Math.abs(f.x - me.x) < f.size + 10 && Math.abs(f.y - me.y) < f.size + 10) { if (safe <= 0) { f.dead = true; booms.push({ x: f.x, y: f.y, t: 0 }); } hurt(); }
+                    }
+                    for (const b of fire) if (Math.abs(b.x - me.x) < 11 && Math.abs(b.y - me.y) < 13) { b.dead = true; hurt(); }
+                    shots = shots.filter(b => !b.dead && b.y > -10); fire = fire.filter(b => !b.dead && b.y < H + 10);
+                    foes = foes.filter(f => !f.dead && f.y < H + 30);
+                }
+                booms.forEach(b => b.t += dt); booms = booms.filter(b => b.t < .35);
+                clouds.forEach(cl => { cl.y += 25 * dt; if (cl.y > H + 40) { cl.y = -40; cl.x = rnd(W); } });
+                // draw
+                g.fillStyle = col.sky; g.fillRect(0, 0, W, H);
+                g.fillStyle = col.cloud; g.globalAlpha = .6;
+                clouds.forEach(cl => { g.beginPath(); g.arc(cl.x, cl.y, cl.r, 0, 7); g.arc(cl.x + cl.r, cl.y + 4, cl.r * .7, 0, 7); g.arc(cl.x - cl.r, cl.y + 5, cl.r * .6, 0, 7); g.fill(); });
+                g.globalAlpha = 1;
+                g.fillStyle = col.shot; shots.forEach(b => g.fillRect(b.x - 1.5, b.y - 6, 3, 10));
+                g.fillStyle = col.ink; fire.forEach(b => { g.beginPath(); g.arc(b.x, b.y, 3.5, 0, 7); g.fill(); });
+                foes.forEach(f => plane(f.x, f.y, f.size, col.foe, true));
+                if (lives > 0 && (safe <= 0 || Math.floor(now / 90) % 2)) plane(me.x, me.y, 14, col.me, false);
+                booms.forEach(b => { g.strokeStyle = col.shot; g.lineWidth = 3; g.globalAlpha = 1 - b.t / .35; g.beginPath(); g.arc(b.x, b.y, 6 + b.t * 70, 0, 7); g.stroke(); g.globalAlpha = 1; });
+                timers.push(requestAnimationFrame(frame));
+            };
+            timers.push(requestAnimationFrame(frame));
+        }
+    },
     breathe: {
         name: 'Slow Breath', glyph: '○', domain: 'Reset', mins: 1, unscored: true,
         how: 'One minute of slow breathing: in for 4 seconds, out for 6. Nothing to score. It simply settles the system before you think.',
@@ -781,12 +877,12 @@ function flash(el, good) { el.classList.remove('flash-good', 'flash-bad'); void 
 /* Today's four: one speed, one memory, one control drill and one fun game, rotating daily. */
 function dailySet() {
     const d = dayNum();
-    return [['symbol', 'flash'][d % 2], ['nback', 'grid'][d % 2], ['stroop', 'trail', 'steady'][d % 3], ['pairs', 'fireflies', 'pop', 'odd', 'scramble'][d % 5]];
+    return [['symbol', 'flash'][d % 2], ['nback', 'grid'][d % 2], ['stroop', 'trail', 'steady'][d % 3], ['pairs', 'fireflies', 'pop', 'odd', 'scramble', 'sky'][d % 6]];
 }
 
 /* ---------- runner ---------- */
 let timers = [], queue = [], free = false, gentle = false, tab = 'today';
-const clearTimers = () => { timers.forEach(t => { clearTimeout(t); cancelAnimationFrame(t); }); timers = []; document.onkeydown = null; };
+const clearTimers = () => { timers.forEach(t => { clearTimeout(t); cancelAnimationFrame(t); }); timers = []; document.onkeydown = document.onkeyup = null; };
 const app = $('#app'), tabsEl = $('#tabs');
 
 /* free = unranked: play any level, nothing is recorded and levels never move.
