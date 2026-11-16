@@ -104,6 +104,15 @@ a { color: var(--accent); }
 .arena { position: relative; width: 300px; height: 300px; border-radius: 50%; border: 1px dashed var(--line); }
 .arena > * { position: absolute; width: 48px; height: 48px; margin: -24px 0 0 -24px; display: grid; place-items: center; font-size: 28px; border-radius: 50%; }
 .arena button { border: 2px solid var(--line); background: var(--card); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin-top: 14px; border-radius: 12px; background: var(--line); }
+.seg button { padding: 10px 0; border-radius: 9px; font-weight: 600; color: var(--dim); }
+.seg button.on { background: var(--card); color: var(--ink); }
+.stepper { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 10px 0 6px; font-size: 20px; }
+.stepper button { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); font-size: 22px; }
+.stepper button:disabled { opacity: .35; }
+.stepper b { min-width: 96px; }
+.goal { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: var(--soft); font-size: 14px; }
+.rankup { margin-top: 12px; padding: 10px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-weight: 700; }
 .breath { width: 120px; height: 120px; border-radius: 50%; background: var(--soft); border: 2px solid var(--accent); transition: transform 4s ease-in-out; }
 .ink-btn { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .ink-btn i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
@@ -141,11 +150,24 @@ const today = () => dstr(new Date());
 const dayNum = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 864e5);
 
 /* ---------- state ---------- */
-let S = { lv: {}, hist: [], days: {} };
+let S = { lv: {}, hist: [], days: {}, fail: {}, mode: 'ranked' };
 try { S = Object.assign(S, JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 const day = () => S.days[today()] || (S.days[today()] = { habits: {}, played: [] });
 const level = id => S.lv[id] || 1;
+/* Ranked progression: every level cleared in any game is one step up the ladder. */
+const RANKS = [[0, 'Fogbound'], [5, 'Haze'], [12, 'Clearing'], [22, 'Daylight'], [35, 'Sharp'], [50, 'Lucid'], [66, 'Crystal']];
+function rank() {
+    const steps = Object.keys(GAMES).reduce((n, id) => n + (GAMES[id].unscored ? 0 : level(id) - 1), 0);
+    let i = 0; while (i + 1 < RANKS.length && steps >= RANKS[i + 1][0]) i++;
+    const next = RANKS[i + 1], from = RANKS[i][0];
+    return { i, name: RANKS[i][1], steps, next: next && next[1], toGo: next ? next[0] - steps : 0, frac: next ? (steps - from) / (next[0] - from) : 1 };
+}
+function rankCard() {
+    const r = rank();
+    return `<div class="card"><div class="row between"><span><span class="eyebrow">Rank ${r.i + 1} of ${RANKS.length}</span><br><b style="font-size:20px">${r.name}</b></span><span class="dim small" style="text-align:right">${r.next ? `${r.toGo} level${r.toGo > 1 ? 's' : ''} to<br><b>${r.next}</b>` : 'Top rank'}</span></div>
+        <div class="bar" style="margin-top:10px"><i style="transform:scaleX(${r.frac})"></i></div></div>`;
+}
 function streak() {
     let n = 0; const d = new Date();
     if (!(S.days[dstr(d)] || {}).played?.length) d.setDate(d.getDate() - 1);
@@ -159,6 +181,7 @@ function streak() {
 const INKS = [['RED', '#d64545'], ['BLUE', '#3b7dd8'], ['GREEN', '#2f9e5b'], ['GOLD', '#d9a400']];
 const GAMES = {
     symbol: {
+        goal: () => '20 correct at 90% accuracy',
         name: 'Symbol Key', glyph: '◆', domain: 'Processing speed', mins: 0.75,
         how: 'Each symbol has a number in the key at the top. A symbol appears: tap its number as fast as you can for 45 seconds.',
         run(c) {
@@ -183,6 +206,7 @@ const GAMES = {
         }
     },
     flash: {
+        goal: () => 'shape and star both right in 6 of 8',
         name: 'Flash Focus', glyph: '✦', domain: 'Visual speed & divided attention', mins: 1,
         how: 'Keep your eyes on the centre. A shape flashes in the middle while a star flashes on the ring. Then say which shape you saw, and where the star was. The flash gets shorter as you improve.',
         run(c) {
@@ -225,6 +249,7 @@ const GAMES = {
         }
     },
     nback: {
+        goal: () => '80% accuracy',
         name: 'Echo', glyph: '↺', domain: 'Working memory',  mins: 1,
         how: lvl => `Letters appear one at a time. Tap MATCH when the letter is the same as the one <b>${nOf(lvl)} step${nOf(lvl) > 1 ? 's' : ''} back</b>. Otherwise do nothing.`,
         run(c) {
@@ -253,6 +278,7 @@ const GAMES = {
         }
     },
     grid: {
+        goal: () => '4 of 5 rounds perfect',
         name: 'Afterimage', glyph: '▦', domain: 'Visual memory', mins: 1,
         how: 'Some tiles light up briefly. When they fade, tap every tile that was lit. Five rounds.',
         run(c) {
@@ -278,6 +304,7 @@ const GAMES = {
         }
     },
     stroop: {
+        goal: () => '14 correct at 90% accuracy',
         name: 'Ink', glyph: '◐', domain: 'Inhibition & mental flexibility', mins: 0.75,
         how: lvl => 'A colour word appears printed in a coloured ink. Tap the colour of the <b>ink</b>, not what the word says.' + (lvl >= 5 ? ' Sometimes the rule flips to <b>MEANING</b>: then tap what the word says.' : ''),
         run(c) {
@@ -304,6 +331,7 @@ const GAMES = {
         }
     },
     trail: {
+        goal: lvl => `no more than 1 slip, under ${lvl >= 3 ? '2.0' : '1.6'}s per step`,
         name: 'Trail', glyph: '⤳', domain: 'Attention switching', mins: 0.75,
         how: lvl => lvl >= 3 ? 'Tap the circles in order, alternating numbers and letters: <b>1 → A → 2 → B → 3 → C</b>… as quickly as you can.' : 'Tap the numbered circles in order, <b>1 → 2 → 3</b>… as quickly as you can.',
         run(c) {
@@ -324,6 +352,7 @@ const GAMES = {
         }
     },
     steady: {
+        goal: () => 'hold still on 6 of 7 threes and tap 90% of the rest',
         name: 'Steady', glyph: '◉', domain: 'Sustained attention', mins: 0.75,
         how: 'Numbers appear in a steady rhythm. Tap for <b>every number except 3</b>. When you see a 3, hold still.',
         run(c) {
@@ -372,28 +401,38 @@ function dailySet() {
 }
 
 /* ---------- runner ---------- */
-let timers = [], queue = [], gentle = false, tab = 'today';
+let timers = [], queue = [], free = false, gentle = false, tab = 'today';
 const clearTimers = () => { timers.forEach(t => { clearTimeout(t); cancelAnimationFrame(t); }); timers = []; };
 const app = $('#app'), tabsEl = $('#tabs');
 
-function startSession(ids, isGentle) { queue = ids.slice(); gentle = !!isGentle; nextInQueue(); }
-function nextInQueue() { queue.length ? intro(queue.shift()) : (gentle = false, go('today')); }
+/* free = unranked: play any level, nothing is recorded and levels never move.
+   gentle = foggy-day unranked session that starts one level below your ranked level. */
+function startSession(ids, isFree, isGentle) { queue = ids.slice(); free = !!isFree; gentle = !!isGentle; nextInQueue(); }
+function nextInQueue() { queue.length ? intro(queue.shift()) : (free = gentle = false, go(tab)); }
 
-function intro(id) {
-    const g = GAMES[id], lvl = g.unscored ? 0 : Math.max(1, level(id) - (gentle ? 1 : 0));
+function intro(id, chosen) {
+    const g = GAMES[id];
+    const lvl = g.unscored ? 0 : free ? clamp(chosen || level(id) - (gentle ? 1 : 0), 1, MAXLV) : level(id);
     clearTimers(); app.onclick = null; tabsEl.style.display = 'none'; window.scrollTo(0, 0);
+    const head = !lvl ? '' : free
+        ? `<p class="eyebrow" style="margin-top:8px">Unranked${gentle ? ' · gentle' : ''}</p>
+           <div class="stepper"><button id="dn" aria-label="Easier" ${lvl <= 1 ? 'disabled' : ''}>−</button><b>Level ${lvl}</b><button id="up" aria-label="Harder" ${lvl >= MAXLV ? 'disabled' : ''}>+</button></div>
+           <p class="dim small">Pick any level. Nothing is recorded.</p>`
+        : `<p class="eyebrow" style="margin-top:8px">Ranked</p><p style="font-size:20px;font-weight:700">Level ${lvl} <span class="dim" style="font-weight:400">of ${MAXLV}</span></p>
+           <p class="goal">${lvl >= MAXLV ? 'Top level. Hold it with' : 'To clear this level'}: ${g.goal(lvl)}</p>`;
     app.innerHTML = `<div class="hud"><button class="x" aria-label="Quit">✕</button><span class="eyebrow">${g.domain}</span></div>
         <div class="card" style="margin-top:24px;text-align:center;padding:28px 18px">
             <div class="glyph" style="margin:0 auto 12px">${g.glyph}</div>
             <h1>${g.name}</h1>
-            ${lvl ? `<p class="dim small" style="margin-top:4px">Level ${lvl}${gentle ? ' · gentle' : ''}</p>` : ''}
+            ${head}
             <p style="margin:16px 0 22px">${typeof g.how === 'function' ? g.how(lvl) : g.how}</p>
             <button class="btn" id="startBtn">Start</button>
         </div>`;
     $('.x').onclick = quit;
     $('#startBtn').onclick = () => runGame(id, lvl);
+    if ($('#dn')) { $('#dn').onclick = () => intro(id, lvl - 1); $('#up').onclick = () => intro(id, lvl + 1); }
 }
-function quit() { clearTimers(); queue = []; gentle = false; go(tab); }
+function quit() { clearTimers(); queue = []; free = gentle = false; go(tab); }
 
 function runGame(id, lvl) {
     const g = GAMES[id];
@@ -417,28 +456,42 @@ function runGame(id, lvl) {
 function result(id, lvl, res) {
     const g = GAMES[id], d = day();
     if (!d.played.includes(id)) d.played.push(id);
+    const stats = () => `<div class="stats">${res.stats.map(s => `<div><b>${s[1]}</b>${s[0]}</div>`).join('')}</div>`;
     let body;
     if (g.unscored) body = `<h1>Nicely done</h1><p class="dim" style="margin-top:8px">A minute of slow breathing, banked.</p>`;
-    else {
-        const pts = Math.round(lvl * 100 * res.acc);
+    else if (free) {
+        body = `<p class="eyebrow">${g.name} · level ${lvl} · unranked</p><div class="score" style="margin-top:10px">${pct(res.acc)}</div>
+            <p class="dim small">${res.move > 0 ? 'That would have cleared the level.' : 'Practice run.'}</p>${stats()}
+            <p class="small dim" style="margin-top:14px">Unranked: your levels and rank are untouched.</p>`;
+    } else {
+        const pts = Math.round(lvl * 100 * res.acc), before = rank();
         const prev = S.hist.filter(h => h.g === id).map(h => h.pts), best = Math.max(0, ...prev);
         S.hist.push({ d: today(), g: id, lvl, acc: +res.acc.toFixed(3), pts });
         if (S.hist.length > 2000) S.hist.splice(0, S.hist.length - 2000);
-        // gentle sessions never cost you a level
-        const move = gentle ? 0 : res.move, to = clamp(level(id) + move, 1, MAXLV);
-        S.lv[id] = to;
-        const note = gentle ? 'Gentle session: your level is untouched.' : move > 0 && to > lvl ? `Level up. Next time: level ${to}.` : move < 0 && to < lvl ? `Easing back to level ${to}. The right level is the one you can just manage.` : `Staying at level ${to}.`;
-        body = `<p class="eyebrow">${g.name} · level ${lvl}</p><div class="score" style="margin-top:10px">${pts}</div>
-            <p class="dim small">${pts > best && prev.length ? 'New personal best' : best ? 'Best ' + best : 'First score recorded'}</p>
-            <div class="stats">${res.stats.map(s => `<div><b>${s[1]}</b>${s[0]}</div>`).join('')}</div>
-            <p class="small" style="margin-top:14px">${note}</p>`;
+        // Clear the target: up a level. Two poor runs in a row: down one. Anything else: stay.
+        let title, note, tone = 'var(--ink)';
+        if (res.move > 0) {
+            S.fail[id] = 0; tone = 'var(--good)';
+            if (lvl < MAXLV) { S.lv[id] = lvl + 1; title = `Level ${lvl} cleared`; note = `Level ${lvl + 1} unlocked. It gets harder from here.`; }
+            else { title = 'Top level held'; note = 'You are at the highest level of this game.'; }
+        } else if (res.move < 0 && lvl > 1) {
+            S.fail[id] = (S.fail[id] || 0) + 1; title = 'Not cleared';
+            if (S.fail[id] >= 2) { S.fail[id] = 0; S.lv[id] = lvl - 1; note = `Two rough runs in a row, so you drop to level ${lvl - 1}. Win it back.`; }
+            else note = `Target: ${g.goal(lvl)}. One more run like this drops you a level.`;
+        } else { S.fail[id] = 0; title = 'Not cleared yet'; note = `Target: ${g.goal(lvl)}. Try again.`; }
+        const after = rank();
+        body = `<p class="eyebrow">${g.name} · ranked</p><h1 style="margin-top:8px;color:${tone}">${title}</h1>
+            <div class="score" style="margin-top:12px">${pts}</div>
+            <p class="dim small">${pts > best && prev.length ? 'New personal best' : best ? 'Best ' + best : 'First score recorded'}</p>${stats()}
+            <p class="small" style="margin-top:14px">${note}</p>
+            ${after.i > before.i ? `<p class="rankup">Rank up: ${after.name}</p>` : after.i < before.i ? `<p class="small dim" style="margin-top:8px">Rank drops to ${after.name}.</p>` : ''}`;
     }
     save();
     app.innerHTML = `<div class="card" style="margin-top:40px;text-align:center;padding:28px 18px">${body}</div>
         <button class="btn" id="nx" style="margin-top:16px">${queue.length ? 'Next: ' + GAMES[queue[0]].name : 'Done'}</button>
-        ${g.unscored ? '' : '<button class="btn ghost" id="again" style="margin-top:10px">Play again</button>'}`;
+        ${g.unscored ? '' : `<button class="btn ghost" id="again" style="margin-top:10px">${!free && S.lv[id] > lvl ? 'Play level ' + S.lv[id] : 'Play again'}</button>`}`;
     $('#nx').onclick = nextInQueue;
-    if ($('#again')) $('#again').onclick = () => intro(id);
+    if ($('#again')) $('#again').onclick = () => intro(id, free ? lvl : 0);
 }
 
 /* ---------- screens ---------- */
@@ -453,9 +506,9 @@ function go(t) {
 }
 tabsEl.onclick = e => { const b = e.target.closest('button'); if (b) go(b.dataset.t); };
 
-function gameRow(id) {
+function gameRow(id, anyLevel) {
     const g = GAMES[id], done = day().played.includes(id);
-    return `<button class="game" data-play="${id}"><span class="glyph">${g.glyph}</span><span><b>${g.name}</b><br><span class="dim small">${g.domain}</span></span><span class="lv">${done ? '<span class="done-dot">✓</span> ' : ''}${g.unscored ? '1 min' : 'Lv ' + level(id)}</span></button>`;
+    return `<button class="game" data-play="${id}"><span class="glyph">${g.glyph}</span><span><b>${g.name}</b><br><span class="dim small">${g.domain}</span></span><span class="lv">${done ? '<span class="done-dot">✓</span> ' : ''}${g.unscored ? '1 min' : anyLevel ? 'Any level' : 'Lv ' + level(id) + '/' + MAXLV}</span></button>`;
 }
 
 function viewToday() {
@@ -464,13 +517,14 @@ function viewToday() {
     app.innerHTML = `<a class="home-link" href="../">‹ Life Game</a>
         <div class="hero"><div class="sun" style="--fog:${fog}%"></div><div><p class="eyebrow">${new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' })}</p><h1>Clear Mind</h1></div>
             <div class="streak"><b>${streak()}</b><span class="dim small">day streak</span></div></div>
+        ${rankCard()}
         <div class="card"><h3>How clear is your head right now?</h3>
             <div class="scale">${CLARITY.map((c, i) => `<button data-c="${i + 1}" class="${d.clarity === i + 1 ? 'on' : ''}"><b>${i + 1}</b>${c}</button>`).join('')}</div>
             <p class="small dim" style="margin-top:12px">Hours slept last night</p>
             <div class="chips">${[4, 5, 6, 7, 8, 9].map(h => `<button data-s="${h}" class="${d.sleep === h ? 'on' : ''}">${h === 4 ? '≤4' : h === 9 ? '9+' : h}</button>`).join('')}</div>
         </div>
-        <div class="card"><div class="row between"><h3>Today's session</h3><span class="dim small">about ${foggy ? 4 : 3} min</span></div>
-            <p class="small dim" style="margin:6px 0 12px">${foggy ? 'Foggy day, so this is a gentle session: a minute of slow breathing first, then easier levels. Pushing through fog tends to make it worse.' : 'Three short drills: one for speed, one for memory, one for control. Short and daily beats long and rare.'}</p>
+        <div class="card"><div class="row between"><h3>Today's session</h3><span class="dim small">${foggy ? 'unranked · 4 min' : 'ranked · 3 min'}</span></div>
+            <p class="small dim" style="margin:6px 0 12px">${foggy ? 'Foggy day, so this is a gentle, unranked session: a minute of slow breathing first, then easier levels, and your rank is safe. Pushing through fog tends to make it worse.' : 'Three ranked drills: one for speed, one for memory, one for control. Clear the target and the next level is harder.'}</p>
             <div style="display:grid;gap:12px;margin-bottom:14px">${(foggy ? ['breathe'] : []).concat(set).map(gameRow).join('')}</div>
             <button class="btn" id="go">${left.length === 0 ? 'Session complete · play again' : left.length < 3 ? 'Continue session' : 'Start session'}</button>
         </div>
@@ -482,15 +536,23 @@ function viewToday() {
         if (b.dataset.c) { d.clarity = +b.dataset.c; save(); viewToday(); }
         else if (b.dataset.s) { d.sleep = +b.dataset.s; if (d.sleep >= 7) d.habits.sleep = true; save(); viewToday(); }
         else if (b.dataset.h) { d.habits[b.dataset.h] = !d.habits[b.dataset.h]; save(); viewToday(); }
-        else if (b.dataset.play) startSession([b.dataset.play], foggy);
-        else if (b.id === 'go') startSession((foggy && !d.played.includes('breathe') ? ['breathe'] : []).concat(left.length ? left : set), foggy);
+        else if (b.dataset.play) startSession([b.dataset.play], foggy, foggy);
+        else if (b.id === 'go') startSession((foggy && !d.played.includes('breathe') ? ['breathe'] : []).concat(left.length ? left : set), foggy, foggy);
     };
 }
 
 function viewGames() {
-    app.innerHTML = `<h1>All games</h1><p class="dim small" style="margin-top:6px">Each one adapts: it gets harder when you do well and eases off when you don't.</p>
-        ${Object.keys(GAMES).map(id => `<div class="card">${gameRow(id)}</div>`).join('')}`;
-    app.onclick = e => { const b = e.target.closest('[data-play]'); if (b) startSession([b.dataset.play]); };
+    const fr = S.mode === 'free';
+    app.innerHTML = `<h1>All games</h1>
+        <div class="seg"><button data-m="ranked" class="${fr ? '' : 'on'}">Ranked</button><button data-m="free" class="${fr ? 'on' : ''}">Unranked</button></div>
+        <p class="dim small" style="margin-top:10px">${fr ? 'No progression. Pick any level of any game and play for practice; scores are not kept and your rank does not move.' : 'Progression. Each game has 12 levels. Clear the target to unlock the next, harder level; two rough runs in a row drop you one. Every level cleared lifts your rank.'}</p>
+        ${fr ? '' : rankCard()}
+        ${Object.keys(GAMES).map(id => `<div class="card">${gameRow(id, fr)}</div>`).join('')}`;
+    app.onclick = e => {
+        const m = e.target.closest('[data-m]'), b = e.target.closest('[data-play]');
+        if (m) { S.mode = m.dataset.m; save(); viewGames(); }
+        else if (b) startSession([b.dataset.play], fr);
+    };
 }
 
 function viewProgress() {
@@ -500,7 +562,8 @@ function viewProgress() {
     const good = avg(d => d.sleep >= 7), poor = avg(d => d.sleep && d.sleep < 7);
     const active = Object.values(S.days).filter(d => d.played?.length).length;
     app.innerHTML = `<h1>Progress</h1>
-        <div class="stats"><div><b>${streak()}</b>Day streak</div><div><b>${active}</b>Days trained</div><div><b>${S.hist.length}</b>Drills done</div></div>
+        <div class="stats"><div><b>${streak()}</b>Day streak</div><div><b>${active}</b>Days trained</div><div><b>${S.hist.length}</b>Ranked runs</div></div>
+        ${rankCard()}
         <div class="card"><h3>Clarity, last 14 days</h3>
             <div class="days">${days.map(([dt, d]) => `<div class="${d.clarity ? '' : 'none'}" title="${dstr(dt)}">${d.clarity || ''}<i style="height:${(d.clarity || 0) * 13}px"></i>${dt.getDate()}</div>`).join('')}</div>
             <p class="small dim" style="margin-top:10px">${good && poor ? `On days after 7+ hours of sleep your clarity averages <b>${good}</b>; after less, <b>${poor}</b>.` : 'Rate your clarity and sleep each day and this will show how the two move together for you.'}</p>
@@ -513,7 +576,7 @@ function viewProgress() {
         <button class="btn ghost" id="reset" style="margin-top:16px">Reset all data</button>`;
     app.onclick = e => {
         if (e.target.id !== 'reset') return;
-        if (confirm('Erase all Clear Mind levels, scores and check-ins on this device?')) { S = { lv: {}, hist: [], days: {} }; save(); viewProgress(); }
+        if (confirm('Erase all Clear Mind levels, scores and check-ins on this device?')) { S = { lv: {}, hist: [], days: {}, fail: {}, mode: 'ranked' }; save(); viewProgress(); }
     };
 }
 
@@ -528,8 +591,8 @@ function viewScience() {
             <p>So this app is built around what the evidence does support:</p>
             <ul>
                 <li><b>Targeted drills.</b> Each game exercises one of the abilities fog blunts, using task types borrowed from clinical testing (symbol-digit coding, trail making, n-back, Stroop, go/no-go) and from speed-of-processing training, the best-studied form of cognitive training.</li>
-                <li><b>Adaptive difficulty.</b> Levels move so you're working at the edge of what you can do, which is where practice is useful and not discouraging.</li>
-                <li><b>Short sessions and pacing.</b> About three minutes. On foggy days the session gets gentler, because overexertion makes fog worse, especially after illness.</li>
+                <li><b>Progressive difficulty.</b> In ranked play each cleared level unlocks a harder one, so you keep working at the edge of what you can do. Unranked play is there for pressure-free practice.</li>
+                <li><b>Short sessions and pacing.</b> About three minutes. On foggy days the session becomes gentle and unranked, because overexertion makes fog worse, especially after illness.</li>
                 <li><b>Tracking the real levers.</b> The daily check-in exists so you can see how sleep and habits line up with your clear days. Sleep, movement, hydration and stress do far more for fog than any drill.</li>
             </ul></div>
         <div class="card prose"><h3>When to see a doctor</h3>
