@@ -422,7 +422,9 @@ function best(items, a, s, get) {
     const aw = words(a), sw = words(s.replace(/\(.*?\)/g, ''));
     let top = null, topScore = 0;
     for (const it of items) {
-        const [artist, title, extra] = get(it), hay = norm(artist + ' ' + extra), th = norm(title);
+        const [artist, title, extra] = get(it);
+        if (/karaoke|tribute|made famous|in the style of/i.test(artist + ' ' + title + ' ' + extra)) continue;
+        const hay = norm(artist + ' ' + extra), th = norm(title);
         const aHit = aw.some(w => hay.includes(w)), sHit = sw.length ? sw.filter(w => th.includes(w)).length / sw.length : 0;
         const score = (aHit ? 2 : 0) + sHit;
         if (score > topScore && (aHit || sHit >= .6)) { top = it; topScore = score; }
@@ -435,12 +437,17 @@ async function findPreview(a, s) {
     if (P.cache[k]) return P.cache[k];
     const term = (a.replace(/\(.*?\)/g, '') + ' ' + s.replace(/\(.*?\)/g, '')).replace(/\s+/g, ' ').trim();
     let url = null, reached = false;
-    try {
-        const d = await getJSON('https://itunes.apple.com/search?media=music&entity=song&limit=15&term=' + encodeURIComponent(term));
-        reached = true;
-        const hit = best((d.results || []).filter(r => r.previewUrl), a, s, r => [r.artistName || '', r.trackName || '', r.collectionName || '']);
-        url = hit && hit.previewUrl;
-    } catch {}
+    // Note: no media=music here. With it, iTunes redirects iPhones to the Music
+    // app (a musics:// link) instead of returning results, so nothing loads.
+    for (const country of ['us', 'in']) {
+        if (url) break;
+        try {
+            const d = await getJSON('https://itunes.apple.com/search?entity=song&limit=15&country=' + country + '&term=' + encodeURIComponent(term));
+            reached = true;
+            const hit = best((d.results || []).filter(r => r.previewUrl), a, s, r => [r.artistName || '', r.trackName || '', r.collectionName || '']);
+            url = hit && hit.previewUrl;
+        } catch {}
+    }
     if (!url) try {
         const d = await jsonp('https://api.deezer.com/search?output=jsonp&q=' + encodeURIComponent(term));
         reached = true;
