@@ -143,6 +143,11 @@ table.grid { border-collapse: separate; border-spacing: 3px; font-size: .74rem; 
 .grid td { height: 24px; min-width: 26px; border-radius: 6px; background: var(--soft); text-align: center; color: #fff; font-weight: 700; }
 .grid td.add { box-shadow: inset 0 0 0 2px #1f2430; }
 .grid td.rem { background: var(--bad-soft); color: var(--bad); }
+.fair { display: grid; grid-template-columns: 74px 1fr auto; gap: 10px; align-items: center; padding: 7px 0; }
+.fair .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar { height: 10px; border-radius: 5px; background: var(--soft); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 5px; }
+.fair .n { font-size: .85rem; white-space: nowrap; text-align: right; }
 .toast { position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: #1f2430; color: #fff; padding: 10px 18px; border-radius: 999px; font-size: .9rem; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 60; white-space: nowrap; }
 .toast.show { opacity: 1; }
 .hidden { display: none !important; }
@@ -519,6 +524,7 @@ function renderSwaps() {
         <button class="btn ghost block" onclick="openExchange()">🔄 Exchange turns</button></div>
     <div class="card"><h2>Keep everyone in sync</h2><p class="muted" style="margin-top:0">You only need to record a change once. Send it to the team as a link and everyone using the app taps it to update their schedule. If someone sends you a link, just open it.</p>
         <button class="btn ghost block" onclick="shareChanges(upcomingKeys(), 'All duty changes (next 30 days)')">📤 Send all upcoming changes</button></div>`;
+    h += fairCard();
     h += balanceCard(false);
     const owed = balances(); let team = '';
     S.team.forEach((a, i) => S.team.slice(i + 1).forEach(b => {
@@ -540,6 +546,30 @@ function renderSwaps() {
     });
     h += `</div>`;
     $('v-swaps').innerHTML = h;
+}
+
+/* ---------- WHO'S DOING MORE ---------- */
+let fairPeriod = 'month';
+function fairCard() {
+    const cur = currentDutyDate(), d0 = parse(cur);
+    const [from, to] = fairPeriod === 'past' ? [addDays(cur, -29), cur]
+        : fairPeriod === 'next' ? [cur, addDays(cur, 29)]
+        : [ymd(new Date(d0.getFullYear(), d0.getMonth(), 1)), ymd(new Date(d0.getFullYear(), d0.getMonth() + 1, 0))];
+    const days = Array.from({ length: dayDiff(from, to) + 1 }, (_, i) => addDays(from, i));
+    const rows = S.team.map(p => ({ p, act: days.filter(k => isOn(p.id, k)).length, plan: days.filter(k => isScheduled(p.id, k)).length }))
+        .sort((a, b) => b.act - a.act || (b.act - b.plan) - (a.act - a.plan));
+    const max = Math.max(1, ...rows.map(r => r.act));
+    const chip = (v, l) => `<button class="chip ${fairPeriod === v ? 'on' : ''}" onclick="fairPeriod='${v}';render()">${l}</button>`;
+    let h = `<div class="card"><h2>Who's doing more?</h2>
+        <div class="chips" style="margin-bottom:8px">${chip('month', MONTHS[d0.getMonth()])}${chip('past', 'Last 30 days')}${chip('next', 'Next 30 days')}</div>`;
+    rows.forEach(r => {
+        const diff = r.act - r.plan;
+        h += `<div class="fair"><span class="nm">${esc(r.p.name)}${r.p.id === S.me ? ' ★' : ''}</span>
+            <div class="bar"><i style="width:${r.act / max * 100}%;background:${r.p.color}"></i></div>
+            <span class="n"><b>${r.act}</b> days ${diff > 0 ? `<span class="owe plus">+${diff}</span>` : diff < 0 ? `<span class="owe minus">−${-diff}</span>` : ''}</span></div>`;
+    });
+    h += `<p class="muted" style="margin:6px 0 0">+ / − = days more or less than the normal rotation, because of swaps.</p></div>`;
+    return h;
 }
 
 /* ---------- COVER PLANNER ---------- */
