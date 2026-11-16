@@ -122,6 +122,26 @@ a { color: var(--accent); }
 .letters { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 340px; }
 .letters button { width: 48px; height: 52px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); font-size: 24px; font-weight: 700; text-transform: uppercase; }
 .letters button.used { visibility: hidden; }
+.board { border: 1px solid var(--line); border-radius: 10px; touch-action: none; max-width: 100%; }
+.dpad { display: grid; grid-template-areas: ". u ." "l d r"; gap: 6px; }
+.dpad button { width: 64px; height: 46px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); font-size: 17px; }
+.dpad button:active { background: var(--soft); }
+.dpad [data-d="0"] { grid-area: u; } .dpad [data-d="1"] { grid-area: r; } .dpad [data-d="2"] { grid-area: d; } .dpad [data-d="3"] { grid-area: l; }
+.sdk { display: grid; width: 100%; max-width: 320px; border: 2px solid var(--ink); border-radius: 8px; overflow: hidden; }
+.sdk button { aspect-ratio: 1; border: 1px solid var(--line); background: var(--card); font-size: 22px; padding: 0; color: var(--accent); font-weight: 600; }
+.sdk button.given { background: var(--bg); color: var(--ink); font-weight: 700; }
+.sdk button.sel { background: var(--soft); outline: 2px solid var(--accent); outline-offset: -2px; }
+.slide button { font-size: 26px; font-weight: 700; padding: 0; }
+.slide button.blank { visibility: hidden; }
+.chip { width: 24px; height: 24px; flex: none; border-radius: 50%; display: inline-grid; place-items: center; color: #fff; font-weight: 700; font-size: 12px; }
+button.chip.pick { width: 46px; height: 46px; font-size: 16px; }
+.hist { display: grid; gap: 6px; font-size: 14px; }
+.hist div { display: flex; align-items: center; gap: 5px; }
+.hist span:last-child { margin-left: 6px; color: var(--dim); }
+.codeslots { display: flex; gap: 8px; justify-content: center; }
+.codeslots div { width: 34px; height: 34px; border-radius: 50%; border: 2px dashed var(--line); display: grid; place-items: center; }
+.hold { width: 96px; height: 50px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); font-size: 18px; touch-action: none; }
+.hold:active { background: var(--soft); }
 .breath { width: 120px; height: 120px; border-radius: 50%; background: var(--soft); border: 2px solid var(--accent); transition: transform 4s ease-in-out; }
 .ink-btn { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .ink-btn i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
@@ -526,6 +546,284 @@ const GAMES = {
             c.countdown(75, end);
         }
     },
+    sudoku: {
+        classic: true, goal: () => 'complete the grid with no more than 2 mistakes',
+        name: 'Sudoku', glyph: '🔢', domain: 'Classic · logic', mins: 3,
+        how: lvl => `Fill the grid so every row, every column and every outlined box contains each number from 1 to ${lvl <= 4 ? 4 : 6} exactly once. Tap an empty square, then tap a number.`,
+        run(c) {
+            const small = c.lvl <= 4, n = small ? 4 : 6, bh = 2, bw = n / bh;
+            const want = small ? [6, 8, 9, 10][c.lvl - 1] : Math.min(24, 12 + 2 * (c.lvl - 5));
+            // a valid solved grid: shifted base pattern, then shuffle digits, rows and columns within their bands
+            const order = (groups, per) => { const o = []; shuffle([...Array(groups).keys()]).forEach(g => shuffle([...Array(per).keys()]).forEach(r => o.push(g * per + r))); return o; };
+            const rows = order(n / bh, bh), cols = order(n / bw, bw), digits = shuffle([...Array(n)].map((_, i) => i + 1));
+            const sol = rows.map(r => cols.map(col => digits[(bw * (r % bh) + Math.floor(r / bh) + col) % n]));
+            const g = sol.map(r => r.slice());
+            const ok = (r, col, v) => {
+                for (let i = 0; i < n; i++) if (g[r][i] === v || g[i][col] === v) return false;
+                const br = Math.floor(r / bh) * bh, bc = Math.floor(col / bw) * bw;
+                for (let y = br; y < br + bh; y++) for (let x = bc; x < bc + bw; x++) if (g[y][x] === v) return false;
+                return true;
+            };
+            const count = limit => { // number of solutions, stopping at limit
+                for (let r = 0; r < n; r++) for (let col = 0; col < n; col++) if (!g[r][col]) {
+                    let t = 0;
+                    for (let v = 1; v <= n && t < limit; v++) if (ok(r, col, v)) { g[r][col] = v; t += count(limit - t); g[r][col] = 0; }
+                    return t;
+                }
+                return 1;
+            };
+            let blanks = 0; // remove squares only while the puzzle keeps a single solution
+            for (const i of shuffle([...Array(n * n).keys()])) {
+                if (blanks === want) break;
+                const r = Math.floor(i / n), col = i % n, v = g[r][col];
+                g[r][col] = 0; if (count(2) === 1) blanks++; else g[r][col] = v;
+            }
+            let left = blanks, bad = 0, sel = null;
+            c.el.innerHTML = `<div class="prompt">Mistakes: <b>0</b> of 2 allowed</div><div class="sdk" style="grid-template-columns:repeat(${n},1fr)">${g.map((row, r) => row.map((v, col) => `<button data-r="${r}" data-c="${col}" class="${v ? 'given' : ''}" style="${(col + 1) % bw === 0 && col < n - 1 ? 'border-right:2px solid var(--ink);' : ''}${(r + 1) % bh === 0 && r < n - 1 ? 'border-bottom:2px solid var(--ink)' : ''}">${v || ''}</button>`).join('')).join('')}</div><div class="pad" style="grid-template-columns:repeat(${n},1fr)">${digits.map((_, i) => `<button data-n="${i + 1}">${i + 1}</button>`).join('')}</div>`;
+            const end = () => c.finish({ acc: blanks / (blanks + bad), move: left === 0 && bad <= 2 ? 1 : bad > 6 ? -1 : 0, stats: [['Filled', (blanks - left) + '/' + blanks], ['Mistakes', bad], ['Grid', n + '×' + n]] });
+            $('.sdk', c.el).onclick = e => {
+                const b = e.target.closest('button'); if (!b || b.textContent) return;
+                if (sel) sel.classList.remove('sel'); sel = b; b.classList.add('sel');
+            };
+            $('.pad', c.el).onclick = e => {
+                const b = e.target.closest('button'); if (!b || !sel) return;
+                if (+b.dataset.n === sol[+sel.dataset.r][+sel.dataset.c]) {
+                    sel.textContent = b.dataset.n; sel.classList.remove('sel'); sel = null; left--; c.progress(left / blanks);
+                    if (!left) c.after(400, end);
+                } else { bad++; $('.prompt b', c.el).textContent = bad; flash(sel, false); if (bad >= 9) c.after(400, end); }
+            };
+        }
+    },
+    snake: {
+        classic: true, goal: lvl => `collect ${5 + lvl} sunbeams without crashing`,
+        name: 'Snake', glyph: '🐍', domain: 'Classic · reflexes', mins: 1,
+        how: 'Steer the snake to the sunbeams. Each one makes it longer. Do not hit the walls or your own tail. Swipe on the board or use the arrows.',
+        run(c) {
+            const N = 15, need = 5 + c.lvl, tick = Math.max(90, 260 - 15 * c.lvl);
+            c.el.innerHTML = `<div class="prompt">Sunbeams: <b>0</b> of ${need}</div><canvas class="board" width="300" height="300"></canvas>`;
+            const cv = $('canvas', c.el), g = cv.getContext('2d');
+            let body = [{ x: 7, y: 7 }, { x: 6, y: 7 }, { x: 5, y: 7 }], dir = 1, q = [], food, eaten = 0;
+            const hit = (x, y) => body.some(p => p.x === x && p.y === y);
+            const place = () => { do food = { x: rnd(N), y: rnd(N) }; while (hit(food.x, food.y)); };
+            const draw = () => {
+                g.fillStyle = css('--card'); g.fillRect(0, 0, 300, 300);
+                g.fillStyle = css('--dawn'); g.beginPath(); g.arc(food.x * 20 + 10, food.y * 20 + 10, 7, 0, 7); g.fill();
+                body.forEach((p, i) => { g.fillStyle = css(i ? '--accent' : '--ink'); g.fillRect(p.x * 20 + 1, p.y * 20 + 1, 18, 18); });
+            };
+            const end = () => c.finish({ acc: Math.min(1, eaten / need), move: eaten >= need ? 1 : eaten < need / 3 ? -1 : 0, stats: [['Collected', eaten + '/' + need], ['Length', body.length], ['Speed', (1000 / tick).toFixed(1) + '/s']] });
+            const step = () => {
+                if (q.length) dir = q.shift();
+                const h = { x: body[0].x + DX[dir], y: body[0].y + DY[dir] };
+                if (h.x < 0 || h.y < 0 || h.x >= N || h.y >= N || hit(h.x, h.y)) { flash(cv, false); return c.after(600, end); }
+                body.unshift(h);
+                if (h.x === food.x && h.y === food.y) {
+                    eaten++; $('.prompt b', c.el).textContent = eaten; c.progress(1 - eaten / need);
+                    if (eaten >= need) { draw(); flash(cv, true); return c.after(500, end); }
+                    place();
+                } else body.pop();
+                draw(); c.after(tick, step);
+            };
+            dirInput(c, cv, d => { const last = q.length ? q[q.length - 1] : dir; if (d !== last && (d + 2) % 4 !== last && q.length < 2) q.push(d); });
+            place(); draw(); c.after(900, step);
+        }
+    },
+    slide: {
+        classic: true, goal: lvl => `put the tiles in order in ${slideSetup(lvl).limit} moves or fewer`,
+        name: 'Slide', glyph: '🧩', domain: 'Classic · planning', mins: 2,
+        how: 'Tap a tile next to the gap to slide it. Put the numbers in order, left to right and top to bottom, with the gap in the last square.',
+        run(c) {
+            const { n, mix, limit } = slideSetup(c.lvl), E = n * n;
+            const t = [...Array(E)].map((_, i) => (i + 1) % E);
+            const near = i => [i - n, i + n, i % n ? i - 1 : -1, i % n < n - 1 ? i + 1 : -1].filter(x => x >= 0 && x < E);
+            const solved = () => t.every((v, i) => v === (i + 1) % E);
+            let gap = E - 1, prev = -1;
+            // scramble by walking the gap, so the puzzle is always solvable
+            for (let i = 0; i < mix || solved(); i++) { const m = pick(near(gap).filter(x => x !== prev)); t[gap] = t[m]; t[m] = 0; prev = gap; gap = m; }
+            let moves = 0;
+            c.el.innerHTML = `<div class="prompt">Moves: <b>0</b> of ${limit}</div><div class="grid slide" style="grid-template-columns:repeat(${n},1fr)"></div>`;
+            const grid = $('.grid', c.el);
+            const draw = () => { grid.innerHTML = t.map((v, i) => `<button data-i="${i}" class="${v ? '' : 'blank'}">${v || ''}</button>`).join(''); };
+            const end = done => c.finish({ acc: done ? Math.min(1, limit / moves) : .2, move: done && moves <= limit ? 1 : done ? 0 : -1, stats: [['Moves', moves], ['Target', limit], ['Grid', n + '×' + n]] });
+            grid.onclick = e => {
+                const b = e.target.closest('button'); if (!b) return;
+                const i = +b.dataset.i; if (!near(gap).includes(i)) return;
+                t[gap] = t[i]; t[i] = 0; gap = i; moves++; draw();
+                $('.prompt b', c.el).textContent = moves; c.progress(1 - moves / limit);
+                if (solved()) { grid.onclick = null; flash(grid, true); c.after(500, () => end(true)); }
+                else if (moves >= limit * 3) { grid.onclick = null; c.after(300, () => end(false)); }
+            };
+            draw();
+        }
+    },
+    code: {
+        classic: true, goal: lvl => `crack the code within ${codeSetup(lvl).tries} guesses`,
+        name: 'Code Breaker', glyph: '🔐', domain: 'Classic · deduction', mins: 2,
+        how: lvl => `A hidden code of <b>${codeSetup(lvl).len} colours</b> (repeats allowed). Build a guess and you are told how many are <b>exact</b> (right colour, right place) and how many are <b>misplaced</b> (right colour, wrong place). Tap your guess to undo.`,
+        run(c) {
+            const { len, kinds, tries } = codeSetup(c.lvl), code = [...Array(len)].map(() => rnd(kinds));
+            const chip = i => `<span class="chip" style="background:${CODE_COL[i][1]}">${CODE_COL[i][0]}</span>`;
+            let guess = [], used = 0, best = 0, busy = false;
+            c.el.innerHTML = `<div class="prompt"></div><div class="hist"></div><div class="codeslots"></div><div class="row" style="justify-content:center;flex-wrap:wrap">${[...Array(kinds)].map((_, i) => `<button class="chip pick" data-k="${i}" style="background:${CODE_COL[i][1]}">${CODE_COL[i][0]}</button>`).join('')}</div>`;
+            const slots = $('.codeslots', c.el), hist = $('.hist', c.el);
+            const draw = () => { $('.prompt', c.el).textContent = `Guess ${Math.min(used + 1, tries)} of ${tries}`; slots.innerHTML = [...Array(len)].map((_, i) => `<div>${guess[i] != null ? chip(guess[i]) : ''}</div>`).join(''); };
+            const end = won => c.finish({ acc: won ? 1 - (used - 1) / (2 * tries) : best / len / 2, move: won ? 1 : best * 2 < len ? -1 : 0, stats: [['Guesses', used + '/' + tries], ['Code length', len], ['Colours', kinds]] });
+            slots.onclick = () => { if (!busy && guess.length) { guess.pop(); draw(); } };
+            c.el.onclick = e => {
+                const b = e.target.closest('.pick'); if (!b || busy) return;
+                guess.push(+b.dataset.k); draw();
+                if (guess.length < len) return;
+                busy = true; used++;
+                const exact = guess.filter((v, i) => v === code[i]).length;
+                const common = [...Array(kinds)].reduce((n, _, k) => n + Math.min(code.filter(v => v === k).length, guess.filter(v => v === k).length), 0);
+                best = Math.max(best, exact);
+                hist.insertAdjacentHTML('beforeend', `<div>${guess.map(chip).join('')}<span><b>${exact}</b> exact · <b>${common - exact}</b> misplaced</span></div>`);
+                c.progress(1 - used / tries);
+                if (exact === len) { flash(hist, true); return c.after(700, () => end(true)); }
+                if (used === tries) { $('.prompt', c.el).textContent = 'The code was'; slots.innerHTML = code.map(v => `<div>${chip(v)}</div>`).join(''); return c.after(2200, () => end(false)); }
+                c.after(250, () => { guess = []; busy = false; draw(); });
+            };
+            draw();
+        }
+    },
+    maze: {
+        classic: true, goal: lvl => `reach the sun within ${mazeSetup(lvl).secs} seconds`,
+        name: 'Maze', glyph: '🌀', domain: 'Classic · navigation', mins: 1,
+        how: 'Find the way from the top-left corner to the sun in the bottom-right before time runs out. Swipe on the maze or use the arrows; you glide until the next turning.',
+        run(c) {
+            const { n, secs } = mazeSetup(c.lvl), cell = 300 / n;
+            // open[y][x] is a bitmask of the sides you can walk through; carved by depth-first search
+            const open = [...Array(n)].map(() => Array(n).fill(0)), seen = [...Array(n)].map(() => Array(n).fill(false));
+            const stack = [[0, 0]]; seen[0][0] = true;
+            while (stack.length) {
+                const [x, y] = stack[stack.length - 1];
+                const opts = [0, 1, 2, 3].filter(d => { const X = x + DX[d], Y = y + DY[d]; return X >= 0 && Y >= 0 && X < n && Y < n && !seen[Y][X]; });
+                if (!opts.length) { stack.pop(); continue; }
+                const d = pick(opts), X = x + DX[d], Y = y + DY[d];
+                open[y][x] |= 1 << d; open[Y][X] |= 1 << ((d + 2) % 4); seen[Y][X] = true; stack.push([X, Y]);
+            }
+            c.el.innerHTML = '<div class="prompt">Reach the sun</div><canvas class="board" width="300" height="300"></canvas>';
+            const cv = $('canvas', c.el), g = cv.getContext('2d'), t0 = performance.now();
+            let px = 0, py = 0, done = false;
+            const draw = () => {
+                g.fillStyle = css('--card'); g.fillRect(0, 0, 300, 300);
+                g.fillStyle = css('--dawn'); g.beginPath(); g.arc(300 - cell / 2, 300 - cell / 2, cell * .32, 0, 7); g.fill();
+                g.strokeStyle = css('--ink'); g.lineWidth = 2; g.lineCap = 'round'; g.beginPath();
+                for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+                    if (!(open[y][x] & 2)) { g.moveTo((x + 1) * cell, y * cell); g.lineTo((x + 1) * cell, (y + 1) * cell); }
+                    if (!(open[y][x] & 4)) { g.moveTo(x * cell, (y + 1) * cell); g.lineTo((x + 1) * cell, (y + 1) * cell); }
+                }
+                g.stroke();
+                g.fillStyle = css('--accent'); g.beginPath(); g.arc((px + .5) * cell, (py + .5) * cell, cell * .3, 0, 7); g.fill();
+            };
+            const end = won => { const used = (performance.now() - t0) / 1000; c.finish({ acc: won ? .5 + .5 * Math.max(0, 1 - used / secs) : .2, move: won ? 1 : -1, stats: [['Result', won ? 'Out' : 'Lost'], ['Time', Math.min(secs, used).toFixed(1) + 's'], ['Maze', n + '×' + n]] }); };
+            dirInput(c, cv, d => {
+                if (done) return;
+                while (open[py][px] & (1 << d)) {
+                    px += DX[d]; py += DY[d];
+                    if (px === n - 1 && py === n - 1) { done = true; break; }
+                    if ([0, 1, 2, 3].filter(k => open[py][px] & (1 << k)).length > 2) break; // stop at junctions
+                }
+                draw();
+                if (done) { flash(cv, true); c.after(400, () => end(true)); }
+            });
+            draw();
+            c.countdown(secs, () => { if (!done) { done = true; end(false); } });
+        }
+    },
+    sky: {
+        fun: true, goal: lvl => `shoot down ${10 + 3 * lvl} enemy planes before you lose your 3 lives`,
+        name: 'Sky Patrol', glyph: '✈️', domain: 'Fun · action', mins: 1.5,
+        how: lvl => 'Your plane fires on its own. Drag left and right on the sky (or hold the arrows) to line up shots and dodge. Crashing into an enemy' + (lvl >= 4 ? ' or being hit by enemy fire' : '') + ' costs a life.',
+        run(c) {
+            const W = 300, H = 400, need = 10 + 3 * c.lvl, dpr = Math.min(2, window.devicePixelRatio || 1);
+            const spawnEvery = Math.max(380, 1100 - 60 * c.lvl), speed = 60 + 12 * c.lvl;
+            c.el.innerHTML = `<div class="prompt">Shot down: <b>0</b> of ${need} · <span class="lives">♥♥♥</span></div><canvas class="board" style="width:${W}px;height:${H}px"></canvas><div class="row"><button class="hold" data-h="-1" aria-label="Left">◀</button><button class="hold" data-h="1" aria-label="Right">▶</button></div>`;
+            const cv = $('canvas', c.el), g = cv.getContext('2d');
+            cv.width = W * dpr; cv.height = H * dpr; g.scale(dpr, dpr);
+            const col = { sky: css('--soft'), cloud: css('--card'), me: css('--accent'), foe: css('--bad'), shot: css('--dawn'), ink: css('--ink') };
+            const me = { x: W / 2, y: H - 44 };
+            let tx = null, held = 0, shots = [], foes = [], fire = [], booms = [], kills = 0, lives = 3, fired = 0, hits = 0, safe = 0, tShot = 0, tSpawn = 600, over = false, last = performance.now();
+            const clouds = [...Array(5)].map(() => ({ x: rnd(W), y: rnd(H), r: 18 + rnd(18) }));
+
+            // controls: drag on the sky, hold the arrow buttons, or keyboard arrows
+            const point = e => { const r = cv.getBoundingClientRect(); tx = (e.clientX - r.left) * W / r.width; };
+            cv.onpointerdown = point; cv.onpointermove = e => { if (e.buttons || e.pointerType === 'touch') point(e); };
+            c.el.querySelectorAll('.hold').forEach(b => {
+                b.onpointerdown = () => { held = +b.dataset.h; tx = null; };
+                b.onpointerup = b.onpointerleave = b.onpointercancel = () => { held = 0; };
+            });
+            document.onkeydown = e => { const d = { ArrowLeft: -1, ArrowRight: 1 }[e.key]; if (d) { e.preventDefault(); held = d; tx = null; } };
+            document.onkeyup = e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') held = 0; };
+
+            const plane = (x, y, size, colour, down) => { // simple top-view aeroplane
+                const k = down ? -1 : 1;
+                g.fillStyle = colour; g.beginPath();
+                g.moveTo(x, y - size * k); g.lineTo(x + size * .28, y - size * .2 * k); g.lineTo(x + size, y + size * .25 * k); g.lineTo(x + size, y + size * .5 * k);
+                g.lineTo(x + size * .25, y + size * .35 * k); g.lineTo(x + size * .2, y + size * .8 * k); g.lineTo(x + size * .5, y + size * k); g.lineTo(x - size * .5, y + size * k);
+                g.lineTo(x - size * .2, y + size * .8 * k); g.lineTo(x - size * .25, y + size * .35 * k); g.lineTo(x - size, y + size * .5 * k); g.lineTo(x - size, y + size * .25 * k);
+                g.lineTo(x - size * .28, y - size * .2 * k); g.closePath(); g.fill();
+            };
+            const hud = () => { $('.prompt b', c.el).textContent = kills; $('.lives', c.el).textContent = '♥'.repeat(lives) + '♡'.repeat(3 - lives); c.progress(1 - kills / need); };
+            const end = () => {
+                if (over) return; over = true;
+                c.after(500, () => c.finish({ acc: Math.min(1, kills / need), move: kills >= need ? 1 : kills < need / 3 ? -1 : 0, stats: [['Shot down', kills + '/' + need], ['Lives left', lives], ['Hit rate', fired ? pct(hits / fired) : '–']] }));
+            };
+            const hurt = () => { if (safe > 0 || over) return; lives--; safe = 1.3; booms.push({ x: me.x, y: me.y, t: 0 }); flash(cv, false); hud(); if (lives <= 0) end(); };
+
+            const frame = now => {
+                const dt = Math.min(.05, (now - last) / 1000); last = now;
+                if (!over) {
+                    // move
+                    if (held) me.x += held * 300 * dt;
+                    else if (tx != null) me.x += clamp(tx - me.x, -420 * dt, 420 * dt);
+                    me.x = clamp(me.x, 16, W - 16); safe -= dt;
+                    // shoot
+                    tShot -= dt * 1000;
+                    if (tShot <= 0) { tShot = 260; shots.push({ x: me.x, y: me.y - 16 }); fired++; }
+                    // spawn
+                    tSpawn -= dt * 1000;
+                    if (tSpawn <= 0) {
+                        tSpawn = spawnEvery * (.7 + Math.random() * .6);
+                        const big = c.lvl >= 8 && Math.random() < .2;
+                        foes.push({ x: 20 + rnd(W - 40), y: -20, hp: big ? 3 : 1, size: big ? 18 : 12, sway: c.lvl >= 5 && Math.random() < .4 ? 40 + rnd(40) : 0, t: Math.random() * 6, gun: c.lvl >= 4 && Math.random() < .25 + c.lvl * .03 ? .4 + Math.random() : 99 });
+                    }
+                    shots.forEach(b => b.y -= 420 * dt);
+                    fire.forEach(b => b.y += (170 + 10 * c.lvl) * dt);
+                    foes.forEach(f => {
+                        f.y += speed * (f.hp > 1 ? .6 : 1) * dt; f.t += dt;
+                        if (f.sway) f.x = clamp(f.x + Math.cos(f.t * 2.2) * f.sway * dt * 2.2, 14, W - 14);
+                        f.gun -= dt; if (f.gun <= 0 && f.y > 0 && f.y < H * .6) { f.gun = 99; fire.push({ x: f.x, y: f.y + f.size }); }
+                    });
+                    // hits
+                    for (const f of foes) {
+                        for (const b of shots) if (!b.dead && Math.abs(b.x - f.x) < f.size && Math.abs(b.y - f.y) < f.size) {
+                            b.dead = true; hits++; f.hp--;
+                            if (f.hp <= 0) { f.dead = true; kills++; booms.push({ x: f.x, y: f.y, t: 0 }); hud(); if (kills >= need) end(); }
+                            break;
+                        }
+                        if (!f.dead && Math.abs(f.x - me.x) < f.size + 10 && Math.abs(f.y - me.y) < f.size + 10) { if (safe <= 0) { f.dead = true; booms.push({ x: f.x, y: f.y, t: 0 }); } hurt(); }
+                    }
+                    for (const b of fire) if (Math.abs(b.x - me.x) < 11 && Math.abs(b.y - me.y) < 13) { b.dead = true; hurt(); }
+                    shots = shots.filter(b => !b.dead && b.y > -10); fire = fire.filter(b => !b.dead && b.y < H + 10);
+                    foes = foes.filter(f => !f.dead && f.y < H + 30);
+                }
+                booms.forEach(b => b.t += dt); booms = booms.filter(b => b.t < .35);
+                clouds.forEach(cl => { cl.y += 25 * dt; if (cl.y > H + 40) { cl.y = -40; cl.x = rnd(W); } });
+                // draw
+                g.fillStyle = col.sky; g.fillRect(0, 0, W, H);
+                g.fillStyle = col.cloud; g.globalAlpha = .6;
+                clouds.forEach(cl => { g.beginPath(); g.arc(cl.x, cl.y, cl.r, 0, 7); g.arc(cl.x + cl.r, cl.y + 4, cl.r * .7, 0, 7); g.arc(cl.x - cl.r, cl.y + 5, cl.r * .6, 0, 7); g.fill(); });
+                g.globalAlpha = 1;
+                g.fillStyle = col.shot; shots.forEach(b => g.fillRect(b.x - 1.5, b.y - 6, 3, 10));
+                g.fillStyle = col.ink; fire.forEach(b => { g.beginPath(); g.arc(b.x, b.y, 3.5, 0, 7); g.fill(); });
+                foes.forEach(f => plane(f.x, f.y, f.size, col.foe, true));
+                if (lives > 0 && (safe <= 0 || Math.floor(now / 90) % 2)) plane(me.x, me.y, 14, col.me, false);
+                booms.forEach(b => { g.strokeStyle = col.shot; g.lineWidth = 3; g.globalAlpha = 1 - b.t / .35; g.beginPath(); g.arc(b.x, b.y, 6 + b.t * 70, 0, 7); g.stroke(); g.globalAlpha = 1; });
+                timers.push(requestAnimationFrame(frame));
+            };
+            timers.push(requestAnimationFrame(frame));
+        }
+    },
     breathe: {
         name: 'Slow Breath', glyph: '○', domain: 'Reset', mins: 1, unscored: true,
         how: 'One minute of slow breathing: in for 4 seconds, out for 6. Nothing to score. It simply settles the system before you think.',
@@ -553,18 +851,38 @@ const WORDS = {
     7: 'rainbow morning thunder popcorn journey kitchen holiday diamond penguin mystery volcano whisper bicycle dolphin freedom giraffe harmony juggler lantern picture'.split(' '),
     8: 'sunshine mountain elephant hospital keyboard learning notebook pleasure question sandwich treasure umbrella daylight firework kangaroo lollipop mushroom painting champion dinosaur'.split(' ')
 };
+const DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0]; // up, right, down, left
+const CODE_COL = [['R', '#d64545'], ['B', '#3b7dd8'], ['G', '#2f9e5b'], ['Y', '#b98a00'], ['P', '#8e5bd0'], ['O', '#d9722a']];
+function slideSetup(lvl) { const n = lvl <= 5 ? 3 : 4, mix = n === 3 ? 10 + lvl * 6 : 20 + (lvl - 5) * 12; return { n, mix, limit: mix * 2 }; }
+function codeSetup(lvl) { return { len: lvl <= 3 ? 3 : lvl <= 8 ? 4 : 5, kinds: Math.min(6, 4 + Math.floor(lvl / 3)), tries: 10 - Math.floor(lvl / 4) }; }
+function mazeSetup(lvl) { const n = Math.min(16, 5 + lvl); return { n, secs: Math.round(18 + n * 2.5) }; }
+function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+/* Arrow pad + swipes on `target` + keyboard arrows, all calling fn(direction 0..3). */
+function dirInput(c, target, fn) {
+    const pad = document.createElement('div'); pad.className = 'dpad';
+    pad.innerHTML = '<button data-d="0" aria-label="Up">▲</button><button data-d="3" aria-label="Left">◀</button><button data-d="2" aria-label="Down">▼</button><button data-d="1" aria-label="Right">▶</button>';
+    c.el.appendChild(pad);
+    pad.onclick = e => { const b = e.target.closest('button'); if (b) fn(+b.dataset.d); };
+    let sx = 0, sy = 0;
+    target.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+    target.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) >= 20) fn(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 1 : 3) : (dy > 0 ? 2 : 0));
+    });
+    document.onkeydown = e => { const d = { ArrowUp: 0, ArrowRight: 1, ArrowDown: 2, ArrowLeft: 3 }[e.key]; if (d != null) { e.preventDefault(); fn(d); } };
+}
 function nOf(lvl) { return lvl >= 7 ? 3 : lvl >= 3 ? 2 : 1; }
 function flash(el, good) { el.classList.remove('flash-good', 'flash-bad'); void el.offsetWidth; el.classList.add(good ? 'flash-good' : 'flash-bad'); }
 
 /* Today's four: one speed, one memory, one control drill and one fun game, rotating daily. */
 function dailySet() {
     const d = dayNum();
-    return [['symbol', 'flash'][d % 2], ['nback', 'grid'][d % 2], ['stroop', 'trail', 'steady'][d % 3], ['pairs', 'fireflies', 'pop', 'odd', 'scramble'][d % 5]];
+    return [['symbol', 'flash'][d % 2], ['nback', 'grid'][d % 2], ['stroop', 'trail', 'steady'][d % 3], ['pairs', 'fireflies', 'pop', 'odd', 'scramble', 'sky'][d % 6]];
 }
 
 /* ---------- runner ---------- */
 let timers = [], queue = [], free = false, gentle = false, tab = 'today';
-const clearTimers = () => { timers.forEach(t => { clearTimeout(t); cancelAnimationFrame(t); }); timers = []; };
+const clearTimers = () => { timers.forEach(t => { clearTimeout(t); cancelAnimationFrame(t); }); timers = []; document.onkeydown = document.onkeyup = null; };
 const app = $('#app'), tabsEl = $('#tabs');
 
 /* free = unranked: play any level, nothing is recorded and levels never move.
@@ -707,12 +1025,14 @@ function viewGames() {
     const fr = S.mode === 'free';
     app.innerHTML = `<h1>All games</h1>
         <div class="seg"><button data-m="ranked" class="${fr ? '' : 'on'}">Ranked</button><button data-m="free" class="${fr ? 'on' : ''}">Unranked</button></div>
-        <p class="dim small" style="margin-top:10px">${fr ? 'No progression. Pick any level of any game and play for practice; scores are not kept and your rank does not move.' : 'Progression. Every game, fun or drill, has 12 levels. Clear the target to unlock the next, harder level; two rough runs in a row drop you one. Every level cleared lifts your rank.'}</p>
+        <p class="dim small" style="margin-top:10px">${fr ? 'No progression. Pick any level of any game and play for practice; scores are not kept and your rank does not move.' : 'Progression. Every game has 12 levels. Clear the target to unlock the next, harder level; two rough runs in a row drop you one. Every level cleared lifts your rank.'}</p>
         ${fr ? '' : rankCard()}
+        <h2 style="margin-top:22px">Classics</h2>
+        ${Object.keys(GAMES).filter(id => GAMES[id].classic).map(id => `<div class="card">${gameRow(id, fr)}</div>`).join('')}
         <h2 style="margin-top:22px">Fun games</h2>
         ${Object.keys(GAMES).filter(id => GAMES[id].fun).map(id => `<div class="card">${gameRow(id, fr)}</div>`).join('')}
         <h2 style="margin-top:22px">Training drills</h2>
-        ${Object.keys(GAMES).filter(id => !GAMES[id].fun).map(id => `<div class="card">${gameRow(id, fr)}</div>`).join('')}`;
+        ${Object.keys(GAMES).filter(id => !GAMES[id].fun && !GAMES[id].classic).map(id => `<div class="card">${gameRow(id, fr)}</div>`).join('')}`;
     app.onclick = e => {
         const m = e.target.closest('[data-m]'), b = e.target.closest('[data-play]');
         if (m) { S.mode = m.dataset.m; save(); viewGames(); }
