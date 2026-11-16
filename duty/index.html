@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#3b5ba9">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Duty">
-<title>Duty Planner</title>
+<meta name="apple-mobile-web-app-title" content="APO Duty">
+<title>APO Duty</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,7 +18,7 @@
 :root {
     --bg: #f5f6f9; --panel: #fff; --soft: #eef1f6; --border: #dde2ec;
     --text: #1f2430; --dim: #667085; --main: #3b5ba9; --main-dark: #2c4685; --main-soft: #e3e9f7;
-    --good: #2e7d32; --good-soft: #e5f3e6; --bad: #c0392b; --bad-soft: #fbe7e4; --warn: #b7791f; --warn-soft: #fbf1df;
+    --good: #2e7d32; --good-soft: #e5f3e6; --bad: #c0392b; --bad-soft: #fbe7e4; --warn: #a86b12; --warn-soft: #fbf1df;
     --shadow: 0 2px 12px rgba(20, 30, 60, 0.07);
 }
 html { font-size: 17px; }
@@ -31,45 +31,53 @@ button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 .wrap { max-width: 560px; margin: 0 auto; padding: 0 16px; }
 
-.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 0 8px; }
-.topbar h1 { margin: 0; font-size: 1.3rem; }
-.back { color: var(--dim); text-decoration: none; font-size: .9rem; }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 0 6px; }
+.topbar h1 { margin: 0; font-size: 1.25rem; }
+.topbar .sub { color: var(--dim); font-size: .8rem; }
+.back { color: var(--dim); text-decoration: none; font-size: .9rem; white-space: nowrap; }
 
 .card { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 16px; margin: 12px 0; box-shadow: var(--shadow); }
-.card h2 { margin: 0 0 10px; font-size: 1rem; color: var(--dim); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.card h2 { margin: 0 0 10px; font-size: .9rem; color: var(--dim); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
 .muted { color: var(--dim); font-size: .88rem; }
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .spread { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.big { font-size: 1.6rem; font-weight: 700; }
 
 .btn { border: none; border-radius: 12px; padding: 11px 16px; background: var(--main); color: #fff; font-weight: 600; }
 .btn:active { background: var(--main-dark); }
 .btn.ghost { background: var(--soft); color: var(--text); }
 .btn.good { background: var(--good); }
 .btn.bad { background: var(--bad-soft); color: var(--bad); }
-.btn.sm { padding: 7px 12px; font-size: .88rem; border-radius: 10px; }
+.btn.sm { padding: 7px 12px; font-size: .86rem; border-radius: 10px; }
 .btn.block { width: 100%; }
-.btn:disabled { opacity: .45; }
 
-/* today hero */
-.hero { border-radius: 20px; padding: 20px; color: #fff; margin: 12px 0; box-shadow: var(--shadow); }
-.hero .label { opacity: .85; font-size: .85rem; }
-.hero .shift { font-size: 2rem; font-weight: 700; margin: 2px 0; }
-.hero .time { font-size: 1.05rem; opacity: .95; }
-.hero .status { margin-top: 10px; background: rgba(255,255,255,.18); border-radius: 12px; padding: 8px 12px; font-size: .92rem; }
-.hero .tag { display: inline-block; background: rgba(255,255,255,.25); border-radius: 999px; padding: 2px 10px; font-size: .78rem; margin-left: 6px; vertical-align: middle; }
+.hero { border-radius: 20px; padding: 18px 20px; color: #fff; margin: 12px 0; box-shadow: var(--shadow); }
+.hero .label { opacity: .9; font-size: .85rem; }
+.hero .who { font-size: 2rem; font-weight: 700; margin: 2px 0; }
+.hero .time { opacity: .95; font-size: .95rem; }
+.hero .status { margin-top: 10px; background: rgba(255,255,255,.2); border-radius: 12px; padding: 8px 12px; font-size: .92rem; }
+.tag { display: inline-block; background: rgba(255,255,255,.28); border-radius: 999px; padding: 2px 10px; font-size: .75rem; margin-left: 6px; vertical-align: middle; font-weight: 600; }
 
-.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
-.wday { border-radius: 12px; padding: 8px 2px; text-align: center; background: var(--soft); border: 2px solid transparent; }
-.wday.today { border-color: var(--main); }
-.wday .dn { font-size: .7rem; color: var(--dim); }
-.wday .dd { font-weight: 700; }
-.wday .ds { margin-top: 4px; font-size: .78rem; font-weight: 700; border-radius: 8px; padding: 2px 0; color: #fff; }
+.notice { background: var(--warn-soft); color: var(--warn); border-radius: 14px; padding: 12px 14px; margin: 12px 0; font-size: .92rem; }
+.notice b { color: #7a4c06; }
 
-/* stats */
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.stat { background: var(--soft); border-radius: 12px; padding: 10px; text-align: center; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.stat { background: var(--soft); border-radius: 12px; padding: 10px 6px; text-align: center; }
 .stat b { display: block; font-size: 1.25rem; }
-.stat span { font-size: .75rem; color: var(--dim); }
+.stat span { font-size: .74rem; color: var(--dim); }
+
+/* person dot / pill */
+.pill { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex: none; }
+
+/* list rows */
+.item { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.item:last-child { border-bottom: none; }
+.item .grow { flex: 1; min-width: 0; }
+.item .t { font-weight: 600; }
+.badge { min-width: 46px; height: 46px; border-radius: 12px; color: #fff; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: .8rem; line-height: 1.1; }
+.badge b { font-size: 1.05rem; }
+.me-row { background: var(--main-soft); border-radius: 12px; padding-left: 8px; padding-right: 8px; }
 
 /* calendar */
 .monthnav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
@@ -77,22 +85,19 @@ button { cursor: pointer; }
 .monthnav button { border: none; background: var(--soft); width: 40px; height: 40px; border-radius: 12px; font-size: 1.1rem; }
 .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .cal .hd { text-align: center; font-size: .72rem; color: var(--dim); padding: 4px 0; }
-.cell { position: relative; aspect-ratio: 1 / 1.15; border-radius: 10px; border: 2px solid transparent; background: var(--soft); padding: 3px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; font-size: .8rem; }
+.cell { position: relative; min-width: 0; aspect-ratio: 1 / 1.15; border-radius: 10px; border: 2px solid transparent; background: var(--soft); padding: 3px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; font-size: .8rem; }
 .cell.empty { background: transparent; }
-.cell.today { border-color: var(--main); }
-.cell.sel { border-color: var(--warn); }
+.cell.today { border-color: var(--text); }
+.cell.mine { background: var(--main-soft); }
 .cell .n { font-weight: 600; }
-.cell .s { width: 100%; overflow: hidden; text-align: center; border-radius: 7px; color: #fff; font-weight: 700; font-size: .78rem; padding: 2px 0; }
-.cell .mk { position: absolute; top: 1px; right: 3px; font-size: .62rem; }
+.cell .s { width: 100%; overflow: hidden; text-align: center; border-radius: 7px; color: #fff; font-weight: 700; font-size: .72rem; padding: 2px 0; white-space: nowrap; }
+.cell .mk { position: absolute; top: 1px; right: 3px; font-size: .62rem; font-weight: 700; color: var(--warn); }
 .cell .mk2 { position: absolute; top: 1px; left: 3px; font-size: .62rem; color: var(--good); font-weight: 700; }
 .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; font-size: .78rem; color: var(--dim); }
-.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 4px; vertical-align: -1px; margin-right: 4px; }
-.banner { background: var(--warn-soft); color: var(--warn); border-radius: 12px; padding: 10px 12px; font-weight: 600; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 
 /* chips */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip { border: 2px solid var(--border); background: var(--panel); border-radius: 999px; padding: 6px 12px; font-weight: 600; font-size: .9rem; display: inline-flex; align-items: center; gap: 6px; }
-.chip i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
 .chip.on { border-color: var(--main); background: var(--main-soft); }
 
 /* forms */
@@ -102,34 +107,31 @@ input[type=text], input[type=time], input[type=date], input[type=number], select
 }
 textarea { min-height: 64px; resize: vertical; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.check { display: flex; align-items: center; gap: 10px; font-weight: 600; margin: 8px 0; }
+.check input { width: 22px; height: 22px; }
 
-/* list */
-.item { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
-.item:last-child { border-bottom: none; }
-.badge { min-width: 44px; height: 44px; border-radius: 12px; color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-.item .grow { flex: 1; min-width: 0; }
-.item .t { font-weight: 600; }
-.ot { color: var(--good); font-weight: 700; font-size: .85rem; }
-.short { color: var(--bad); font-weight: 700; font-size: .85rem; }
+.owe { font-weight: 700; }
+.owe.plus { color: var(--good); }
+.owe.minus { color: var(--bad); }
+.warn { color: var(--warn); font-size: .82rem; font-weight: 600; }
 
-.pattern { display: flex; flex-wrap: wrap; gap: 6px; min-height: 44px; padding: 8px; border: 2px dashed var(--border); border-radius: 12px; }
-.pchip { border: none; color: #fff; font-weight: 700; border-radius: 9px; padding: 6px 10px; font-size: .85rem; }
-.pchip small { opacity: .8; font-weight: 400; margin-left: 2px; }
+.plan-row { display: grid; grid-template-columns: 1fr 1.3fr; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
 
 /* bottom tabs */
 .tabs { position: fixed; left: 0; right: 0; bottom: 0; background: var(--panel); border-top: 1px solid var(--border); display: flex; justify-content: center; padding-bottom: env(safe-area-inset-bottom); z-index: 20; }
 .tabs .in { display: flex; max-width: 560px; width: 100%; }
-.tabs button { flex: 1; border: none; background: none; padding: 10px 0 12px; font-size: .75rem; color: var(--dim); font-weight: 600; }
-.tabs button .ic { display: block; font-size: 1.3rem; }
+.tabs button { flex: 1; border: none; background: none; padding: 10px 0 12px; font-size: .72rem; color: var(--dim); font-weight: 600; }
+.tabs button .ic { display: block; font-size: 1.25rem; }
 .tabs button.on { color: var(--main); }
 
 /* sheet */
 .overlay { position: fixed; inset: 0; background: rgba(15, 20, 35, .45); z-index: 40; display: none; align-items: flex-end; justify-content: center; }
 .overlay.open { display: flex; }
-.sheet { background: var(--panel); width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; border-radius: 22px 22px 0 0; padding: 18px 16px calc(20px + env(safe-area-inset-bottom)); }
+.sheet { background: var(--panel); width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; border-radius: 22px 22px 0 0; padding: 18px 16px calc(20px + env(safe-area-inset-bottom)); }
 .sheet h3 { margin: 0 0 4px; font-size: 1.15rem; }
 .sec { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 12px; }
 .sec > b { display: block; margin-bottom: 8px; }
+pre.share { white-space: pre-wrap; background: var(--soft); border-radius: 12px; padding: 12px; font: inherit; font-size: .88rem; margin: 10px 0; }
 
 .toast { position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: #1f2430; color: #fff; padding: 10px 18px; border-radius: 999px; font-size: .9rem; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 60; white-space: nowrap; }
 .toast.show { opacity: 1; }
@@ -139,24 +141,21 @@ textarea { min-height: 64px; resize: vertical; }
 <body>
 <div class="wrap">
     <div class="topbar">
-        <h1>🗓 Duty Planner</h1>
+        <div><h1>🗓 APO Duty</h1><div class="sub" id="subTitle"></div></div>
         <a class="back" href="../">← Home</a>
     </div>
-
-    <!-- TODAY -->
-    <section id="v-today"></section>
-    <!-- CALENDAR -->
+    <section id="v-home"></section>
     <section id="v-cal" class="hidden"></section>
-    <!-- LOG -->
+    <section id="v-swaps" class="hidden"></section>
     <section id="v-log" class="hidden"></section>
-    <!-- SETUP -->
     <section id="v-setup" class="hidden"></section>
 </div>
 
 <nav class="tabs"><div class="in">
-    <button data-tab="today" class="on"><span class="ic">🏠</span>Today</button>
-    <button data-tab="cal"><span class="ic">📅</span>Plan</button>
-    <button data-tab="log"><span class="ic">📒</span>Log</button>
+    <button data-tab="home" class="on"><span class="ic">🏠</span>Today</button>
+    <button data-tab="cal"><span class="ic">📅</span>Calendar</button>
+    <button data-tab="swaps"><span class="ic">🔁</span>Swaps</button>
+    <button data-tab="log"><span class="ic">📒</span>My log</button>
     <button data-tab="setup"><span class="ic">⚙️</span>Setup</button>
 </div></nav>
 
@@ -165,358 +164,439 @@ textarea { min-height: 64px; resize: vertical; }
 
 <script>
 'use strict';
-const STORE = 'duty.v1';
+/*
+ * APO duty rotation.
+ * Team members take turns in a fixed order. Each turn = `perTurn` consecutive
+ * 24-hour duty days starting at `shiftStart`. With 5 APOs × 2 days the cycle is 10 days.
+ * A swap is stored per duty day: { orig, cover, note, settled, group }.
+ * Every unsettled swap means `orig` owes `cover` one duty day.
+ */
+const STORE = 'duty.apo.v1';
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const COLORS = ['#e08a1e', '#3b7dd8', '#5b3fa8', '#2f8f6b', '#c0392b', '#d4a017', '#8a94a6', '#c2185b', '#00838f', '#6d4c41'];
+const COLORS = ['#3b5ba9', '#e08a1e', '#2f8f6b', '#8e44ad', '#c0392b', '#00838f', '#6d4c41', '#c2185b'];
 
-/* ---------- storage ---------- */
+function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
 function defaults() {
+    const team = ['Asif', 'Nithin', 'Sooraj', 'Gireesh', 'Dinesh'].map((n, i) => ({ id: 'p' + (i + 1), name: n, color: COLORS[i] }));
     return {
-        shifts: [
-            { id: 'M', name: 'Morning', short: 'M', start: '06:00', end: '14:00', color: '#e08a1e', work: true },
-            { id: 'E', name: 'Evening', short: 'E', start: '14:00', end: '22:00', color: '#3b7dd8', work: true },
-            { id: 'N', name: 'Night',   short: 'N', start: '22:00', end: '06:00', color: '#5b3fa8', work: true },
-            { id: 'G', name: 'General', short: 'G', start: '09:00', end: '17:00', color: '#2f8f6b', work: true },
-            { id: 'O', name: 'Off',     short: 'OFF', start: '', end: '', color: '#8a94a6', work: false },
-            { id: 'L', name: 'Leave',   short: 'L', start: '', end: '', color: '#c0392b', work: false },
-        ],
-        pattern: { start: ymd(new Date()), cycle: ['M', 'M', 'E', 'E', 'N', 'N', 'O', 'O'] },
-        overrides: {},   // date -> { shift, kind: 'change'|'swap'|'leave', note }
-        logs: {},        // date -> { status: 'done'|'absent'|'leave', in, out, note }
+        team, me: 'p1',
+        perTurn: 2,
+        shiftStart: '08:00',
+        anchor: { date: ymd(new Date()), who: 'p1', day: 1 }, // on `date`, `who` was on day `day` of their turn
+        confirmed: false,
+        posting: 'Petrol pump sector',
+        swaps: {},   // date -> { orig, cover, note, settled, group }
+        logs: {},    // date -> { done, note, posting }
     };
 }
+
+/* ---------- storage ---------- */
 let S;
 function load() {
-    try { S = JSON.parse(localStorage.getItem(STORE)); } catch (e) { S = null; }
-    if (!S || !Array.isArray(S.shifts)) S = defaults();
-    S.overrides = S.overrides || {}; S.logs = S.logs || {};
-    S.pattern = S.pattern || { start: ymd(new Date()), cycle: [] };
+    let d = null;
+    try { d = JSON.parse(localStorage.getItem(STORE)); } catch (e) {}
+    S = Object.assign(defaults(), d && Array.isArray(d.team) ? d : {});
 }
 function save() { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) { toast('⚠ Could not save'); } }
 
-/* ---------- date helpers ---------- */
+/* ---------- helpers ---------- */
 function pad(n) { return String(n).padStart(2, '0'); }
-function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
 function parse(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
 function addDays(s, n) { const d = parse(s); d.setDate(d.getDate() + n); return ymd(d); }
 function dayDiff(a, b) { const A = parse(a), B = parse(b); return Math.round((Date.UTC(B.getFullYear(), B.getMonth(), B.getDate()) - Date.UTC(A.getFullYear(), A.getMonth(), A.getDate())) / 864e5); }
-function pretty(s) { const d = parse(s); return DAYS[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS[d.getMonth()].slice(0, 3) + ' ' + d.getFullYear(); }
-function toMin(t) { if (!t) return null; const [h, m] = t.split(':').map(Number); return h * 60 + m; }
-function span(a, b) { const x = toMin(a), y = toMin(b); if (x == null || y == null) return 0; let d = y - x; if (d <= 0) d += 1440; return d; }
-function hm(min) { const neg = min < 0; min = Math.abs(Math.round(min)); const h = Math.floor(min / 60), m = min % 60; return (neg ? '-' : '') + h + 'h' + (m ? ' ' + pad(m) + 'm' : ''); }
-function t12(t) { if (!t) return ''; let [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return h + ':' + pad(m) + ' ' + ap; }
-function nowHM() { const d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+function pretty(s, year) { const d = parse(s); return DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()].slice(0, 3) + (year ? ' ' + d.getFullYear() : ''); }
+function t12(t) { let [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return h + (m ? ':' + pad(m) : '') + ' ' + ap; }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-
-/* ---------- duty logic ---------- */
-function shiftById(id) { return S.shifts.find(s => s.id === id) || null; }
-function planned(date) {
-    const c = S.pattern.cycle;
-    if (!c.length || !S.pattern.start) return null;
-    const i = ((dayDiff(S.pattern.start, date) % c.length) + c.length) % c.length;
-    return c[i];
-}
-function effective(date) { const o = S.overrides[date]; return o ? o.shift : planned(date); }
-function shiftHours(sh) { return sh && sh.work ? span(sh.start, sh.end) : 0; }
-function loggedMinutes(l) { return l && l.status === 'done' ? span(l.in, l.out) : 0; }
-
-function monthStats(y, m) {
-    const st = { duty: 0, off: 0, leave: 0, night: 0, plannedMin: 0, workedMin: 0, ot: 0, logged: 0, changed: 0 };
-    const days = new Date(y, m + 1, 0).getDate();
-    for (let d = 1; d <= days; d++) {
-        const k = y + '-' + pad(m + 1) + '-' + pad(d);
-        const sh = shiftById(effective(k));
-        const lg = S.logs[k];
-        if (S.overrides[k]) st.changed++;
-        if (sh && sh.work) {
-            st.duty++; st.plannedMin += shiftHours(sh);
-            if (toMin(sh.end) <= toMin(sh.start)) st.night++;
-        } else if (sh && sh.id === 'L' || lg && lg.status === 'leave') st.leave++;
-        else st.off++;
-        if (lg) {
-            st.logged++;
-            const w = loggedMinutes(lg); st.workedMin += w;
-            if (lg.status === 'done' && sh && sh.work) st.ot += Math.max(0, w - shiftHours(sh));
-            else if (lg.status === 'done') st.ot += w; // worked on a non-duty day
-        }
-    }
-    return st;
-}
-
-/* ---------- UI helpers ---------- */
-let tab = 'today', calY, calM, swapFrom = null;
 function $(id) { return document.getElementById(id); }
-function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 1800); }
-function shLabel(sh) { return sh ? sh.short : '–'; }
-function shColor(sh) { return sh ? sh.color : '#c5ccd8'; }
-function timeText(sh) { return sh && sh.work ? t12(sh.start) + ' – ' + t12(sh.end) + ' · ' + hm(shiftHours(sh)) : (sh ? 'No duty' : 'Not planned'); }
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 1900); }
+function plural(n, w) { return n + ' ' + (n === 1 ? w : w.endsWith('y') && !/[aeiou]y$/.test(w) ? w.slice(0, -1) + 'ies' : w + 's'); }
 
+/* ---------- rotation logic ---------- */
+function person(id) { return S.team.find(p => p.id === id) || { id, name: '(removed)', color: '#9aa3b2' }; }
+function nameOf(id) { return id === S.me ? person(id).name + ' (you)' : person(id).name; }
+function short(id) { return person(id).name.slice(0, 4); }
+function scheduled(date) {
+    const n = S.team.length; if (!n) return null;
+    const ai = Math.max(0, S.team.findIndex(p => p.id === S.anchor.who));
+    // position (in days) of `date` measured from the start of the anchor person's turn
+    const off = dayDiff(S.anchor.date, date) + (S.anchor.day - 1);
+    const turn = Math.floor(off / S.perTurn);
+    return S.team[(((ai + turn) % n) + n) % n].id;
+}
+function dayOfTurn(date) {
+    const off = dayDiff(S.anchor.date, date) + (S.anchor.day - 1);
+    return ((off % S.perTurn) + S.perTurn) % S.perTurn + 1;
+}
+function onDuty(date) { const sw = S.swaps[date]; return sw ? sw.cover : scheduled(date); }
+// The duty day that is running right now (a duty day starts at shiftStart and lasts 24h).
+function currentDutyDate() {
+    const now = new Date(), [h, m] = S.shiftStart.split(':').map(Number);
+    const today = ymd(now);
+    return (now.getHours() * 60 + now.getMinutes() < h * 60 + m) ? addDays(today, -1) : today;
+}
+function dutyStart(date) { const d = parse(date), [h, m] = S.shiftStart.split(':').map(Number); d.setHours(h, m, 0, 0); return d; }
+function windowText(date) { return t12(S.shiftStart) + ' ' + pretty(date) + ' → ' + t12(S.shiftStart) + ' ' + pretty(addDays(date, 1)); }
+function nextDutyOf(id, from, limit = 400) {
+    for (let i = 0; i < limit; i++) { const k = addDays(from, i); if (onDuty(k) === id) return k; }
+    return null;
+}
+function untilText(ms) {
+    const mins = Math.max(0, Math.round(ms / 60000)), d = Math.floor(mins / 1440), h = Math.floor((mins % 1440) / 60), m = mins % 60;
+    if (d) return d + 'd ' + h + 'h'; if (h) return h + 'h ' + m + 'm'; return m + 'm';
+}
+// owed[a][b] = number of duty days a owes b
+function balances() {
+    const owed = {};
+    S.team.forEach(a => { owed[a.id] = {}; S.team.forEach(b => owed[a.id][b.id] = 0); });
+    Object.values(S.swaps).forEach(sw => {
+        if (sw.settled || sw.orig === sw.cover) return;
+        if (owed[sw.orig] && owed[sw.orig][sw.cover] !== undefined) owed[sw.orig][sw.cover]++;
+    });
+    return owed;
+}
+function net(owed, a, b) { return (owed[a]?.[b] || 0) - (owed[b]?.[a] || 0); } // >0: a owes b
+
+/* ---------- navigation ---------- */
+let tab = 'home', calY, calM, logY, logM, calOnlyMe = false;
 function setTab(t) {
-    tab = t; swapFrom = t === 'cal' ? swapFrom : null;
-    ['today', 'cal', 'log', 'setup'].forEach(x => $('v-' + x).classList.toggle('hidden', x !== t));
+    tab = t;
+    ['home', 'cal', 'swaps', 'log', 'setup'].forEach(x => $('v-' + x).classList.toggle('hidden', x !== t));
     document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
     render(); window.scrollTo(0, 0);
 }
 function render() {
-    if (tab === 'today') renderToday();
-    if (tab === 'cal') renderCal();
-    if (tab === 'log') renderLog();
-    if (tab === 'setup') renderSetup();
+    $('subTitle').textContent = person(S.me).name + ' · ' + S.posting;
+    ({ home: renderHome, cal: renderCal, swaps: renderSwaps, log: renderLog, setup: renderSetup })[tab]();
+}
+function openSheet(html) { $('sheet').innerHTML = html; $('overlay').classList.add('open'); $('sheet').scrollTop = 0; }
+function closeSheet() { $('overlay').classList.remove('open'); }
+function setupNotice() {
+    return S.confirmed ? '' : `<div class="notice">⚠ <b>Check the rotation start.</b> Set the APO order and one date when a known APO's turn began, so the dates are correct. <button class="btn sm" style="margin-top:8px" onclick="setTab('setup')">Open Setup</button></div>`;
 }
 
-/* ---------- TODAY ---------- */
-function dutyWindow(date, sh) {
-    const s = parse(date); const [h1, m1] = sh.start.split(':').map(Number);
-    s.setHours(h1, m1, 0, 0);
-    const e = new Date(s.getTime() + shiftHours(sh) * 60000);
-    return [s, e];
-}
-function renderToday() {
-    const today = ymd(new Date());
-    const yest = addDays(today, -1);
-    let date = today, sh = shiftById(effective(today));
-    // still on last night's duty?
-    const ysh = shiftById(effective(yest));
-    if (ysh && ysh.work) { const [, e] = dutyWindow(yest, ysh); if (new Date() < e) { date = yest; sh = ysh; } }
-    const o = S.overrides[date], lg = S.logs[date];
-    let status = '';
-    if (sh && sh.work) {
-        const [s, e] = dutyWindow(date, sh), now = new Date();
-        if (now < s) status = '⏳ Starts in ' + hm((s - now) / 60000);
-        else if (now < e) status = '🟢 On duty now · ends in ' + hm((e - now) / 60000);
-        else status = '✅ Duty time over';
-    } else if (sh) status = sh.id === 'L' ? '🌴 On leave today' : '😌 Rest day';
-    else status = 'Set up your rotation in ⚙️ Setup';
-
-    const next = shiftNextDuty(today);
-    let h = `<div class="hero" style="background:${shColor(sh)}">
-        <div class="label">${date === today ? 'Today' : 'Night duty (from yesterday)'} · ${pretty(date)}</div>
-        <div class="shift">${sh ? esc(sh.name) : 'No plan'}${o ? '<span class="tag">✎ adjusted</span>' : ''}${lg ? '<span class="tag">✓ logged</span>' : ''}</div>
-        <div class="time">${timeText(sh)}</div>
-        <div class="status">${status}</div>
+/* ---------- HOME ---------- */
+function renderHome() {
+    const cur = currentDutyDate(), who = onDuty(cur), sw = S.swaps[cur], now = new Date();
+    const endsIn = dutyStart(addDays(cur, 1)) - now;
+    let h = setupNotice();
+    h += `<div class="hero" style="background:${person(who).color}">
+        <div class="label">On duty now · day ${dayOfTurn(cur)} of ${S.perTurn}</div>
+        <div class="who">${esc(nameOf(who))}${sw ? '<span class="tag">⇄ covering ' + esc(person(sw.orig).name) + '</span>' : ''}</div>
+        <div class="time">${windowText(cur)}</div>
+        <div class="status">${who === S.me ? '🟢 You are on duty · ends in ' + untilText(endsIn) : 'Duty changes in ' + untilText(endsIn)}</div>
     </div>`;
 
-    // log card
-    h += `<div class="card"><h2>Log this duty</h2>`;
-    if (lg) {
-        h += `<div class="spread"><div><b>${logLine(lg)}</b><div class="muted">${esc(lg.note || '')}</div></div>
-              <button class="btn sm ghost" onclick="openDay('${date}')">Edit</button></div>`;
-        if (lg.status === 'done' && lg.in && !lg.out) h += `<button class="btn block good" style="margin-top:10px" onclick="clockOut('${date}')">⏹ Clock out now (${t12(nowHM())})</button>`;
-    } else if (sh && sh.work) {
-        h += `<div class="row">
-            <button class="btn good" onclick="clockIn('${date}')">▶ Clock in now</button>
-            <button class="btn ghost" onclick="logAsPlanned('${date}')">✓ Done as planned</button>
-            <button class="btn ghost" onclick="openDay('${date}')">More…</button></div>`;
-    } else {
-        h += `<div class="row"><span class="muted">No duty planned.</span>
-              <button class="btn sm ghost" onclick="openDay('${date}')">Called in? Log extra duty</button></div>`;
-    }
+    // my duty card
+    const myNext = who === S.me ? cur : nextDutyOf(S.me, addDays(cur, 1));
+    h += `<div class="card"><h2>My duty</h2>`;
+    if (who === S.me) {
+        const lg = S.logs[cur];
+        h += `<div class="spread"><div><b>You are on duty now</b><div class="muted">${lg && lg.done ? '✓ Logged' + (lg.note ? ': ' + esc(lg.note) : '') : 'Not logged yet'}</div></div>
+              <button class="btn sm" onclick="openDay('${cur}')">${lg ? 'Edit log' : 'Log duty'}</button></div>`;
+        let endTurn = cur; while (onDuty(addDays(endTurn, 1)) === S.me) endTurn = addDays(endTurn, 1);
+        const nxt = nextDutyOf(S.me, addDays(endTurn, 1));
+        if (nxt) h += `<p class="muted" style="margin:10px 0 0">After this turn, next duty: <b>${pretty(nxt)}</b> (${dayDiff(addDays(endTurn, 1), nxt)} days off)</p>`;
+    } else if (myNext) {
+        const ms = dutyStart(myNext) - now, daysOff = dayDiff(cur, myNext) - 1;
+        h += `<div class="big">${pretty(myNext, true)}</div>
+              <div class="muted">Starts ${t12(S.shiftStart)} · in ${untilText(ms)} · ${plural(Math.max(0, daysOff), 'full day')} off left</div>
+              ${S.swaps[myNext] ? `<div class="warn" style="margin-top:6px">⇄ You're covering ${esc(person(S.swaps[myNext].orig).name)} that day</div>` : ''}`;
+    } else h += `<p class="muted">No duty found for you. Check Setup.</p>`;
+    // unlogged past duties
+    const pending = myPastDuties(30).filter(d => !(S.logs[d] && S.logs[d].done));
+    if (pending.length) h += `<div class="notice" style="margin-bottom:0">📒 ${plural(pending.length, 'past duty')} not logged yet. <button class="btn sm ghost" onclick="openDay('${pending[0]}')">Log ${pretty(pending[0])}</button></div>`;
     h += `</div>`;
 
-    // next 7 days
-    h += `<div class="card"><div class="spread"><h2>Next 7 days</h2><button class="btn sm ghost" onclick="setTab('cal')">Full plan →</button></div><div class="week">`;
-    for (let i = 0; i < 7; i++) {
-        const k = addDays(today, i), s2 = shiftById(effective(k)), d = parse(k);
-        h += `<div class="wday ${i === 0 ? 'today' : ''}" onclick="openDay('${k}')"><div class="dn">${DAYS[d.getDay()]}</div><div class="dd">${d.getDate()}</div>
-              <div class="ds" style="background:${shColor(s2)}">${esc(shLabel(s2))}</div></div>`;
-    }
-    h += `</div>${next ? `<p class="muted" style="margin:10px 0 0">Next duty: <b>${esc(next.sh.name)}</b> on ${pretty(next.date)} at ${t12(next.sh.start)}</p>` : ''}</div>`;
+    // balances
+    h += balanceCard(true);
 
-    // month summary
-    const d = new Date(), st = monthStats(d.getFullYear(), d.getMonth());
-    h += `<div class="card"><h2>${MONTHS[d.getMonth()]} so far</h2>${statsGrid(st)}</div>`;
-    $('v-today').innerHTML = h;
+    // next 10 days
+    h += `<div class="card"><div class="spread"><h2>Next 10 days</h2><button class="btn sm ghost" onclick="shareSchedule()">📤 Share</button></div>`;
+    for (let i = 0; i < 10; i++) {
+        const k = addDays(cur, i), w = onDuty(k), s2 = S.swaps[k], d = parse(k);
+        h += `<div class="item ${w === S.me ? 'me-row' : ''}" onclick="openDay('${k}')">
+            <div class="badge" style="background:${person(w).color}"><b>${d.getDate()}</b>${DAYS[d.getDay()]}</div>
+            <div class="grow"><div class="t">${esc(nameOf(w))}${i === 0 ? ' · now' : ''}</div>
+            <div class="muted">Day ${dayOfTurn(k)} of turn${s2 ? ' · ⇄ covering ' + esc(person(s2.orig).name) : ''}</div></div></div>`;
+    }
+    h += `</div>`;
+    $('v-home').innerHTML = h;
 }
-function shiftNextDuty(from) {
-    for (let i = 1; i <= 60; i++) { const k = addDays(from, i), sh = shiftById(effective(k)); if (sh && sh.work) return { date: k, sh }; }
-    return null;
+function myPastDuties(days) {
+    const cur = currentDutyDate(), out = [];
+    for (let i = 1; i <= days; i++) { const k = addDays(cur, -i); if (S.confirmed && k >= (S.logSince || k) && onDuty(k) === S.me) out.push(k); }
+    return out;
 }
-function statsGrid(st) {
-    return `<div class="stats">
-        <div class="stat"><b>${st.duty}</b><span>Duty days</span></div>
-        <div class="stat"><b>${st.night}</b><span>Night duties</span></div>
-        <div class="stat"><b>${st.off}</b><span>Off days</span></div>
-        <div class="stat"><b>${st.leave}</b><span>Leave</span></div>
-        <div class="stat"><b>${hm(st.plannedMin)}</b><span>Planned hours</span></div>
-        <div class="stat"><b>${hm(st.workedMin)}</b><span>Logged hours</span></div>
-        <div class="stat"><b style="color:var(--good)">${hm(st.ot)}</b><span>Overtime</span></div>
-        <div class="stat"><b>${st.logged}</b><span>Days logged</span></div>
-        <div class="stat"><b>${st.changed}</b><span>Adjusted</span></div>
-    </div>`;
-}
-function logLine(lg) {
-    if (lg.status === 'leave') return '🌴 Leave';
-    if (lg.status === 'absent') return '✖ Absent';
-    if (lg.in && !lg.out) return '🟢 In at ' + t12(lg.in);
-    return '✓ ' + t12(lg.in) + ' – ' + t12(lg.out) + ' · ' + hm(loggedMinutes(lg));
-}
-function clockIn(date) { S.logs[date] = { status: 'done', in: nowHM(), out: '', note: '' }; save(); toast('Clocked in'); render(); }
-function clockOut(date) { S.logs[date].out = nowHM(); save(); toast('Clocked out · ' + hm(loggedMinutes(S.logs[date]))); render(); }
-function logAsPlanned(date) {
-    const sh = shiftById(effective(date));
-    S.logs[date] = { status: 'done', in: sh.start, out: sh.end, note: '' }; save(); toast('Logged ✓'); render();
+function balanceCard(compact) {
+    const owed = balances(); let rows = '';
+    S.team.forEach(p => {
+        if (p.id === S.me) return;
+        const n = net(owed, p.id, S.me);
+        if (compact && !n) return;
+        rows += `<div class="item"><span class="dot" style="background:${p.color}"></span><div class="grow">${esc(p.name)}</div>
+            ${n > 0 ? `<span class="owe plus">owes you ${plural(n, 'duty')}</span>` : n < 0 ? `<span class="owe minus">you owe ${plural(-n, 'duty')}</span>` : '<span class="muted">even</span>'}</div>`;
+    });
+    if (compact && !rows) rows = '<p class="muted" style="margin:0">All square: nobody owes anybody a duty.</p>';
+    return `<div class="card"><div class="spread"><h2>Owed duties</h2>${compact ? `<button class="btn sm ghost" onclick="setTab('swaps')">Swaps →</button>` : ''}</div>${rows}</div>`;
 }
 
 /* ---------- CALENDAR ---------- */
 function renderCal() {
-    const y = calY, m = calM, today = ymd(new Date());
+    const y = calY, m = calM, cur = currentDutyDate();
     const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
-    let h = '';
-    if (swapFrom) h += `<div class="banner"><span>🔁 Tap another day to swap with ${pretty(swapFrom)}</span><button class="btn sm ghost" onclick="swapFrom=null;render()">Cancel</button></div>`;
-    h += `<div class="card"><div class="monthnav"><button onclick="moveMonth(-1)">‹</button><b>${MONTHS[m]} ${y}</b><button onclick="moveMonth(1)">›</button></div><div class="cal">`;
-    DAYS.forEach(d => h += `<div class="hd">${d[0]}${d[1]}</div>`);
+    let h = setupNotice();
+    h += `<div class="card"><div class="monthnav"><button onclick="moveCal(-1)">‹</button><b>${MONTHS[m]} ${y}</b><button onclick="moveCal(1)">›</button></div>
+        <div class="chips" style="margin-bottom:10px"><button class="chip ${calOnlyMe ? '' : 'on'}" onclick="calOnlyMe=false;render()">Everyone</button><button class="chip ${calOnlyMe ? 'on' : ''}" onclick="calOnlyMe=true;render()">Only my duty</button></div>
+        <div class="cal">`;
+    DAYS.forEach(d => h += `<div class="hd">${d.slice(0, 2)}</div>`);
     for (let i = 0; i < first; i++) h += `<div class="cell empty"></div>`;
+    let mine = 0, covered = 0;
     for (let d = 1; d <= days; d++) {
-        const k = y + '-' + pad(m + 1) + '-' + pad(d), sh = shiftById(effective(k));
-        const cls = (k === today ? ' today' : '') + (k === swapFrom ? ' sel' : '');
-        h += `<div class="cell${cls}" onclick="tapDay('${k}')">
-            ${S.logs[k] ? '<span class="mk2">✓</span>' : ''}${S.overrides[k] ? '<span class="mk">✎</span>' : ''}
-            <span class="n">${d}</span><span class="s" style="background:${shColor(sh)}">${esc(shLabel(sh))}</span></div>`;
+        const k = y + '-' + pad(m + 1) + '-' + pad(d), w = onDuty(k), sw = S.swaps[k];
+        if (w === S.me) mine++; if (sw) covered++;
+        const show = !calOnlyMe || w === S.me;
+        h += `<div class="cell${k === cur ? ' today' : ''}${w === S.me ? ' mine' : ''}" onclick="openDay('${k}')">
+            ${S.logs[k] && S.logs[k].done ? '<span class="mk2">✓</span>' : ''}${sw ? '<span class="mk">⇄</span>' : ''}
+            <span class="n">${d}</span>${show ? `<span class="s" style="background:${person(w).color}">${esc(short(w))}</span>` : '<span></span>'}</div>`;
     }
-    h += `</div><div class="legend">${S.shifts.map(s => `<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join('')}<span>✎ adjusted</span><span>✓ logged</span></div></div>`;
-    h += `<div class="card"><h2>${MONTHS[m]} summary</h2>${statsGrid(monthStats(y, m))}</div>`;
-    h += `<p class="muted" style="text-align:center">Tap a day to change its duty, swap, mark leave or log it.</p>`;
+    h += `</div><div class="legend">${S.team.map(p => `<span class="pill"><span class="dot" style="background:${p.color}"></span>${esc(p.name)}</span>`).join('')}</div>
+        <div class="legend"><span>⇄ swapped day</span><span>✓ logged</span><span>Blue box = your duty</span></div></div>`;
+    h += `<div class="card"><div class="stats">
+        <div class="stat"><b>${mine}</b><span>My duty days</span></div>
+        <div class="stat"><b>${mine * 24}h</b><span>My hours</span></div>
+        <div class="stat"><b>${covered}</b><span>Swapped days</span></div></div>
+        <p class="muted" style="margin:10px 0 0">Tap any day to see who is on duty, record a swap or log your duty.</p></div>`;
     $('v-cal').innerHTML = h;
 }
-function moveMonth(n) { calM += n; if (calM < 0) { calM = 11; calY--; } if (calM > 11) { calM = 0; calY++; } render(); }
-function tapDay(k) {
-    if (swapFrom) {
-        if (k === swapFrom) { swapFrom = null; render(); return; }
-        const a = effective(swapFrom), b = effective(k);
-        setOverride(swapFrom, b, 'swap', 'Swapped with ' + pretty(k));
-        setOverride(k, a, 'swap', 'Swapped with ' + pretty(swapFrom));
-        swapFrom = null; save(); toast('Duties swapped 🔁'); render(); return;
-    }
-    openDay(k);
-}
-function setOverride(date, shift, kind, note) {
-    if (shift === planned(date) && kind !== 'leave') { delete S.overrides[date]; return; }
-    S.overrides[date] = { shift, kind, note: note || '' };
-}
+function moveCal(n) { calM += n; if (calM < 0) { calM = 11; calY--; } if (calM > 11) { calM = 0; calY++; } render(); }
 
 /* ---------- DAY SHEET ---------- */
-let sheetDate = null, sheetShift = null;
-function openDay(date) {
-    sheetDate = date; sheetShift = effective(date);
-    drawSheet(); $('overlay').classList.add('open');
-}
-function closeSheet() { $('overlay').classList.remove('open'); sheetDate = null; }
-function drawSheet() {
-    const date = sheetDate, p = shiftById(planned(date)), o = S.overrides[date];
-    const lg = S.logs[date] || null;
-    const cur = shiftById(sheetShift);
-    let h = `<div class="spread"><h3>${pretty(date)}</h3><button class="btn sm ghost" onclick="closeSheet()">✕</button></div>
-        <div class="muted">Rotation says: <b>${p ? esc(p.name) : 'nothing'}</b>${o ? ` · <span style="color:var(--warn)">adjusted (${esc(o.kind)})</span>` : ''}</div>`;
+let sheetDate, sheetCover;
+function openDay(date) { sheetDate = date; sheetCover = onDuty(date); drawDay(); $('overlay').classList.add('open'); }
+function drawDay() {
+    const date = sheetDate, sch = scheduled(date), sw = S.swaps[date], lg = S.logs[date] || {};
+    let h = `<div class="spread"><h3>${pretty(date, true)}</h3><button class="btn sm ghost" onclick="closeSheet()">✕</button></div>
+        <div class="muted">${windowText(date)} · 24 hours</div>
+        <div class="muted">Rotation: <b>${esc(nameOf(sch))}</b>, day ${dayOfTurn(date)} of ${S.perTurn}</div>`;
+    h += `<div class="sec"><b>⇄ Who is actually on duty?</b><div class="chips">`;
+    S.team.forEach(p => h += `<button class="chip ${sheetCover === p.id ? 'on' : ''}" onclick="sheetCover='${p.id}';drawDay()"><span class="dot" style="background:${p.color}"></span>${esc(p.name)}</button>`);
+    h += `</div>`;
+    if (sheetCover !== sch) h += `<p class="muted" style="margin:8px 0 0"><b>${esc(person(sheetCover).name)}</b> covers for <b>${esc(person(sch).name)}</b> → ${esc(person(sch).name)} will owe ${esc(person(sheetCover).name)} 1 duty.</p>
+        ${backToBack(sheetCover, date) ? `<p class="warn">⚠ ${esc(person(sheetCover).name)} is already on duty the day before or after. That's a long stretch.</p>` : ''}
+        <label class="f">Note</label><input type="text" id="swNote" placeholder="e.g. Nithin's family function" value="${esc(sw ? sw.note : '')}">
+        ${sw ? `<label class="check"><input type="checkbox" id="swSettled" ${sw.settled ? 'checked' : ''}> Paid back / settled (don't count as owed)</label>` : ''}`;
+    h += `<div class="row" style="margin-top:10px">
+        ${sheetCover !== sch || sw ? `<button class="btn" onclick="saveSwap()">Save</button>` : ''}
+        ${sw ? `<button class="btn bad" onclick="removeSwap()">Remove swap</button>` : ''}</div></div>`;
 
-    h += `<div class="sec"><b>✎ Adjust duty</b><div class="chips">`;
-    S.shifts.forEach(s => h += `<button class="chip ${sheetShift === s.id ? 'on' : ''}" onclick="sheetShift='${s.id}';drawSheet()"><i style="background:${s.color}"></i>${esc(s.name)}</button>`);
-    h += `</div><p class="muted" style="margin:8px 0 0">${timeText(cur)}</p>
-        <label class="f">Reason / note</label><input type="text" id="ovNote" placeholder="e.g. covering for Rahul, extra duty" value="${esc(o ? o.note : '')}">
-        <div class="row" style="margin-top:10px">
-            <button class="btn" onclick="saveAdjust()">Save change</button>
-            <button class="btn ghost" onclick="startSwap()">🔁 Swap with another day</button>
-            ${o ? `<button class="btn bad" onclick="resetDay()">Reset to rotation</button>` : ''}
-        </div></div>`;
-
-    const w = cur && cur.work;
-    const st = lg ? lg.status : (w ? 'done' : 'done');
-    h += `<div class="sec"><b>📒 Log what actually happened</b>
-        <div class="chips" id="stChips">
-            ${['done', 'absent', 'leave'].map(x => `<button class="chip ${st === x ? 'on' : ''}" data-st="${x}" onclick="pickStatus('${x}')">${{ done: '✓ Worked', absent: '✖ Absent', leave: '🌴 Leave' }[x]}</button>`).join('')}
-        </div>
-        <div id="timeBox" class="${st === 'done' ? '' : 'hidden'}"><div class="two">
-            <div><label class="f">Started</label><input type="time" id="lgIn" value="${lg ? lg.in : (w ? cur.start : '')}"></div>
-            <div><label class="f">Finished</label><input type="time" id="lgOut" value="${lg ? lg.out : (w ? cur.end : '')}"></div>
-        </div><p class="muted" id="lgCalc" style="margin:6px 0 0"></p></div>
-        <label class="f">Notes</label><textarea id="lgNote" placeholder="What happened on duty…">${esc(lg ? lg.note : '')}</textarea>
-        <div class="row" style="margin-top:10px">
-            <button class="btn good" onclick="saveLog()">Save log</button>
-            ${lg ? `<button class="btn bad" onclick="deleteLog()">Delete log</button>` : ''}
-        </div></div>`;
-    $('sheet').innerHTML = h;
-    $('sheet').dataset.st = st;
-    ['lgIn', 'lgOut'].forEach(id => $(id).addEventListener('input', calcPreview));
-    calcPreview();
-}
-function pickStatus(x) {
-    $('sheet').dataset.st = x;
-    document.querySelectorAll('#stChips .chip').forEach(c => c.classList.toggle('on', c.dataset.st === x));
-    $('timeBox').classList.toggle('hidden', x !== 'done');
-}
-function calcPreview() {
-    const a = $('lgIn').value, b = $('lgOut').value, cur = shiftById(sheetShift);
-    if (!a || !b) { $('lgCalc').textContent = ''; return; }
-    const w = span(a, b), p = shiftHours(cur), diff = w - p;
-    $('lgCalc').innerHTML = 'Worked ' + hm(w) + (p ? (diff > 0 ? ` · <span class="ot">+${hm(diff)} overtime</span>` : diff < 0 ? ` · <span class="short">${hm(diff)} short</span>` : ' · exactly as planned') : (w ? ' · <span class="ot">extra duty</span>' : ''));
-}
-function saveAdjust() {
-    const p = planned(sheetDate);
-    if (sheetShift === p && !S.overrides[sheetDate]) { toast('No change'); return; }
-    const kind = sheetShift === 'L' ? 'leave' : 'change';
-    setOverride(sheetDate, sheetShift, kind, $('ovNote').value.trim());
-    save(); toast('Duty updated ✎'); drawSheet(); render();
-}
-function resetDay() { delete S.overrides[sheetDate]; sheetShift = planned(sheetDate); save(); toast('Back to rotation'); drawSheet(); render(); }
-function startSwap() { const d = sheetDate; closeSheet(); swapFrom = d; calY = parse(d).getFullYear(); calM = parse(d).getMonth(); if (tab !== 'cal') setTab('cal'); else render(); }
-function saveLog() {
-    const st = $('sheet').dataset.st;
-    const rec = { status: st, in: '', out: '', note: $('lgNote').value.trim() };
-    if (st === 'done') {
-        rec.in = $('lgIn').value; rec.out = $('lgOut').value;
-        if (!rec.in) { toast('Enter start time'); return; }
+    if (sheetCover === S.me && dutyStart(date) <= new Date()) {
+        h += `<div class="sec"><b>📒 My duty log</b>
+            <label class="check"><input type="checkbox" id="lgDone" ${lg.done !== false ? 'checked' : ''}> Duty completed</label>
+            <label class="f">Posting / sector</label><input type="text" id="lgPost" value="${esc(lg.posting || S.posting)}">
+            <label class="f">Notes (crews supervised, incidents, handover…)</label><textarea id="lgNote">${esc(lg.note || '')}</textarea>
+            <div class="row" style="margin-top:10px"><button class="btn good" onclick="saveLog()">Save log</button>
+            ${S.logs[date] ? `<button class="btn bad" onclick="deleteLog()">Delete log</button>` : ''}</div></div>`;
+    } else if (sheetCover === S.me) {
+        h += `<div class="sec muted">📒 You can log this duty once it has started.</div>`;
     }
-    // if the shown shift differs from saved, keep the adjustment too
-    if (sheetShift !== effective(sheetDate)) setOverride(sheetDate, sheetShift, sheetShift === 'L' ? 'leave' : 'change', $('ovNote').value.trim());
-    S.logs[sheetDate] = rec; save(); toast('Log saved ✓'); closeSheet(); render();
+    $('sheet').innerHTML = h;
 }
-function deleteLog() { if (!confirm('Delete this log?')) return; delete S.logs[sheetDate]; save(); toast('Log deleted'); closeSheet(); render(); }
+// true if `id` would also be on duty right before or after this turn (a long stretch)
+function backToBack(id, date) {
+    return [-1, 1].some(o => { const a = addDays(date, o); return onDuty(a) === id && scheduled(a) !== scheduled(date); });
+}
+function saveSwap() {
+    const sch = scheduled(sheetDate);
+    if (sheetCover === sch) { delete S.swaps[sheetDate]; }
+    else {
+        const old = S.swaps[sheetDate] || {};
+        S.swaps[sheetDate] = { orig: sch, cover: sheetCover, note: $('swNote') ? $('swNote').value.trim() : '', settled: $('swSettled') ? $('swSettled').checked : false, group: old.group || '' };
+    }
+    save(); toast('Saved ⇄'); drawDay(); render();
+}
+function removeSwap() { delete S.swaps[sheetDate]; sheetCover = scheduled(sheetDate); save(); toast('Swap removed'); drawDay(); render(); }
+function saveLog() {
+    S.logs[sheetDate] = { done: $('lgDone').checked, posting: $('lgPost').value.trim(), note: $('lgNote').value.trim() };
+    save(); toast('Duty logged ✓'); closeSheet(); render();
+}
+function deleteLog() { if (!confirm('Delete this log?')) return; delete S.logs[sheetDate]; save(); closeSheet(); render(); }
 
-/* ---------- LOG ---------- */
-let logY, logM;
-function renderLog() {
-    const y = logY, m = logM, prefix = y + '-' + pad(m + 1);
-    const keys = Object.keys(S.logs).filter(k => k.startsWith(prefix)).sort().reverse();
-    let h = `<div class="card"><div class="monthnav"><button onclick="moveLog(-1)">‹</button><b>${MONTHS[m]} ${y}</b><button onclick="moveLog(1)">›</button></div>${statsGrid(monthStats(y, m))}</div>`;
-    h += `<div class="card"><div class="spread"><h2>Duty log</h2><button class="btn sm ghost" onclick="exportCSV()">⬇ CSV</button></div>`;
-    if (!keys.length) h += `<p class="muted">Nothing logged this month yet. Log from the Today tab or tap a day in Plan.</p>`;
+/* ---------- SWAPS ---------- */
+function renderSwaps() {
+    let h = `<div class="card"><h2>Need time off?</h2><p class="muted" style="margin-top:0">Plan who covers your turns, see what you'll owe, and send the plan to the team.</p>
+        <button class="btn block" onclick="openPlanner()">🗓 Plan cover for days off</button></div>`;
+    h += balanceCard(false);
+    // whole team balances
+    const owed = balances(); let team = '';
+    S.team.forEach((a, i) => S.team.slice(i + 1).forEach(b => {
+        const n = net(owed, a.id, b.id); if (!n) return;
+        const [x, y] = n > 0 ? [a, b] : [b, a];
+        team += `<div class="item"><div class="grow">${esc(nameOf(x.id))} owes ${esc(nameOf(y.id))}</div><b>${plural(Math.abs(n), 'duty')}</b></div>`;
+    }));
+    h += `<div class="card"><h2>Whole team</h2>${team || '<p class="muted" style="margin:0">Everyone is even.</p>'}</div>`;
+
+    const keys = Object.keys(S.swaps).sort().reverse();
+    h += `<div class="card"><div class="spread"><h2>Swap log</h2><span class="muted">${keys.length} days</span></div>`;
+    if (!keys.length) h += `<p class="muted" style="margin:0">No swaps yet. Tap a day in the Calendar, or use the planner above.</p>`;
     keys.forEach(k => {
-        const lg = S.logs[k], sh = shiftById(effective(k)), d = parse(k);
-        const w = loggedMinutes(lg), p = shiftHours(sh), diff = lg.status === 'done' && lg.out ? w - p : 0;
-        h += `<div class="item" onclick="openDay('${k}')">
-            <div class="badge" style="background:${shColor(sh)}">${esc(shLabel(sh))}</div>
-            <div class="grow"><div class="t">${DAYS[d.getDay()]} ${d.getDate()} · ${sh ? esc(sh.name) : '—'}${S.overrides[k] ? ' ✎' : ''}</div>
-            <div class="muted">${logLine(lg)}${lg.note ? ' · ' + esc(lg.note) : ''}</div></div>
-            ${diff > 0 ? `<span class="ot">+${hm(diff)}</span>` : diff < 0 && p ? `<span class="short">${hm(diff)}</span>` : ''}
-        </div>`;
+        const sw = S.swaps[k], d = parse(k), mine = sw.orig === S.me || sw.cover === S.me;
+        h += `<div class="item ${mine ? 'me-row' : ''}" onclick="openDay('${k}')">
+            <div class="badge" style="background:${person(sw.cover).color}"><b>${d.getDate()}</b>${MONTHS[d.getMonth()].slice(0, 3)}</div>
+            <div class="grow"><div class="t">${esc(nameOf(sw.cover))} covered ${esc(nameOf(sw.orig))}</div>
+            <div class="muted">${DAYS[d.getDay()]} ${d.getFullYear()}${sw.note ? ' · ' + esc(sw.note) : ''}</div></div>
+            ${sw.settled ? '<span class="muted">settled</span>' : '<span class="warn">owed</span>'}</div>`;
     });
     h += `</div>`;
-    // adjustments list
-    const adj = Object.keys(S.overrides).filter(k => k.startsWith(prefix)).sort();
-    if (adj.length) {
-        h += `<div class="card"><h2>Adjustments this month</h2>`;
-        adj.forEach(k => {
-            const o = S.overrides[k], from = shiftById(planned(k)), to = shiftById(o.shift), d = parse(k);
-            h += `<div class="item" onclick="openDay('${k}')"><div class="badge" style="background:${shColor(to)}">${esc(shLabel(to))}</div>
-                <div class="grow"><div class="t">${DAYS[d.getDay()]} ${d.getDate()} · ${from ? esc(from.name) : '—'} → ${to ? esc(to.name) : '—'}</div>
-                <div class="muted">${esc(o.kind)}${o.note ? ' · ' + esc(o.note) : ''}</div></div></div>`;
-        });
-        h += `</div>`;
+    $('v-swaps').innerHTML = h;
+}
+
+/* ---------- SWAP PLANNER ---------- */
+let P = null;
+function openPlanner() {
+    const cur = currentDutyDate();
+    P = { who: S.me, from: cur, to: addDays(cur, 14), mode: 'split', one: null, assign: {}, note: '' };
+    drawPlanner(); $('overlay').classList.add('open');
+}
+function plannerDays() {
+    const out = []; if (!P.from || !P.to || P.to < P.from) return out;
+    for (let k = P.from; k <= P.to; k = addDays(k, 1)) if (onDuty(k) === P.who && (!S.swaps[k] || S.swaps[k].group === P.group)) out.push(k);
+    return out.slice(0, 60);
+}
+function suggest(days) {
+    const others = S.team.filter(p => p.id !== P.who).map(p => p.id), owed = balances(), load = {};
+    others.forEach(o => load[o] = 0);
+    // group consecutive days (one turn) so a single APO covers the whole turn
+    const runs = [];
+    days.forEach(k => { const r = runs[runs.length - 1]; if (r && addDays(r[r.length - 1], 1) === k) r.push(k); else runs.push([k]); });
+    const assign = {};
+    runs.forEach(run => {
+        const clash = id => run.some(k => backToBack(id, k)) ? 1 : 0;
+        const pick = others.slice().sort((a, b) =>
+            clash(a) - clash(b)                                    // avoid back-to-back duty
+            || load[a] - load[b]                                   // spread evenly
+            || net(owed, b, P.who) - net(owed, a, P.who))[0];      // prefer people who owe the requester
+        run.forEach(k => assign[k] = pick); load[pick] += run.length;
+    });
+    return assign;
+}
+function drawPlanner() {
+    const days = plannerDays();
+    if (P.mode === 'split' && days.some(k => !P.assign[k] || P.assign[k] === P.who)) { const sg = suggest(days); days.forEach(k => { if (!P.assign[k] || P.assign[k] === P.who) P.assign[k] = sg[k]; }); }
+    const others = S.team.filter(p => p.id !== P.who);
+    if (P.mode === 'one' && (!P.one || P.one === P.who)) P.one = others[0]?.id;
+    let h = `<div class="spread"><h3>Plan cover</h3><button class="btn sm ghost" onclick="closeSheet()">✕</button></div>
+        <label class="f">Who needs cover?</label><select onchange="P.who=this.value;P.assign={};drawPlanner()">${S.team.map(p => `<option value="${p.id}" ${p.id === P.who ? 'selected' : ''}>${esc(nameOf(p.id))}</option>`).join('')}</select>
+        <div class="two"><div><label class="f">Off from</label><input type="date" value="${P.from}" onchange="P.from=this.value;P.assign={};drawPlanner()"></div>
+        <div><label class="f">Until</label><input type="date" value="${P.to}" onchange="P.to=this.value;P.assign={};drawPlanner()"></div></div>
+        <label class="f">Reason (optional)</label><input type="text" id="plNote" value="${esc(P.note)}" oninput="P.note=this.value">`;
+    if (!days.length) {
+        h += `<p class="muted" style="margin-top:14px">${esc(person(P.who).name)} has no duty in these dates, so no cover is needed.</p>`;
+        $('sheet').innerHTML = h; return;
     }
+    h += `<div class="sec"><b>${plural(days.length, 'duty day')} to cover (${days.length * 24} hours)</b>
+        <div class="chips"><button class="chip ${P.mode === 'one' ? 'on' : ''}" onclick="P.mode='one';drawPlanner()">One APO covers all</button>
+        <button class="chip ${P.mode === 'split' ? 'on' : ''}" onclick="P.mode='split';drawPlanner()">Split between APOs</button></div>`;
+    if (P.mode === 'one') h += `<label class="f">Covered by</label><select onchange="P.one=this.value;drawPlanner()">${others.map(p => `<option value="${p.id}" ${p.id === P.one ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>`;
+    h += `<div style="margin-top:8px">`;
+    days.forEach(k => {
+        const c = P.mode === 'one' ? P.one : P.assign[k];
+        h += `<div class="plan-row"><div><b>${pretty(k)}</b><div class="muted">day ${dayOfTurn(k)} of turn</div></div>
+            <div>${P.mode === 'one' ? `<span class="pill"><span class="dot" style="background:${person(c).color}"></span>${esc(person(c).name)}</span>`
+                : `<select onchange="P.assign['${k}']=this.value;drawPlanner()">${others.map(p => `<option value="${p.id}" ${p.id === c ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>`}
+            ${backToBack(c, k) ? `<div class="warn">⚠ back-to-back duty</div>` : ''}</div></div>`;
+    });
+    h += `</div></div>`;
+    // owed preview
+    const tally = {}; days.forEach(k => { const c = P.mode === 'one' ? P.one : P.assign[k]; tally[c] = (tally[c] || 0) + 1; });
+    h += `<div class="sec"><b>After this, ${esc(person(P.who).name)} will owe</b>${Object.entries(tally).map(([id, n]) => `<div class="item"><span class="dot" style="background:${person(id).color}"></span><div class="grow">${esc(person(id).name)}</div><b>${plural(n, 'duty')}</b></div>`).join('')}</div>`;
+    h += `<pre class="share" id="plText">${esc(planText(days))}</pre>
+        <div class="row"><button class="btn ghost" onclick="shareText($('plText').textContent)">📤 Send plan to team</button>
+        <button class="btn good" onclick="savePlan()">✓ Agreed, save swaps</button></div>`;
+    $('sheet').innerHTML = h;
+}
+function planText(days) {
+    let t = `Duty cover plan: ${person(P.who).name} off ${pretty(P.from)} – ${pretty(P.to)}${P.note ? ' (' + P.note + ')' : ''}\n`;
+    days.forEach(k => { const c = P.mode === 'one' ? P.one : P.assign[k]; t += `• ${pretty(k)} (${t12(S.shiftStart)}, 24h): ${person(c).name}\n`; });
+    const tally = {}; days.forEach(k => { const c = P.mode === 'one' ? P.one : P.assign[k]; tally[c] = (tally[c] || 0) + 1; });
+    t += `${person(P.who).name} will owe: ` + Object.entries(tally).map(([id, n]) => `${person(id).name} ${plural(n, 'duty')}`).join(', ');
+    return t;
+}
+function savePlan() {
+    const days = plannerDays(), g = 'g' + Date.now().toString(36);
+    days.forEach(k => { const c = P.mode === 'one' ? P.one : P.assign[k]; S.swaps[k] = { orig: scheduled(k), cover: c, note: P.note || 'Cover for ' + person(P.who).name, settled: false, group: g }; });
+    save(); closeSheet(); toast(plural(days.length, 'swap') + ' saved'); setTab('swaps');
+}
+
+/* ---------- SHARE ---------- */
+function scheduleText(from, n) {
+    let t = `APO duty schedule (${t12(S.shiftStart)} to ${t12(S.shiftStart)}, 24h)\n`, i = 0;
+    while (i < n) {
+        const k = addDays(from, i), w = onDuty(k); let j = i;
+        while (j + 1 < n && onDuty(addDays(from, j + 1)) === w) j++;
+        const end = addDays(from, j);
+        t += `• ${pretty(k)}${j > i ? ' – ' + pretty(end) : ''}: ${person(w).name}${S.swaps[k] ? ' (covering ' + person(S.swaps[k].orig).name + ')' : ''}\n`;
+        i = j + 1;
+    }
+    return t.trim();
+}
+function shareSchedule() {
+    const txt = scheduleText(currentDutyDate(), 20);
+    openSheet(`<div class="spread"><h3>Share schedule</h3><button class="btn sm ghost" onclick="closeSheet()">✕</button></div>
+        <p class="muted">Next 20 days, including swaps.</p><pre class="share" id="shTxt">${esc(txt)}</pre>
+        <div class="row"><button class="btn" onclick="shareText($('shTxt').textContent)">📤 Share / copy</button>
+        <a class="btn ghost" style="text-decoration:none" href="https://wa.me/?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">WhatsApp</a></div>`);
+}
+async function shareText(txt) {
+    try { if (navigator.share) { await navigator.share({ text: txt }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    try { await navigator.clipboard.writeText(txt); toast('Copied, paste it in WhatsApp'); } catch (e) { toast('Long-press the text to copy'); }
+}
+
+/* ---------- MY LOG ---------- */
+function renderLog() {
+    const y = logY, m = logM, prefix = y + '-' + pad(m + 1), cur = currentDutyDate();
+    const days = new Date(y, m + 1, 0).getDate();
+    const mine = [];
+    for (let d = 1; d <= days; d++) { const k = prefix + '-' + pad(d); if (onDuty(k) === S.me || (S.swaps[k] && S.swaps[k].orig === S.me)) mine.push(k); }
+    const worked = mine.filter(k => onDuty(k) === S.me);
+    const coveredOthers = worked.filter(k => S.swaps[k]).length;
+    const coveredByOthers = mine.filter(k => onDuty(k) !== S.me).length;
+    const logged = worked.filter(k => S.logs[k] && S.logs[k].done).length;
+    let h = `<div class="card"><div class="monthnav"><button onclick="moveLog(-1)">‹</button><b>${MONTHS[m]} ${y}</b><button onclick="moveLog(1)">›</button></div>
+        <div class="stats">
+        <div class="stat"><b>${worked.length}</b><span>My duty days</span></div>
+        <div class="stat"><b>${worked.length * 24}h</b><span>Duty hours</span></div>
+        <div class="stat"><b>${logged}</b><span>Logged</span></div>
+        <div class="stat"><b>${coveredOthers}</b><span>I covered others</span></div>
+        <div class="stat"><b>${coveredByOthers}</b><span>Others covered me</span></div>
+        <div class="stat"><b>${Math.floor(worked.length / S.perTurn)}</b><span>Full turns</span></div></div></div>`;
+    h += `<div class="card"><div class="spread"><h2>My duties</h2><button class="btn sm ghost" onclick="exportCSV()">⬇ CSV</button></div>`;
+    if (!mine.length) h += `<p class="muted" style="margin:0">No duty for you this month.</p>`;
+    mine.forEach(k => {
+        const d = parse(k), w = onDuty(k), sw = S.swaps[k], lg = S.logs[k], future = k > cur;
+        let status;
+        if (w !== S.me) status = `<span class="muted">covered by ${esc(person(w).name)}</span>`;
+        else if (lg && lg.done) status = '<span class="owe plus">✓</span>';
+        else if (lg) status = '<span class="owe minus">✖</span>';
+        else status = future ? '<span class="muted">upcoming</span>' : '<span class="warn">log</span>';
+        h += `<div class="item" onclick="openDay('${k}')">
+            <div class="badge" style="background:${w === S.me ? person(S.me).color : '#9aa3b2'}"><b>${d.getDate()}</b>${DAYS[d.getDay()]}</div>
+            <div class="grow"><div class="t">${w === S.me ? (sw ? 'Covering ' + esc(person(sw.orig).name) : 'My turn, day ' + dayOfTurn(k)) : 'Off (swapped)'}</div>
+            <div class="muted">${lg ? esc(lg.posting || '') + (lg.note ? ' · ' + esc(lg.note) : '') : (sw && sw.note ? esc(sw.note) : '')}</div></div>${status}</div>`;
+    });
+    h += `</div>`;
     $('v-log').innerHTML = h;
 }
 function moveLog(n) { logM += n; if (logM < 0) { logM = 11; logY--; } if (logM > 11) { logM = 0; logY++; } render(); }
 function exportCSV() {
-    const prefix = logY + '-' + pad(logM + 1);
-    const rows = [['Date', 'Day', 'Planned', 'Duty', 'Status', 'In', 'Out', 'Worked hrs', 'Overtime hrs', 'Adjustment', 'Note']];
-    const days = new Date(logY, logM + 1, 0).getDate();
+    const prefix = logY + '-' + pad(logM + 1), days = new Date(logY, logM + 1, 0).getDate();
+    const rows = [['Date', 'Day', 'Rotation', 'On duty', 'Swap', 'Owed settled', 'Completed', 'Posting', 'Note']];
     for (let d = 1; d <= days; d++) {
-        const k = prefix + '-' + pad(d), p = shiftById(planned(k)), sh = shiftById(effective(k)), lg = S.logs[k], o = S.overrides[k];
-        const w = loggedMinutes(lg), ot = lg && lg.status === 'done' && lg.out ? Math.max(0, w - shiftHours(sh)) : 0;
-        rows.push([k, DAYS[parse(k).getDay()], p ? p.name : '', sh ? sh.name : '', lg ? lg.status : '', lg ? lg.in : '', lg ? lg.out : '',
-            (w / 60).toFixed(2), (ot / 60).toFixed(2), o ? o.kind + (o.note ? ': ' + o.note : '') : '', lg ? lg.note : '']);
+        const k = prefix + '-' + pad(d), sw = S.swaps[k], lg = S.logs[k];
+        rows.push([k, DAYS[parse(k).getDay()], person(scheduled(k)).name, person(onDuty(k)).name, sw ? person(sw.cover).name + ' covered ' + person(sw.orig).name : '',
+            sw ? (sw.settled ? 'yes' : 'no') : '', lg ? (lg.done ? 'yes' : 'no') : '', lg ? lg.posting : '', [sw && sw.note, lg && lg.note].filter(Boolean).join(' | ')]);
     }
-    download('duty-' + prefix + '.csv', rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n'), 'text/csv');
+    download('apo-duty-' + prefix + '.csv', rows.map(r => r.map(c => '"' + String(c ?? '').replace(/"/g, '""') + '"').join(',')).join('\n'), 'text/csv');
 }
 function download(name, text, type) {
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name;
@@ -525,76 +605,95 @@ function download(name, text, type) {
 
 /* ---------- SETUP ---------- */
 function renderSetup() {
-    let h = `<div class="card"><h2>1 · My duty rotation</h2>
-        <p class="muted" style="margin-top:0">Tap shifts below to build your repeating cycle (e.g. M M E E N N OFF OFF). Tap a block in the cycle to remove it.</p>
-        <div class="pattern">${S.pattern.cycle.length ? S.pattern.cycle.map((id, i) => { const s = shiftById(id); return `<button class="pchip" style="background:${shColor(s)}" onclick="rmCycle(${i})">${esc(shLabel(s))}<small>×</small></button>`; }).join('') : '<span class="muted">Empty — add shifts ↓</span>'}</div>
-        <div class="chips" style="margin-top:10px">${S.shifts.map(s => `<button class="chip" onclick="addCycle('${s.id}')"><i style="background:${s.color}"></i>+ ${esc(s.name)}</button>`).join('')}</div>
-        <label class="f">Cycle starts on (day 1 of the cycle)</label><input type="date" id="pStart" value="${S.pattern.start}" onchange="S.pattern.start=this.value;save();toast('Saved')">
-        <p class="muted">${S.pattern.cycle.length} day cycle · ${S.pattern.cycle.filter(id => (shiftById(id) || {}).work).length} duty days per cycle</p>
-        <div class="row"><button class="btn sm ghost" onclick="presetCycle('week')">Preset: Mon–Sat General, Sun Off</button>
-        <button class="btn sm bad" onclick="if(confirm('Clear cycle?')){S.pattern.cycle=[];save();render()}">Clear</button></div>
-    </div>`;
-
-    h += `<div class="card"><div class="spread"><h2>2 · My shift types</h2><button class="btn sm" onclick="editShift(null)">+ Add</button></div>`;
-    S.shifts.forEach(s => {
-        h += `<div class="item" onclick="editShift('${s.id}')"><div class="badge" style="background:${s.color}">${esc(s.short)}</div>
-            <div class="grow"><div class="t">${esc(s.name)}</div><div class="muted">${s.work ? t12(s.start) + ' – ' + t12(s.end) + ' · ' + hm(shiftHours(s)) : 'No duty (rest/leave)'}</div></div><span class="muted">Edit ›</span></div>`;
+    let h = `<div class="card"><h2>1 · Rotation order</h2><p class="muted" style="margin-top:0">The order APOs take their turns. Use ↑ ↓ to change it.</p>`;
+    S.team.forEach((p, i) => {
+        h += `<div class="item"><span class="dot" style="background:${p.color}"></span>
+            <input type="text" value="${esc(p.name)}" onchange="renamePerson('${p.id}', this.value)" style="flex:1">
+            <button class="btn sm ghost" onclick="movePerson(${i},-1)" ${i ? '' : 'disabled'}>↑</button>
+            <button class="btn sm ghost" onclick="movePerson(${i},1)" ${i < S.team.length - 1 ? '' : 'disabled'}>↓</button>
+            <button class="btn sm bad" onclick="removePerson('${p.id}')">✕</button></div>`;
     });
-    h += `</div>`;
+    h += `<div class="row" style="margin-top:10px"><button class="btn sm ghost" onclick="addPerson()">+ Add APO</button></div>
+        <label class="f">Who are you?</label><select onchange="S.me=this.value;save();render()">${S.team.map(p => `<option value="${p.id}" ${p.id === S.me ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>`;
 
-    h += `<div class="card"><h2>3 · Backup</h2><p class="muted" style="margin-top:0">Your data is saved on this phone. Download a backup to keep it safe or move to another phone.</p>
+    h += `<div class="card"><h2>2 · A known start date</h2><p class="muted" style="margin-top:0">Pick one date you're sure about. Everything else is worked out from it.</p>
+        <label class="f">On this date…</label><input type="date" id="anDate" value="${S.anchor.date}">
+        <div class="two"><div><label class="f">…this APO was on duty</label><select id="anWho">${S.team.map(p => `<option value="${p.id}" ${p.id === S.anchor.who ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>
+        <div><label class="f">It was their</label><select id="anDay">${Array.from({ length: S.perTurn }, (_, i) => `<option value="${i + 1}" ${S.anchor.day === i + 1 ? 'selected' : ''}>${['1st', '2nd', '3rd', '4th'][i] || (i + 1) + 'th'} day</option>`).join('')}</select></div></div>
+        <div class="two"><div><label class="f">Duty starts at</label><input type="time" id="shStart" value="${S.shiftStart}"></div>
+        <div><label class="f">Days per turn</label><input type="number" id="perTurn" min="1" max="7" value="${S.perTurn}"></div></div>
+        <p class="muted">Cycle: ${S.team.length} APOs × ${S.perTurn} days = <b>${S.team.length * S.perTurn}-day cycle</b>. Each APO works ${S.perTurn} days and is off ${S.perTurn * (S.team.length - 1)}.</p>
+        <button class="btn block" onclick="saveRotation()">${S.confirmed ? 'Save' : '✓ Save & confirm'}</button></div>`;
+
+    h += `<div class="card"><h2>3 · Posting</h2><label class="f">Current posting / sector</label>
+        <input type="text" value="${esc(S.posting)}" onchange="S.posting=this.value.trim()||S.posting;save();render();toast('Saved')">
+        <p class="muted">Saved with each duty you log, so you'll keep a record if your posting changes.</p></div>`;
+
+    h += `<div class="card"><h2>4 · Reminders</h2><p class="muted" style="margin-top:0">Add your next 6 months of duties to your phone's calendar. It will remind you the evening before (12h) and 1 hour before each turn.</p>
+        <button class="btn ghost block" onclick="exportICS()">📅 Add my duties to phone calendar</button>
+        <p class="muted">After swaps change your duties, add them again.</p></div>`;
+
+    h += `<div class="card"><h2>5 · Backup</h2><p class="muted" style="margin-top:0">Data is saved on this phone only.</p>
         <div class="row"><button class="btn ghost" onclick="backup()">⬇ Download backup</button>
-        <label class="btn ghost" style="display:inline-block">⬆ Restore<input type="file" accept=".json" class="hidden" onchange="restore(this.files[0])"></label></div>
+        <label class="btn ghost">⬆ Restore<input type="file" accept=".json" class="hidden" onchange="restore(this.files[0])"></label></div>
         <div class="row" style="margin-top:10px"><button class="btn sm bad" onclick="resetAll()">Erase everything</button></div></div>`;
     $('v-setup').innerHTML = h;
 }
-function addCycle(id) { S.pattern.cycle.push(id); if (!S.pattern.start) S.pattern.start = ymd(new Date()); save(); render(); }
-function rmCycle(i) { S.pattern.cycle.splice(i, 1); save(); render(); }
-function presetCycle(kind) {
-    if (kind === 'week') {
-        if (!shiftById('G') || !shiftById('O')) { toast('Need General and Off shifts'); return; }
-        const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // this Monday
-        S.pattern = { start: ymd(d), cycle: ['G', 'G', 'G', 'G', 'G', 'G', 'O'] };
+function renamePerson(id, v) { v = v.trim(); if (!v) return; person(id).name = v; save(); toast('Saved'); render(); }
+function movePerson(i, d) { const t = S.team, j = i + d; [t[i], t[j]] = [t[j], t[i]]; save(); render(); }
+function addPerson() {
+    const name = prompt('Name of the APO'); if (!name || !name.trim()) return;
+    const used = S.team.map(p => p.color);
+    S.team.push({ id: 'p' + Date.now().toString(36), name: name.trim(), color: COLORS.find(c => !used.includes(c)) || COLORS[S.team.length % COLORS.length] });
+    save(); render();
+}
+function removePerson(id) {
+    if (S.team.length <= 2) { toast('Need at least 2 APOs'); return; }
+    if (!confirm('Remove ' + person(id).name + ' from the rotation? Dates for everyone will shift.')) return;
+    S.team = S.team.filter(p => p.id !== id);
+    if (S.me === id) S.me = S.team[0].id;
+    if (S.anchor.who === id) S.anchor.who = S.team[0].id;
+    save(); render();
+}
+function saveRotation() {
+    const pt = Math.max(1, Math.min(7, parseInt($('perTurn').value) || 2));
+    S.anchor = { date: $('anDate').value || S.anchor.date, who: $('anWho').value, day: Math.min(pt, parseInt($('anDay').value) || 1) };
+    S.shiftStart = $('shStart').value || '08:00'; S.perTurn = pt;
+    if (!S.confirmed) S.logSince = currentDutyDate();
+    S.confirmed = true;
+    // keep stored swaps consistent: drop any whose "original" no longer matches the rotation
+    let moved = 0;
+    Object.keys(S.swaps).forEach(k => { if (S.swaps[k].orig !== scheduled(k)) moved++; });
+    save(); toast('Rotation saved ✓'); render();
+    if (moved) alert(moved + ' saved swap(s) no longer line up with the new rotation. Check them in the Swaps tab.');
+}
+function icsDate(d) { return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + 'T' + pad(d.getHours()) + pad(d.getMinutes()) + '00'; }
+function exportICS() {
+    const cur = currentDutyDate(); const ev = [];
+    let i = 0;
+    while (i < 183) {
+        const k = addDays(cur, i);
+        if (onDuty(k) !== S.me) { i++; continue; }
+        let j = i; while (onDuty(addDays(cur, j + 1)) === S.me) j++;
+        const s = dutyStart(k), e = dutyStart(addDays(cur, j + 1));
+        const covering = [...new Set(Array.from({ length: j - i + 1 }, (_, x) => S.swaps[addDays(cur, i + x)]).filter(Boolean).map(sw => person(sw.orig).name))];
+        ev.push(['BEGIN:VEVENT', 'UID:apo-' + k + '@duty', 'DTSTAMP:' + icsDate(new Date()), 'DTSTART:' + icsDate(s), 'DTEND:' + icsDate(e),
+            'SUMMARY:APO duty' + (covering.length ? ' (covering ' + covering.join(', ') + ')' : ''), 'LOCATION:' + S.posting,
+            'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:Duty tomorrow', 'TRIGGER:-PT12H', 'END:VALARM',
+            'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:Duty in 1 hour', 'TRIGGER:-PT1H', 'END:VALARM', 'END:VEVENT'].join('\r\n'));
+        i = j + 1;
     }
-    save(); toast('Rotation set'); render();
+    download('my-apo-duties.ics', ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//LifeGame//APO Duty//EN', ...ev, 'END:VCALENDAR'].join('\r\n'), 'text/calendar');
+    toast(plural(ev.length, 'turn') + ' exported');
 }
-function editShift(id) {
-    const s = id ? shiftById(id) : { id: '', name: '', short: '', start: '09:00', end: '17:00', color: COLORS[S.shifts.length % COLORS.length], work: true };
-    let h = `<div class="spread"><h3>${id ? 'Edit shift' : 'New shift'}</h3><button class="btn sm ghost" onclick="closeSheet()">✕</button></div>
-        <label class="f">Name</label><input type="text" id="sName" value="${esc(s.name)}" placeholder="e.g. Night">
-        <label class="f">Short label (shown on calendar)</label><input type="text" id="sShort" maxlength="4" value="${esc(s.short)}" placeholder="N">
-        <label class="f"><input type="checkbox" id="sWork" ${s.work ? 'checked' : ''} onchange="$('sTimes').classList.toggle('hidden',!this.checked)"> This is a working duty</label>
-        <div class="two ${s.work ? '' : 'hidden'}" id="sTimes"><div><label class="f">Start</label><input type="time" id="sStart" value="${s.start}"></div>
-        <div><label class="f">End</label><input type="time" id="sEnd" value="${s.end}"></div></div>
-        <label class="f">Colour</label><div class="chips" id="sCol">${COLORS.map(c => `<button class="chip ${c === s.color ? 'on' : ''}" data-c="${c}" onclick="pickColor('${c}')"><i style="background:${c}"></i></button>`).join('')}</div>
-        <div class="row" style="margin-top:14px"><button class="btn" onclick="saveShift('${id || ''}')">Save</button>
-        ${id ? `<button class="btn bad" onclick="deleteShift('${id}')">Delete</button>` : ''}</div>`;
-    $('sheet').innerHTML = h; $('sheet').dataset.color = s.color; $('overlay').classList.add('open');
-}
-function pickColor(c) { $('sheet').dataset.color = c; document.querySelectorAll('#sCol .chip').forEach(x => x.classList.toggle('on', x.dataset.c === c)); }
-function saveShift(id) {
-    const name = $('sName').value.trim(); if (!name) { toast('Enter a name'); return; }
-    const work = $('sWork').checked;
-    const rec = { name, short: ($('sShort').value.trim() || name[0]).toUpperCase(), start: work ? $('sStart').value : '', end: work ? $('sEnd').value : '', color: $('sheet').dataset.color, work };
-    if (work && (!rec.start || !rec.end)) { toast('Enter start and end'); return; }
-    if (id) Object.assign(shiftById(id), rec);
-    else { rec.id = 's' + Date.now().toString(36); S.shifts.push(rec); }
-    save(); closeSheet(); toast('Shift saved'); render();
-}
-function deleteShift(id) {
-    const used = S.pattern.cycle.includes(id) || Object.values(S.overrides).some(o => o.shift === id);
-    if (!confirm(used ? 'This shift is used in your rotation or adjustments. Delete anyway? Those days will show as unplanned.' : 'Delete this shift?')) return;
-    S.shifts = S.shifts.filter(s => s.id !== id); S.pattern.cycle = S.pattern.cycle.filter(x => x !== id);
-    save(); closeSheet(); render();
-}
-function backup() { download('duty-backup-' + ymd(new Date()) + '.json', JSON.stringify(S, null, 2), 'application/json'); }
+function backup() { download('apo-duty-backup-' + ymd(new Date()) + '.json', JSON.stringify(S, null, 2), 'application/json'); }
 function restore(file) {
     if (!file) return;
     const r = new FileReader();
-    r.onload = () => { try { const d = JSON.parse(r.result); if (!Array.isArray(d.shifts)) throw 0; S = Object.assign(defaults(), d); save(); toast('Restored ✓'); render(); } catch (e) { toast('Not a valid backup'); } };
+    r.onload = () => { try { const d = JSON.parse(r.result); if (!Array.isArray(d.team)) throw 0; S = Object.assign(defaults(), d); save(); toast('Restored ✓'); render(); } catch (e) { toast('Not a valid backup'); } };
     r.readAsText(file);
 }
-function resetAll() { if (!confirm('Erase all shifts, plans and logs?')) return; S = defaults(); save(); render(); toast('Reset'); }
+function resetAll() { if (!confirm('Erase rotation, swaps and logs?')) return; S = defaults(); save(); render(); }
 
 /* ---------- init ---------- */
 load();
@@ -602,7 +701,7 @@ const _n = new Date(); calY = logY = _n.getFullYear(); calM = logM = _n.getMonth
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => setTab(b.dataset.tab));
 $('overlay').addEventListener('click', e => { if (e.target.id === 'overlay') closeSheet(); });
 render();
-setInterval(() => { if (tab === 'today' && !$('overlay').classList.contains('open')) renderToday(); }, 30000);
+setInterval(() => { if (tab === 'home' && !$('overlay').classList.contains('open')) renderHome(); }, 30000);
 </script>
 </body>
 </html>

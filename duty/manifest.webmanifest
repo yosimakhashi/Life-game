@@ -1,6 +1,6 @@
 {
-  "name": "Duty Planner",
-  "short_name": "Duty",
+  "name": "APO Duty",
+  "short_name": "APO Duty",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
