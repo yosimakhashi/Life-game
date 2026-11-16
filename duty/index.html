@@ -85,12 +85,13 @@ button { cursor: pointer; }
 .monthnav button { border: none; background: var(--soft); width: 40px; height: 40px; border-radius: 12px; font-size: 1.1rem; }
 .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .cal .hd { text-align: center; font-size: .72rem; color: var(--dim); padding: 4px 0; }
-.cell { position: relative; min-width: 0; aspect-ratio: 1 / 1.15; border-radius: 10px; border: 2px solid transparent; background: var(--soft); padding: 3px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; font-size: .8rem; }
+.cell { position: relative; min-width: 0; min-height: 66px; border-radius: 10px; border: 2px solid transparent; background: var(--soft); padding: 3px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; font-size: .8rem; }
 .cell.empty { background: transparent; }
 .cell.today { border-color: var(--text); }
 .cell.mine { background: var(--main-soft); }
 .cell .n { font-weight: 600; }
-.cell .s { width: 100%; overflow: hidden; text-align: center; border-radius: 7px; color: #fff; font-weight: 700; font-size: .72rem; padding: 2px 0; white-space: nowrap; }
+.cell .ss { width: 100%; display: flex; flex-direction: column; gap: 2px; }
+.cell .s { width: 100%; overflow: hidden; text-align: center; border-radius: 7px; color: #fff; font-weight: 700; font-size: .66rem; padding: 1px 0; white-space: nowrap; }
 .cell .mk { position: absolute; top: 1px; right: 3px; font-size: .62rem; font-weight: 700; color: var(--warn); }
 .cell .mk2 { position: absolute; top: 1px; left: 3px; font-size: .62rem; color: var(--good); font-weight: 700; }
 .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; font-size: .78rem; color: var(--dim); }
@@ -165,29 +166,33 @@ pre.share { white-space: pre-wrap; background: var(--soft); border-radius: 12px;
 <script>
 'use strict';
 /*
- * APO duty rotation.
- * Team members take turns in a fixed order. Each turn = `perTurn` consecutive
- * 24-hour duty days starting at `shiftStart`. With 5 APOs × 2 days the cycle is 10 days.
- * A swap is stored per duty day: { orig, cover, note, settled, group }.
+ * APO duty rotation (staggered, two on duty at a time).
+ * Every day at the change time one APO comes in and the one who has finished
+ * their turn goes home. Each APO is on duty for `perTurn` days in a row
+ * (2 × 24h), then off until their next turn. With 5 APOs: 2 days on, 3 days off,
+ * and 2 APOs present at any time.
+ * The order below is the order APOs come in, one per day.
+ * A swap replaces one APO in one duty day: key `date|orig` → { date, orig, cover, note, settled, group }.
  * Every unsettled swap means `orig` owes `cover` one duty day.
  */
-const STORE = 'duty.apo.v1';
+const STORE = 'duty.apo.v2';
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const COLORS = ['#3b5ba9', '#e08a1e', '#2f8f6b', '#8e44ad', '#c0392b', '#00838f', '#6d4c41', '#c2185b'];
 
-function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
 function defaults() {
-    const team = ['Asif', 'Nithin', 'Sooraj', 'Gireesh', 'Dinesh'].map((n, i) => ({ id: 'p' + (i + 1), name: n, color: COLORS[i] }));
+    const team = [['p1', 'Asif', 0], ['p5', 'Dinesh', 4], ['p3', 'Sooraj', 2], ['p2', 'Nithin', 1], ['p4', 'Gireesh', 3]]
+        .map(([id, name, c]) => ({ id, name, color: COLORS[c] }));
     return {
         team, me: 'p1',
         perTurn: 2,
-        shiftStart: '08:00',
-        anchor: { date: ymd(new Date()), who: 'p1', day: 1 }, // on `date`, `who` was on day `day` of their turn
-        confirmed: false,
+        shiftStart: '09:00',
+        anchor: { date: '2026-11-15', who: 'p1', day: 1 }, // Asif came in on 15 Nov morning
+        confirmed: true,
+        logSince: '2026-11-15',
         posting: 'Petrol pump sector',
-        swaps: {},   // date -> { orig, cover, note, settled, group }
-        logs: {},    // date -> { done, note, posting }
+        swaps: {},
+        logs: {},
     };
 }
 
@@ -197,11 +202,15 @@ function load() {
     let d = null;
     try { d = JSON.parse(localStorage.getItem(STORE)); } catch (e) {}
     S = Object.assign(defaults(), d && Array.isArray(d.team) ? d : {});
+    if (!d) { // carry over the log and posting from the earlier version
+        try { const old = JSON.parse(localStorage.getItem('duty.apo.v1')); if (old) { S.logs = old.logs || {}; S.posting = old.posting || S.posting; } } catch (e) {}
+    }
 }
 function save() { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) { toast('⚠ Could not save'); } }
 
 /* ---------- helpers ---------- */
 function pad(n) { return String(n).padStart(2, '0'); }
+function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
 function parse(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
 function addDays(s, n) { const d = parse(s); d.setDate(d.getDate() + n); return ymd(d); }
 function dayDiff(a, b) { const A = parse(a), B = parse(b); return Math.round((Date.UTC(B.getFullYear(), B.getMonth(), B.getDate()) - Date.UTC(A.getFullYear(), A.getMonth(), A.getDate())) / 864e5); }
@@ -211,40 +220,61 @@ function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;
 function $(id) { return document.getElementById(id); }
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 1900); }
 function plural(n, w) { return n + ' ' + (n === 1 ? w : w.endsWith('y') && !/[aeiou]y$/.test(w) ? w.slice(0, -1) + 'ies' : w + 's'); }
+function mod(a, n) { return ((a % n) + n) % n; }
+function andList(a) { return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' & ' + a[a.length - 1]; }
 
 /* ---------- rotation logic ---------- */
 function person(id) { return S.team.find(p => p.id === id) || { id, name: '(removed)', color: '#9aa3b2' }; }
-function nameOf(id) { return id === S.me ? person(id).name + ' (you)' : person(id).name; }
-function short(id) { return person(id).name.slice(0, 4); }
-function scheduled(date) {
-    const n = S.team.length; if (!n) return null;
+function pname(id) { return person(id).name; }
+function nameOf(id) { return id === S.me ? pname(id) + ' (you)' : pname(id); }
+function short(id) { return pname(id).slice(0, 4); }
+// index in S.team of the APO who comes in on `date`
+function starterIdx(date) {
     const ai = Math.max(0, S.team.findIndex(p => p.id === S.anchor.who));
-    // position (in days) of `date` measured from the start of the anchor person's turn
-    const off = dayDiff(S.anchor.date, date) + (S.anchor.day - 1);
-    const turn = Math.floor(off / S.perTurn);
-    return S.team[(((ai + turn) % n) + n) % n].id;
+    return mod(ai + dayDiff(S.anchor.date, date) + (S.anchor.day - 1), S.team.length);
 }
-function dayOfTurn(date) {
-    const off = dayDiff(S.anchor.date, date) + (S.anchor.day - 1);
-    return ((off % S.perTurn) + S.perTurn) % S.perTurn + 1;
+// the duty places on `date`: the APO on their last day first, the one who came in that day last
+function slots(date) {
+    const out = [];
+    for (let j = S.perTurn - 1; j >= 0; j--) {
+        const orig = S.team[starterIdx(addDays(date, -j))].id, key = date + '|' + orig, sw = S.swaps[key];
+        out.push({ date, orig, who: sw ? sw.cover : orig, day: j + 1, sw, key });
+    }
+    return out;
 }
-function onDuty(date) { const sw = S.swaps[date]; return sw ? sw.cover : scheduled(date); }
-// The duty day that is running right now (a duty day starts at shiftStart and lasts 24h).
+function onDuty(date) { return slots(date).map(s => s.who); }
+function isOn(id, date) { return onDuty(date).includes(id); }
+function isScheduled(id, date) { return slots(date).some(s => s.orig === id); }
+// who comes in and who goes home at the change on the morning of `date`
+function change(date) {
+    const prev = onDuty(addDays(date, -1)), cur = onDuty(date);
+    return { inn: cur.filter(x => !prev.includes(x)), out: prev.filter(x => !cur.includes(x)) };
+}
 function currentDutyDate() {
     const now = new Date(), [h, m] = S.shiftStart.split(':').map(Number);
     const today = ymd(now);
     return (now.getHours() * 60 + now.getMinutes() < h * 60 + m) ? addDays(today, -1) : today;
 }
 function dutyStart(date) { const d = parse(date), [h, m] = S.shiftStart.split(':').map(Number); d.setHours(h, m, 0, 0); return d; }
-function windowText(date) { return t12(S.shiftStart) + ' ' + pretty(date) + ' → ' + t12(S.shiftStart) + ' ' + pretty(addDays(date, 1)); }
-function nextDutyOf(id, from, limit = 400) {
-    for (let i = 0; i < limit; i++) { const k = addDays(from, i); if (onDuty(k) === id) return k; }
-    return null;
-}
+function firstDutyOf(id, from, limit = 400) { for (let i = 0; i < limit; i++) { const k = addDays(from, i); if (isOn(id, k)) return k; } return null; }
+function stretchEnd(id, date) { let e = date; while (isOn(id, addDays(e, 1))) e = addDays(e, 1); return e; }
 function untilText(ms) {
     const mins = Math.max(0, Math.round(ms / 60000)), d = Math.floor(mins / 1440), h = Math.floor((mins % 1440) / 60), m = mins % 60;
     if (d) return d + 'd ' + h + 'h'; if (h) return h + 'h ' + m + 'm'; return m + 'm';
 }
+// longest run of consecutive duty days `id` would have if they also took the dates in `extra`
+function stretchWith(id, extra) {
+    const on = d => extra.has(d) || isOn(id, d);
+    let best = 0;
+    extra.forEach(d => {
+        let a = d, b = d;
+        while (on(addDays(a, -1))) a = addDays(a, -1);
+        while (on(addDays(b, 1))) b = addDays(b, 1);
+        best = Math.max(best, dayDiff(a, b) + 1);
+    });
+    return best;
+}
+function stretchNote(n) { return n > S.perTurn + 1 ? `<span class="warn">⚠ ${n} days in a row (${n * 24}h)</span>` : `<span class="muted">${n} day${n > 1 ? 's' : ''} in a row</span>`; }
 // owed[a][b] = number of duty days a owes b
 function balances() {
     const owed = {};
@@ -256,6 +286,7 @@ function balances() {
     return owed;
 }
 function net(owed, a, b) { return (owed[a]?.[b] || 0) - (owed[b]?.[a] || 0); } // >0: a owes b
+function swapsOn(date) { return slots(date).filter(s => s.sw); }
 
 /* ---------- navigation ---------- */
 let tab = 'home', calY, calM, logY, logM, calOnlyMe = false;
@@ -266,66 +297,64 @@ function setTab(t) {
     render(); window.scrollTo(0, 0);
 }
 function render() {
-    $('subTitle').textContent = person(S.me).name + ' · ' + S.posting;
+    $('subTitle').textContent = pname(S.me) + ' · ' + S.posting;
     ({ home: renderHome, cal: renderCal, swaps: renderSwaps, log: renderLog, setup: renderSetup })[tab]();
 }
 function openSheet(html) { $('sheet').innerHTML = html; $('overlay').classList.add('open'); $('sheet').scrollTop = 0; }
 function closeSheet() { $('overlay').classList.remove('open'); }
-function setupNotice() {
-    return S.confirmed ? '' : `<div class="notice">⚠ <b>Check the rotation start.</b> Set the APO order and one date when a known APO's turn began, so the dates are correct. <button class="btn sm" style="margin-top:8px" onclick="setTab('setup')">Open Setup</button></div>`;
+function changeLine(date) {
+    const c = change(date);
+    if (!c.inn.length && !c.out.length) return 'No change';
+    return (c.inn.length ? andList(c.inn.map(pname)) + ' in' : '') + (c.inn.length && c.out.length ? ', ' : '') + (c.out.length ? andList(c.out.map(pname)) + ' out' : '');
 }
 
 /* ---------- HOME ---------- */
 function renderHome() {
-    const cur = currentDutyDate(), who = onDuty(cur), sw = S.swaps[cur], now = new Date();
-    const endsIn = dutyStart(addDays(cur, 1)) - now;
-    let h = setupNotice();
-    h += `<div class="hero" style="background:${person(who).color}">
-        <div class="label">On duty now · day ${dayOfTurn(cur)} of ${S.perTurn}</div>
-        <div class="who">${esc(nameOf(who))}${sw ? '<span class="tag">⇄ covering ' + esc(person(sw.orig).name) + '</span>' : ''}</div>
-        <div class="time">${windowText(cur)}</div>
-        <div class="status">${who === S.me ? '🟢 You are on duty · ends in ' + untilText(endsIn) : 'Duty changes in ' + untilText(endsIn)}</div>
+    const cur = currentDutyDate(), now = new Date(), sl = slots(cur), tomorrow = addDays(cur, 1);
+    const meOn = isOn(S.me, cur);
+    let h = `<div class="hero" style="background:${meOn ? person(S.me).color : '#4a5568'}">
+        <div class="label">On duty now · ${t12(S.shiftStart)} ${pretty(cur)} → ${t12(S.shiftStart)} ${pretty(tomorrow)}</div>
+        <div class="who">${esc(andList(sl.map(s => nameOf(s.who))))}</div>
+        <div class="time">${sl.map(s => `${esc(pname(s.who))}: day ${s.day} of ${S.perTurn}${s.sw ? ' (covering ' + esc(pname(s.orig)) + ')' : ''}`).join(' · ')}</div>
+        <div class="status">🔁 Next change ${t12(S.shiftStart)} ${pretty(tomorrow)} (in ${untilText(dutyStart(tomorrow) - now)}): ${esc(changeLine(tomorrow))}</div>
     </div>`;
 
-    // my duty card
-    const myNext = who === S.me ? cur : nextDutyOf(S.me, addDays(cur, 1));
     h += `<div class="card"><h2>My duty</h2>`;
-    if (who === S.me) {
+    if (meOn) {
+        const end = stretchEnd(S.me, cur), home = addDays(end, 1), back = firstDutyOf(S.me, home);
         const lg = S.logs[cur];
-        h += `<div class="spread"><div><b>You are on duty now</b><div class="muted">${lg && lg.done ? '✓ Logged' + (lg.note ? ': ' + esc(lg.note) : '') : 'Not logged yet'}</div></div>
-              <button class="btn sm" onclick="openDay('${cur}')">${lg ? 'Edit log' : 'Log duty'}</button></div>`;
-        let endTurn = cur; while (onDuty(addDays(endTurn, 1)) === S.me) endTurn = addDays(endTurn, 1);
-        const nxt = nextDutyOf(S.me, addDays(endTurn, 1));
-        if (nxt) h += `<p class="muted" style="margin:10px 0 0">After this turn, next duty: <b>${pretty(nxt)}</b> (${dayDiff(addDays(endTurn, 1), nxt)} days off)</p>`;
-    } else if (myNext) {
-        const ms = dutyStart(myNext) - now, daysOff = dayDiff(cur, myNext) - 1;
-        h += `<div class="big">${pretty(myNext, true)}</div>
-              <div class="muted">Starts ${t12(S.shiftStart)} · in ${untilText(ms)} · ${plural(Math.max(0, daysOff), 'full day')} off left</div>
-              ${S.swaps[myNext] ? `<div class="warn" style="margin-top:6px">⇄ You're covering ${esc(person(S.swaps[myNext].orig).name)} that day</div>` : ''}`;
-    } else h += `<p class="muted">No duty found for you. Check Setup.</p>`;
-    // unlogged past duties
+        h += `<div class="big">Home ${t12(S.shiftStart)} ${pretty(home)}</div>
+            <div class="muted">in ${untilText(dutyStart(home) - now)}${back ? ` · back on <b>${pretty(back)}</b> (${plural(dayDiff(home, back), 'day')} off)` : ''}</div>
+            <div class="spread" style="margin-top:10px"><span class="muted">${lg && lg.done ? '✓ Today logged' + (lg.note ? ': ' + esc(lg.note) : '') : 'Today not logged yet'}</span>
+            <button class="btn sm" onclick="openDay('${cur}')">${lg ? 'Edit log' : 'Log duty'}</button></div>`;
+    } else {
+        const next = firstDutyOf(S.me, tomorrow);
+        if (next) {
+            const with_ = onDuty(next).filter(x => x !== S.me);
+            h += `<div class="big">Back ${t12(S.shiftStart)} ${pretty(next)}</div>
+                <div class="muted">in ${untilText(dutyStart(next) - now)} · with ${esc(andList(with_.map(pname)))}</div>`;
+        } else h += `<p class="muted">No duty found for you. Check Setup.</p>`;
+    }
     const pending = myPastDuties(30).filter(d => !(S.logs[d] && S.logs[d].done));
-    if (pending.length) h += `<div class="notice" style="margin-bottom:0">📒 ${plural(pending.length, 'past duty')} not logged yet. <button class="btn sm ghost" onclick="openDay('${pending[0]}')">Log ${pretty(pending[0])}</button></div>`;
+    if (pending.length) h += `<div class="notice" style="margin-bottom:0">📒 ${plural(pending.length, 'past duty day')} not logged. <button class="btn sm ghost" onclick="openDay('${pending[0]}')">Log ${pretty(pending[0])}</button></div>`;
     h += `</div>`;
 
-    // balances
     h += balanceCard(true);
 
-    // next 10 days
     h += `<div class="card"><div class="spread"><h2>Next 10 days</h2><button class="btn sm ghost" onclick="shareSchedule()">📤 Share</button></div>`;
     for (let i = 0; i < 10; i++) {
-        const k = addDays(cur, i), w = onDuty(k), s2 = S.swaps[k], d = parse(k);
-        h += `<div class="item ${w === S.me ? 'me-row' : ''}" onclick="openDay('${k}')">
-            <div class="badge" style="background:${person(w).color}"><b>${d.getDate()}</b>${DAYS[d.getDay()]}</div>
-            <div class="grow"><div class="t">${esc(nameOf(w))}${i === 0 ? ' · now' : ''}</div>
-            <div class="muted">Day ${dayOfTurn(k)} of turn${s2 ? ' · ⇄ covering ' + esc(person(s2.orig).name) : ''}</div></div></div>`;
+        const k = addDays(cur, i), d = parse(k), s2 = slots(k), mine = isOn(S.me, k);
+        h += `<div class="item ${mine ? 'me-row' : ''}" onclick="openDay('${k}')">
+            <div class="badge" style="background:${mine ? person(S.me).color : '#8a94a6'}"><b>${d.getDate()}</b>${DAYS[d.getDay()]}</div>
+            <div class="grow"><div class="t">${s2.map(s => `<span class="pill"><span class="dot" style="background:${person(s.who).color}"></span>${esc(pname(s.who))}</span>`).join(' & ')}${i === 0 ? ' · now' : ''}</div>
+            <div class="muted">${i === 0 ? 'On duty now' : t12(S.shiftStart) + ': ' + esc(changeLine(k))}${s2.some(s => s.sw) ? ' · ⇄ swap' : ''}</div></div></div>`;
     }
     h += `</div>`;
     $('v-home').innerHTML = h;
 }
 function myPastDuties(days) {
     const cur = currentDutyDate(), out = [];
-    for (let i = 1; i <= days; i++) { const k = addDays(cur, -i); if (S.confirmed && k >= (S.logSince || k) && onDuty(k) === S.me) out.push(k); }
+    for (let i = 1; i <= days; i++) { const k = addDays(cur, -i); if (k >= (S.logSince || k) && isOn(S.me, k)) out.push(k); }
     return out;
 }
 function balanceCard(compact) {
@@ -337,7 +366,7 @@ function balanceCard(compact) {
         rows += `<div class="item"><span class="dot" style="background:${p.color}"></span><div class="grow">${esc(p.name)}</div>
             ${n > 0 ? `<span class="owe plus">owes you ${plural(n, 'duty')}</span>` : n < 0 ? `<span class="owe minus">you owe ${plural(-n, 'duty')}</span>` : '<span class="muted">even</span>'}</div>`;
     });
-    if (compact && !rows) rows = '<p class="muted" style="margin:0">All square: nobody owes anybody a duty.</p>';
+    if (compact && !rows) rows = '<p class="muted" style="margin:0">All square: nobody owes you and you owe nobody.</p>';
     return `<div class="card"><div class="spread"><h2>Owed duties</h2>${compact ? `<button class="btn sm ghost" onclick="setTab('swaps')">Swaps →</button>` : ''}</div>${rows}</div>`;
 }
 
@@ -345,77 +374,77 @@ function balanceCard(compact) {
 function renderCal() {
     const y = calY, m = calM, cur = currentDutyDate();
     const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
-    let h = setupNotice();
-    h += `<div class="card"><div class="monthnav"><button onclick="moveCal(-1)">‹</button><b>${MONTHS[m]} ${y}</b><button onclick="moveCal(1)">›</button></div>
+    let h = `<div class="card"><div class="monthnav"><button onclick="moveCal(-1)">‹</button><b>${MONTHS[m]} ${y}</b><button onclick="moveCal(1)">›</button></div>
         <div class="chips" style="margin-bottom:10px"><button class="chip ${calOnlyMe ? '' : 'on'}" onclick="calOnlyMe=false;render()">Everyone</button><button class="chip ${calOnlyMe ? 'on' : ''}" onclick="calOnlyMe=true;render()">Only my duty</button></div>
         <div class="cal">`;
     DAYS.forEach(d => h += `<div class="hd">${d.slice(0, 2)}</div>`);
     for (let i = 0; i < first; i++) h += `<div class="cell empty"></div>`;
-    let mine = 0, covered = 0;
+    let mine = 0, swapped = 0;
     for (let d = 1; d <= days; d++) {
-        const k = y + '-' + pad(m + 1) + '-' + pad(d), w = onDuty(k), sw = S.swaps[k];
-        if (w === S.me) mine++; if (sw) covered++;
-        const show = !calOnlyMe || w === S.me;
-        h += `<div class="cell${k === cur ? ' today' : ''}${w === S.me ? ' mine' : ''}" onclick="openDay('${k}')">
-            ${S.logs[k] && S.logs[k].done ? '<span class="mk2">✓</span>' : ''}${sw ? '<span class="mk">⇄</span>' : ''}
-            <span class="n">${d}</span>${show ? `<span class="s" style="background:${person(w).color}">${esc(short(w))}</span>` : '<span></span>'}</div>`;
+        const k = y + '-' + pad(m + 1) + '-' + pad(d), on = onDuty(k), me = on.includes(S.me), sw = swapsOn(k).length;
+        if (me) mine++; if (sw) swapped++;
+        const shown = calOnlyMe ? on.filter(x => x === S.me) : on;
+        h += `<div class="cell${k === cur ? ' today' : ''}${me ? ' mine' : ''}" onclick="openDay('${k}')">
+            ${S.logs[k] && S.logs[k].done && me ? '<span class="mk2">✓</span>' : ''}${sw ? '<span class="mk">⇄</span>' : ''}
+            <span class="n">${d}</span><span class="ss">${shown.map(w => `<span class="s" style="background:${person(w).color}">${esc(short(w))}</span>`).join('')}</span></div>`;
     }
     h += `</div><div class="legend">${S.team.map(p => `<span class="pill"><span class="dot" style="background:${p.color}"></span>${esc(p.name)}</span>`).join('')}</div>
-        <div class="legend"><span>⇄ swapped day</span><span>✓ logged</span><span>Blue box = your duty</span></div></div>`;
+        <div class="legend"><span>⇄ swap that day</span><span>✓ logged</span><span>Blue box = you're on duty</span></div></div>`;
     h += `<div class="card"><div class="stats">
         <div class="stat"><b>${mine}</b><span>My duty days</span></div>
         <div class="stat"><b>${mine * 24}h</b><span>My hours</span></div>
-        <div class="stat"><b>${covered}</b><span>Swapped days</span></div></div>
-        <p class="muted" style="margin:10px 0 0">Tap any day to see who is on duty, record a swap or log your duty.</p></div>`;
+        <div class="stat"><b>${swapped}</b><span>Days with swaps</span></div></div>
+        <p class="muted" style="margin:10px 0 0">Each day runs ${t12(S.shiftStart)} to ${t12(S.shiftStart)}. Tap a day to see the change, record a swap or log your duty.</p></div>`;
     $('v-cal').innerHTML = h;
 }
 function moveCal(n) { calM += n; if (calM < 0) { calM = 11; calY--; } if (calM > 11) { calM = 0; calY++; } render(); }
 
 /* ---------- DAY SHEET ---------- */
-let sheetDate, sheetCover;
-function openDay(date) { sheetDate = date; sheetCover = onDuty(date); drawDay(); $('overlay').classList.add('open'); }
+let sheetDate, draft;
+function openDay(date) {
+    sheetDate = date;
+    draft = slots(date).map(s => ({ orig: s.orig, who: s.who, day: s.day, note: s.sw ? s.sw.note : '', settled: s.sw ? !!s.sw.settled : false, had: !!s.sw }));
+    drawDay(); $('overlay').classList.add('open'); $('sheet').scrollTop = 0;
+}
 function drawDay() {
-    const date = sheetDate, sch = scheduled(date), sw = S.swaps[date], lg = S.logs[date] || {};
+    const date = sheetDate, lg = S.logs[date] || {};
     let h = `<div class="spread"><h3>${pretty(date, true)}</h3><button class="btn sm ghost" onclick="closeSheet()">✕</button></div>
-        <div class="muted">${windowText(date)} · 24 hours</div>
-        <div class="muted">Rotation: <b>${esc(nameOf(sch))}</b>, day ${dayOfTurn(date)} of ${S.perTurn}</div>`;
-    h += `<div class="sec"><b>⇄ Who is actually on duty?</b><div class="chips">`;
-    S.team.forEach(p => h += `<button class="chip ${sheetCover === p.id ? 'on' : ''}" onclick="sheetCover='${p.id}';drawDay()"><span class="dot" style="background:${p.color}"></span>${esc(p.name)}</button>`);
-    h += `</div>`;
-    if (sheetCover !== sch) h += `<p class="muted" style="margin:8px 0 0"><b>${esc(person(sheetCover).name)}</b> covers for <b>${esc(person(sch).name)}</b> → ${esc(person(sch).name)} will owe ${esc(person(sheetCover).name)} 1 duty.</p>
-        ${backToBack(sheetCover, date) ? `<p class="warn">⚠ ${esc(person(sheetCover).name)} is already on duty the day before or after. That's a long stretch.</p>` : ''}
-        <label class="f">Note</label><input type="text" id="swNote" placeholder="e.g. Nithin's family function" value="${esc(sw ? sw.note : '')}">
-        ${sw ? `<label class="check"><input type="checkbox" id="swSettled" ${sw.settled ? 'checked' : ''}> Paid back / settled (don't count as owed)</label>` : ''}`;
-    h += `<div class="row" style="margin-top:10px">
-        ${sheetCover !== sch || sw ? `<button class="btn" onclick="saveSwap()">Save</button>` : ''}
-        ${sw ? `<button class="btn bad" onclick="removeSwap()">Remove swap</button>` : ''}</div></div>`;
+        <div class="muted">${t12(S.shiftStart)} ${pretty(date)} → ${t12(S.shiftStart)} ${pretty(addDays(date, 1))}</div>
+        <div class="muted">Change at ${t12(S.shiftStart)}: <b>${esc(changeLine(date))}</b></div>`;
+    h += `<div class="sec"><b>👮 On duty (tap to change who covers)</b>`;
+    draft.forEach((s, i) => {
+        const taken = draft.filter((_, j) => j !== i).map(x => x.who);
+        h += `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+            <div class="muted">Rotation: <b>${esc(nameOf(s.orig))}</b>, day ${s.day} of ${S.perTurn}</div>
+            <select onchange="draft[${i}].who=this.value;drawDay()" style="margin-top:6px">${S.team.filter(p => !taken.includes(p.id)).map(p => `<option value="${p.id}" ${p.id === s.who ? 'selected' : ''}>${esc(p.id === s.orig ? p.name + ' (as per rotation)' : p.name + ' covers')}</option>`).join('')}</select>`;
+        if (s.who !== s.orig) {
+            h += `<p class="muted" style="margin:6px 0 0">${esc(pname(s.who))} covers ${esc(pname(s.orig))} → ${esc(pname(s.orig))} owes ${esc(pname(s.who))} 1 duty. ${stretchNote(stretchWith(s.who, new Set([date])))}</p>
+                <input type="text" placeholder="Reason / note" value="${esc(s.note)}" oninput="draft[${i}].note=this.value" style="margin-top:6px">
+                ${s.had ? `<label class="check"><input type="checkbox" ${s.settled ? 'checked' : ''} onchange="draft[${i}].settled=this.checked"> Paid back / settled</label>` : ''}`;
+        }
+        h += `</div>`;
+    });
+    const dirty = draft.some((s, i) => s.who !== slots(date)[i].who || s.had);
+    h += `${dirty ? `<button class="btn" style="margin-top:10px" onclick="saveDay()">Save</button>` : ''}</div>`;
 
-    if (sheetCover === S.me && dutyStart(date) <= new Date()) {
+    if (isOn(S.me, date) && dutyStart(date) <= new Date()) {
         h += `<div class="sec"><b>📒 My duty log</b>
             <label class="check"><input type="checkbox" id="lgDone" ${lg.done !== false ? 'checked' : ''}> Duty completed</label>
             <label class="f">Posting / sector</label><input type="text" id="lgPost" value="${esc(lg.posting || S.posting)}">
             <label class="f">Notes (crews supervised, incidents, handover…)</label><textarea id="lgNote">${esc(lg.note || '')}</textarea>
             <div class="row" style="margin-top:10px"><button class="btn good" onclick="saveLog()">Save log</button>
             ${S.logs[date] ? `<button class="btn bad" onclick="deleteLog()">Delete log</button>` : ''}</div></div>`;
-    } else if (sheetCover === S.me) {
-        h += `<div class="sec muted">📒 You can log this duty once it has started.</div>`;
-    }
+    } else if (isOn(S.me, date)) h += `<div class="sec muted">📒 You can log this duty once it starts.</div>`;
     $('sheet').innerHTML = h;
 }
-// true if `id` would also be on duty right before or after this turn (a long stretch)
-function backToBack(id, date) {
-    return [-1, 1].some(o => { const a = addDays(date, o); return onDuty(a) === id && scheduled(a) !== scheduled(date); });
+function saveDay() {
+    draft.forEach(s => {
+        const key = sheetDate + '|' + s.orig;
+        if (s.who === s.orig) delete S.swaps[key];
+        else S.swaps[key] = { date: sheetDate, orig: s.orig, cover: s.who, note: (s.note || '').trim(), settled: s.settled, group: S.swaps[key]?.group || '' };
+    });
+    save(); toast('Saved ⇄'); openDay(sheetDate); render();
 }
-function saveSwap() {
-    const sch = scheduled(sheetDate);
-    if (sheetCover === sch) { delete S.swaps[sheetDate]; }
-    else {
-        const old = S.swaps[sheetDate] || {};
-        S.swaps[sheetDate] = { orig: sch, cover: sheetCover, note: $('swNote') ? $('swNote').value.trim() : '', settled: $('swSettled') ? $('swSettled').checked : false, group: old.group || '' };
-    }
-    save(); toast('Saved ⇄'); drawDay(); render();
-}
-function removeSwap() { delete S.swaps[sheetDate]; sheetCover = scheduled(sheetDate); save(); toast('Swap removed'); drawDay(); render(); }
 function saveLog() {
     S.logs[sheetDate] = { done: $('lgDone').checked, posting: $('lgPost').value.trim(), note: $('lgNote').value.trim() };
     save(); toast('Duty logged ✓'); closeSheet(); render();
@@ -424,10 +453,9 @@ function deleteLog() { if (!confirm('Delete this log?')) return; delete S.logs[s
 
 /* ---------- SWAPS ---------- */
 function renderSwaps() {
-    let h = `<div class="card"><h2>Need time off?</h2><p class="muted" style="margin-top:0">Plan who covers your turns, see what you'll owe, and send the plan to the team.</p>
-        <button class="btn block" onclick="openPlanner()">🗓 Plan cover for days off</button></div>`;
+    let h = `<div class="card"><h2>Need leave?</h2><p class="muted" style="margin-top:0">Plan who covers your duty days, see what you'll owe, and send the plan to the team.</p>
+        <button class="btn block" onclick="openPlanner()">🗓 Plan cover for leave</button></div>`;
     h += balanceCard(false);
-    // whole team balances
     const owed = balances(); let team = '';
     S.team.forEach((a, i) => S.team.slice(i + 1).forEach(b => {
         const n = net(owed, a.id, b.id); if (!n) return;
@@ -435,13 +463,12 @@ function renderSwaps() {
         team += `<div class="item"><div class="grow">${esc(nameOf(x.id))} owes ${esc(nameOf(y.id))}</div><b>${plural(Math.abs(n), 'duty')}</b></div>`;
     }));
     h += `<div class="card"><h2>Whole team</h2>${team || '<p class="muted" style="margin:0">Everyone is even.</p>'}</div>`;
-
-    const keys = Object.keys(S.swaps).sort().reverse();
-    h += `<div class="card"><div class="spread"><h2>Swap log</h2><span class="muted">${keys.length} days</span></div>`;
-    if (!keys.length) h += `<p class="muted" style="margin:0">No swaps yet. Tap a day in the Calendar, or use the planner above.</p>`;
-    keys.forEach(k => {
-        const sw = S.swaps[k], d = parse(k), mine = sw.orig === S.me || sw.cover === S.me;
-        h += `<div class="item ${mine ? 'me-row' : ''}" onclick="openDay('${k}')">
+    const list = Object.entries(S.swaps).sort((a, b) => b[1].date.localeCompare(a[1].date));
+    h += `<div class="card"><div class="spread"><h2>Swap log</h2><span class="muted">${plural(list.length, 'day')}</span></div>`;
+    if (!list.length) h += `<p class="muted" style="margin:0">No swaps yet. Tap a day in the Calendar, or use the planner above.</p>`;
+    list.forEach(([, sw]) => {
+        const d = parse(sw.date), mine = sw.orig === S.me || sw.cover === S.me;
+        h += `<div class="item ${mine ? 'me-row' : ''}" onclick="openDay('${sw.date}')">
             <div class="badge" style="background:${person(sw.cover).color}"><b>${d.getDate()}</b>${MONTHS[d.getMonth()].slice(0, 3)}</div>
             <div class="grow"><div class="t">${esc(nameOf(sw.cover))} covered ${esc(nameOf(sw.orig))}</div>
             <div class="muted">${DAYS[d.getDay()]} ${d.getFullYear()}${sw.note ? ' · ' + esc(sw.note) : ''}</div></div>
@@ -451,99 +478,96 @@ function renderSwaps() {
     $('v-swaps').innerHTML = h;
 }
 
-/* ---------- SWAP PLANNER ---------- */
+/* ---------- COVER PLANNER ---------- */
 let P = null;
 function openPlanner() {
     const cur = currentDutyDate();
-    P = { who: S.me, from: cur, to: addDays(cur, 14), mode: 'split', one: null, assign: {}, note: '' };
-    drawPlanner(); $('overlay').classList.add('open');
+    P = { who: S.me, from: cur, to: addDays(cur, 10), mode: 'split', one: null, assign: {}, note: '' };
+    drawPlanner(); $('overlay').classList.add('open'); $('sheet').scrollTop = 0;
 }
 function plannerDays() {
     const out = []; if (!P.from || !P.to || P.to < P.from) return out;
-    for (let k = P.from; k <= P.to; k = addDays(k, 1)) if (onDuty(k) === P.who && (!S.swaps[k] || S.swaps[k].group === P.group)) out.push(k);
-    return out.slice(0, 60);
+    for (let k = P.from; k <= P.to && out.length < 60; k = addDays(k, 1)) if (isScheduled(P.who, k) && isOn(P.who, k)) out.push(k);
+    return out;
 }
+function free(id, k) { return id !== P.who && !isOn(id, k); }
 function suggest(days) {
-    const others = S.team.filter(p => p.id !== P.who).map(p => p.id), owed = balances(), load = {};
-    others.forEach(o => load[o] = 0);
-    // group consecutive days (one turn) so a single APO covers the whole turn
-    const runs = [];
-    days.forEach(k => { const r = runs[runs.length - 1]; if (r && addDays(r[r.length - 1], 1) === k) r.push(k); else runs.push([k]); });
+    const owed = balances(), load = {}, taken = {};
+    S.team.forEach(p => { load[p.id] = 0; taken[p.id] = new Set(); });
     const assign = {};
-    runs.forEach(run => {
-        const clash = id => run.some(k => backToBack(id, k)) ? 1 : 0;
-        const pick = others.slice().sort((a, b) =>
-            clash(a) - clash(b)                                    // avoid back-to-back duty
-            || load[a] - load[b]                                   // spread evenly
-            || net(owed, b, P.who) - net(owed, a, P.who))[0];      // prefer people who owe the requester
-        run.forEach(k => assign[k] = pick); load[pick] += run.length;
+    days.forEach(k => {
+        const c = S.team.map(p => p.id).filter(id => free(id, k));
+        if (!c.length) return;
+        const score = id => stretchWith(id, new Set([...taken[id], k]));
+        const pick = c.sort((a, b) => score(a) - score(b) || load[a] - load[b] || net(owed, b, P.who) - net(owed, a, P.who))[0];
+        assign[k] = pick; load[pick]++; taken[pick].add(k);
     });
     return assign;
 }
 function drawPlanner() {
     const days = plannerDays();
-    if (P.mode === 'split' && days.some(k => !P.assign[k] || P.assign[k] === P.who)) { const sg = suggest(days); days.forEach(k => { if (!P.assign[k] || P.assign[k] === P.who) P.assign[k] = sg[k]; }); }
-    const others = S.team.filter(p => p.id !== P.who);
-    if (P.mode === 'one' && (!P.one || P.one === P.who)) P.one = others[0]?.id;
-    let h = `<div class="spread"><h3>Plan cover</h3><button class="btn sm ghost" onclick="closeSheet()">✕</button></div>
-        <label class="f">Who needs cover?</label><select onchange="P.who=this.value;P.assign={};drawPlanner()">${S.team.map(p => `<option value="${p.id}" ${p.id === P.who ? 'selected' : ''}>${esc(nameOf(p.id))}</option>`).join('')}</select>
-        <div class="two"><div><label class="f">Off from</label><input type="date" value="${P.from}" onchange="P.from=this.value;P.assign={};drawPlanner()"></div>
-        <div><label class="f">Until</label><input type="date" value="${P.to}" onchange="P.to=this.value;P.assign={};drawPlanner()"></div></div>
-        <label class="f">Reason (optional)</label><input type="text" id="plNote" value="${esc(P.note)}" oninput="P.note=this.value">`;
-    if (!days.length) {
-        h += `<p class="muted" style="margin-top:14px">${esc(person(P.who).name)} has no duty in these dates, so no cover is needed.</p>`;
-        $('sheet').innerHTML = h; return;
+    if (P.mode === 'split' && days.some(k => !P.assign[k] || !free(P.assign[k], k))) {
+        const sg = suggest(days); days.forEach(k => { if (!P.assign[k] || !free(P.assign[k], k)) P.assign[k] = sg[k]; });
     }
+    const oneOptions = S.team.filter(p => days.every(k => free(p.id, k)));
+    if (P.mode === 'one' && !oneOptions.some(p => p.id === P.one)) P.one = oneOptions.length ? oneOptions.slice().sort((a, b) => stretchWith(a.id, new Set(days)) - stretchWith(b.id, new Set(days)))[0].id : null;
+    let h = `<div class="spread"><h3>Plan cover</h3><button class="btn sm ghost" onclick="closeSheet()">✕</button></div>
+        <label class="f">Who needs leave?</label><select onchange="P.who=this.value;P.assign={};drawPlanner()">${S.team.map(p => `<option value="${p.id}" ${p.id === P.who ? 'selected' : ''}>${esc(nameOf(p.id))}</option>`).join('')}</select>
+        <div class="two"><div><label class="f">Leave from</label><input type="date" value="${P.from}" onchange="P.from=this.value;P.assign={};drawPlanner()"></div>
+        <div><label class="f">Until</label><input type="date" value="${P.to}" onchange="P.to=this.value;P.assign={};drawPlanner()"></div></div>
+        <label class="f">Reason (optional)</label><input type="text" value="${esc(P.note)}" oninput="P.note=this.value">`;
+    if (!days.length) { $('sheet').innerHTML = h + `<p class="muted" style="margin-top:14px">${esc(pname(P.who))} has no duty in these dates, so no cover is needed.</p>`; return; }
     h += `<div class="sec"><b>${plural(days.length, 'duty day')} to cover (${days.length * 24} hours)</b>
         <div class="chips"><button class="chip ${P.mode === 'one' ? 'on' : ''}" onclick="P.mode='one';drawPlanner()">One APO covers all</button>
         <button class="chip ${P.mode === 'split' ? 'on' : ''}" onclick="P.mode='split';drawPlanner()">Split between APOs</button></div>`;
-    if (P.mode === 'one') h += `<label class="f">Covered by</label><select onchange="P.one=this.value;drawPlanner()">${others.map(p => `<option value="${p.id}" ${p.id === P.one ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>`;
+    const pick = k => P.mode === 'one' ? P.one : P.assign[k];
+    if (P.mode === 'one') {
+        h += oneOptions.length ? `<label class="f">Covered by</label><select onchange="P.one=this.value;drawPlanner()">${oneOptions.map(p => `<option value="${p.id}" ${p.id === P.one ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
+            <p style="margin:6px 0 0">${stretchNote(stretchWith(P.one, new Set(days)))}</p>`
+            : `<p class="warn">Nobody is free on all these days (someone is always on duty already). Use "Split".</p>`;
+    }
+    const byWho = {}; days.forEach(k => { const c = pick(k); if (c) (byWho[c] = byWho[c] || new Set()).add(k); });
     h += `<div style="margin-top:8px">`;
     days.forEach(k => {
-        const c = P.mode === 'one' ? P.one : P.assign[k];
-        h += `<div class="plan-row"><div><b>${pretty(k)}</b><div class="muted">day ${dayOfTurn(k)} of turn</div></div>
-            <div>${P.mode === 'one' ? `<span class="pill"><span class="dot" style="background:${person(c).color}"></span>${esc(person(c).name)}</span>`
-                : `<select onchange="P.assign['${k}']=this.value;drawPlanner()">${others.map(p => `<option value="${p.id}" ${p.id === c ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>`}
-            ${backToBack(c, k) ? `<div class="warn">⚠ back-to-back duty</div>` : ''}</div></div>`;
+        const c = pick(k), partner = onDuty(k).filter(x => x !== P.who);
+        h += `<div class="plan-row"><div><b>${pretty(k)}</b><div class="muted">with ${esc(andList(partner.map(pname)))}</div></div><div>`;
+        if (P.mode === 'one') h += c ? `<span class="pill"><span class="dot" style="background:${person(c).color}"></span>${esc(pname(c))}</span>` : '—';
+        else h += `<select onchange="P.assign['${k}']=this.value;drawPlanner()">${S.team.filter(p => free(p.id, k)).map(p => `<option value="${p.id}" ${p.id === c ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>`;
+        if (c && P.mode === 'split') h += `<div>${stretchNote(stretchWith(c, byWho[c]))}</div>`;
+        h += `</div></div>`;
     });
     h += `</div></div>`;
-    // owed preview
-    const tally = {}; days.forEach(k => { const c = P.mode === 'one' ? P.one : P.assign[k]; tally[c] = (tally[c] || 0) + 1; });
-    h += `<div class="sec"><b>After this, ${esc(person(P.who).name)} will owe</b>${Object.entries(tally).map(([id, n]) => `<div class="item"><span class="dot" style="background:${person(id).color}"></span><div class="grow">${esc(person(id).name)}</div><b>${plural(n, 'duty')}</b></div>`).join('')}</div>`;
-    h += `<pre class="share" id="plText">${esc(planText(days))}</pre>
+    if (P.mode === 'one' && !P.one) { $('sheet').innerHTML = h; return; }
+    h += `<div class="sec"><b>After this, ${esc(pname(P.who))} will owe</b>${Object.entries(byWho).map(([id, set]) => `<div class="item"><span class="dot" style="background:${person(id).color}"></span><div class="grow">${esc(pname(id))}</div><b>${plural(set.size, 'duty')}</b></div>`).join('')}</div>
+        <pre class="share" id="plText">${esc(planText(days, pick, byWho))}</pre>
         <div class="row"><button class="btn ghost" onclick="shareText($('plText').textContent)">📤 Send plan to team</button>
         <button class="btn good" onclick="savePlan()">✓ Agreed, save swaps</button></div>`;
     $('sheet').innerHTML = h;
 }
-function planText(days) {
-    let t = `Duty cover plan: ${person(P.who).name} off ${pretty(P.from)} – ${pretty(P.to)}${P.note ? ' (' + P.note + ')' : ''}\n`;
-    days.forEach(k => { const c = P.mode === 'one' ? P.one : P.assign[k]; t += `• ${pretty(k)} (${t12(S.shiftStart)}, 24h): ${person(c).name}\n`; });
-    const tally = {}; days.forEach(k => { const c = P.mode === 'one' ? P.one : P.assign[k]; tally[c] = (tally[c] || 0) + 1; });
-    t += `${person(P.who).name} will owe: ` + Object.entries(tally).map(([id, n]) => `${person(id).name} ${plural(n, 'duty')}`).join(', ');
-    return t;
+function planText(days, pick, byWho) {
+    let t = `Duty cover plan: ${pname(P.who)} on leave ${pretty(P.from)} – ${pretty(P.to)}${P.note ? ' (' + P.note + ')' : ''}\n`;
+    days.forEach(k => t += `• ${pretty(k)} (${t12(S.shiftStart)}, 24h): ${pname(pick(k))} instead of ${pname(P.who)}\n`);
+    return t + `${pname(P.who)} will owe: ` + Object.entries(byWho).map(([id, s]) => `${pname(id)} ${plural(s.size, 'duty')}`).join(', ');
 }
 function savePlan() {
     const days = plannerDays(), g = 'g' + Date.now().toString(36);
-    days.forEach(k => { const c = P.mode === 'one' ? P.one : P.assign[k]; S.swaps[k] = { orig: scheduled(k), cover: c, note: P.note || 'Cover for ' + person(P.who).name, settled: false, group: g }; });
+    days.forEach(k => { const c = P.mode === 'one' ? P.one : P.assign[k]; if (c) S.swaps[k + '|' + P.who] = { date: k, orig: P.who, cover: c, note: P.note || 'Leave cover for ' + pname(P.who), settled: false, group: g }; });
     save(); closeSheet(); toast(plural(days.length, 'swap') + ' saved'); setTab('swaps');
 }
 
 /* ---------- SHARE ---------- */
 function scheduleText(from, n) {
-    let t = `APO duty schedule (${t12(S.shiftStart)} to ${t12(S.shiftStart)}, 24h)\n`, i = 0;
-    while (i < n) {
-        const k = addDays(from, i), w = onDuty(k); let j = i;
-        while (j + 1 < n && onDuty(addDays(from, j + 1)) === w) j++;
-        const end = addDays(from, j);
-        t += `• ${pretty(k)}${j > i ? ' – ' + pretty(end) : ''}: ${person(w).name}${S.swaps[k] ? ' (covering ' + person(S.swaps[k].orig).name + ')' : ''}\n`;
-        i = j + 1;
+    let t = `APO duty (change at ${t12(S.shiftStart)} daily)\n`;
+    for (let i = 0; i < n; i++) {
+        const k = addDays(from, i), sl = slots(k);
+        t += `• ${pretty(k)}: ${andList(sl.map(s => pname(s.who) + (s.sw ? ' (for ' + pname(s.orig) + ')' : '')))}${i ? '  [' + changeLine(k) + ']' : ''}\n`;
     }
     return t.trim();
 }
 function shareSchedule() {
-    const txt = scheduleText(currentDutyDate(), 20);
+    const txt = scheduleText(currentDutyDate(), 15);
     openSheet(`<div class="spread"><h3>Share schedule</h3><button class="btn sm ghost" onclick="closeSheet()">✕</button></div>
-        <p class="muted">Next 20 days, including swaps.</p><pre class="share" id="shTxt">${esc(txt)}</pre>
+        <p class="muted">Next 15 days, including swaps.</p><pre class="share" id="shTxt">${esc(txt)}</pre>
         <div class="row"><button class="btn" onclick="shareText($('shTxt').textContent)">📤 Share / copy</button>
         <a class="btn ghost" style="text-decoration:none" href="https://wa.me/?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">WhatsApp</a></div>`);
 }
@@ -555,12 +579,11 @@ async function shareText(txt) {
 /* ---------- MY LOG ---------- */
 function renderLog() {
     const y = logY, m = logM, prefix = y + '-' + pad(m + 1), cur = currentDutyDate();
-    const days = new Date(y, m + 1, 0).getDate();
-    const mine = [];
-    for (let d = 1; d <= days; d++) { const k = prefix + '-' + pad(d); if (onDuty(k) === S.me || (S.swaps[k] && S.swaps[k].orig === S.me)) mine.push(k); }
-    const worked = mine.filter(k => onDuty(k) === S.me);
-    const coveredOthers = worked.filter(k => S.swaps[k]).length;
-    const coveredByOthers = mine.filter(k => onDuty(k) !== S.me).length;
+    const days = new Date(y, m + 1, 0).getDate(), mine = [];
+    for (let d = 1; d <= days; d++) { const k = prefix + '-' + pad(d); if (isOn(S.me, k) || isScheduled(S.me, k)) mine.push(k); }
+    const worked = mine.filter(k => isOn(S.me, k));
+    const coveredOthers = worked.filter(k => !isScheduled(S.me, k)).length;
+    const coveredByOthers = mine.filter(k => !isOn(S.me, k)).length;
     const logged = worked.filter(k => S.logs[k] && S.logs[k].done).length;
     let h = `<div class="card"><div class="monthnav"><button onclick="moveLog(-1)">‹</button><b>${MONTHS[m]} ${y}</b><button onclick="moveLog(1)">›</button></div>
         <div class="stats">
@@ -569,20 +592,23 @@ function renderLog() {
         <div class="stat"><b>${logged}</b><span>Logged</span></div>
         <div class="stat"><b>${coveredOthers}</b><span>I covered others</span></div>
         <div class="stat"><b>${coveredByOthers}</b><span>Others covered me</span></div>
-        <div class="stat"><b>${Math.floor(worked.length / S.perTurn)}</b><span>Full turns</span></div></div></div>`;
+        <div class="stat"><b>${days - worked.length}</b><span>Days off</span></div></div></div>`;
     h += `<div class="card"><div class="spread"><h2>My duties</h2><button class="btn sm ghost" onclick="exportCSV()">⬇ CSV</button></div>`;
     if (!mine.length) h += `<p class="muted" style="margin:0">No duty for you this month.</p>`;
     mine.forEach(k => {
-        const d = parse(k), w = onDuty(k), sw = S.swaps[k], lg = S.logs[k], future = k > cur;
+        const d = parse(k), on = isOn(S.me, k), lg = S.logs[k], future = k > cur;
+        const mySlot = slots(k).find(s => s.who === S.me || s.orig === S.me);
+        const partner = onDuty(k).filter(x => x !== S.me);
         let status;
-        if (w !== S.me) status = `<span class="muted">covered by ${esc(person(w).name)}</span>`;
+        if (!on) status = `<span class="muted">covered by ${esc(pname(mySlot.who))}</span>`;
         else if (lg && lg.done) status = '<span class="owe plus">✓</span>';
         else if (lg) status = '<span class="owe minus">✖</span>';
         else status = future ? '<span class="muted">upcoming</span>' : '<span class="warn">log</span>';
+        const title = !on ? 'Off (swapped)' : mySlot.orig !== S.me ? 'Covering ' + esc(pname(mySlot.orig)) : 'Day ' + mySlot.day + ' of turn';
         h += `<div class="item" onclick="openDay('${k}')">
-            <div class="badge" style="background:${w === S.me ? person(S.me).color : '#9aa3b2'}"><b>${d.getDate()}</b>${DAYS[d.getDay()]}</div>
-            <div class="grow"><div class="t">${w === S.me ? (sw ? 'Covering ' + esc(person(sw.orig).name) : 'My turn, day ' + dayOfTurn(k)) : 'Off (swapped)'}</div>
-            <div class="muted">${lg ? esc(lg.posting || '') + (lg.note ? ' · ' + esc(lg.note) : '') : (sw && sw.note ? esc(sw.note) : '')}</div></div>${status}</div>`;
+            <div class="badge" style="background:${on ? person(S.me).color : '#9aa3b2'}"><b>${d.getDate()}</b>${DAYS[d.getDay()]}</div>
+            <div class="grow"><div class="t">${title}</div>
+            <div class="muted">${on ? 'with ' + esc(andList(partner.map(pname))) : ''}${lg ? ' · ' + esc(lg.posting || '') + (lg.note ? ' · ' + esc(lg.note) : '') : ''}</div></div>${status}</div>`;
     });
     h += `</div>`;
     $('v-log').innerHTML = h;
@@ -590,11 +616,12 @@ function renderLog() {
 function moveLog(n) { logM += n; if (logM < 0) { logM = 11; logY--; } if (logM > 11) { logM = 0; logY++; } render(); }
 function exportCSV() {
     const prefix = logY + '-' + pad(logM + 1), days = new Date(logY, logM + 1, 0).getDate();
-    const rows = [['Date', 'Day', 'Rotation', 'On duty', 'Swap', 'Owed settled', 'Completed', 'Posting', 'Note']];
+    const rows = [['Date', 'Day', 'On duty', 'Change at ' + t12(S.shiftStart), 'Swaps', 'Me on duty', 'Completed', 'Posting', 'Note']];
     for (let d = 1; d <= days; d++) {
-        const k = prefix + '-' + pad(d), sw = S.swaps[k], lg = S.logs[k];
-        rows.push([k, DAYS[parse(k).getDay()], person(scheduled(k)).name, person(onDuty(k)).name, sw ? person(sw.cover).name + ' covered ' + person(sw.orig).name : '',
-            sw ? (sw.settled ? 'yes' : 'no') : '', lg ? (lg.done ? 'yes' : 'no') : '', lg ? lg.posting : '', [sw && sw.note, lg && lg.note].filter(Boolean).join(' | ')]);
+        const k = prefix + '-' + pad(d), lg = S.logs[k];
+        rows.push([k, DAYS[parse(k).getDay()], onDuty(k).map(pname).join(' & '), changeLine(k),
+            swapsOn(k).map(s => pname(s.who) + ' for ' + pname(s.orig) + (s.sw.note ? ' (' + s.sw.note + ')' : '')).join('; '),
+            isOn(S.me, k) ? 'yes' : '', lg ? (lg.done ? 'yes' : 'no') : '', lg ? lg.posting : '', lg ? lg.note : '']);
     }
     download('apo-duty-' + prefix + '.csv', rows.map(r => r.map(c => '"' + String(c ?? '').replace(/"/g, '""') + '"').join(',')).join('\n'), 'text/csv');
 }
@@ -605,33 +632,34 @@ function download(name, text, type) {
 
 /* ---------- SETUP ---------- */
 function renderSetup() {
-    let h = `<div class="card"><h2>1 · Rotation order</h2><p class="muted" style="margin-top:0">The order APOs take their turns. Use ↑ ↓ to change it.</p>`;
+    const n = S.team.length;
+    let h = `<div class="card"><h2>1 · Order APOs come in</h2><p class="muted" style="margin-top:0">One APO comes in each day at the change, in this order. Use ↑ ↓ to change it.</p>`;
     S.team.forEach((p, i) => {
-        h += `<div class="item"><span class="dot" style="background:${p.color}"></span>
-            <input type="text" value="${esc(p.name)}" onchange="renamePerson('${p.id}', this.value)" style="flex:1">
+        h += `<div class="item"><span class="muted" style="width:18px">${i + 1}</span><span class="dot" style="background:${p.color}"></span>
+            <input type="text" value="${esc(p.name)}" onchange="renamePerson('${p.id}', this.value)" style="flex:1;min-width:0">
             <button class="btn sm ghost" onclick="movePerson(${i},-1)" ${i ? '' : 'disabled'}>↑</button>
-            <button class="btn sm ghost" onclick="movePerson(${i},1)" ${i < S.team.length - 1 ? '' : 'disabled'}>↓</button>
+            <button class="btn sm ghost" onclick="movePerson(${i},1)" ${i < n - 1 ? '' : 'disabled'}>↓</button>
             <button class="btn sm bad" onclick="removePerson('${p.id}')">✕</button></div>`;
     });
     h += `<div class="row" style="margin-top:10px"><button class="btn sm ghost" onclick="addPerson()">+ Add APO</button></div>
         <label class="f">Who are you?</label><select onchange="S.me=this.value;save();render()">${S.team.map(p => `<option value="${p.id}" ${p.id === S.me ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>`;
 
-    h += `<div class="card"><h2>2 · A known start date</h2><p class="muted" style="margin-top:0">Pick one date you're sure about. Everything else is worked out from it.</p>
+    h += `<div class="card"><h2>2 · A known date</h2><p class="muted" style="margin-top:0">One date you're sure about. Everything else is worked out from it.</p>
         <label class="f">On this date…</label><input type="date" id="anDate" value="${S.anchor.date}">
-        <div class="two"><div><label class="f">…this APO was on duty</label><select id="anWho">${S.team.map(p => `<option value="${p.id}" ${p.id === S.anchor.who ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>
-        <div><label class="f">It was their</label><select id="anDay">${Array.from({ length: S.perTurn }, (_, i) => `<option value="${i + 1}" ${S.anchor.day === i + 1 ? 'selected' : ''}>${['1st', '2nd', '3rd', '4th'][i] || (i + 1) + 'th'} day</option>`).join('')}</select></div></div>
-        <div class="two"><div><label class="f">Duty starts at</label><input type="time" id="shStart" value="${S.shiftStart}"></div>
-        <div><label class="f">Days per turn</label><input type="number" id="perTurn" min="1" max="7" value="${S.perTurn}"></div></div>
-        <p class="muted">Cycle: ${S.team.length} APOs × ${S.perTurn} days = <b>${S.team.length * S.perTurn}-day cycle</b>. Each APO works ${S.perTurn} days and is off ${S.perTurn * (S.team.length - 1)}.</p>
-        <button class="btn block" onclick="saveRotation()">${S.confirmed ? 'Save' : '✓ Save & confirm'}</button></div>`;
+        <div class="two"><div><label class="f">…this APO</label><select id="anWho">${S.team.map(p => `<option value="${p.id}" ${p.id === S.anchor.who ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>
+        <div><label class="f">was on their</label><select id="anDay">${Array.from({ length: S.perTurn }, (_, i) => `<option value="${i + 1}" ${S.anchor.day === i + 1 ? 'selected' : ''}>${i === 0 ? '1st day (came in)' : ['2nd', '3rd', '4th', '5th', '6th'][i - 1] + ' day'}</option>`).join('')}</select></div></div>
+        <div class="two"><div><label class="f">Change time</label><input type="time" id="shStart" value="${S.shiftStart}"></div>
+        <div><label class="f">Days on per turn</label><input type="number" id="perTurn" min="1" max="${n - 1}" value="${S.perTurn}"></div></div>
+        <p class="muted">${n} APOs: each does <b>${S.perTurn} days on, ${n - S.perTurn} days off</b>. <b>${S.perTurn} APOs on duty</b> at a time, and one change every day at ${t12(S.shiftStart)}.</p>
+        <button class="btn block" onclick="saveRotation()">Save</button></div>`;
 
     h += `<div class="card"><h2>3 · Posting</h2><label class="f">Current posting / sector</label>
         <input type="text" value="${esc(S.posting)}" onchange="S.posting=this.value.trim()||S.posting;save();render();toast('Saved')">
-        <p class="muted">Saved with each duty you log, so you'll keep a record if your posting changes.</p></div>`;
+        <p class="muted">Saved with each duty you log, so you keep a record if your posting changes.</p></div>`;
 
-    h += `<div class="card"><h2>4 · Reminders</h2><p class="muted" style="margin-top:0">Add your next 6 months of duties to your phone's calendar. It will remind you the evening before (12h) and 1 hour before each turn.</p>
+    h += `<div class="card"><h2>4 · Reminders</h2><p class="muted" style="margin-top:0">Add your duties for the next 6 months to your phone calendar. It reminds you the evening before (12h) and 1 hour before each turn.</p>
         <button class="btn ghost block" onclick="exportICS()">📅 Add my duties to phone calendar</button>
-        <p class="muted">After swaps change your duties, add them again.</p></div>`;
+        <p class="muted">If swaps change your duties, add them again.</p></div>`;
 
     h += `<div class="card"><h2>5 · Backup</h2><p class="muted" style="margin-top:0">Data is saved on this phone only.</p>
         <div class="row"><button class="btn ghost" onclick="backup()">⬇ Download backup</button>
@@ -648,40 +676,34 @@ function addPerson() {
     save(); render();
 }
 function removePerson(id) {
-    if (S.team.length <= 2) { toast('Need at least 2 APOs'); return; }
-    if (!confirm('Remove ' + person(id).name + ' from the rotation? Dates for everyone will shift.')) return;
+    if (S.team.length <= S.perTurn + 1) { toast('Too few APOs for ' + S.perTurn + '-day turns'); return; }
+    if (!confirm('Remove ' + pname(id) + ' from the rotation? Dates for everyone will shift.')) return;
     S.team = S.team.filter(p => p.id !== id);
     if (S.me === id) S.me = S.team[0].id;
     if (S.anchor.who === id) S.anchor.who = S.team[0].id;
     save(); render();
 }
 function saveRotation() {
-    const pt = Math.max(1, Math.min(7, parseInt($('perTurn').value) || 2));
+    const pt = Math.max(1, Math.min(S.team.length - 1, parseInt($('perTurn').value) || 2));
     S.anchor = { date: $('anDate').value || S.anchor.date, who: $('anWho').value, day: Math.min(pt, parseInt($('anDay').value) || 1) };
-    S.shiftStart = $('shStart').value || '08:00'; S.perTurn = pt;
-    if (!S.confirmed) S.logSince = currentDutyDate();
-    S.confirmed = true;
-    // keep stored swaps consistent: drop any whose "original" no longer matches the rotation
-    let moved = 0;
-    Object.keys(S.swaps).forEach(k => { if (S.swaps[k].orig !== scheduled(k)) moved++; });
+    S.shiftStart = $('shStart').value || '09:00'; S.perTurn = pt;
+    const stale = Object.values(S.swaps).filter(sw => !isScheduled(sw.orig, sw.date)).length;
     save(); toast('Rotation saved ✓'); render();
-    if (moved) alert(moved + ' saved swap(s) no longer line up with the new rotation. Check them in the Swaps tab.');
+    if (stale) alert(stale + ' saved swap(s) no longer match the rotation. Check them in the Swaps tab.');
 }
 function icsDate(d) { return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + 'T' + pad(d.getHours()) + pad(d.getMinutes()) + '00'; }
 function exportICS() {
-    const cur = currentDutyDate(); const ev = [];
+    const cur = currentDutyDate(), ev = [];
     let i = 0;
     while (i < 183) {
         const k = addDays(cur, i);
-        if (onDuty(k) !== S.me) { i++; continue; }
-        let j = i; while (onDuty(addDays(cur, j + 1)) === S.me) j++;
-        const s = dutyStart(k), e = dutyStart(addDays(cur, j + 1));
-        const covering = [...new Set(Array.from({ length: j - i + 1 }, (_, x) => S.swaps[addDays(cur, i + x)]).filter(Boolean).map(sw => person(sw.orig).name))];
-        ev.push(['BEGIN:VEVENT', 'UID:apo-' + k + '@duty', 'DTSTAMP:' + icsDate(new Date()), 'DTSTART:' + icsDate(s), 'DTEND:' + icsDate(e),
-            'SUMMARY:APO duty' + (covering.length ? ' (covering ' + covering.join(', ') + ')' : ''), 'LOCATION:' + S.posting,
+        if (!isOn(S.me, k)) { i++; continue; }
+        const end = stretchEnd(S.me, k), len = dayDiff(k, end) + 1;
+        ev.push(['BEGIN:VEVENT', 'UID:apo-' + k + '@duty', 'DTSTAMP:' + icsDate(new Date()), 'DTSTART:' + icsDate(dutyStart(k)), 'DTEND:' + icsDate(dutyStart(addDays(end, 1))),
+            'SUMMARY:APO duty (' + len * 24 + 'h)', 'LOCATION:' + S.posting,
             'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:Duty tomorrow', 'TRIGGER:-PT12H', 'END:VALARM',
             'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:Duty in 1 hour', 'TRIGGER:-PT1H', 'END:VALARM', 'END:VEVENT'].join('\r\n'));
-        i = j + 1;
+        i += len;
     }
     download('my-apo-duties.ics', ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//LifeGame//APO Duty//EN', ...ev, 'END:VCALENDAR'].join('\r\n'), 'text/calendar');
     toast(plural(ev.length, 'turn') + ' exported');
