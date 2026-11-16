@@ -66,9 +66,22 @@ a { color: var(--accent); }
 
 /* tracks */
 .tracks { list-style: none; margin: 10px 0 0; padding: 0; }
-.tracks li { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.tracks li { display: grid; grid-template-columns: 40px 1fr auto; gap: 10px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
 .tracks li:first-child { border-top: 0; }
 .num { font-family: Georgia, serif; font-size: 20px; color: var(--accent); text-align: center; }
+/* in-page 30s previews */
+.pp { width: 38px; height: 38px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 14px; font-weight: 700; display: grid; place-items: center; }
+.pp:active { transform: scale(.94); }
+li.playing .pp { background: var(--accent); color: var(--accent-ink); }
+li.loading .pp { animation: pulse 1s ease-in-out infinite; }
+li.none .pp { opacity: .4; }
+@keyframes pulse { 50% { opacity: .45; } }
+.bar { height: 3px; border-radius: 99px; background: var(--soft); margin-top: 6px; overflow: hidden; display: none; }
+li.playing .bar, li.paused .bar { display: block; }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); }
+.status { font-size: 12px; color: var(--accent); font-weight: 600; }
+li.none .status { color: var(--dim); }
+.note { font-size: 13px; color: var(--dim); margin-top: 10px; }
 .song { font-weight: 600; line-height: 1.3; }
 .artist { font-size: 14px; color: var(--dim); }
 .links { display: flex; gap: 6px; }
@@ -239,6 +252,7 @@ function swap() {
     const fresh = pool.filter(i => !recent.has(i));
     if (fresh.length) pool = fresh;
     if (!pool.length) return;
+    stopAudio();
     S.days[TK] = { g: pool[Math.floor(Math.random() * pool.length)], listened: false };
     save(); render(true);
 }
@@ -251,7 +265,7 @@ function setReact(v) {
 function toggleListened() { S.days[TK].listened = !S.days[TK].listened; save(); render(); }
 function resetAll() {
     if (!confirm('Clear your history, likes and swaps?')) return;
-    S = { days: {}, react: {} }; S.days[TK] = { g: scheduled(today), listened: false }; save(); render();
+    stopAudio(); S = { days: {}, react: {} }; S.days[TK] = { g: scheduled(today), listened: false }; save(); render();
 }
 
 function streak() {
@@ -300,9 +314,9 @@ function render(spun) {
     <div class="card">
         <div class="eyebrow">Start with these three</div>
         <ol class="tracks">
-            ${g.t.map(([a, s], i) => `<li>
-                <span class="num">${i + 1}</span>
-                <div><div class="song">${esc(s)}</div><div class="artist">${esc(a)}</div></div>
+            ${g.t.map(([a, s], i) => `<li data-i="${i}">
+                <button class="pp" data-play="${i}" aria-label="Play preview of ${esc(s)}">▶</button>
+                <div><div class="song">${esc(s)}</div><div class="artist">${esc(a)} <span class="status"></span></div><div class="bar"><i></i></div></div>
                 <div class="links">
                     <a href="${sp(a + ' ' + s)}" target="_blank" rel="noopener">Spotify</a>
                     <a href="${yt(a + ' ' + s)}" target="_blank" rel="noopener">YouTube</a>
@@ -310,8 +324,10 @@ function render(spun) {
             </li>`).join('')}
         </ol>
         <div class="mix">
-            <a class="btn" href="${yt(g.n + ' music mix')}" target="_blank" rel="noopener">▶ Play a ${esc(g.n)} mix</a>
+            <button class="btn" data-act="playall" id="playall">▶ Play all 3 previews</button>
+            <a class="btn ghost" href="${yt(g.n + ' music mix')}" target="_blank" rel="noopener">Full mix ↗</a>
         </div>
+        <p class="note">Previews are 30 seconds and play right here. Tap Spotify or YouTube for the full song.</p>
     </div>
 
     <div class="card">
@@ -358,13 +374,121 @@ function render(spun) {
     <button data-act="reset">Reset my history</button></p>`;
 
     if (spun) { const d = document.querySelector('.disc'); d.classList.add('on'); setTimeout(() => render(), 900); }
+    paint();
+}
+
+/* ---------- previews ----------
+   Looks each track up in the iTunes Search API (JSONP, no key needed) and
+   falls back to Deezer. Both return 30-second preview clips. Found URLs are
+   cached in localStorage so a track is only looked up once. */
+const audio = new Audio();
+const P = { key: null, idx: -1, queue: false, loading: false, none: {}, cache: {}, unlocked: false };
+try { P.cache = JSON.parse(localStorage.getItem(KEY + '.previews')) || {}; } catch {}
+
+function jsonp(url) {
+    return new Promise((res, rej) => {
+        const cb = 'dsCb' + Math.random().toString(36).slice(2), sc = document.createElement('script');
+        const done = () => { clearTimeout(t); delete window[cb]; sc.remove(); };
+        const t = setTimeout(() => { done(); rej(new Error('timeout')); }, 8000);
+        window[cb] = d => { done(); res(d); };
+        sc.onerror = () => { done(); rej(new Error('network')); };
+        sc.src = url + '&callback=' + cb;
+        document.head.appendChild(sc);
+    });
+}
+const norm = x => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+const STOP = new Set(['the', 'and', 'los', 'las', 'les', 'del', 'with', 'feat', 'album', 'mandolin']);
+const words = x => norm(x).split(' ').filter(w => w.length > 2 && !STOP.has(w));
+
+// Pick the result that best matches artist (strong) and title (weaker).
+function best(items, a, s, get) {
+    const aw = words(a), sw = words(s.replace(/\(.*?\)/g, ''));
+    let top = null, topScore = 0;
+    for (const it of items) {
+        const [artist, title, extra] = get(it), hay = norm(artist + ' ' + extra), th = norm(title);
+        const aHit = aw.some(w => hay.includes(w)), sHit = sw.length ? sw.filter(w => th.includes(w)).length / sw.length : 0;
+        const score = (aHit ? 2 : 0) + sHit;
+        if (score > topScore && (aHit || sHit >= .6)) { top = it; topScore = score; }
+    }
+    return top;
+}
+async function findPreview(a, s) {
+    const k = a + '|' + s;
+    if (P.cache[k]) return P.cache[k];
+    const term = (a.replace(/\(.*?\)/g, '') + ' ' + s.replace(/\(.*?\)/g, '')).replace(/\s+/g, ' ').trim();
+    let url = null;
+    try {
+        const d = await jsonp('https://itunes.apple.com/search?media=music&entity=song&limit=15&term=' + encodeURIComponent(term));
+        const hit = best((d.results || []).filter(r => r.previewUrl), a, s, r => [r.artistName || '', r.trackName || '', r.collectionName || '']);
+        url = hit && hit.previewUrl;
+    } catch {}
+    if (!url) try {
+        const d = await jsonp('https://api.deezer.com/search?output=jsonp&q=' + encodeURIComponent(term));
+        const hit = best((d.data || []).filter(r => r.preview), a, s, r => [r.artist?.name || '', r.title || '', r.album?.title || '']);
+        url = hit && hit.preview;
+    } catch {}
+    if (url) { P.cache[k] = url; try { localStorage.setItem(KEY + '.previews', JSON.stringify(P.cache)); } catch {} }
+    return url;
+}
+
+// iPhones only allow audio started from a tap; play a silent clip on the first
+// tap so the real preview can start once the lookup finishes.
+const SILENT = 'data:audio/wav;base64,UklGRrQBAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YZABAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
+function unlock() { if (P.unlocked) return; P.unlocked = true; audio.src = SILENT; audio.play().catch(() => {}); }
+
+async function play(i, queue) {
+    const [a, s] = GENRES[S.days[TK].g].t[i], k = a + '|' + s;
+    if (P.key === k && !P.loading) {
+        if (audio.paused) audio.play().catch(() => {}); else { audio.pause(); P.queue = false; }
+        return paint();
+    }
+    unlock();
+    Object.assign(P, { key: k, idx: i, queue, loading: true }); paint();
+    const url = await findPreview(a, s);
+    if (P.key !== k) return;
+    P.loading = false;
+    if (!url) { P.none[k] = 1; P.key = null; paint(); if (queue && i < 2) play(i + 1, true); return; }
+    audio.src = url;
+    audio.play().catch(() => { paint(); });
+    paint();
+}
+function stopAudio() { audio.pause(); Object.assign(P, { key: null, idx: -1, queue: false, loading: false }); }
+audio.addEventListener('play', paint);
+audio.addEventListener('pause', paint);
+audio.addEventListener('ended', () => {
+    if (audio.src === SILENT) return;
+    if (P.queue && P.idx < 2) play(P.idx + 1, true); else { stopAudio(); paint(); }
+});
+audio.addEventListener('timeupdate', () => {
+    const el = document.querySelector(`li[data-i="${P.idx}"] .bar i`);
+    if (el && audio.duration && P.key) el.style.width = (audio.currentTime / audio.duration * 100) + '%';
+});
+
+function paint() {
+    const t = GENRES[S.days[TK].g].t, live = P.key && !P.loading && !audio.paused;
+    document.querySelectorAll('.tracks li').forEach(li => {
+        const i = +li.dataset.i, k = t[i][0] + '|' + t[i][1], cur = P.key === k;
+        const st = cur && P.loading ? 'loading' : cur && live ? 'playing' : cur ? 'paused' : P.none[k] ? 'none' : '';
+        li.className = st;
+        li.querySelector('.pp').textContent = st === 'playing' ? '❚❚' : st === 'loading' ? '…' : '▶';
+        li.querySelector('.status').textContent = st === 'playing' ? '· playing' : st === 'loading' ? '· finding…' : st === 'none' ? '· no preview' : '';
+    });
+    const all = document.getElementById('playall');
+    if (all) all.textContent = P.queue && P.key ? (live ? '❚❚ Pause' : '▶ Resume') : '▶ Play all 3 previews';
+    const disc = document.querySelector('.disc');
+    if (disc) disc.classList.toggle('on', !!live || !!S.days[TK].listened);
 }
 
 document.getElementById('app').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.mood) { mood = mood === b.dataset.mood ? null : b.dataset.mood; render(); return; }
+    if (b.dataset.play) { play(+b.dataset.play, false); return; }
     const a = b.dataset.act;
-    if (a === 'swap') swap();
+    if (a === 'playall') {
+        if (P.queue && P.key) { if (audio.paused) audio.play().catch(() => {}); else audio.pause(); paint(); }
+        else play(0, true);
+    }
+    else if (a === 'swap') swap();
     else if (a === 'love' || a === 'nope') setReact(a);
     else if (a === 'listened') toggleListened();
     else if (a === 'reset') resetAll();
