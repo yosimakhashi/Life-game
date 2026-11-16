@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#14121a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Daily Sound">
+<title>Daily Sound</title>
+<style>
+/* Daily Sound: one new taste of music every day.
+   One file, no network calls. The day's genre comes from a seeded shuffle of
+   GENRES keyed by the date, so everyone gets the same pick on the same day and
+   no genre repeats until the whole list has been used. Personal state (swaps,
+   reactions, listened days) lives in localStorage under KEY. */
+:root {
+    --bg: #f4f1ec; --card: #fffdf9; --ink: #1d1a22; --dim: #6b6573; --line: #e0dad1;
+    --soft: #ece7df; --good: #1f8a5b; --bad: #b8433d;
+    --h: 280; /* genre hue, set per pick */
+    --accent: hsl(var(--h) 55% 42%); --accent-soft: hsl(var(--h) 60% 93%); --accent-ink: #fff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #14121a; --card: #1d1a24; --ink: #ece8f0; --dim: #9a93a5; --line: #2f2a38;
+        --soft: #262230; --good: #5fd39a; --bad: #f0827b;
+        --accent: hsl(var(--h) 70% 70%); --accent-soft: hsl(var(--h) 30% 20%); --accent-ink: #14121a;
+    }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body { font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; }
+h1, h2, h3 { font-family: 'Iowan Old Style', Palatino, 'Palatino Linotype', Georgia, serif; font-weight: 600; line-height: 1.15; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; touch-action: manipulation; }
+a { color: var(--accent); }
+.wrap { max-width: 540px; margin: 0 auto; padding: 18px 16px calc(40px + env(safe-area-inset-bottom)); }
+.top { display: flex; justify-content: space-between; align-items: center; }
+.home-link { font-size: 14px; color: var(--dim); text-decoration: none; }
+.streak { font-size: 14px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.streak b { color: var(--ink); }
+.eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.dim { color: var(--dim); } .small { font-size: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px; margin-top: 14px; }
+
+/* hero: spinning record tinted with the genre's hue */
+.hero { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; margin-top: 18px; }
+.hero h1 { font-size: 34px; margin-top: 4px; }
+.meta { margin-top: 6px; color: var(--dim); font-size: 14px; }
+.disc { width: 96px; height: 96px; border-radius: 50%; flex: none; position: relative;
+    background:
+        radial-gradient(circle, var(--bg) 0 5%, hsl(var(--h) 65% 55%) 5.5% 26%, #111 26.5% 28%, transparent 28.5%),
+        repeating-radial-gradient(circle, #1b1b1f 0 2px, #2a2a30 2px 3px);
+    box-shadow: 0 6px 20px hsl(var(--h) 50% 30% / .35);
+    animation: spin 6s linear infinite; animation-play-state: paused; }
+.disc.on { animation-play-state: running; }
+.disc::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: linear-gradient(135deg, rgba(255,255,255,.18), transparent 45%); }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .disc { animation: none; } }
+
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.tag { font-size: 12px; padding: 3px 10px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.blurb { margin-top: 14px; font-size: 17px; }
+.when { margin-top: 10px; font-size: 14px; color: var(--dim); }
+.when b { color: var(--ink); font-weight: 600; }
+
+/* tracks */
+.tracks { list-style: none; margin: 10px 0 0; padding: 0; }
+.tracks li { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.tracks li:first-child { border-top: 0; }
+.num { font-family: Georgia, serif; font-size: 20px; color: var(--accent); text-align: center; }
+.song { font-weight: 600; line-height: 1.3; }
+.artist { font-size: 14px; color: var(--dim); }
+.links { display: flex; gap: 6px; }
+.links a { font-size: 12px; font-weight: 700; text-decoration: none; padding: 6px 9px; border-radius: 8px; border: 1px solid var(--line); color: var(--ink); white-space: nowrap; }
+.links a:active { transform: scale(.96); }
+.mix { display: flex; gap: 8px; margin-top: 12px; }
+.btn { display: block; flex: 1; padding: 13px 14px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); font-weight: 650; text-align: center; text-decoration: none; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.btn:active { transform: scale(.98); }
+
+/* reactions */
+.react { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.react button { padding: 12px 4px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); font-size: 14px; font-weight: 600; }
+.react button span { display: block; font-size: 20px; line-height: 1.2; }
+.react button.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.react button.on.bad { border-color: var(--bad); color: var(--bad); background: transparent; }
+
+/* mood steering */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.chips button { padding: 8px 12px; border-radius: 99px; border: 1px solid var(--line); background: var(--bg); font-size: 14px; }
+.chips button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+/* history + favourites */
+.hist { list-style: none; margin: 8px 0 0; padding: 0; }
+.hist li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.hist li:first-child { border-top: 0; }
+.dot { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+.hist .name { font-weight: 600; flex: 1; min-width: 0; }
+.hist .name small { display: block; font-weight: 400; color: var(--dim); font-size: 13px; }
+.hist .mark { font-size: 16px; }
+.empty { color: var(--dim); font-size: 14px; margin-top: 8px; }
+.progress { height: 6px; background: var(--soft); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+.progress i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+.foot { text-align: center; color: var(--dim); font-size: 13px; margin-top: 22px; }
+.foot button { color: var(--dim); text-decoration: underline; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+const KEY = 'dailySound.v1';
+
+/* Each genre: name, origin, era, mood tags, a one-line pitch, when to try it,
+   and three starting points (artist, track). Links are search links, so an
+   album title works as well as a song. */
+const GENRES = [
+ { n: 'Bossa Nova', o: 'Brazil', e: 'late 1950s', h: 165, m: ['chill','feel'], d: 'Samba slowed down and whispered: nylon-string guitar, hushed vocals and jazz chords that drift like a sea breeze.', w: 'a slow morning coffee', t: [['Stan Getz & João Gilberto','The Girl from Ipanema'],['Antônio Carlos Jobim','Wave'],['João Gilberto','Chega de Saudade']] },
+ { n: 'Afrobeat', o: 'Nigeria', e: '1970s', h: 30, m: ['groove','energy'], d: 'Long, hypnotic grooves built from interlocking guitars, punchy horns and political fire. Songs take their time and then take over.', w: 'cleaning the house or a long walk', t: [['Fela Kuti','Water No Get Enemy'],['Fela Kuti','Zombie'],['Ebo Taylor','Love and Death']] },
+ { n: 'Ethio-Jazz', o: 'Ethiopia', e: '1960s–70s', h: 40, m: ['chill','focus'], d: 'Ethiopian pentatonic scales meet vibraphone, organ and smoky horns. Mysterious, cool and unlike anything else.', w: 'late-night work', t: [['Mulatu Astatke','Yègèllé Tezeta'],['Mulatu Astatke','Yekermo Sew'],['Mahmoud Ahmed','Tezeta']] },
+ { n: 'City Pop', o: 'Japan', e: '1980s', h: 320, m: ['groove','feel'], d: 'Glossy, nostalgic pop for neon cities: funky bass, bright synths and a little heartbreak.', w: 'an evening drive or bus ride', t: [['Mariya Takeuchi','Plastic Love'],['Miki Matsubara','Mayonaka no Door (Stay With Me)'],['Tatsuro Yamashita','Ride on Time']] },
+ { n: 'Shoegaze', o: 'UK', e: 'late 1980s', h: 300, m: ['feel','focus'], d: 'Guitars turned into a warm wall of fog, with vocals buried inside. Loud, but strangely calming.', w: 'when you want to disappear into sound', t: [['My Bloody Valentine','Only Shallow'],['Slowdive','Alison'],['Ride','Vapour Trail']] },
+ { n: 'Delta Blues', o: 'Mississippi, USA', e: '1920s–30s', h: 25, m: ['feel'], d: 'One voice, one guitar and a lot of truth. The raw root that rock, soul and hip-hop all grew from.', w: 'a quiet rainy afternoon', t: [['Robert Johnson','Cross Road Blues'],['Son House','Death Letter'],['Skip James',"Hard Time Killin' Floor Blues"]] },
+ { n: 'Hindustani Classical', o: 'North India', e: 'centuries old', h: 15, m: ['focus','chill'], d: 'Ragas unfold slowly, from a meditative opening to dazzling improvisation. Each raga has its own mood and time of day.', w: 'deep focus or early morning', t: [['Shivkumar Sharma, Brijbhushan Kabra & Hariprasad Chaurasia','Call of the Valley (album)'],['Ravi Shankar','The Sounds of India (album)'],['Kishori Amonkar','Sahela Re']] },
+ { n: 'Carnatic', o: 'South India', e: 'centuries old', h: 45, m: ['focus','feel'], d: 'Intricate, devotional and mathematically precise. Vocal lines curl around the rhythm with breathtaking ornament.', w: 'a calm, unhurried morning', t: [['M.S. Subbulakshmi','Kurai Ondrum Illai'],['M.S. Subbulakshmi','Bhaja Govindam'],['U. Srinivas','Vatapi Ganapatim (mandolin)']] },
+ { n: 'Ghazal', o: 'South Asia', e: '1970s–80s golden era', h: 350, m: ['chill','feel'], d: 'Urdu poetry of love and longing set to soft harmonium and tabla. Every line is meant to be savoured.', w: 'late evening with tea', t: [['Jagjit Singh','Hothon Se Chhoo Lo Tum'],['Mehdi Hassan','Ranjish Hi Sahi'],['Ghulam Ali','Chupke Chupke Raat Din']] },
+ { n: 'Qawwali', o: 'Pakistan & India', e: 'Sufi tradition', h: 5, m: ['energy','feel'], d: 'Sufi devotional music that builds from a whisper to an ecstatic roar with hand claps and soaring voices.', w: 'when you need to feel lifted', t: [['Nusrat Fateh Ali Khan','Mustt Mustt'],['Nusrat Fateh Ali Khan','Tumhe Dillagi'],['Sabri Brothers','Bhar Do Jholi Meri']] },
+ { n: 'Old Hindi Film Songs', o: 'India', e: '1950s–70s', h: 10, m: ['feel','chill'], d: 'The golden age of Bollywood melody: lush orchestras and some of the most loved voices ever recorded.', w: 'a nostalgic evening', t: [['Lata Mangeshkar','Lag Jaa Gale'],['Kishore Kumar','Mere Sapnon Ki Rani'],['Mohammed Rafi','Chaudhvin Ka Chand']] },
+ { n: 'Malayalam Film Melodies', o: 'Kerala, India', e: '1970s–today', h: 140, m: ['feel','chill'], d: 'Gentle, poetic melodies rooted in Carnatic music and Kerala’s landscapes.', w: 'a slow evening at home', t: [['K.J. Yesudas','Pramadavanam'],['K.S. Chithra','Rajahamsame'],['Shreya Ghoshal','Kaathirunnu Kaathirunnu']] },
+ { n: 'Highlife', o: 'Ghana & Nigeria', e: '1950s–70s', h: 50, m: ['groove','feel'], d: 'Sunny guitar lines and brass bands with a lilting dance swing. Pure joy with a touch of sweetness.', w: 'a sunny weekend', t: [['Prince Nico Mbarga','Sweet Mother'],['E.T. Mensah','All for You'],['Victor Uwaifo','Joromi']] },
+ { n: 'Roots Reggae', o: 'Jamaica', e: '1970s', h: 120, m: ['chill','feel'], d: 'Heavy bass, the off-beat skank and songs about faith, freedom and justice.', w: 'an easy, sunny afternoon', t: [['Bob Marley & The Wailers','Natural Mystic'],['Burning Spear','Marcus Garvey'],['Toots & The Maytals','Pressure Drop']] },
+ { n: 'Dub', o: 'Jamaica', e: '1970s', h: 135, m: ['chill','focus'], d: 'Reggae taken apart in the studio: bass up front, echoes everywhere, vocals floating in and out.', w: 'headphones and a dim room', t: [['Augustus Pablo & King Tubby','King Tubby Meets Rockers Uptown'],['Lee "Scratch" Perry','Blackboard Jungle Dub (album)'],['Scientist','Scientist Rids the World of the Evil Curse of the Vampires (album)']] },
+ { n: 'Krautrock', o: 'West Germany', e: '1970s', h: 200, m: ['focus','energy'], d: 'Endless motorik drumbeats and experimental textures. Music that feels like a straight road to the horizon.', w: 'coding, running or driving', t: [['Neu!','Hallogallo'],['Can','Vitamin C'],['Kraftwerk','Autobahn']] },
+ { n: 'Ambient', o: 'UK & Japan', e: '1970s–90s', h: 190, m: ['chill','focus'], d: 'Music as atmosphere: slow, spacious and meant to colour a room rather than demand attention.', w: 'reading, studying or winding down', t: [['Brian Eno','An Ending (Ascent)'],['Hiroshi Yoshimura','Water Copy'],['Aphex Twin','Rhubarb']] },
+ { n: 'Modal Jazz', o: 'USA', e: 'late 1950s–60s', h: 220, m: ['focus','chill'], d: 'Jazz that slows its chord changes to let soloists roam. Cool, open and endlessly re-listenable.', w: 'deep work', t: [['Miles Davis','So What'],['John Coltrane','My Favorite Things'],['Herbie Hancock','Maiden Voyage']] },
+ { n: 'Spiritual Jazz', o: 'USA', e: '1960s–today', h: 260, m: ['feel','focus'], d: 'Jazz reaching for the cosmic: harps, chants, droning bass and saxophones that cry out.', w: 'when you want something big', t: [['Pharoah Sanders','The Creator Has a Master Plan'],['Alice Coltrane','Journey in Satchidananda'],['Kamasi Washington','Truth']] },
+ { n: 'Bebop', o: 'New York, USA', e: '1940s', h: 210, m: ['energy','focus'], d: 'Fast, clever, virtuosic jazz. Lines zig-zag at lightning speed and the rhythm never sits still.', w: 'a burst of brain energy', t: [['Charlie Parker','Ko-Ko'],['Dizzy Gillespie','A Night in Tunisia'],['Thelonious Monk','Straight, No Chaser']] },
+ { n: 'Vocal Jazz', o: 'USA', e: '1930s–60s', h: 235, m: ['chill','feel'], d: 'The great voices of jazz turning standards into confessions.', w: 'a candle-lit dinner', t: [['Ella Fitzgerald & Louis Armstrong','Summertime'],['Nina Simone','Feeling Good'],['Billie Holiday','Strange Fruit']] },
+ { n: 'Big Band Swing', o: 'USA', e: '1930s–40s', h: 45, m: ['energy','groove'], d: 'Huge horn sections, walking bass and drums that make it impossible to sit still.', w: 'getting ready to go out', t: [['Duke Ellington',"Take the 'A' Train"],['Count Basie',"One O'Clock Jump"],['Benny Goodman','Sing, Sing, Sing']] },
+ { n: 'Classic Soul', o: 'USA', e: '1960s–70s', h: 15, m: ['feel','groove'], d: 'Gospel-trained voices singing about love, pain and change over tight rhythm sections.', w: 'any time you need to feel something', t: [['Marvin Gaye',"What's Going On"],['Otis Redding',"(Sittin' On) The Dock of the Bay"],['Aretha Franklin','Respect']] },
+ { n: 'Funk', o: 'USA', e: 'late 1960s–70s', h: 35, m: ['groove','energy'], d: 'Everything is rhythm: chicken-scratch guitar, slap bass and the mighty “one”.', w: 'when you need to move', t: [['James Brown','Funky Drummer'],['Parliament','Give Up the Funk (Tear the Roof off the Sucker)'],['The Meters','Cissy Strut']] },
+ { n: 'Disco', o: 'USA & Europe', e: 'mid-1970s', h: 300, m: ['groove','energy'], d: 'Four-on-the-floor beats, strings, and pure dance-floor euphoria.', w: 'a mood-lifting workout', t: [['Donna Summer','I Feel Love'],['Chic','Good Times'],['Sylvester','You Make Me Feel (Mighty Real)']] },
+ { n: 'Gospel', o: 'USA', e: '1940s–70s', h: 50, m: ['feel','energy'], d: 'Choirs, organ and voices that shake the walls. The emotional engine behind soul and R&B.', w: 'a Sunday morning', t: [['Mahalia Jackson','How I Got Over'],['Sister Rosetta Tharpe','Up Above My Head'],['The Edwin Hawkins Singers','Oh Happy Day']] },
+ { n: 'Chicago House', o: 'Chicago, USA', e: 'mid-1980s', h: 280, m: ['groove','energy'], d: 'Drum machines, deep basslines and soulful vocals. The blueprint for modern dance music.', w: 'a workout or a dance in the kitchen', t: [['Frankie Knuckles','Your Love'],['Mr. Fingers','Can You Feel It'],['Marshall Jefferson','Move Your Body']] },
+ { n: 'Detroit Techno', o: 'Detroit, USA', e: 'late 1980s', h: 195, m: ['energy','focus'], d: 'Futuristic machine funk with a soul. Hypnotic, driving and surprisingly emotional.', w: 'a run or a focused sprint', t: [['Rhythim Is Rhythim','Strings of Life'],['Inner City','Good Life'],['DJ Rolando','Knights of the Jaguar']] },
+ { n: 'French House', o: 'France', e: 'late 1990s', h: 330, m: ['groove','energy'], d: 'Filtered disco loops, chunky beats and a big sunny grin.', w: 'getting energy before going out', t: [['Daft Punk','One More Time'],['Stardust','Music Sounds Better with You'],['Cassius','1999']] },
+ { n: 'Drum & Bass', o: 'UK', e: '1990s', h: 170, m: ['energy','focus'], d: 'Rapid breakbeats over rolling sub-bass. Can be fierce or surprisingly dreamy.', w: 'cardio, or work that needs pace', t: [['Goldie','Inner City Life'],['LTJ Bukem','Horizons'],['Roni Size & Reprazent','Brown Paper Bag']] },
+ { n: 'UK Garage', o: 'London, UK', e: 'late 1990s', h: 60, m: ['groove'], d: 'Skippy, swung beats with R&B vocals. Bouncy and stylish.', w: 'a sunny commute', t: [['Artful Dodger','Re-Rewind'],['MJ Cole','Sincere'],['Sweet Female Attitude','Flowers']] },
+ { n: 'Early Dubstep', o: 'South London, UK', e: 'mid-2000s', h: 240, m: ['focus','chill'], d: 'Not the noisy kind: dark, spacious half-time beats with deep bass and rainy-city moods.', w: 'a night walk with headphones', t: [['Burial','Archangel'],['Skream','Midnight Request Line'],['Benga & Coki','Night']] },
+ { n: 'IDM', o: 'UK', e: '1990s', h: 180, m: ['focus'], d: 'Electronic music for listening rather than dancing: intricate, playful and sometimes tender.', w: 'focused solo work', t: [['Aphex Twin','Avril 14th'],['Boards of Canada','Roygbiv'],['Autechre','Bike']] },
+ { n: 'Trip-Hop', o: 'Bristol, UK', e: '1990s', h: 260, m: ['chill','feel'], d: 'Slow hip-hop beats, moody samples and cinematic, smoky vocals.', w: 'a rainy evening', t: [['Massive Attack','Teardrop'],['Portishead','Glory Box'],['Tricky','Overcome']] },
+ { n: 'Boom-Bap Hip-Hop', o: 'New York, USA', e: '1990s', h: 25, m: ['groove','focus'], d: 'Hard drums, jazzy samples and sharp lyricism from hip-hop’s golden age.', w: 'a walk through the city', t: [['A Tribe Called Quest','Electric Relaxation'],['Nas','N.Y. State of Mind'],['Gang Starr','Mass Appeal']] },
+ { n: 'Lo-fi Beats', o: 'Japan & USA', e: '2000s–today', h: 25, m: ['chill','focus'], d: 'Dusty, mellow instrumental hip-hop. The ancestors of every “beats to study to” stream.', w: 'studying', t: [['Nujabes','Feather'],['Nujabes','Aruarian Dance'],['J Dilla',"Don't Cry"]] },
+ { n: 'Neo-Soul', o: 'USA', e: 'late 1990s', h: 15, m: ['chill','groove'], d: 'Soul reborn with hip-hop drums and jazzy, laid-back grooves.', w: 'a lazy evening', t: [["D'Angelo",'Untitled (How Does It Feel)'],['Erykah Badu','On & On'],['Lauryn Hill','Ex-Factor']] },
+ { n: 'Modern Afrobeats', o: 'Nigeria & Ghana', e: '2010s–today', h: 95, m: ['groove','feel'], d: 'Smooth, swaying West African pop with irresistible rhythm.', w: 'cooking or getting ready', t: [['Wizkid','Essence'],['Burna Boy','Ye'],['Rema','Calm Down']] },
+ { n: 'Amapiano', o: 'South Africa', e: '2010s–today', h: 85, m: ['groove','chill'], d: 'Deep house slowed down, with jazzy keys and the signature rumbling log-drum bass.', w: 'a sunset hangout', t: [['Focalistic & Vigro Deep','Ke Star'],['Tyler ICU & Tumela_za','Mnike'],['Uncle Waffles','Tanzania']] },
+ { n: 'Desert Blues', o: 'Mali & Niger', e: '1980s–today', h: 35, m: ['focus','feel'], d: 'Hypnotic, looping guitars from the Sahara. Trance-like and wide open like the desert itself.', w: 'long, steady work', t: [['Tinariwen','Cler Achel'],['Ali Farka Touré','Diaraby'],['Mdou Moctar','Afrique Victime']] },
+ { n: 'Mande Music', o: 'Mali & West Africa', e: 'ancient roots, modern recordings', h: 55, m: ['chill','feel'], d: 'The cascading 21-string kora and griot voices carrying centuries of stories.', w: 'a calm morning', t: [['Toumani Diabaté','Kaira'],['Salif Keita','Madan'],['Amadou & Mariam','Je pense à toi']] },
+ { n: 'Raï', o: 'Algeria', e: '1980s–90s', h: 20, m: ['groove','feel'], d: 'North African street music mixed with synths and pop. Passionate, danceable and rebellious.', w: 'a lively afternoon', t: [['Khaled','Didi'],['Khaled','Aïcha'],['Rachid Taha','Ya Rayah']] },
+ { n: 'Arabic Tarab', o: 'Egypt & Lebanon', e: '1950s–70s', h: 40, m: ['feel'], d: 'Grand, emotional songs with orchestras, built to bring listeners to a state of ecstatic rapture.', w: 'an evening with time to spare', t: [['Umm Kulthum','Enta Omri'],['Fairuz','Li Beirut'],['Abdel Halim Hafez','Zay El Hawa']] },
+ { n: 'Anatolian Rock', o: 'Turkey', e: '1960s–70s', h: 10, m: ['energy','groove'], d: 'Psychedelic fuzz guitars meet Turkish folk melodies and the bağlama.', w: 'when you want something fresh', t: [['Erkin Koray','Cemalim'],['Barış Manço','Dağlar Dağlar'],['Selda Bağcan','Yaz Gazeteci Yaz']] },
+ { n: 'Balkan Brass', o: 'Serbia & Romania', e: '1990s–today', h: 0, m: ['energy','groove'], d: 'Wild, fast wedding-band brass with crazy time signatures and pure party energy.', w: 'when the day needs a jolt', t: [['Goran Bregović','Kalashnikov'],['Goran Bregović','Mesečina'],['Fanfare Ciocărlia','Asfalt Tango']] },
+ { n: 'Flamenco', o: 'Andalusia, Spain', e: '1970s nuevo flamenco', h: 355, m: ['energy','feel'], d: 'Fiery guitar, hand claps and anguished, powerful singing.', w: 'when you want intensity', t: [['Paco de Lucía','Entre dos aguas'],['Camarón de la Isla','La leyenda del tiempo'],['Camarón de la Isla','Como el agua']] },
+ { n: 'Fado', o: 'Portugal', e: '1940s–today', h: 220, m: ['feel','chill'], d: 'Songs of saudade: longing for what is lost, sung over the shimmering Portuguese guitar.', w: 'a reflective night', t: [['Amália Rodrigues','Estranha Forma de Vida'],['Mariza','Ó Gente da Minha Terra'],['Carlos Paredes','Verdes Anos']] },
+ { n: 'French Chanson', o: 'France & Belgium', e: '1940s–60s', h: 345, m: ['feel','chill'], d: 'Poetic songs where the lyrics matter as much as the melody. Romantic, dramatic, witty.', w: 'a romantic evening', t: [['Édith Piaf','La Vie en rose'],['Jacques Brel','Ne me quitte pas'],['Serge Gainsbourg','La Javanaise']] },
+ { n: 'Tango', o: 'Argentina', e: '1920s–80s', h: 0, m: ['feel','energy'], d: 'The bandoneón’s sigh, dramatic pauses and passion in every step.', w: 'when you feel dramatic', t: [['Astor Piazzolla','Libertango'],['Carlos Gardel','Por una cabeza'],['Astor Piazzolla','Adiós Nonino']] },
+ { n: 'Cumbia', o: 'Colombia & Mexico', e: '1950s–today', h: 75, m: ['groove'], d: 'A loping, shuffling beat that’s spread through all of Latin America. Gentle but impossible to resist.', w: 'cooking with friends', t: [['Totó la Momposina','El Pescador'],['Los Ángeles Azules','17 Años'],['Celso Piña','Cumbia sobre el río']] },
+ { n: 'Salsa', o: 'New York & Puerto Rico', e: '1970s', h: 5, m: ['groove','energy'], d: 'Hot brass, clave rhythms and storytelling singers. Made for dancing.', w: 'a party mood', t: [['Héctor Lavoe','El Cantante'],['Celia Cruz','Quimbara'],['Willie Colón & Rubén Blades','Pedro Navaja']] },
+ { n: 'Son Cubano', o: 'Cuba', e: 'old roots, 1990s revival', h: 30, m: ['chill','groove'], d: 'Elegant Cuban grooves with tres guitar, bongos and warm, weathered voices.', w: 'a warm, lazy evening', t: [['Buena Vista Social Club','Chan Chan'],['Ibrahim Ferrer','Dos Gardenias'],['Omara Portuondo','Veinte Años']] },
+ { n: 'Tropicália', o: 'Brazil', e: 'late 1960s', h: 100, m: ['groove','feel'], d: 'Brazilian rebels mixing samba, psychedelia and rock into colourful, playful pop.', w: 'a creative afternoon', t: [['Os Mutantes','A Minha Menina'],['Caetano Veloso','Alegria, Alegria'],['Gilberto Gil','Domingo no Parque']] },
+ { n: 'Baroque', o: 'Europe', e: '1600s–1750', h: 40, m: ['focus'], d: 'Clear, interlocking lines and steady pulses. Ordered and elegant, perfect for thinking.', w: 'studying or writing', t: [['J.S. Bach (Yo-Yo Ma)','Cello Suite No. 1: Prelude'],['Antonio Vivaldi','The Four Seasons: Spring'],['G.F. Handel','Water Music']] },
+ { n: 'Romantic & Impressionist Piano', o: 'Europe', e: '1830s–1910s', h: 250, m: ['chill','feel'], d: 'Solo piano at its most expressive: dreamy, delicate and full of colour.', w: 'winding down before sleep', t: [['Frédéric Chopin','Nocturne Op. 9 No. 2'],['Claude Debussy','Clair de lune'],['Erik Satie','Gymnopédie No. 1']] },
+ { n: 'Opera Arias', o: 'Italy, France & Austria', e: '1790s–1920s', h: 0, m: ['feel','energy'], d: 'Huge voices and huge emotions. The original power ballads.', w: 'when you want goosebumps', t: [['Luciano Pavarotti','Nessun dorma'],['Georges Bizet','Habanera (Carmen)'],['W.A. Mozart','Der Hölle Rache (Queen of the Night)']] },
+ { n: 'Minimalism', o: 'USA', e: '1960s–80s', h: 175, m: ['focus'], d: 'Small patterns repeated and slowly shifted until they become hypnotic.', w: 'flow-state work', t: [['Steve Reich','Music for 18 Musicians'],['Philip Glass','Metamorphosis One'],['Terry Riley','In C']] },
+ { n: 'Film Scores', o: 'Worldwide', e: '1960s–today', h: 210, m: ['focus','feel'], d: 'Music built to tell stories without words. Your day will feel like a movie.', w: 'a big task you want to feel epic', t: [['Ennio Morricone','The Ecstasy of Gold'],['Hans Zimmer','Time'],['Joe Hisaishi',"One Summer's Day"]] },
+ { n: 'Japanese Electronic', o: 'Japan', e: '1978–80s', h: 190, m: ['focus','groove'], d: 'Pioneering synth music from Yellow Magic Orchestra and friends: playful, melodic, futuristic.', w: 'creative work', t: [['Ryuichi Sakamoto','Merry Christmas Mr. Lawrence'],['Yellow Magic Orchestra','Rydeen'],['Haruomi Hosono','Sports Men']] },
+ { n: 'Canto & Mandopop Classics', o: 'Hong Kong & Taiwan', e: '1970s–90s', h: 350, m: ['feel','chill'], d: 'Tender ballads and stadium anthems from Chinese pop’s golden years.', w: 'a nostalgic night', t: [['Teresa Teng','The Moon Represents My Heart'],['Faye Wong','Eyes on Me'],['Beyond','Hoi Fut Tin Hung (海闊天空)']] },
+ { n: 'Post-Rock', o: 'UK, USA & Iceland', e: '1990s–2000s', h: 205, m: ['focus','feel'], d: 'Instrumental rock that swells from whisper to crescendo. Cinematic and cathartic.', w: 'long focus sessions', t: [['Explosions in the Sky','Your Hand in Mine'],['Sigur Rós','Hoppípolla'],['Mogwai','Auto Rock']] },
+ { n: 'Punk', o: 'USA & UK', e: '1970s', h: 0, m: ['energy'], d: 'Three chords, two minutes, maximum attitude.', w: 'when you need to burn off frustration', t: [['Ramones','Blitzkrieg Bop'],['The Clash','London Calling'],['Sex Pistols','Anarchy in the U.K.']] },
+ { n: 'Post-Punk', o: 'UK & USA', e: 'late 1970s–80s', h: 230, m: ['energy','focus'], d: 'Punk’s energy turned arty and angular: wiry guitars, prominent bass and moody vocals.', w: 'a grey day', t: [['Joy Division','Love Will Tear Us Apart'],['Talking Heads','Once in a Lifetime'],['Siouxsie and the Banshees','Spellbound']] },
+ { n: 'Psychedelic Rock', o: 'USA & UK', e: '1960s', h: 285, m: ['energy','feel'], d: 'Rock that bends reality: swirling organs, wild guitar solos and dreamy lyrics.', w: 'something adventurous', t: [['Jefferson Airplane','White Rabbit'],['The Doors','Light My Fire'],['Pink Floyd','Interstellar Overdrive']] },
+ { n: 'Classic Heavy Metal', o: 'UK & USA', e: '1970s–80s', h: 0, m: ['energy'], d: 'Massive riffs, galloping drums and soaring vocals.', w: 'the gym', t: [['Black Sabbath','Paranoid'],['Iron Maiden','The Trooper'],['Metallica','Master of Puppets']] },
+ { n: 'Grunge', o: 'Seattle, USA', e: 'early 1990s', h: 90, m: ['energy','feel'], d: 'Sludgy guitars, quiet–loud dynamics and raw, angsty honesty.', w: 'a moody day', t: [['Nirvana','Smells Like Teen Spirit'],['Soundgarden','Black Hole Sun'],['Alice in Chains','Nutshell']] },
+ { n: 'Britpop', o: 'UK', e: 'mid-1990s', h: 215, m: ['energy','feel'], d: 'Catchy, swaggering guitar pop with very British wit.', w: 'a good-mood afternoon', t: [['Oasis','Live Forever'],['Pulp','Common People'],['Blur','Tender']] },
+ { n: 'Synth-Pop', o: 'UK', e: '1980s', h: 270, m: ['groove','feel'], d: 'Electronic pop with cool synths, drum machines and melancholy hooks.', w: 'a night-time commute', t: [['Depeche Mode','Enjoy the Silence'],['New Order','Blue Monday'],['Yazoo','Only You']] },
+ { n: 'Dream Pop', o: 'UK & USA', e: '1980s–today', h: 290, m: ['chill','feel'], d: 'Hazy, reverb-soaked songs that feel like half-remembered dreams.', w: 'drifting off', t: [['Cocteau Twins','Heaven or Las Vegas'],['Mazzy Star','Fade into You'],['Beach House','Space Song']] },
+ { n: '50s Rock & Roll', o: 'USA', e: '1950s', h: 10, m: ['energy','groove'], d: 'Where it all exploded: boogie piano, twangy guitar and pure youthful energy.', w: 'a quick mood boost', t: [['Chuck Berry','Johnny B. Goode'],['Little Richard','Tutti Frutti'],['Elvis Presley',"That's All Right"]] },
+ { n: 'Singer-Songwriter Folk', o: 'USA & UK', e: '1960s–70s', h: 35, m: ['chill','feel'], d: 'An acoustic guitar and words that matter.', w: 'a quiet, reflective moment', t: [['Bob Dylan',"Blowin' in the Wind"],['Joni Mitchell','A Case of You'],['Nick Drake','Pink Moon']] },
+ { n: 'Indie Folk', o: 'USA', e: '2000s', h: 110, m: ['chill','feel'], d: 'Harmonies, banjo, falsetto and the feeling of a cabin in the woods.', w: 'a cosy evening', t: [['Bon Iver','Skinny Love'],['Fleet Foxes','White Winter Hymnal'],['Sufjan Stevens','Chicago']] },
+ { n: 'Bluegrass', o: 'Appalachia, USA', e: '1940s–today', h: 60, m: ['energy','feel'], d: 'Lightning-fast banjo, fiddle and mandolin with high, lonesome harmonies.', w: 'a cheerful chore session', t: [['Flatt & Scruggs','Foggy Mountain Breakdown'],['Bill Monroe','Blue Moon of Kentucky'],['Alison Krauss & Union Station','When You Say Nothing at All']] },
+ { n: 'Outlaw Country', o: 'Texas, USA', e: '1970s', h: 30, m: ['feel','chill'], d: 'Rough-edged country with honest stories, steel guitar and a rebel streak.', w: 'a long drive', t: [['Willie Nelson','Blue Eyes Crying in the Rain'],['Waylon Jennings','Luckenbach, Texas'],['Merle Haggard','Mama Tried']] },
+ { n: 'Celtic Folk', o: 'Ireland & Scotland', e: '1970s–80s revival', h: 140, m: ['feel','chill'], d: 'Fiddles, tin whistles and ancient airs, from foot-stomping reels to haunting ballads.', w: 'a misty morning walk', t: [['Clannad',"Theme from Harry's Game"],['Planxty','The Raggle Taggle Gypsy'],['The Chieftains',"O'Sullivan's March"]] },
+ { n: 'UK Jazz Now', o: 'London, UK', e: '2010s–today', h: 160, m: ['groove','energy'], d: 'Young London players mixing jazz with Afrobeat, grime and Caribbean rhythms.', w: 'an energetic afternoon', t: [['Kokoroko','Abusey Junction'],['Sons of Kemet','My Queen Is Harriet Tubman'],['Yussef Kamaal','Strings of Light']] },
+];
+
+const MOODS = { chill: '😌 Chill', focus: '🎯 Focus', energy: '⚡ Energy', groove: '🕺 Groove', feel: '💭 Feel' };
+
+/* ---------- storage ---------- */
+function load() {
+    try { return Object.assign({ days: {}, react: {} }, JSON.parse(localStorage.getItem(KEY)) || {}); }
+    catch { return { days: {}, react: {} }; }
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
+let S = load();
+// S.days[dateKey] = { g: genreIndex, listened: bool }
+// S.react[genreName] = 'love' | 'nope'
+
+/* ---------- daily pick ---------- */
+const dayKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const dayNum = d => Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5);
+
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function cycleOrder(cycle) {
+    const r = rng(90210 + cycle * 7919), a = GENRES.map((_, i) => i);
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+}
+// The scheduled pick for a date: walk the shuffled rotation, skipping genres the user said "not for me".
+function scheduled(d) {
+    const n = dayNum(d), L = GENRES.length;
+    for (let k = 0; k < L; k++) {
+        const x = n + k, idx = cycleOrder(Math.floor(x / L))[x % L];
+        if (S.react[GENRES[idx].n] !== 'nope') return idx;
+    }
+    return cycleOrder(Math.floor(n / L))[n % L];
+}
+
+const today = new Date(), TK = dayKey(today);
+if (!S.days[TK]) { S.days[TK] = { g: scheduled(today), listened: false }; save(); }
+let mood = null;
+
+/* ---------- actions ---------- */
+function swap() {
+    const cur = S.days[TK].g;
+    const recent = new Set(Object.keys(S.days).sort().slice(-14).map(k => S.days[k].g));
+    let pool = GENRES.map((g, i) => i).filter(i => i !== cur && S.react[GENRES[i].n] !== 'nope');
+    if (mood) pool = pool.filter(i => GENRES[i].m.includes(mood));
+    const fresh = pool.filter(i => !recent.has(i));
+    if (fresh.length) pool = fresh;
+    if (!pool.length) return;
+    S.days[TK] = { g: pool[Math.floor(Math.random() * pool.length)], listened: false };
+    save(); render(true);
+}
+function setReact(v) {
+    const name = GENRES[S.days[TK].g].n;
+    S.react[name] = S.react[name] === v ? undefined : v;
+    if (!S.react[name]) delete S.react[name];
+    save(); render();
+}
+function toggleListened() { S.days[TK].listened = !S.days[TK].listened; save(); render(); }
+function resetAll() {
+    if (!confirm('Clear your history, likes and swaps?')) return;
+    S = { days: {}, react: {} }; S.days[TK] = { g: scheduled(today), listened: false }; save(); render();
+}
+
+function streak() {
+    let n = 0; const d = new Date(today);
+    if (!S.days[TK]?.listened) d.setDate(d.getDate() - 1);
+    while (S.days[dayKey(d)]?.listened) { n++; d.setDate(d.getDate() - 1); }
+    return n;
+}
+
+/* ---------- render ---------- */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const q = s => encodeURIComponent(s.replace(/\(album\)|\(mandolin\)/g, '').trim());
+const yt = s => 'https://www.youtube.com/results?search_query=' + q(s);
+const sp = s => 'https://open.spotify.com/search/' + q(s);
+
+function render(spun) {
+    const day = S.days[TK], g = GENRES[day.g], r = S.react[g.n];
+    document.documentElement.style.setProperty('--h', g.h);
+    const dateStr = today.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+    const tried = new Set(Object.values(S.days).map(x => x.g)).size;
+    const past = Object.keys(S.days).filter(k => k !== TK).sort().reverse().slice(0, 10);
+    const loved = GENRES.filter(x => S.react[x.n] === 'love');
+    const st = streak();
+
+    document.getElementById('app').innerHTML = `
+    <div class="top">
+        <a class="home-link" href="../">‹ Life Game</a>
+        <span class="streak">🔥 <b>${st}</b> day${st === 1 ? '' : 's'} listening</span>
+    </div>
+
+    <div class="hero">
+        <div>
+            <div class="eyebrow">${esc(dateStr)} · today’s sound</div>
+            <h1>${esc(g.n)}</h1>
+            <div class="meta">${esc(g.o)} · ${esc(g.e)}</div>
+        </div>
+        <div class="disc ${day.listened ? 'on' : ''}" aria-hidden="true"></div>
+    </div>
+
+    <div class="card">
+        <div class="tags">${g.m.map(m => `<span class="tag">${MOODS[m]}</span>`).join('')}</div>
+        <p class="blurb">${esc(g.d)}</p>
+        <p class="when">Best for: <b>${esc(g.w)}</b></p>
+    </div>
+
+    <div class="card">
+        <div class="eyebrow">Start with these three</div>
+        <ol class="tracks">
+            ${g.t.map(([a, s], i) => `<li>
+                <span class="num">${i + 1}</span>
+                <div><div class="song">${esc(s)}</div><div class="artist">${esc(a)}</div></div>
+                <div class="links">
+                    <a href="${sp(a + ' ' + s)}" target="_blank" rel="noopener">Spotify</a>
+                    <a href="${yt(a + ' ' + s)}" target="_blank" rel="noopener">YouTube</a>
+                </div>
+            </li>`).join('')}
+        </ol>
+        <div class="mix">
+            <a class="btn" href="${yt(g.n + ' music mix')}" target="_blank" rel="noopener">▶ Play a ${esc(g.n)} mix</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="eyebrow">How was it?</div>
+        <div class="react">
+            <button data-act="listened" class="${day.listened ? 'on' : ''}"><span>🎧</span>${day.listened ? 'Listened' : 'Mark listened'}</button>
+            <button data-act="love" class="${r === 'love' ? 'on' : ''}"><span>💚</span>Love it</button>
+            <button data-act="nope" class="${r === 'nope' ? 'on bad' : ''}"><span>🙅</span>Not for me</button>
+        </div>
+        ${r === 'nope' ? '<p class="small dim" style="margin-top:10px">Got it. This genre won’t come up in your rotation again.</p>' : ''}
+    </div>
+
+    <div class="card">
+        <div class="eyebrow">Not in the mood? Swap today’s pick</div>
+        <div class="chips">
+            ${Object.entries(MOODS).map(([k, v]) => `<button data-mood="${k}" class="${mood === k ? 'on' : ''}">${v}</button>`).join('')}
+        </div>
+        <div class="mix"><button class="btn ghost" data-act="swap">🔀 ${mood ? 'Swap for a ' + MOODS[mood].split(' ')[1].toLowerCase() + ' pick' : 'Give me something else'}</button></div>
+    </div>
+
+    <div class="card">
+        <div class="row" style="display:flex;justify-content:space-between;align-items:baseline">
+            <div class="eyebrow">Your musical passport</div>
+            <span class="small dim">${tried} / ${GENRES.length} tastes</span>
+        </div>
+        <div class="progress"><i style="width:${(tried / GENRES.length * 100).toFixed(1)}%"></i></div>
+        ${past.length ? `<ul class="hist">${past.map(k => {
+            const x = S.days[k], G = GENRES[x.g], rr = S.react[G.n];
+            const lbl = new Date(k + 'T12:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+            return `<li><span class="dot" style="background:hsl(${G.h} 60% 55%)"></span>
+                <span class="name">${esc(G.n)}<small>${esc(lbl)} · ${esc(G.o)}</small></span>
+                <span class="mark">${rr === 'love' ? '💚' : rr === 'nope' ? '🙅' : ''}${x.listened ? '🎧' : ''}</span></li>`;
+        }).join('')}</ul>` : '<p class="empty">Come back tomorrow for a new taste. Your past picks will show up here.</p>'}
+    </div>
+
+    ${loved.length ? `<div class="card">
+        <div class="eyebrow">Genres you love</div>
+        <ul class="hist">${loved.map(G => `<li><span class="dot" style="background:hsl(${G.h} 60% 55%)"></span>
+            <span class="name">${esc(G.n)}<small>${esc(G.t[0][0])} · ${esc(G.t[0][1])}</small></span>
+            <a class="small" href="${yt(G.n + ' music mix')}" target="_blank" rel="noopener">Mix ↗</a></li>`).join('')}</ul>
+    </div>` : ''}
+
+    <p class="foot">A new genre every day at midnight · no repeats until you’ve heard all ${GENRES.length}<br>
+    <button data-act="reset">Reset my history</button></p>`;
+
+    if (spun) { const d = document.querySelector('.disc'); d.classList.add('on'); setTimeout(() => render(), 900); }
+}
+
+document.getElementById('app').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.mood) { mood = mood === b.dataset.mood ? null : b.dataset.mood; render(); return; }
+    const a = b.dataset.act;
+    if (a === 'swap') swap();
+    else if (a === 'love' || a === 'nope') setReact(a);
+    else if (a === 'listened') toggleListened();
+    else if (a === 'reset') resetAll();
+});
+
+render();
+</script>
+</body>
+</html>
