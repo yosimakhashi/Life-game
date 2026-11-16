@@ -134,6 +134,7 @@ textarea { min-height: 64px; resize: vertical; }
 .sec > b { display: block; margin-bottom: 8px; }
 pre.share { white-space: pre-wrap; background: var(--soft); border-radius: 12px; padding: 12px; font: inherit; font-size: .88rem; margin: 10px 0; }
 
+.hero .fix { margin-top: 10px; background: rgba(255,255,255,.22); color: #fff; }
 .toast { position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: #1f2430; color: #fff; padding: 10px 18px; border-radius: 999px; font-size: .9rem; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 60; white-space: nowrap; }
 .toast.show { opacity: 1; }
 .hidden { display: none !important; }
@@ -317,6 +318,7 @@ function renderHome() {
         <div class="who">${esc(andList(sl.map(s => nameOf(s.who))))}</div>
         <div class="time">${sl.map(s => `${esc(pname(s.who))}: day ${s.day} of ${S.perTurn}${s.sw ? ' (covering ' + esc(pname(s.orig)) + ')' : ''}`).join(' · ')}</div>
         <div class="status">🔁 Next change ${t12(S.shiftStart)} ${pretty(tomorrow)} (in ${untilText(dutyStart(tomorrow) - now)}): ${esc(changeLine(tomorrow))}</div>
+        <button class="btn sm fix" onclick="openDay('${cur}')">✎ Someone else is here? Fix today</button>
     </div>`;
 
     h += `<div class="card"><h2>My duty</h2>`;
@@ -425,7 +427,8 @@ function drawDay() {
         h += `</div>`;
     });
     const dirty = draft.some((s, i) => s.who !== slots(date)[i].who || s.had);
-    h += `${dirty ? `<button class="btn" style="margin-top:10px" onclick="saveDay()">Save</button>` : ''}</div>`;
+    h += `<div class="row" style="margin-top:10px">${dirty ? `<button class="btn" onclick="saveDay()">Save</button>` : ''}
+        ${swapsOn(date).length && !dirty ? `<button class="btn ghost" onclick="shareChanges(dayKeys('${date}'), 'Duty change')">📤 Tell the team</button>` : ''}</div></div>`;
 
     if (isOn(S.me, date) && dutyStart(date) <= new Date()) {
         h += `<div class="sec"><b>📒 My duty log</b>
@@ -443,8 +446,10 @@ function saveDay() {
         if (s.who === s.orig) delete S.swaps[key];
         else S.swaps[key] = { date: sheetDate, orig: s.orig, cover: s.who, note: (s.note || '').trim(), settled: s.settled, group: S.swaps[key]?.group || '' };
     });
-    save(); toast('Saved ⇄'); openDay(sheetDate); render();
+    save(); render();
+    savedSheet(dayKeys(sheetDate), 'Duty change', () => openDay(sheetDate));
 }
+function dayKeys(date) { return slots(date).map(s => s.key); }
 function saveLog() {
     S.logs[sheetDate] = { done: $('lgDone').checked, posting: $('lgPost').value.trim(), note: $('lgNote').value.trim() };
     save(); toast('Duty logged ✓'); closeSheet(); render();
@@ -454,7 +459,11 @@ function deleteLog() { if (!confirm('Delete this log?')) return; delete S.logs[s
 /* ---------- SWAPS ---------- */
 function renderSwaps() {
     let h = `<div class="card"><h2>Need leave?</h2><p class="muted" style="margin-top:0">Plan who covers your duty days, see what you'll owe, and send the plan to the team.</p>
-        <button class="btn block" onclick="openPlanner()">🗓 Plan cover for leave</button></div>`;
+        <button class="btn block" onclick="openPlanner()">🗓 Plan cover for leave</button></div>
+    <div class="card"><h2>Quick exchange</h2><p class="muted" style="margin-top:0">Two APOs swap turns with each other ("you do my turn, I do yours"). One step, nobody owes anything.</p>
+        <button class="btn ghost block" onclick="openExchange()">🔄 Exchange turns</button></div>
+    <div class="card"><h2>Keep everyone in sync</h2><p class="muted" style="margin-top:0">You only need to record a change once. Send it to the team as a link and everyone using the app taps it to update their schedule. If someone sends you a link, just open it.</p>
+        <button class="btn ghost block" onclick="shareChanges(upcomingKeys(), 'All duty changes (next 30 days)')">📤 Send all upcoming changes</button></div>`;
     h += balanceCard(false);
     const owed = balances(); let team = '';
     S.team.forEach((a, i) => S.team.slice(i + 1).forEach(b => {
@@ -552,8 +561,120 @@ function planText(days, pick, byWho) {
 function savePlan() {
     const days = plannerDays(), g = 'g' + Date.now().toString(36);
     days.forEach(k => { const c = P.mode === 'one' ? P.one : P.assign[k]; if (c) S.swaps[k + '|' + P.who] = { date: k, orig: P.who, cover: c, note: P.note || 'Leave cover for ' + pname(P.who), settled: false, group: g }; });
-    save(); closeSheet(); toast(plural(days.length, 'swap') + ' saved'); setTab('swaps');
+    save(); setTab('swaps');
+    savedSheet(days.map(k => k + '|' + P.who), 'Duty cover for ' + pname(P.who) + (P.note ? ' (' + P.note + ')' : ''));
 }
+
+/* ---------- QUICK EXCHANGE ---------- */
+let X = null;
+function turnsOf(id, n = 8) {
+    const out = [], cur = currentDutyDate();
+    for (let i = 1; out.length < n && i < 200; i++) { const k = addDays(cur, i); if (S.team[starterIdx(k)].id === id) out.push(k); }
+    return out;
+}
+function turnDays(start) { return Array.from({ length: S.perTurn }, (_, i) => addDays(start, i)); }
+function turnLabel(start) { const e = addDays(start, S.perTurn - 1); return pretty(start) + (S.perTurn > 1 ? ' – ' + pretty(e) : ''); }
+function openExchange() {
+    X = { a: S.me, ta: turnsOf(S.me)[0], b: null, tb: null };
+    drawExchange(); $('overlay').classList.add('open'); $('sheet').scrollTop = 0;
+}
+function drawExchange() {
+    if (!turnsOf(X.a).includes(X.ta)) X.ta = turnsOf(X.a)[0];
+    const fitsFor = (b, t) => !turnDays(X.ta).some(d => isOn(b, d)) && !turnDays(t).some(d => isOn(X.a, d));
+    const canSwap = b => turnsOf(b).some(t => fitsFor(b, t));
+    if (!X.b || X.b === X.a) { const o = S.team.filter(p => p.id !== X.a); X.b = (o.find(p => canSwap(p.id)) || o[0]).id; }
+    const fits = t => fitsFor(X.b, t);
+    if (!turnsOf(X.b).includes(X.tb)) X.tb = turnsOf(X.b).find(fits) || turnsOf(X.b)[0];
+    const A = turnDays(X.ta), B = turnDays(X.tb);
+    const busyB = A.filter(d => isOn(X.b, d)), busyA = B.filter(d => isOn(X.a, d));
+    const turnSel = (id, val, f) => `<select onchange="X.${f}=this.value;${f === 'ta' ? 'X.tb=null;' : ''}drawExchange()">${turnsOf(id).map(t => `<option value="${t}" ${t === val ? 'selected' : ''}>${turnLabel(t)}</option>`).join('')}</select>`;
+    let h = `<div class="spread"><h3>Exchange turns</h3><button class="btn sm ghost" onclick="closeSheet()">✕</button></div>
+        <label class="f">APO</label><select onchange="X.a=this.value;X.ta=null;X.tb=null;drawExchange()">${S.team.map(p => `<option value="${p.id}" ${p.id === X.a ? 'selected' : ''}>${esc(nameOf(p.id))}</option>`).join('')}</select>
+        <label class="f">gives this turn</label>${turnSel(X.a, X.ta, 'ta')}
+        <label class="f">to</label><select onchange="X.b=this.value;X.tb=null;drawExchange()">${S.team.filter(p => p.id !== X.a).map(p => `<option value="${p.id}" ${p.id === X.b ? 'selected' : ''}>${esc(nameOf(p.id))}</option>`).join('')}</select>
+        <label class="f">and takes their turn</label>${turnSel(X.b, X.tb, 'tb')}`;
+    if (busyA.length || busyB.length) {
+        if (!canSwap(X.b)) h += `<p class="warn" style="margin-top:12px">⚠ ${esc(pname(X.b))}'s turns always share a day with ${esc(pname(X.a))}'s turn, so a full exchange isn't possible. Choose someone else, or change single days by tapping the day in the Calendar.</p>`;
+        else h += `<p class="warn" style="margin-top:12px">⚠ These turns overlap: ${busyB.length ? esc(pname(X.b)) + ' is already on duty ' + busyB.map(d => pretty(d)).join(', ') : ''}${busyB.length && busyA.length ? '; ' : ''}${busyA.length ? esc(pname(X.a)) + ' is already on duty ' + busyA.map(d => pretty(d)).join(', ') : ''}. Pick other turns.</p>`;
+    } else {
+        h += `<div class="sec"><b>After the exchange</b>
+            <div class="item"><span class="dot" style="background:${person(X.b).color}"></span><div class="grow"><b>${esc(pname(X.b))}</b> works ${turnLabel(X.ta)}</div></div>
+            <div class="item"><span class="dot" style="background:${person(X.a).color}"></span><div class="grow"><b>${esc(pname(X.a))}</b> works ${turnLabel(X.tb)}</div></div>
+            <p class="muted">An even exchange, so nobody owes a duty.</p>
+            <button class="btn good block" onclick="saveExchange()">✓ Save exchange</button></div>`;
+    }
+    $('sheet').innerHTML = h;
+}
+function saveExchange() {
+    const keys = [], g = 'x' + Date.now().toString(36);
+    turnDays(X.ta).forEach(d => { const k = d + '|' + X.a; S.swaps[k] = { date: d, orig: X.a, cover: X.b, note: 'Exchange with ' + pname(X.a), settled: true, group: g }; keys.push(k); });
+    turnDays(X.tb).forEach(d => { const k = d + '|' + X.b; S.swaps[k] = { date: d, orig: X.b, cover: X.a, note: 'Exchange with ' + pname(X.b), settled: true, group: g }; keys.push(k); });
+    save(); render();
+    savedSheet(keys, 'Duty exchange: ' + pname(X.a) + ' ⇄ ' + pname(X.b));
+}
+
+/* ---------- TEAM SYNC (send changes as a link) ---------- */
+function b64(str) { return btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function unb64(str) { str = str.replace(/-/g, '+').replace(/_/g, '/'); while (str.length % 4) str += '='; return decodeURIComponent(escape(atob(str))); }
+// a change is [date, original APO, who covers (null = as per rotation), note, settled]
+function syncLink(keys) {
+    const c = keys.map(k => { const [d, o] = k.split('|'), sw = S.swaps[k]; return sw ? [d, pname(o), pname(sw.cover), sw.note || '', sw.settled ? 1 : 0] : [d, pname(o), null]; });
+    return location.href.split('#')[0] + '#sync=' + b64(JSON.stringify({ v: 1, by: pname(S.me), c }));
+}
+function changeText(keys) {
+    return keys.slice().sort().map(k => { const [d, o] = k.split("|"), sw = S.swaps[k]; return "• " + pretty(d) + ': ' + (sw ? pname(sw.cover) + ' instead of ' + pname(o) + (sw.note ? ' (' + sw.note + ')' : '') : pname(o) + ' as per rotation'); }).join('\n');
+}
+function upcomingKeys() { const from = addDays(currentDutyDate(), -1), to = addDays(from, 31); return Object.keys(S.swaps).filter(k => { const d = k.split('|')[0]; return d >= from && d <= to; }).sort(); }
+function shareChanges(keys, title) {
+    if (!keys.length) { toast('No changes to send'); return; }
+    shareText(title + '\n' + changeText(keys) + '\n\nTap to add to your APO Duty app:\n' + syncLink(keys));
+}
+let savedKeys = [], savedTitle = '';
+function savedSheet(keys, title, back) {
+    savedKeys = keys; savedTitle = title;
+    window._savedBack = back || null;
+    openSheet(`<div class="spread"><h3>✓ Saved</h3><button class="btn sm ghost" onclick="closeSheet()">✕</button></div>
+        <p class="muted">Send it to the team so everyone's app shows the same duty.</p>
+        <pre class="share">${esc(title + '\n' + changeText(keys))}</pre>
+        <div class="row"><button class="btn" onclick="shareChanges(savedKeys, savedTitle)">📤 Send to team</button>
+        <button class="btn ghost" onclick="window._savedBack ? _savedBack() : closeSheet()">Done</button></div>`);
+}
+let pendingImport = [];
+function checkSyncLink() {
+    const m = location.hash.match(/^#sync=(.+)$/); if (!m) return false;
+    history.replaceState(null, '', location.href.split('#')[0]);
+    let p; try { p = JSON.parse(unb64(m[1])); } catch (e) { toast('Could not read that link'); return false; }
+    const byName = n => S.team.find(x => x.name.trim().toLowerCase() === String(n).trim().toLowerCase());
+    const bad = new Set(); pendingImport = [];
+    (p.c || []).forEach(([d, o, c, n, st]) => {
+        const O = byName(o), C = c == null ? null : byName(c);
+        if (!O) bad.add(o); if (c != null && !C) bad.add(c);
+        if (O && (c == null || C)) pendingImport.push({ d, o: O.id, c: C ? C.id : null, n: n || '', s: !!st });
+    });
+    let h = `<div class="spread"><h3>Duty changes from ${esc(p.by || 'a teammate')}</h3><button class="btn sm ghost" onclick="closeSheet()">✕</button></div>`;
+    pendingImport.forEach(x => {
+        const off = !isScheduled(x.o, x.d);
+        h += `<div class="item"><div class="grow"><b>${pretty(x.d)}</b>: ${x.c ? esc(pname(x.c)) + ' instead of ' + esc(pname(x.o)) : esc(pname(x.o)) + ' as per rotation'}${x.n ? '<div class="muted">' + esc(x.n) + '</div>' : ''}
+            ${off ? `<div class="warn">⚠ Your rotation doesn't have ${esc(pname(x.o))} on this day. Check Setup.</div>` : ''}</div></div>`;
+    });
+    if (bad.size) h += `<p class="warn">⚠ Names not in your team: ${esc([...bad].join(', '))}. Those changes were skipped. Make names match in Setup.</p>`;
+    h += pendingImport.length ? `<button class="btn good block" style="margin-top:10px" onclick="applyImport()">✓ Add to my schedule</button>` : '';
+    openSheet(h);
+    return true;
+}
+function applyImport() {
+    pendingImport.forEach(x => {
+        const k = x.d + '|' + x.o;
+        if (!x.c || x.c === x.o) delete S.swaps[k];
+        else S.swaps[k] = { date: x.d, orig: x.o, cover: x.c, note: x.n, settled: x.s, group: S.swaps[k]?.group || '' };
+    });
+    save(); closeSheet(); toast('Schedule updated ✓'); render();
+}
+function askWho() {
+    openSheet(`<h3>Who are you?</h3><p class="muted">So the app can show your duty. You can change this in Setup.</p>
+        <div class="chips">${S.team.map(p => `<button class="chip" onclick="chooseMe('${p.id}')"><span class="dot" style="background:${p.color}"></span>${esc(p.name)}</button>`).join('')}</div>`);
+}
+function chooseMe(id) { S.me = id; S.meChosen = true; save(); closeSheet(); render(); checkSyncLink(); }
 
 /* ---------- SHARE ---------- */
 function scheduleText(from, n) {
@@ -642,7 +763,7 @@ function renderSetup() {
             <button class="btn sm bad" onclick="removePerson('${p.id}')">✕</button></div>`;
     });
     h += `<div class="row" style="margin-top:10px"><button class="btn sm ghost" onclick="addPerson()">+ Add APO</button></div>
-        <label class="f">Who are you?</label><select onchange="S.me=this.value;save();render()">${S.team.map(p => `<option value="${p.id}" ${p.id === S.me ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>`;
+        <label class="f">Who are you?</label><select onchange="S.me=this.value;S.meChosen=true;save();render()">${S.team.map(p => `<option value="${p.id}" ${p.id === S.me ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>`;
 
     h += `<div class="card"><h2>2 · A known date</h2><p class="muted" style="margin-top:0">One date you're sure about. Everything else is worked out from it.</p>
         <label class="f">On this date…</label><input type="date" id="anDate" value="${S.anchor.date}">
@@ -723,6 +844,8 @@ const _n = new Date(); calY = logY = _n.getFullYear(); calM = logM = _n.getMonth
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => setTab(b.dataset.tab));
 $('overlay').addEventListener('click', e => { if (e.target.id === 'overlay') closeSheet(); });
 render();
+if (!S.meChosen) askWho(); else checkSyncLink();
+window.addEventListener('hashchange', () => { if (S.meChosen) checkSyncLink(); });
 setInterval(() => { if (tab === 'home' && !$('overlay').classList.contains('open')) renderHome(); }, 30000);
 </script>
 </body>
