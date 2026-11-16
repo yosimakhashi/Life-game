@@ -897,6 +897,81 @@ const GAMES = {
             timers.push(requestAnimationFrame(frame));
         }
     },
+    flutter: {
+        fun: true, goal: lvl => `fly through ${8 + 2 * lvl} gaps before you lose your 3 lives`,
+        name: 'Flutter', glyph: '🪲', domain: 'Fun · timing', mins: 1,
+        how: lvl => 'A firefly that sinks unless you tap. Each tap is one wing-beat upward. Thread it through the gaps in the hedges' + (lvl >= 7 ? ', some of which drift up and down' : '') + '. Hitting a hedge or the ground costs a life.',
+        run(c) {
+            const W = 300, H = 400, floor = H - 24, need = 8 + 2 * c.lvl, dpr = Math.min(2, window.devicePixelRatio || 1);
+            const speed = 110 + 8 * c.lvl, gapH = Math.max(88, 150 - 5 * c.lvl), every = 175, wallW = 44;
+            c.el.innerHTML = `<div class="prompt">Gaps: <b>0</b> of ${need} · <span class="lives">♥♥♥</span></div><canvas class="board" style="width:${W}px;height:${H}px"></canvas><button class="tap" style="padding:16px 0">FLAP</button>`;
+            const cv = $('canvas', c.el), g = cv.getContext('2d');
+            cv.width = W * dpr; cv.height = H * dpr; g.scale(dpr, dpr);
+            const col = { sky: css('--soft'), hedge: css('--accent'), glow: css('--dawn'), ink: css('--ink'), wing: css('--card'), line: css('--line') };
+            const me = { x: 84, y: H / 2, vy: 0 };
+            let walls = [], passed = 0, lives = 3, safe = 0, started = false, over = false, scroll = 0, last = performance.now(), beat = 0;
+            const addWall = x => walls.push({ x, mid: 70 + rnd(floor - 140), drift: c.lvl >= 7 && Math.random() < .35 ? (Math.random() < .5 ? -1 : 1) * (18 + c.lvl * 2) : 0, done: false });
+            for (let i = 0; i < 3; i++) addWall(W + 60 + i * every);
+            const flap = () => { if (over) return; started = true; me.vy = -265; beat = .18; };
+            cv.onpointerdown = flap; $('.tap', c.el).onpointerdown = e => { e.preventDefault(); flap(); };
+            document.onkeydown = e => { if (e.key === ' ' || e.key === 'ArrowUp') { e.preventDefault(); if (!e.repeat) flap(); } };
+            const hud = () => { $('.prompt b', c.el).textContent = passed; $('.lives', c.el).textContent = '♥'.repeat(lives) + '♡'.repeat(3 - lives); c.progress(1 - passed / need); };
+            const end = () => {
+                if (over) return; over = true;
+                c.after(600, () => c.finish({ acc: Math.min(1, passed / need), move: passed >= need ? 1 : passed < need / 3 ? -1 : 0, stats: [['Gaps', passed + '/' + need], ['Lives left', lives], ['Gap size', gapH + 'px']] }));
+            };
+            const crash = () => {
+                if (safe > 0 || over) return;
+                lives--; flash(cv, false); hud();
+                if (lives <= 0) return end();
+                me.y = H / 2; me.vy = 0; safe = 1.6; started = false; // hover until the next tap
+            };
+            const frame = now => {
+                const dt = Math.min(.05, (now - last) / 1000); last = now; beat -= dt;
+                if (!over && started) {
+                    safe -= dt; scroll += speed * dt;
+                    me.vy += 760 * dt; me.y += me.vy * dt;
+                    if (me.y < 10) { me.y = 10; me.vy = 0; }
+                    if (me.y > floor - 9) crash();
+                    walls.forEach(w => {
+                        w.x -= speed * dt;
+                        if (w.drift) { w.mid += w.drift * dt; if (w.mid < 70 || w.mid > floor - 70) w.drift = -w.drift; }
+                        if (!w.done && w.x + wallW < me.x - 8) { w.done = true; passed++; hud(); if (passed >= need) { flash(cv, true); end(); } }
+                        if (me.x + 8 > w.x && me.x - 8 < w.x + wallW && Math.abs(me.y - w.mid) > gapH / 2 - 8) crash();
+                    });
+                    if (walls[0].x < -wallW - 10) { walls.shift(); addWall(walls[walls.length - 1].x + every); }
+                }
+                // draw: dusk sky, hedges with a leafy cap, ground, firefly with a glow
+                g.fillStyle = col.sky; g.fillRect(0, 0, W, H);
+                g.fillStyle = col.wing; g.globalAlpha = .5;
+                for (let i = 0; i < 6; i++) { const sx = ((i * 97 - scroll * .25) % (W + 40) + W + 40) % (W + 40) - 20; g.beginPath(); g.arc(sx, 40 + (i * 53) % 220, 2, 0, 7); g.fill(); }
+                g.globalAlpha = 1;
+                walls.forEach(w => {
+                    const top = w.mid - gapH / 2, bot = w.mid + gapH / 2;
+                    g.fillStyle = col.hedge;
+                    g.beginPath(); g.roundRect(w.x, -10, wallW, top + 10, 8); g.fill();
+                    g.beginPath(); g.roundRect(w.x, bot, wallW, floor - bot + 10, 8); g.fill();
+                    // leafy, scalloped ends instead of flat caps
+                    for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(w.x + 7 + i * 15, top - 4, 10, 0, 7); g.arc(w.x + 7 + i * 15, bot + 4, 10, 0, 7); g.fill(); }
+                });
+                g.fillStyle = col.ink; g.fillRect(0, floor, W, H - floor);
+                g.fillStyle = col.line; for (let x = -(scroll % 24); x < W; x += 24) g.fillRect(x, floor, 12, 3);
+                if (safe <= 0 || Math.floor(now / 90) % 2) {
+                    const glow = g.createRadialGradient(me.x, me.y, 2, me.x, me.y, 22);
+                    glow.addColorStop(0, col.glow); glow.addColorStop(1, 'transparent');
+                    g.globalAlpha = .55; g.fillStyle = glow; g.beginPath(); g.arc(me.x, me.y, 22, 0, 7); g.fill(); g.globalAlpha = 1;
+                    const up = beat > 0 ? -1 : 1; // wings flick up on each beat
+                    g.fillStyle = col.wing; g.strokeStyle = col.ink; g.lineWidth = 1;
+                    g.beginPath(); g.ellipse(me.x - 3, me.y - 5 * up, 5, 9, up * -.5, 0, 7); g.fill(); g.stroke();
+                    g.fillStyle = col.ink; g.beginPath(); g.ellipse(me.x, me.y, 9, 6, 0, 0, 7); g.fill();
+                    g.fillStyle = col.glow; g.beginPath(); g.arc(me.x - 6, me.y, 4.5, 0, 7); g.fill();
+                }
+                if (!started && !over) { g.fillStyle = col.ink; g.font = '600 16px system-ui, sans-serif'; g.textAlign = 'center'; g.fillText('Tap to flap', W / 2, H / 2 - 50); }
+                timers.push(requestAnimationFrame(frame));
+            };
+            timers.push(requestAnimationFrame(frame));
+        }
+    },
     breathe: {
         name: 'Slow Breath', glyph: '○', domain: 'Reset', mins: 1, unscored: true,
         how: 'One minute of slow breathing: in for 4 seconds, out for 6. Nothing to score. It simply settles the system before you think.',
@@ -965,7 +1040,7 @@ function flash(el, good) { el.classList.remove('flash-good', 'flash-bad'); void 
 /* Today's four: one speed, one memory, one control drill and one fun game, rotating daily. */
 function dailySet() {
     const d = dayNum();
-    return [['symbol', 'flash'][d % 2], ['nback', 'grid'][d % 2], ['stroop', 'trail', 'steady'][d % 3], ['pairs', 'fireflies', 'pop', 'odd', 'scramble', 'sky', 'race'][d % 7]];
+    return [['symbol', 'flash'][d % 2], ['nback', 'grid'][d % 2], ['stroop', 'trail', 'steady'][d % 3], ['pairs', 'fireflies', 'pop', 'odd', 'scramble', 'sky', 'race', 'flutter'][d % 8]];
 }
 
 /* ---------- runner ---------- */
