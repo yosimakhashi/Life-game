@@ -220,6 +220,52 @@ h2 span { color: var(--blood); }
 .node.locked .t { color: var(--dim); }
 @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(209,26,42,.7)} 100%{box-shadow:0 0 0 14px rgba(209,26,42,0)} }
 
+/* ---------- Corner report (insights) ---------- */
+.coach { position: relative; background: var(--tape); color: #1a1310; padding: 16px 16px 14px; transform: rotate(-.6deg); box-shadow: 4px 4px 0 rgba(0,0,0,.6); margin: 6px 0 16px; }
+.coach .who { font-family: 'Anton', sans-serif; font-size: 12px; letter-spacing: .2em; opacity: .65; }
+.coach .hd { font-family: 'Anton', sans-serif; font-size: 24px; line-height: 1.05; text-transform: uppercase; margin: 4px 0 6px; }
+.coach .bd { font-size: 14px; line-height: 1.5; }
+.coach.warn { background: var(--blood); color: #fff; animation: warnPulse 2s infinite; }
+.coach.good { border-left: 8px solid var(--amber); }
+@keyframes warnPulse { 50% { box-shadow: 4px 4px 0 rgba(0,0,0,.6), 0 0 26px rgba(209,26,42,.7); } }
+.checkin { background: var(--concrete); border: 1px solid var(--line); border-radius: 3px; padding: 12px; margin-bottom: 12px; }
+.checkin .ql { font-family: 'Anton', sans-serif; font-size: 16px; letter-spacing: .05em; text-transform: uppercase; }
+.lvls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+.lvls button { padding: 9px 2px; background: var(--concrete-2); border: 1px solid var(--line); color: var(--bone); font-family: inherit; font-size: 12px; border-radius: 3px; cursor: pointer; }
+.lvls button.on { background: var(--blood-dark); border-color: var(--blood); color: #fff; }
+.week { display: flex; gap: 6px; margin-top: 10px; align-items: flex-end; }
+.week div { flex: 1; text-align: center; font-size: 10px; color: var(--dim); }
+.week i { display: block; height: 8px; border-radius: 2px; background: var(--line); margin-bottom: 3px; }
+.week i.l0 { background: var(--ok); } .week i.l1 { background: var(--amber); } .week i.l2 { background: #ff7a45; } .week i.l3 { background: var(--blood); }
+.tapeCard { background: var(--concrete); border: 1px solid var(--line); border-radius: 3px; padding: 12px; margin-bottom: 12px; }
+.tapeCard h4 { font-family: 'Anton', sans-serif; font-weight: 400; font-size: 16px; letter-spacing: .08em; margin: 0 0 10px; text-transform: uppercase; color: var(--dim); }
+.trow { display: grid; grid-template-columns: 82px 1fr 52px; align-items: center; gap: 8px; margin-bottom: 7px; font-size: 12px; }
+.trow .tb { height: 12px; background: #000; outline: 1px solid var(--line); }
+.trow .tb i { display: block; height: 100%; background: var(--dim); transition: width .8s; }
+.trow.cur .tb i { background: var(--blood); } .trow.best .tb i { background: var(--amber); }
+.trow b { font-family: 'Anton', sans-serif; font-weight: 400; font-size: 15px; text-align: right; }
+.bars { display: flex; align-items: flex-end; gap: 5px; height: 90px; margin-top: 6px; }
+.bars .b { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; font-size: 10px; color: var(--dim); }
+.bars .b i { display: block; width: 100%; background: var(--dim); min-height: 3px; }
+.bars .b.cur i { background: var(--blood); box-shadow: 0 0 10px rgba(209,26,42,.6); }
+.bars .b.top i { background: var(--amber); }
+.barsNote { font-size: 11px; color: var(--dim); margin-top: 8px; }
+.phase { border: 1px solid var(--line); border-left: 4px solid var(--amber); background: var(--concrete); padding: 12px 14px; margin-bottom: 12px; border-radius: 3px; }
+.phase .pn { font-family: 'Anton', sans-serif; font-size: 12px; letter-spacing: .15em; color: var(--amber); }
+.phase .pt { font-family: 'Anton', sans-serif; font-size: 20px; text-transform: uppercase; margin: 2px 0 6px; }
+.phase p { margin: 0 0 6px; font-size: 13px; line-height: 1.5; color: var(--bone); }
+.phase p.do { color: var(--tape); } .phase p.do b { color: var(--amber); font-weight: 400; }
+.intel { list-style: none; margin: 0; padding: 0; }
+.intel li { padding: 10px 0 10px 26px; border-bottom: 1px dashed var(--line); font-size: 14px; line-height: 1.45; position: relative; }
+.intel li::before { content: "▸"; position: absolute; left: 6px; color: var(--blood); }
+.intel li.w::before { content: "⚠"; left: 2px; color: var(--amber); }
+.intel li b { font-family: 'Anton', sans-serif; font-weight: 400; letter-spacing: .03em; }
+.fine { font-size: 11px; color: var(--dim); margin-top: 10px; line-height: 1.4; }
+.trig { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.trig button { padding: 7px 10px; background: var(--concrete-2); border: 1px solid var(--line); color: var(--bone); font-family: inherit; font-size: 13px; cursor: pointer; border-radius: 3px; }
+.trig button.on { border-color: var(--blood); background: var(--blood-dark); }
+.trigLabel { font-size: 13px; color: var(--dim); margin-bottom: 8px; }
+
 /* ---------- Log ---------- */
 .log { list-style: none; margin: 0; padding: 0; }
 .log li { display: flex; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px dashed var(--line); font-size: 14px; }
@@ -350,6 +396,22 @@ h2 span { color: var(--blood); }
         </div>
     </section>
 
+    <!-- ============ CORNER REPORT ============ -->
+    <h2>Corner <span>Report</span></h2>
+    <div class="h2sub">What your own record says. It gets sharper the more you log.</div>
+    <div class="coach" id="coach"></div>
+    <div class="checkin hidden" id="checkin">
+        <div class="ql">How loud is the enemy today?</div>
+        <div class="lvls" id="lvls">
+            <button data-l="0">Quiet</button><button data-l="1">Whisper</button><button data-l="2">Loud</button><button data-l="3">Screaming</button>
+        </div>
+        <div class="week" id="week"></div>
+    </div>
+    <div class="phase hidden" id="phase"></div>
+    <div class="tapeCard hidden" id="tape"></div>
+    <ul class="intel" id="intel"></ul>
+    <div class="fine">Phase notes reflect habit research and what people commonly report. They are not medical advice.</div>
+
     <!-- ============ MISSION PATH ============ -->
     <h2>The <span>Path</span></h2>
     <div class="h2sub" id="pathSub">Every milestone is an enemy. Put them all down.</div>
@@ -367,6 +429,12 @@ h2 span { color: var(--blood); }
         <div class="choice" id="reasonChoice">
             <button data-r="relapse" class="on">I slipped</button>
             <button data-r="reset">Just resetting</button>
+        </div>
+        <div id="trigWrap">
+            <div class="trigLabel">What set it off? (helps your corner spot the pattern)</div>
+            <div class="trig" id="trigChoice">
+                <button data-t="bored">Boredom</button><button data-t="stress">Stress</button><button data-t="lonely">Loneliness</button><button data-t="tired">Tired</button><button data-t="phone">Late-night phone</button><button data-t="saw">Something I saw</button><button data-t="other">Other</button>
+            </div>
         </div>
         <button class="hold" id="holdBtn"><i id="holdFill"></i><span>HOLD TO END STREAK</span></button>
         <button class="linkBtn" id="keepFighting">No — keep fighting</button>
@@ -470,7 +538,7 @@ const REPLIES = ["Not today.", "I know your tricks.", "Hit harder.", "Keep talki
 const HITS = ['THUD', 'CRACK', 'WHAM', 'SMACK', 'BAM', 'POW'];
 
 let S = load();
-function fresh() { return { start: null, history: [], urges: 0, koSeen: 0, sound: true, buzz: true }; }
+function fresh() { return { start: null, history: [], urges: 0, urgeLog: [], checkins: {}, koSeen: 0, sound: true, buzz: true }; }
 function load() {
     try { const v = JSON.parse(localStorage.getItem(KEY)); if (v && typeof v === 'object') return Object.assign(fresh(), v); } catch (e) {}
     return fresh();
@@ -618,7 +686,10 @@ function renderTick() {
 
     // KO celebration once per milestone (also when returning to the app after one fell)
     if (kos > S.koSeen) { const idx = kos - 1; S.koSeen = kos; save(); showKO(idx, kos); renderPath(); }
-    if (renderTick.lastDay !== days) { renderTick.lastDay = days; renderPath(); }
+    const minute = Math.floor(Date.now() / 60000);
+    if (renderTick.lastDay !== days) { renderTick.lastDay = days; renderPath(); renderCorner(); }
+    else if (renderTick.lastMin !== minute) renderCorner();
+    renderTick.lastMin = minute;
 }
 
 function knockdownThen(newIdx) {
@@ -703,10 +774,178 @@ function renderAll() {
             <div class="stat"><div class="v">${S.history.length}</div><div class="k">Fights</div></div>
             <div class="stat"><div class="v">${S.urges}</div><div class="k">Urges beat</div></div>` : '';
     }
-    renderPath(); renderLog();
+    renderPath(); renderLog(); renderCorner();
     $('soundToggle').classList.toggle('on', S.sound);
     $('buzzToggle').classList.toggle('on', S.buzz);
 }
+
+
+/* ============================================================
+   CORNER REPORT: insights built from the user's own record
+   ============================================================ */
+const TRIGGERS = {
+    bored:  ['boredom', 'Plan the empty hours before they arrive: gym, a walk, a call.'],
+    stress: ['stress', 'Have a release ready: training, a cold shower, slow breathing.'],
+    lonely: ['loneliness', 'Get around people when it hits, even a phone call.'],
+    tired:  ['being tired', 'Sleep earlier. Tired willpower is weak willpower.'],
+    phone:  ['late-night phone use', 'Charge the phone outside the bedroom.'],
+    saw:    ['something you saw', 'Cut the source: unfollow, block, filter.'],
+    other:  ['other things', ''],
+};
+const PARTS = [
+    { n: 'late at night', from: 22, to: 5 }, { n: 'in the morning', from: 5, to: 12 },
+    { n: 'in the afternoon', from: 12, to: 17 }, { n: 'in the evening', from: 17, to: 22 },
+];
+const PHASES = [
+    { to: 3,   t: 'The Opening Bell', x: 'The first 72 hours. The habit loop is at its loudest and urges come often.', a: 'Stay busy and stay out of the usual spots. Just get to bedtime.' },
+    { to: 7,   t: 'The Clinch', x: 'Urges now come in waves. A wave usually peaks and fades within 15 to 20 minutes if you do not feed it.', a: 'Ride it out with the Urge Attack button, then move your body.' },
+    { to: 14,  t: 'The Grind', x: 'The novelty is gone and confidence is up. The trap here is "one quick look to test myself".', a: 'No tests. Confidence is not a reason to open the door.' },
+    { to: 30,  t: 'The Flat Rounds', x: 'Many people report a dip in mood or drive around now, often called a flatline. It is common and it passes.', a: 'Keep the routine: sleep, training, sunlight. Do not judge progress by one flat week.' },
+    { to: 60,  t: 'Second Wind', x: 'New routines are replacing the old one. Urges are rarer and mostly follow stress, boredom or tiredness.', a: 'Know your triggers and have a plan for each one.' },
+    { to: 90,  t: 'Championship Rounds', x: 'The old habit is weak but not gone. Most late falls come from getting comfortable.', a: 'Keep every rule you set on day one.' },
+    { to: 180, t: 'The New Normal', x: 'This is becoming who you are instead of something you resist.', a: 'Put the spare energy into something you are building.' },
+    { to: 1e9, t: 'Legend Rounds', x: 'Few people get here. The fight is mostly maintenance now.', a: 'Stay humble and keep your guard up on bad days.' },
+];
+const LEVELS = ['Quiet', 'Whisper', 'Loud', 'Screaming'];
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const dayKey = ts => { const d = new Date(ts); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+function partOf(ts) { const h = new Date(ts).getHours(); return PARTS.findIndex(p => p.from < p.to ? h >= p.from && h < p.to : h >= p.from || h < p.to); }
+
+function analyse() {
+    const now = Date.now(), active = !!S.start;
+    const ended = S.history.map(h => Object.assign({ len: h.end - h.start, d: daysOf(h.end - h.start) }, h));
+    const slips = ended.filter(h => h.reason !== 'reset');
+    const cur = active ? elapsed() : 0, curD = daysOf(cur);
+    const A = { now, active, ended, slips, cur, curD };
+    A.totalDays = Math.floor((ended.reduce((a, h) => a + h.len, 0) + cur) / DAY);
+    A.avgD = ended.length ? ended.reduce((a, h) => a + h.d, 0) / ended.length : 0;
+    A.bestPastD = ended.length ? Math.max(...ended.map(h => h.d)) : 0;
+    A.last = ended[ended.length - 1] || null;
+    A.beaten = ended.filter(h => h.len < cur).length;
+    // Last 30 days: every slip costs one day
+    const first = Math.min(...ended.map(h => h.start), active ? S.start : now);
+    A.win = Math.max(1, Math.min(30, Math.ceil((now - first) / DAY)));
+    A.slips30 = slips.filter(h => h.end > now - 30 * DAY).length;
+    // Danger zone: the middle half of the days on which past streaks fell
+    if (slips.length) {
+        const ds = slips.map(h => h.d).sort((a, b) => a - b), q = p => ds[Math.round(p * (ds.length - 1))];
+        A.zone = slips.length === 1 ? { lo: ds[0], hi: ds[0], one: true } : { lo: q(.25), hi: q(.75) };
+    }
+    // Risk time of day, from logged urges plus the moments streaks fell
+    const ev = (S.urgeLog || []).concat(slips.map(h => h.end));
+    if (ev.length >= 3) {
+        const c = [0, 0, 0, 0]; ev.forEach(t => c[partOf(t)]++);
+        const top = c.indexOf(Math.max(...c));
+        if (c[top] / ev.length >= .4) A.risk = { part: top, n: c[top], of: ev.length, live: partOf(now) === top };
+    }
+    // Most common slip trigger
+    const tc = {}; slips.forEach(h => { if (h.trigger && TRIGGERS[h.trigger]) tc[h.trigger] = (tc[h.trigger] || 0) + 1; });
+    const tk = Object.keys(tc).sort((a, b) => tc[b] - tc[a])[0];
+    if (tk) A.trig = { k: tk, n: tc[tk], of: slips.length };
+    // Trend: last finished fight against the ones before it
+    if (ended.length >= 3) {
+        const prev = ended.slice(0, -1), pm = prev.reduce((a, h) => a + h.d, 0) / prev.length;
+        A.trend = A.last.d > pm ? 'up' : A.last.d < pm ? 'down' : 'flat';
+    }
+    // Check-ins: this week against last week
+    const lv = off => { const v = S.checkins[dayKey(now - off * DAY)]; return typeof v === 'number' ? v : null; };
+    A.today = lv(0);
+    const wk = [0,1,2,3,4,5,6].map(lv).filter(v => v !== null), pw = [7,8,9,10,11,12,13].map(lv).filter(v => v !== null);
+    const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
+    if (wk.length >= 3 && pw.length >= 3) A.loud = mean(wk) < mean(pw) - .25 ? 'quieter' : mean(wk) > mean(pw) + .25 ? 'louder' : 'same';
+    A.weekN = wk.length;
+    return A;
+}
+
+// One message, the most useful thing to hear right now. Warnings win over praise.
+function coachLine(A) {
+    const d = A.curD, z = A.zone;
+    if (!A.active) {
+        if (!A.ended.length) return ['info', 'No record yet', 'Your first fight sets the bar. Everything after that is you against your own numbers.'];
+        let b = `${plural(A.totalDays, 'clean day')} banked across ${plural(A.ended.length, 'fight')}. Longest ${A.bestPastD}, average ${A.avgD.toFixed(1)}.`;
+        if (A.trend === 'up') b += ' Your last fight beat your average, so you are getting better at this.';
+        if (A.trend === 'down') b += ' Your last fight was shorter than your average. Look at what set it off before you go again.';
+        if (A.trig && TRIGGERS[A.trig.k][1]) b += ` Biggest trigger so far: ${TRIGGERS[A.trig.k][0]}. ${TRIGGERS[A.trig.k][1]}`;
+        return ['info', 'Those days still count', b];
+    }
+    if (A.risk && A.risk.live) return ['warn', 'Heads up: this is your danger hour', `${A.risk.n} of your ${A.risk.of} logged urges and falls happened ${PARTS[A.risk.part].n}. That is right now. Phone away, lights on, keep moving.`];
+    if (z && !z.one && d >= z.lo && d <= z.hi) return ['warn', 'You are in your danger zone', `Most of your fights ended between day ${z.lo} and day ${z.hi}. You are on day ${d}. This is the round that decides it.`];
+    if (z && !z.one && d === z.lo - 1 && d > 0) return ['warn', 'Danger zone starts tomorrow', `Most of your fights ended between day ${z.lo} and day ${z.hi}. You are on day ${d}. Set your plan tonight, before it gets hard.`];
+    if (z && z.one && (d === z.lo || d === z.lo - 1) && d > 0) return ['warn', 'This is where you fell last time', `Your last fight ended on day ${z.lo}. Get through today and tomorrow and you are past it.`];
+    if (A.today >= 2) return ['warn', 'Loud day. Guard up.', 'An urge peaks and fades in about 15 to 20 minutes if you do not feed it. Hit Urge Attack, then get out of the room.'];
+    if (A.ended.length && d > A.bestPastD) return ['good', 'Uncharted territory', `Day ${d}. Your old record was ${A.bestPastD}. Every day from here is a new personal best.`];
+    if (A.ended.length && A.bestPastD - d >= 0 && A.bestPastD - d <= 3) return ['good', A.bestPastD - d === 0 ? 'Record tied. Tomorrow you break it.' : `${plural(A.bestPastD - d + 1, 'day')} to a new record`, `Your best is ${plural(A.bestPastD, 'day')}. You are on day ${d}. Do not hand it back now.`];
+    if (z && d > z.hi) return ['good', 'Past your danger zone', `Your fights used to end by day ${z.hi}. You are on day ${d} and still standing.`];
+    if (A.last && A.cur > A.last.len) return ['good', 'Longer than last time', `Your last fight ended at ${plural(A.last.d, 'day')}. This one is already ahead. Next target: your record of ${A.bestPastD}.`];
+    if (A.last) {
+        const toAvg = Math.ceil(A.avgD) - d;
+        return ['info', `Day ${d} of the comeback`, toAvg > 0 ? `Your average fight lasts ${A.avgD.toFixed(1)} days. Beat the average first: ${plural(toAvg, 'day')} to go.` : `You are past your average of ${A.avgD.toFixed(1)} days. Now go for the record of ${A.bestPastD}.`];
+    }
+    return ['info', d ? `Day ${d}. You are writing the record.` : 'Round one', 'No past fights to compare against yet. Check in each day and log urges so your corner can learn your patterns.'];
+}
+
+function renderCorner() {
+    const A = analyse();
+    const [tone, hd, bd] = coachLine(A);
+    const c = $('coach'); c.className = 'coach ' + tone;
+    c.innerHTML = `<div class="who">YOUR CORNER SAYS</div><div class="hd">${esc(hd)}</div><div class="bd">${esc(bd)}</div>`;
+
+    // Daily check-in
+    $('checkin').classList.toggle('hidden', !A.active);
+    [...$('lvls').children].forEach(b => b.classList.toggle('on', Number(b.dataset.l) === A.today));
+    let wk = '';
+    for (let i = 6; i >= 0; i--) {
+        const t = A.now - i * DAY, v = S.checkins[dayKey(t)];
+        wk += `<div><i class="${typeof v === 'number' ? 'l' + v : ''}"></i>${i ? new Date(t).toLocaleDateString(undefined, { weekday: 'narrow' }) : 'Today'}</div>`;
+    }
+    $('week').innerHTML = wk;
+
+    // Phase
+    const ph = $('phase'); ph.classList.toggle('hidden', !A.active);
+    if (A.active) {
+        const i = PHASES.findIndex(p => A.curD < p.to), p = PHASES[i], from = i ? PHASES[i - 1].to : 0;
+        ph.innerHTML = `<div class="pn">PHASE ${i + 1} · DAY ${from}${p.to < 1e9 ? '–' + (p.to - 1) : '+'}</div><div class="pt">${p.t}</div><p>${p.x}</p><p class="do"><b>Do this:</b> ${p.a}</p>`;
+    }
+
+    // Tale of the tape: this fight against your own numbers
+    const tp = $('tape'); tp.classList.toggle('hidden', !A.ended.length);
+    if (A.ended.length) {
+        const rows = [];
+        if (A.active) rows.push(['cur', 'This fight', A.cur / DAY]);
+        rows.push(['', 'Last fight', A.last.len / DAY], ['', 'Average', A.avgD], ['best', 'Record', Math.max(A.bestPastD, A.curD)]);
+        const mx = Math.max(1, ...rows.map(r => r[2]));
+        let h = '<h4>Tale of the tape</h4>' + rows.map(r => `<div class="trow ${r[0]}"><span>${r[1]}</span><div class="tb"><i style="width:${(r[2] / mx * 100).toFixed(1)}%"></i></div><b>${r[1] === 'Average' ? r[2].toFixed(1) : Math.floor(r[2])}d</b></div>`).join('');
+        const all = A.ended.map(e => ({ d: e.d })).concat(A.active ? [{ d: A.curD, cur: 1 }] : []).slice(-12);
+        const bm = Math.max(1, ...all.map(x => x.d)), off = A.ended.length + (A.active ? 1 : 0) - all.length;
+        h += '<h4 style="margin-top:14px">Every fight so far</h4><div class="bars">' + all.map((x, i) => `<div class="b ${x.cur ? 'cur' : x.d === bm ? 'top' : ''}">${x.d}<i style="height:${(x.d / bm * 70).toFixed(0)}%"></i>#${off + i + 1}</div>`).join('') + '</div>';
+        h += `<div class="barsNote">Days lasted per fight${A.active ? ', current fight in red' : ''}.</div>`;
+        tp.innerHTML = h;
+    }
+
+    // Intel list
+    const li = [];
+    if (A.ended.length || A.curD) li.push(['', `<b>${plural(A.totalDays, 'clean day')}</b> in total across ${plural(A.ended.length + (A.active ? 1 : 0), 'fight')}. A fall ends a streak. It does not erase these.`]);
+    if (A.active && A.ended.length) li.push(['', `This fight is longer than <b>${A.beaten} of your ${A.ended.length}</b> past ${A.ended.length === 1 ? 'fight' : 'fights'}.`]);
+    if (A.slips.length) li.push([A.slips30 > 2 ? 'w' : '', `Last ${A.win} days: <b>${A.win - Math.min(A.win, A.slips30)} clean, ${plural(A.slips30, 'slip')}</b> (${Math.round((1 - Math.min(A.win, A.slips30) / A.win) * 100)}% clean).`]);
+    if (A.zone) li.push(['w', A.zone.one ? `Your one fall so far came on <b>day ${A.zone.lo}</b>. Watch that day.` : A.zone.lo === A.zone.hi ? `Your fights most often end on <b>day ${A.zone.lo}</b>. Be ready for it.` : `Danger zone: your fights most often end between <b>day ${A.zone.lo} and day ${A.zone.hi}</b>.`]);
+    if (A.risk) li.push(['w', `<b>${Math.round(A.risk.n / A.risk.of * 100)}%</b> of your urges and falls happen <b>${PARTS[A.risk.part].n}</b>. Plan that part of the day.`]);
+    if (A.trig) li.push(['w', `Top trigger: <b>${TRIGGERS[A.trig.k][0]}</b> (${A.trig.n} of ${plural(A.trig.of, 'fall')}). ${TRIGGERS[A.trig.k][1]}`]);
+    if (A.trend) li.push(['', A.trend === 'up' ? 'Trend: your last finished fight was <b>longer</b> than your average before it.' : A.trend === 'down' ? 'Trend: your last finished fight was <b>shorter</b> than your average before it.' : 'Trend: your fights are holding steady in length.']);
+    if (A.loud) li.push([A.loud === 'louder' ? 'w' : '', A.loud === 'quieter' ? 'Urges were <b>quieter</b> this week than last week.' : A.loud === 'louder' ? 'Urges were <b>louder</b> this week than last week. Tighten your routine.' : 'Urge levels are about the same as last week.']);
+    if (S.urges) li.push(['', `<b>${plural(S.urges, 'urge')}</b> fought off and beaten. Each one is proof that an urge passes.`]);
+    if (!li.length) li.push(['', 'Nothing to report yet. Check in each day and log urges, and patterns will show up here.']);
+    $('intel').innerHTML = li.map(x => `<li class="${x[0]}">${x[1]}</li>`).join('');
+}
+
+$('lvls').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const l = Number(b.dataset.l);
+    S.checkins[dayKey(Date.now())] = l;
+    const keys = Object.keys(S.checkins).sort(); while (keys.length > 400) delete S.checkins[keys.shift()];
+    save(); renderCorner(); buzz(20);
+    toast(l >= 2 ? 'Logged. Guard up: use Urge Attack when it hits.' : 'Logged. Keep it that way.');
+};
 
 /* ============================================================
    ARENA ACTION
@@ -797,7 +1036,8 @@ function endUrge() {
     clearInterval(urge.timer); urge.on = false;
     $('arena').classList.remove('urge');
     $('urgeBtn').disabled = false; $('urgeBtn').style.opacity = 1;
-    S.urges++; save(); $('sUrge').textContent = S.urges;
+    S.urges++; S.urgeLog.push(Date.now()); if (S.urgeLog.length > 500) S.urgeLog.shift();
+    save(); $('sUrge').textContent = S.urges; renderCorner();
     bell(1); buzz([60, 40, 120]);
     bubble('Urge destroyed.', true);
     toast(`⚡ Urge destroyed with ${urge.hits} hits. That's ${S.urges} beaten.`);
@@ -843,16 +1083,23 @@ $('urgeBtn').onclick = startUrge;
 $('arena').addEventListener('pointerdown', e => { if (urge.on) { e.preventDefault(); urgeTap(); } });
 
 // Towel modal with hold-to-confirm
-let reason = 'relapse';
+let reason = 'relapse', trigger = null;
+$('trigChoice').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    trigger = trigger === b.dataset.t ? null : b.dataset.t;
+    [...$('trigChoice').children].forEach(x => x.classList.toggle('on', x.dataset.t === trigger));
+};
 $('towelBtn').onclick = () => {
     const d = daysOf(elapsed());
     $('towelText').textContent = `You're ${d} day${d === 1 ? '' : 's'} in. Ending now logs this fight and puts you back at day zero.`;
+    trigger = null; [...$('trigChoice').children].forEach(x => x.classList.remove('on'));
     $('towelModal').classList.add('open');
 };
 $('keepFighting').onclick = () => { $('towelModal').classList.remove('open'); toast('Good. Back to work.'); punch(true); };
 $('reasonChoice').onclick = e => {
     const b = e.target.closest('button'); if (!b) return;
     reason = b.dataset.r; [...$('reasonChoice').children].forEach(x => x.classList.toggle('on', x === b));
+    $('trigWrap').classList.toggle('hidden', reason !== 'relapse');
 };
 let holdRaf = null, holdStart = 0;
 function holdDown(e) {
@@ -874,7 +1121,9 @@ $('holdBtn').addEventListener('keyup', holdUp);
 function endStreak() {
     $('towelModal').classList.remove('open');
     const len = elapsed();
-    S.history.push({ start: S.start, end: Date.now(), reason });
+    const entry = { start: S.start, end: Date.now(), reason };
+    if (reason === 'relapse' && trigger) entry.trigger = trigger;
+    S.history.push(entry);
     S.start = null; S.koSeen = 0; save();
     if (urge.on) { clearInterval(urge.timer); urge.on = false; $('arena').classList.remove('urge'); $('urgeBtn').disabled = false; $('urgeBtn').style.opacity = 1; }
     curEnemyIdx = -1;
