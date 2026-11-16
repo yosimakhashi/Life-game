@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#10181d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Clear Mind">
+<title>Clear Mind</title>
+<style>
+/* Clear Mind: short, adaptive cognitive drills for foggy days.
+   One file, no network. Everything is stored in localStorage under KEY.
+   Screens: Today (check-in + daily session), Games, Progress, Science.
+   Each game is an entry in GAMES with a run(ctx) function; the runner
+   handles the intro, timers, level changes and the result screen. */
+:root {
+    --bg: #f2f0ea; --card: #fffdf8; --ink: #1c2a32; --dim: #62717a; --line: #dcd7cb;
+    --accent: #1b7567; --accent-ink: #ffffff; --soft: #dcebe6; --dawn: #c96a2b;
+    --good: #23875a; --bad: #c2413b;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #10181d; --card: #18242b; --ink: #e5ecee; --dim: #8fa0a8; --line: #2a3941;
+        --accent: #5cc7b3; --accent-ink: #0c1a1a; --soft: #1e3536; --dawn: #f0a069;
+        --good: #5fd39a; --bad: #f0827b;
+    }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body { font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; }
+h1, h2, h3 { font-family: 'Iowan Old Style', Palatino, 'Palatino Linotype', Georgia, serif; font-weight: 600; line-height: 1.2; margin: 0; text-wrap: balance; }
+h1 { font-size: 28px; } h2 { font-size: 20px; } h3 { font-size: 17px; }
+p { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; touch-action: manipulation; }
+a { color: var(--accent); }
+.wrap { max-width: 520px; margin: 0 auto; padding: 20px 16px calc(92px + env(safe-area-inset-bottom)); }
+.eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.dim { color: var(--dim); } .small { font-size: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-top: 14px; }
+.row { display: flex; align-items: center; gap: 10px; }
+.between { justify-content: space-between; }
+.btn { display: block; width: 100%; padding: 14px 16px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); font-weight: 600; text-align: center; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.btn:active { transform: scale(.98); }
+.home-link { font-size: 14px; color: var(--dim); text-decoration: none; }
+
+/* header with the fog-lifting sun */
+.hero { display: flex; align-items: center; gap: 14px; margin: 6px 0 4px; }
+.sun { width: 54px; height: 54px; flex: none; border-radius: 50%; background: radial-gradient(circle at 50% 60%, var(--dawn) 0 38%, transparent 40%), linear-gradient(to top, var(--soft), transparent); position: relative; overflow: hidden; }
+.sun::after { content: ""; position: absolute; left: -10%; right: -10%; bottom: 0; height: var(--fog, 50%); background: linear-gradient(to top, var(--bg) 30%, transparent); transition: height .6s; }
+.streak { margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; }
+.streak b { font-size: 22px; display: block; line-height: 1; }
+
+/* check-in */
+.scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 10px; }
+.scale button, .chips button { padding: 10px 0; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); font-size: 14px; }
+.scale button b { display: block; font-size: 18px; }
+.scale button.on, .chips button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.chips button { padding: 8px 12px; }
+.habit { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); width: 100%; text-align: left; }
+.habit:first-of-type { border-top: 0; }
+.tick { width: 24px; height: 24px; flex: none; border-radius: 7px; border: 2px solid var(--line); display: grid; place-items: center; font-size: 14px; color: transparent; }
+.habit.on .tick { background: var(--good); border-color: var(--good); color: var(--card); }
+
+/* game list */
+.game { display: flex; gap: 12px; align-items: center; width: 100%; text-align: left; }
+.glyph { width: 46px; height: 46px; flex: none; border-radius: 12px; background: var(--soft); color: var(--accent); display: grid; place-items: center; font-size: 22px; }
+.game .lv { margin-left: auto; font-size: 13px; color: var(--dim); white-space: nowrap; }
+.done-dot { color: var(--good); }
+
+/* bottom tabs */
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line); display: flex; justify-content: center; padding-bottom: env(safe-area-inset-bottom); z-index: 5; }
+.tabs button { flex: 1; max-width: 130px; padding: 10px 0 12px; font-size: 12px; color: var(--dim); }
+.tabs button span { display: block; font-size: 20px; line-height: 1.2; }
+.tabs button.on { color: var(--accent); font-weight: 600; }
+
+/* play screen */
+.hud { display: flex; align-items: center; gap: 12px; }
+.hud .x { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); font-size: 16px; }
+.bar { flex: 1; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 100%; background: var(--accent); transform-origin: left; }
+.stage { margin-top: 18px; min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; text-align: center; user-select: none; -webkit-user-select: none; }
+.prompt { font-size: 14px; color: var(--dim); min-height: 21px; }
+.big { font-size: 84px; line-height: 1; font-weight: 700; min-height: 90px; font-variant-numeric: tabular-nums; }
+.pad { display: grid; gap: 8px; width: 100%; max-width: 340px; }
+.pad button { padding: 16px 0; border-radius: 12px; background: var(--card); border: 1px solid var(--line); font-size: 20px; font-weight: 600; }
+.pad button:active { background: var(--soft); }
+.flash-good { animation: fg .35s; } .flash-bad { animation: fb .35s; }
+@keyframes fg { 0% { box-shadow: 0 0 0 4px var(--good); } 100% { box-shadow: 0 0 0 4px transparent; } }
+@keyframes fb { 0% { box-shadow: 0 0 0 4px var(--bad); } 100% { box-shadow: 0 0 0 4px transparent; } }
+.keyrow { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
+.keyrow div { width: 34px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); font-size: 18px; padding: 2px 0; }
+.keyrow div b { display: block; border-top: 1px solid var(--line); font-size: 15px; }
+.tap { width: 100%; max-width: 340px; padding: 26px 0; border-radius: 16px; background: var(--accent); color: var(--accent-ink); font-size: 20px; font-weight: 700; letter-spacing: .06em; }
+.trail { position: relative; width: 100%; max-width: 340px; }
+.node { position: absolute; width: 42px; height: 42px; margin: -21px 0 0 -21px; border-radius: 50%; border: 2px solid var(--line); background: var(--card); font-weight: 700; font-size: 16px; }
+.node.hit { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.grid { display: grid; gap: 6px; width: 100%; max-width: 320px; }
+.grid button { aspect-ratio: 1; border-radius: 10px; background: var(--card); border: 1px solid var(--line); }
+.grid button.lit { background: var(--accent); border-color: var(--accent); }
+.grid button.miss { background: var(--bad); border-color: var(--bad); }
+.arena { position: relative; width: 300px; height: 300px; border-radius: 50%; border: 1px dashed var(--line); }
+.arena > * { position: absolute; width: 48px; height: 48px; margin: -24px 0 0 -24px; display: grid; place-items: center; font-size: 28px; border-radius: 50%; }
+.arena button { border: 2px solid var(--line); background: var(--card); }
+.breath { width: 120px; height: 120px; border-radius: 50%; background: var(--soft); border: 2px solid var(--accent); transition: transform 4s ease-in-out; }
+.ink-btn { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.ink-btn i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+
+/* result + progress */
+.score { font-size: 56px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; text-align: center; }
+.stats div { background: var(--bg); border-radius: 10px; padding: 10px 4px; font-size: 12px; color: var(--dim); }
+.stats b { display: block; font-size: 20px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.days { display: flex; align-items: flex-end; gap: 4px; height: 90px; margin-top: 12px; }
+.days div { flex: 1; text-align: center; font-size: 10px; color: var(--dim); }
+.days i { display: block; background: var(--accent); border-radius: 3px 3px 0 0; min-height: 2px; }
+.days .none i { background: var(--line); }
+.spark { width: 84px; height: 30px; margin-left: auto; flex: none; }
+.spark polyline { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.prose p { margin-top: 10px; } .prose ul { margin: 8px 0 0; padding-left: 20px; } .prose li { margin-top: 6px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<nav class="tabs" id="tabs"></nav>
+<script>
+'use strict';
+const KEY = 'clearmind.v1';
+const MAXLV = 12;
+const $ = (s, r = document) => r.querySelector(s);
+const rnd = n => Math.floor(Math.random() * n);
+const pick = a => a[rnd(a.length)];
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const pct = x => Math.round(x * 100) + '%';
+const dstr = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const today = () => dstr(new Date());
+const dayNum = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 864e5);
+
+/* ---------- state ---------- */
+let S = { lv: {}, hist: [], days: {} };
+try { S = Object.assign(S, JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+const day = () => S.days[today()] || (S.days[today()] = { habits: {}, played: [] });
+const level = id => S.lv[id] || 1;
+function streak() {
+    let n = 0; const d = new Date();
+    if (!(S.days[dstr(d)] || {}).played?.length) d.setDate(d.getDate() - 1);
+    while ((S.days[dstr(d)] || {}).played?.length) { n++; d.setDate(d.getDate() - 1); }
+    return n;
+}
+
+/* ---------- games ----------
+   ctx: { el, lvl, after(ms, fn), countdown(sec, fn), progress(frac), finish({acc, move, stats}) }
+   acc is 0..1, move is -1/0/1 (level change), stats is [[label, value], ...]. */
+const INKS = [['RED', '#d64545'], ['BLUE', '#3b7dd8'], ['GREEN', '#2f9e5b'], ['GOLD', '#d9a400']];
+const GAMES = {
+    symbol: {
+        name: 'Symbol Key', glyph: '◆', domain: 'Processing speed', mins: 0.75,
+        how: 'Each symbol has a number in the key at the top. A symbol appears: tap its number as fast as you can for 45 seconds.',
+        run(c) {
+            const n = Math.min(9, 3 + c.lvl);
+            let syms = shuffle('◆▲●■★✚☾♥⬟'.split('')).slice(0, n), cur, ok = 0, tot = 0;
+            c.el.innerHTML = `<div class="keyrow"></div><div class="big"></div><div class="pad" style="grid-template-columns:repeat(${n > 6 ? 5 : n > 4 ? 3 : n},1fr)">${syms.map((_, i) => `<button data-n="${i}">${i + 1}</button>`).join('')}</div>`;
+            const key = () => { $('.keyrow', c.el).innerHTML = syms.map((s, i) => `<div>${s}<b>${i + 1}</b></div>`).join(''); };
+            const next = () => { let p; do p = rnd(n); while (p === cur && n > 1); cur = p; $('.big', c.el).textContent = syms[cur]; };
+            key(); next();
+            $('.pad', c.el).onclick = e => {
+                const b = e.target.closest('button'); if (!b) return;
+                tot++; const good = +b.dataset.n === cur; if (good) ok++;
+                flash($('.big', c.el), good);
+                // higher levels reshuffle the key so it can't simply be memorised
+                if (c.lvl >= 6 && tot % 8 === 0) { syms = shuffle(syms); cur = -1; key(); }
+                next();
+            };
+            c.countdown(45, () => {
+                const acc = tot ? ok / tot : 0;
+                c.finish({ acc, move: ok >= 20 && acc >= .9 ? 1 : (ok < 10 || acc < .7) ? -1 : 0, stats: [['Correct', ok], ['Accuracy', pct(acc)], ['Per answer', tot ? (45 / tot).toFixed(1) + 's' : '–']] });
+            });
+        }
+    },
+    flash: {
+        name: 'Flash Focus', glyph: '✦', domain: 'Visual speed & divided attention', mins: 1,
+        how: 'Keep your eyes on the centre. A shape flashes in the middle while a star flashes on the ring. Then say which shape you saw, and where the star was. The flash gets shorter as you improve.',
+        run(c) {
+            const ms = Math.max(70, Math.round(600 * Math.pow(.8, c.lvl - 1))), N = 8;
+            let t = 0, ok = 0;
+            const pos = i => { const a = i * Math.PI / 4; return `left:${150 + 122 * Math.sin(a)}px;top:${150 - 122 * Math.cos(a)}px`; };
+            c.el.innerHTML = '<div class="prompt"></div><div class="arena"></div><div class="pad" style="grid-template-columns:1fr 1fr;visibility:hidden"><button data-s="▲">▲</button><button data-s="■">■</button></div>';
+            const arena = $('.arena', c.el), prompt = $('.prompt', c.el), pad = $('.pad', c.el);
+            const ring = f => [...Array(8)].map((_, i) => f(i)).join('');
+            const trial = () => {
+                if (t === N) { const acc = ok / N; return c.finish({ acc, move: acc >= .75 ? 1 : acc < .5 ? -1 : 0, stats: [['Both right', ok + '/' + N], ['Flash', ms + 'ms'], ['Accuracy', pct(acc)]] }); }
+                c.progress(1 - t / N); t++;
+                const shape = pick(['▲', '■']), star = rnd(8);
+                prompt.textContent = 'Watch the centre'; pad.style.visibility = 'hidden';
+                arena.innerHTML = '<div style="left:150px;top:150px">+</div>';
+                c.after(800, () => {
+                    arena.innerHTML = `<div style="left:150px;top:150px">${shape}</div>` + ring(i => i === star ? `<div style="${pos(i)}">★</div>` : c.lvl >= 4 ? `<div style="${pos(i)}" class="dim">◇</div>` : '');
+                    c.after(ms, () => {
+                        arena.innerHTML = '<div style="left:150px;top:150px">▒</div>' + ring(i => `<div style="${pos(i)}">▒</div>`);
+                        c.after(250, () => {
+                            arena.innerHTML = ''; prompt.textContent = 'Which shape was in the centre?'; pad.style.visibility = 'visible';
+                            pad.onclick = e => {
+                                const b = e.target.closest('button'); if (!b) return;
+                                const shapeOk = b.dataset.s === shape;
+                                pad.style.visibility = 'hidden'; prompt.textContent = 'Where was the star?';
+                                arena.innerHTML = ring(i => `<button data-i="${i}" style="${pos(i)}" aria-label="position ${i + 1}"></button>`);
+                                arena.onclick = e2 => {
+                                    const p = e2.target.closest('button'); if (!p) return;
+                                    arena.onclick = null;
+                                    const good = shapeOk && +p.dataset.i === star; if (good) ok++;
+                                    arena.querySelector(`[data-i="${star}"]`).textContent = '★';
+                                    flash(arena, good); c.after(600, trial);
+                                };
+                            };
+                        });
+                    });
+                });
+            };
+            trial();
+        }
+    },
+    nback: {
+        name: 'Echo', glyph: '↺', domain: 'Working memory',  mins: 1,
+        how: lvl => `Letters appear one at a time. Tap MATCH when the letter is the same as the one <b>${nOf(lvl)} step${nOf(lvl) > 1 ? 's' : ''} back</b>. Otherwise do nothing.`,
+        run(c) {
+            const n = nOf(c.lvl), gap = Math.max(1700, 2700 - c.lvl * 90), L = 20 + n, abc = 'BCDFGHKLMNPQRST';
+            let seq, m;
+            do { // rebuild until there are enough real matches to judge
+                seq = []; m = 0;
+                for (let i = 0; i < L; i++) {
+                    if (i >= n && Math.random() < .33) { seq.push(seq[i - n]); m++; }
+                    else { let ch; do ch = pick(abc); while (i >= n && ch === seq[i - n]); seq.push(ch); }
+                }
+            } while (m < 5);
+            let i = -1, pressed = false, hits = 0, miss = 0, fa = 0;
+            c.el.innerHTML = `<div class="prompt">Match = same as ${n} back</div><div class="big"></div><button class="tap">MATCH</button>`;
+            const big = $('.big', c.el), tap = $('.tap', c.el);
+            const isMatch = () => i >= n && seq[i] === seq[i - n];
+            tap.onclick = () => { if (pressed || i < 0) return; pressed = true; const good = isMatch(); good ? hits++ : fa++; flash(tap, good); };
+            const step = () => {
+                if (i >= 0 && !pressed && isMatch()) miss++;
+                i++; pressed = false;
+                if (i === L) { const d = hits + miss + fa, acc = d ? hits / d : 1; return c.finish({ acc, move: acc >= .8 ? 1 : acc < .5 ? -1 : 0, stats: [['Caught', hits + '/' + m], ['False taps', fa], ['Accuracy', pct(acc)]] }); }
+                c.progress(1 - i / L); big.textContent = seq[i];
+                c.after(gap - 350, () => { big.textContent = ''; }); c.after(gap, step);
+            };
+            c.after(600, step);
+        }
+    },
+    grid: {
+        name: 'Afterimage', glyph: '▦', domain: 'Visual memory', mins: 1,
+        how: 'Some tiles light up briefly. When they fade, tap every tile that was lit. Five rounds.',
+        run(c) {
+            const size = Math.min(6, 3 + Math.floor(c.lvl / 3)), k = Math.min(size * size - 3, 2 + c.lvl), R = 5;
+            let r = 0, perfect = 0, found = 0;
+            c.el.innerHTML = `<div class="prompt"></div><div class="grid" style="grid-template-columns:repeat(${size},1fr)">${[...Array(size * size)].map((_, i) => `<button data-i="${i}" aria-label="tile"></button>`).join('')}</div>`;
+            const grid = $('.grid', c.el), prompt = $('.prompt', c.el), tiles = [...grid.children];
+            const round = () => {
+                if (r === R) { const acc = found / (R * k); return c.finish({ acc, move: perfect >= 4 ? 1 : perfect <= 1 ? -1 : 0, stats: [['Perfect rounds', perfect + '/' + R], ['Tiles', k], ['Tiles recalled', pct(acc)]] }); }
+                c.progress(1 - r / R); r++;
+                const set = new Set(shuffle(tiles.map((_, i) => i)).slice(0, k)); let got = 0, open = false;
+                tiles.forEach((t, i) => { t.className = set.has(i) ? 'lit' : ''; });
+                prompt.textContent = 'Memorise';
+                c.after(1100 + k * 160, () => { tiles.forEach(t => t.className = ''); prompt.textContent = `Tap the ${k} tiles`; open = true; });
+                grid.onclick = e => {
+                    const b = e.target.closest('button'); if (!b || !open || b.className) return;
+                    const i = +b.dataset.i;
+                    if (set.has(i)) { b.className = 'lit'; got++; found++; if (got === k) { open = false; perfect++; flash(grid, true); c.after(700, round); } }
+                    else { open = false; b.className = 'miss'; set.forEach(j => tiles[j].className = 'lit'); c.after(1300, round); }
+                };
+            };
+            round();
+        }
+    },
+    stroop: {
+        name: 'Ink', glyph: '◐', domain: 'Inhibition & mental flexibility', mins: 0.75,
+        how: lvl => 'A colour word appears printed in a coloured ink. Tap the colour of the <b>ink</b>, not what the word says.' + (lvl >= 5 ? ' Sometimes the rule flips to <b>MEANING</b>: then tap what the word says.' : ''),
+        run(c) {
+            const limit = Math.max(1300, 3200 - 200 * c.lvl), clash = Math.min(.85, .4 + .06 * c.lvl);
+            let ans, ok = 0, tot = 0, timer = null, over = false;
+            c.el.innerHTML = `<div class="prompt"></div><div class="big" style="font-size:56px"></div><div class="pad" style="grid-template-columns:1fr 1fr">${INKS.map((k, i) => `<button class="ink-btn" data-i="${i}"><i style="background:${k[1]}"></i>${k[0]}</button>`).join('')}</div>`;
+            const big = $('.big', c.el), prompt = $('.prompt', c.el);
+            const next = () => {
+                if (over) return;
+                const w = rnd(4), ink = Math.random() < clash ? pick([0, 1, 2, 3].filter(x => x !== w)) : w;
+                const meaning = c.lvl >= 5 && Math.random() < .3;
+                ans = meaning ? w : ink;
+                prompt.innerHTML = meaning ? 'Tap the <b>MEANING</b>' : 'Tap the <b>INK</b>';
+                big.textContent = INKS[w][0]; big.style.color = INKS[ink][1];
+                timer = c.after(limit, () => answer(-1));
+            };
+            const answer = i => { clearTimeout(timer); tot++; const good = i === ans; if (good) ok++; flash(big, good); next(); };
+            $('.pad', c.el).onclick = e => { const b = e.target.closest('button'); if (b) answer(+b.dataset.i); };
+            next();
+            c.countdown(40, () => {
+                over = true; const acc = tot ? ok / tot : 0;
+                c.finish({ acc, move: acc >= .9 && ok >= 14 ? 1 : acc < .65 ? -1 : 0, stats: [['Correct', ok], ['Accuracy', pct(acc)], ['Time limit', (limit / 1000).toFixed(1) + 's']] });
+            });
+        }
+    },
+    trail: {
+        name: 'Trail', glyph: '⤳', domain: 'Attention switching', mins: 0.75,
+        how: lvl => lvl >= 3 ? 'Tap the circles in order, alternating numbers and letters: <b>1 → A → 2 → B → 3 → C</b>… as quickly as you can.' : 'Tap the numbered circles in order, <b>1 → 2 → 3</b>… as quickly as you can.',
+        run(c) {
+            const N = Math.min(20, 6 + 2 * c.lvl), alt = c.lvl >= 3, cols = 5, rows = Math.ceil(N * 1.4 / cols);
+            const labels = [...Array(N)].map((_, i) => alt ? (i % 2 ? String.fromCharCode(65 + (i >> 1)) : (i >> 1) + 1) : i + 1);
+            const cells = shuffle([...Array(cols * rows)].map((_, i) => i)).slice(0, N);
+            c.el.innerHTML = `<div class="prompt">Next: <b>${labels[0]}</b></div><div class="trail" style="height:${rows * 62}px">${cells.map((cell, i) => `<button class="node" data-i="${i}" style="left:${((cell % cols) + .5 + (Math.random() - .5) * .3) * 20}%;top:${(Math.floor(cell / cols) + .5 + (Math.random() - .5) * .3) * 62}px">${labels[i]}</button>`).join('')}</div>`;
+            let at = 0, errs = 0; const t0 = performance.now();
+            $('.trail', c.el).onclick = e => {
+                const b = e.target.closest('.node'); if (!b || b.classList.contains('hit')) return;
+                if (+b.dataset.i !== at) { errs++; return flash(b, false); }
+                b.classList.add('hit'); at++; c.progress(1 - at / N);
+                if (at < N) return $('.prompt b', c.el).textContent = labels[at];
+                const per = (performance.now() - t0) / 1000 / N, fast = alt ? 2 : 1.6;
+                const acc = N / (N + errs);
+                c.after(400, () => c.finish({ acc, move: errs <= 1 && per < fast ? 1 : (errs > 4 || per > 4) ? -1 : 0, stats: [['Time', (per * N).toFixed(1) + 's'], ['Per step', per.toFixed(2) + 's'], ['Slips', errs]] }));
+            };
+        }
+    },
+    steady: {
+        name: 'Steady', glyph: '◉', domain: 'Sustained attention', mins: 0.75,
+        how: 'Numbers appear in a steady rhythm. Tap for <b>every number except 3</b>. When you see a 3, hold still.',
+        run(c) {
+            const gap = Math.max(600, 1200 - c.lvl * 55), L = 36;
+            const seq = shuffle([...Array(L)].map((_, i) => i < 7 ? 3 : pick([1, 2, 4, 5, 6, 7, 8, 9])));
+            let i = -1, pressed = false, goOk = 0, stopOk = 0;
+            c.el.innerHTML = '<div class="prompt">Tap for everything except 3</div><div class="big"></div><button class="tap">TAP</button>';
+            const big = $('.big', c.el), tap = $('.tap', c.el);
+            tap.onclick = () => { if (pressed || i < 0) return; pressed = true; if (seq[i] === 3) flash(tap, false); };
+            const step = () => {
+                if (i >= 0) { if (seq[i] === 3) { if (!pressed) stopOk++; } else if (pressed) goOk++; }
+                i++; pressed = false;
+                if (i === L) {
+                    const hold = stopOk / 7, go = goOk / (L - 7), acc = (hold + go) / 2;
+                    return c.finish({ acc, move: hold >= .8 && go >= .9 ? 1 : acc < .65 ? -1 : 0, stats: [['Held on 3', stopOk + '/7'], ['Taps made', pct(go)], ['Pace', (gap / 1000).toFixed(2) + 's']] });
+                }
+                c.progress(1 - i / L); big.textContent = seq[i];
+                c.after(gap * .65, () => { big.textContent = ''; }); c.after(gap, step);
+            };
+            c.after(600, step);
+        }
+    },
+    breathe: {
+        name: 'Slow Breath', glyph: '○', domain: 'Reset', mins: 1, unscored: true,
+        how: 'One minute of slow breathing: in for 4 seconds, out for 6. Nothing to score. It simply settles the system before you think.',
+        run(c) {
+            c.el.innerHTML = '<div class="prompt"></div><div class="breath"></div>';
+            const orb = $('.breath', c.el), prompt = $('.prompt', c.el);
+            const cycle = () => {
+                prompt.textContent = 'Breathe in'; orb.style.transitionDuration = '4s'; orb.style.transform = 'scale(1.7)';
+                c.after(4000, () => { prompt.textContent = 'Breathe out'; orb.style.transitionDuration = '6s'; orb.style.transform = 'scale(1)'; });
+                c.after(10000, cycle);
+            };
+            c.after(50, cycle);
+            c.countdown(60, () => c.finish({}));
+        }
+    }
+};
+function nOf(lvl) { return lvl >= 7 ? 3 : lvl >= 3 ? 2 : 1; }
+function flash(el, good) { el.classList.remove('flash-good', 'flash-bad'); void el.offsetWidth; el.classList.add(good ? 'flash-good' : 'flash-bad'); }
+
+/* Today's three: one speed, one memory, one control game, rotating daily. */
+function dailySet() {
+    const d = dayNum();
+    return [['symbol', 'flash'][d % 2], ['nback', 'grid'][d % 2], ['stroop', 'trail', 'steady'][d % 3]];
+}
+
+/* ---------- runner ---------- */
+let timers = [], queue = [], gentle = false, tab = 'today';
+const clearTimers = () => { timers.forEach(t => { clearTimeout(t); cancelAnimationFrame(t); }); timers = []; };
+const app = $('#app'), tabsEl = $('#tabs');
+
+function startSession(ids, isGentle) { queue = ids.slice(); gentle = !!isGentle; nextInQueue(); }
+function nextInQueue() { queue.length ? intro(queue.shift()) : (gentle = false, go('today')); }
+
+function intro(id) {
+    const g = GAMES[id], lvl = g.unscored ? 0 : Math.max(1, level(id) - (gentle ? 1 : 0));
+    clearTimers(); app.onclick = null; tabsEl.style.display = 'none'; window.scrollTo(0, 0);
+    app.innerHTML = `<div class="hud"><button class="x" aria-label="Quit">✕</button><span class="eyebrow">${g.domain}</span></div>
+        <div class="card" style="margin-top:24px;text-align:center;padding:28px 18px">
+            <div class="glyph" style="margin:0 auto 12px">${g.glyph}</div>
+            <h1>${g.name}</h1>
+            ${lvl ? `<p class="dim small" style="margin-top:4px">Level ${lvl}${gentle ? ' · gentle' : ''}</p>` : ''}
+            <p style="margin:16px 0 22px">${typeof g.how === 'function' ? g.how(lvl) : g.how}</p>
+            <button class="btn" id="startBtn">Start</button>
+        </div>`;
+    $('.x').onclick = quit;
+    $('#startBtn').onclick = () => runGame(id, lvl);
+}
+function quit() { clearTimers(); queue = []; gentle = false; go(tab); }
+
+function runGame(id, lvl) {
+    const g = GAMES[id];
+    app.innerHTML = `<div class="hud"><button class="x" aria-label="Quit">✕</button><div class="bar"><i></i></div></div><div class="stage"></div>`;
+    $('.x').onclick = quit;
+    const bar = $('.bar i');
+    const ctx = {
+        el: $('.stage'), lvl,
+        after(ms, fn) { const t = setTimeout(fn, ms); timers.push(t); return t; },
+        progress(f) { bar.style.transform = `scaleX(${clamp(f, 0, 1)})`; },
+        countdown(sec, fn) {
+            const end = performance.now() + sec * 1000;
+            const tick = () => { const left = end - performance.now(); ctx.progress(left / (sec * 1000)); if (left <= 0) return fn(); timers.push(requestAnimationFrame(tick)); };
+            tick();
+        },
+        finish(res) { clearTimers(); result(id, lvl, res); }
+    };
+    g.run(ctx);
+}
+
+function result(id, lvl, res) {
+    const g = GAMES[id], d = day();
+    if (!d.played.includes(id)) d.played.push(id);
+    let body;
+    if (g.unscored) body = `<h1>Nicely done</h1><p class="dim" style="margin-top:8px">A minute of slow breathing, banked.</p>`;
+    else {
+        const pts = Math.round(lvl * 100 * res.acc);
+        const prev = S.hist.filter(h => h.g === id).map(h => h.pts), best = Math.max(0, ...prev);
+        S.hist.push({ d: today(), g: id, lvl, acc: +res.acc.toFixed(3), pts });
+        if (S.hist.length > 2000) S.hist.splice(0, S.hist.length - 2000);
+        // gentle sessions never cost you a level
+        const move = gentle ? 0 : res.move, to = clamp(level(id) + move, 1, MAXLV);
+        S.lv[id] = to;
+        const note = gentle ? 'Gentle session: your level is untouched.' : move > 0 && to > lvl ? `Level up. Next time: level ${to}.` : move < 0 && to < lvl ? `Easing back to level ${to}. The right level is the one you can just manage.` : `Staying at level ${to}.`;
+        body = `<p class="eyebrow">${g.name} · level ${lvl}</p><div class="score" style="margin-top:10px">${pts}</div>
+            <p class="dim small">${pts > best && prev.length ? 'New personal best' : best ? 'Best ' + best : 'First score recorded'}</p>
+            <div class="stats">${res.stats.map(s => `<div><b>${s[1]}</b>${s[0]}</div>`).join('')}</div>
+            <p class="small" style="margin-top:14px">${note}</p>`;
+    }
+    save();
+    app.innerHTML = `<div class="card" style="margin-top:40px;text-align:center;padding:28px 18px">${body}</div>
+        <button class="btn" id="nx" style="margin-top:16px">${queue.length ? 'Next: ' + GAMES[queue[0]].name : 'Done'}</button>
+        ${g.unscored ? '' : '<button class="btn ghost" id="again" style="margin-top:10px">Play again</button>'}`;
+    $('#nx').onclick = nextInQueue;
+    if ($('#again')) $('#again').onclick = () => intro(id);
+}
+
+/* ---------- screens ---------- */
+const HABITS = [['sleep', 'Slept 7+ hours', 'Sleep loss is the most common cause of foggy thinking.'], ['move', 'Moved for 20 minutes', 'A brisk walk measurably sharpens attention for the next hour or two.'], ['water', 'Drank enough water', 'Even mild dehydration slows reaction time.'], ['light', 'Daylight before noon', 'Morning light steadies the body clock and alertness.'], ['meal', 'Ate a proper meal', 'Skipped meals and sugar swings both cloud concentration.']];
+const CLARITY = ['Thick fog', 'Hazy', 'Okay', 'Clear', 'Sharp'];
+
+function go(t) {
+    tab = t; clearTimers(); app.onclick = null; window.scrollTo(0, 0);
+    tabsEl.style.display = '';
+    tabsEl.innerHTML = [['today', '☀', 'Today'], ['games', '▦', 'Games'], ['progress', '↗', 'Progress'], ['science', '✎', 'Science']].map(x => `<button data-t="${x[0]}" class="${x[0] === t ? 'on' : ''}"><span>${x[1]}</span>${x[2]}</button>`).join('');
+    ({ today: viewToday, games: viewGames, progress: viewProgress, science: viewScience })[t]();
+}
+tabsEl.onclick = e => { const b = e.target.closest('button'); if (b) go(b.dataset.t); };
+
+function gameRow(id) {
+    const g = GAMES[id], done = day().played.includes(id);
+    return `<button class="game" data-play="${id}"><span class="glyph">${g.glyph}</span><span><b>${g.name}</b><br><span class="dim small">${g.domain}</span></span><span class="lv">${done ? '<span class="done-dot">✓</span> ' : ''}${g.unscored ? '1 min' : 'Lv ' + level(id)}</span></button>`;
+}
+
+function viewToday() {
+    const d = day(), set = dailySet(), left = set.filter(id => !d.played.includes(id)), foggy = d.clarity && d.clarity <= 2;
+    const fog = d.clarity ? (5 - d.clarity) * 20 + 5 : 55;
+    app.innerHTML = `<a class="home-link" href="../">‹ Life Game</a>
+        <div class="hero"><div class="sun" style="--fog:${fog}%"></div><div><p class="eyebrow">${new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' })}</p><h1>Clear Mind</h1></div>
+            <div class="streak"><b>${streak()}</b><span class="dim small">day streak</span></div></div>
+        <div class="card"><h3>How clear is your head right now?</h3>
+            <div class="scale">${CLARITY.map((c, i) => `<button data-c="${i + 1}" class="${d.clarity === i + 1 ? 'on' : ''}"><b>${i + 1}</b>${c}</button>`).join('')}</div>
+            <p class="small dim" style="margin-top:12px">Hours slept last night</p>
+            <div class="chips">${[4, 5, 6, 7, 8, 9].map(h => `<button data-s="${h}" class="${d.sleep === h ? 'on' : ''}">${h === 4 ? '≤4' : h === 9 ? '9+' : h}</button>`).join('')}</div>
+        </div>
+        <div class="card"><div class="row between"><h3>Today's session</h3><span class="dim small">about ${foggy ? 4 : 3} min</span></div>
+            <p class="small dim" style="margin:6px 0 12px">${foggy ? 'Foggy day, so this is a gentle session: a minute of slow breathing first, then easier levels. Pushing through fog tends to make it worse.' : 'Three short drills: one for speed, one for memory, one for control. Short and daily beats long and rare.'}</p>
+            <div style="display:grid;gap:12px;margin-bottom:14px">${(foggy ? ['breathe'] : []).concat(set).map(gameRow).join('')}</div>
+            <button class="btn" id="go">${left.length === 0 ? 'Session complete · play again' : left.length < 3 ? 'Continue session' : 'Start session'}</button>
+        </div>
+        <div class="card"><h3>What actually lifts fog</h3><p class="small dim" style="margin:4px 0 6px">These matter more than any game. Tick what you've done today.</p>
+            ${HABITS.map(h => `<button class="habit ${d.habits[h[0]] ? 'on' : ''}" data-h="${h[0]}"><span class="tick">✓</span><span><b>${h[1]}</b><br><span class="dim small">${h[2]}</span></span></button>`).join('')}
+        </div>`;
+    app.onclick = e => {
+        const b = e.target.closest('button'); if (!b) return;
+        if (b.dataset.c) { d.clarity = +b.dataset.c; save(); viewToday(); }
+        else if (b.dataset.s) { d.sleep = +b.dataset.s; if (d.sleep >= 7) d.habits.sleep = true; save(); viewToday(); }
+        else if (b.dataset.h) { d.habits[b.dataset.h] = !d.habits[b.dataset.h]; save(); viewToday(); }
+        else if (b.dataset.play) startSession([b.dataset.play], foggy);
+        else if (b.id === 'go') startSession((foggy && !d.played.includes('breathe') ? ['breathe'] : []).concat(left.length ? left : set), foggy);
+    };
+}
+
+function viewGames() {
+    app.innerHTML = `<h1>All games</h1><p class="dim small" style="margin-top:6px">Each one adapts: it gets harder when you do well and eases off when you don't.</p>
+        ${Object.keys(GAMES).map(id => `<div class="card">${gameRow(id)}</div>`).join('')}`;
+    app.onclick = e => { const b = e.target.closest('[data-play]'); if (b) startSession([b.dataset.play]); };
+}
+
+function viewProgress() {
+    const days = [...Array(14)].map((_, i) => { const d = new Date(); d.setDate(d.getDate() - 13 + i); return [d, S.days[dstr(d)] || {}]; });
+    const rated = Object.values(S.days).filter(d => d.clarity);
+    const avg = f => { const a = rated.filter(f); return a.length >= 2 ? (a.reduce((s, d) => s + d.clarity, 0) / a.length).toFixed(1) : null; };
+    const good = avg(d => d.sleep >= 7), poor = avg(d => d.sleep && d.sleep < 7);
+    const active = Object.values(S.days).filter(d => d.played?.length).length;
+    app.innerHTML = `<h1>Progress</h1>
+        <div class="stats"><div><b>${streak()}</b>Day streak</div><div><b>${active}</b>Days trained</div><div><b>${S.hist.length}</b>Drills done</div></div>
+        <div class="card"><h3>Clarity, last 14 days</h3>
+            <div class="days">${days.map(([dt, d]) => `<div class="${d.clarity ? '' : 'none'}" title="${dstr(dt)}">${d.clarity || ''}<i style="height:${(d.clarity || 0) * 13}px"></i>${dt.getDate()}</div>`).join('')}</div>
+            <p class="small dim" style="margin-top:10px">${good && poor ? `On days after 7+ hours of sleep your clarity averages <b>${good}</b>; after less, <b>${poor}</b>.` : 'Rate your clarity and sleep each day and this will show how the two move together for you.'}</p>
+        </div>
+        <div class="card"><h3>Games</h3>${Object.keys(GAMES).filter(id => !GAMES[id].unscored).map(id => {
+            const h = S.hist.filter(x => x.g === id).slice(-12).map(x => x.pts), mx = Math.max(1, ...h);
+            const pts = h.map((v, i) => `${h.length > 1 ? 4 + i * 76 / (h.length - 1) : 42},${27 - v / mx * 23}`).join(' ');
+            return `<div class="row" style="padding:10px 0;border-top:1px solid var(--line)"><span class="glyph" style="width:36px;height:36px;font-size:17px">${GAMES[id].glyph}</span><span><b>${GAMES[id].name}</b><br><span class="dim small">Level ${level(id)}${h.length ? ' · best ' + Math.max(...S.hist.filter(x => x.g === id).map(x => x.pts)) : ' · not played yet'}</span></span>${h.length > 1 ? `<svg class="spark" viewBox="0 0 84 30" role="img" aria-label="recent scores"><polyline points="${pts}"/></svg>` : ''}</div>`;
+        }).join('')}</div>
+        <button class="btn ghost" id="reset" style="margin-top:16px">Reset all data</button>`;
+    app.onclick = e => {
+        if (e.target.id !== 'reset') return;
+        if (confirm('Erase all Clear Mind levels, scores and check-ins on this device?')) { S = { lv: {}, hist: [], days: {} }; save(); viewProgress(); }
+    };
+}
+
+function viewScience() {
+    app.onclick = null;
+    app.innerHTML = `<h1>The honest science</h1>
+        <div class="card prose"><h3>What brain fog is</h3>
+            <p>"Brain fog" isn't a diagnosis. It's a name for a cluster of symptoms: slowed thinking, slippery short-term memory, trouble holding attention, and difficulty planning or switching between tasks. Processing speed is the complaint reported most often.</p>
+            <p>Common drivers are poor sleep, chronic stress, low mood or anxiety, dehydration, inactivity, some medications, hormonal changes, and the aftermath of illness (including long COVID). It can also come from things a blood test finds, such as thyroid problems, anaemia, or low B12 or vitamin D.</p></div>
+        <div class="card prose"><h3>What these games can and can't do</h3>
+            <p>Research on brain-training apps is consistent on one point: people reliably get better at the tasks they practise, but evidence that this spreads to everyday thinking is weak. No game here will cure brain fog, and no app honestly can claim to.</p>
+            <p>So this app is built around what the evidence does support:</p>
+            <ul>
+                <li><b>Targeted drills.</b> Each game exercises one of the abilities fog blunts, using task types borrowed from clinical testing (symbol-digit coding, trail making, n-back, Stroop, go/no-go) and from speed-of-processing training, the best-studied form of cognitive training.</li>
+                <li><b>Adaptive difficulty.</b> Levels move so you're working at the edge of what you can do, which is where practice is useful and not discouraging.</li>
+                <li><b>Short sessions and pacing.</b> About three minutes. On foggy days the session gets gentler, because overexertion makes fog worse, especially after illness.</li>
+                <li><b>Tracking the real levers.</b> The daily check-in exists so you can see how sleep and habits line up with your clear days. Sleep, movement, hydration and stress do far more for fog than any drill.</li>
+            </ul></div>
+        <div class="card prose"><h3>When to see a doctor</h3>
+            <p>If your fog has lasted more than a few weeks, is getting worse, came on suddenly, or comes with other symptoms (heavy fatigue, low mood, headaches, numbness, memory gaps that worry people around you), please see a doctor. Many causes are treatable, and a game is no substitute for finding out which one is yours.</p></div>
+        <div class="card prose small"><h3>Further reading</h3><ul>
+            <li><a href="https://uclh.nhs.uk/patients-and-visitors/patient-information-pages/understanding-and-managing-brain-fog" target="_blank" rel="noopener">NHS (UCLH): Understanding and managing brain fog</a></li>
+            <li><a href="https://www.bps.org.uk/research-digest/brain-training-exercises-just-make-you-better-brain-training-exercises" target="_blank" rel="noopener">British Psychological Society: what brain training does and doesn't improve</a></li>
+            <li><a href="https://www.discovermagazine.com/mind/do-brain-training-apps-really-work" target="_blank" rel="noopener">Discover: Do brain training apps really work?</a></li>
+        </ul></div>`;
+}
+
+go('today');
+</script>
+</body>
+</html>
