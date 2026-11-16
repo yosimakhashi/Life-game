@@ -1,0 +1,10 @@
+{
+  "name": "Duty Planner",
+  "short_name": "Duty",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f6f9",
+  "theme_color": "#3b5ba9",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

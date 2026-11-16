@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#3b5ba9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Duty">
+<title>Duty Planner</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+:root {
+    --bg: #f5f6f9; --panel: #fff; --soft: #eef1f6; --border: #dde2ec;
+    --text: #1f2430; --dim: #667085; --main: #3b5ba9; --main-dark: #2c4685; --main-soft: #e3e9f7;
+    --good: #2e7d32; --good-soft: #e5f3e6; --bad: #c0392b; --bad-soft: #fbe7e4; --warn: #b7791f; --warn-soft: #fbf1df;
+    --shadow: 0 2px 12px rgba(20, 30, 60, 0.07);
+}
+html { font-size: 17px; }
+body {
+    margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+    font-family: 'Noto Sans', system-ui, sans-serif; line-height: 1.4;
+    padding-bottom: calc(90px + env(safe-area-inset-bottom));
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+.wrap { max-width: 560px; margin: 0 auto; padding: 0 16px; }
+
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 0 8px; }
+.topbar h1 { margin: 0; font-size: 1.3rem; }
+.back { color: var(--dim); text-decoration: none; font-size: .9rem; }
+
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 16px; margin: 12px 0; box-shadow: var(--shadow); }
+.card h2 { margin: 0 0 10px; font-size: 1rem; color: var(--dim); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.muted { color: var(--dim); font-size: .88rem; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.spread { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+.btn { border: none; border-radius: 12px; padding: 11px 16px; background: var(--main); color: #fff; font-weight: 600; }
+.btn:active { background: var(--main-dark); }
+.btn.ghost { background: var(--soft); color: var(--text); }
+.btn.good { background: var(--good); }
+.btn.bad { background: var(--bad-soft); color: var(--bad); }
+.btn.sm { padding: 7px 12px; font-size: .88rem; border-radius: 10px; }
+.btn.block { width: 100%; }
+.btn:disabled { opacity: .45; }
+
+/* today hero */
+.hero { border-radius: 20px; padding: 20px; color: #fff; margin: 12px 0; box-shadow: var(--shadow); }
+.hero .label { opacity: .85; font-size: .85rem; }
+.hero .shift { font-size: 2rem; font-weight: 700; margin: 2px 0; }
+.hero .time { font-size: 1.05rem; opacity: .95; }
+.hero .status { margin-top: 10px; background: rgba(255,255,255,.18); border-radius: 12px; padding: 8px 12px; font-size: .92rem; }
+.hero .tag { display: inline-block; background: rgba(255,255,255,.25); border-radius: 999px; padding: 2px 10px; font-size: .78rem; margin-left: 6px; vertical-align: middle; }
+
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.wday { border-radius: 12px; padding: 8px 2px; text-align: center; background: var(--soft); border: 2px solid transparent; }
+.wday.today { border-color: var(--main); }
+.wday .dn { font-size: .7rem; color: var(--dim); }
+.wday .dd { font-weight: 700; }
+.wday .ds { margin-top: 4px; font-size: .78rem; font-weight: 700; border-radius: 8px; padding: 2px 0; color: #fff; }
+
+/* stats */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat { background: var(--soft); border-radius: 12px; padding: 10px; text-align: center; }
+.stat b { display: block; font-size: 1.25rem; }
+.stat span { font-size: .75rem; color: var(--dim); }
+
+/* calendar */
+.monthnav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.monthnav b { font-size: 1.1rem; }
+.monthnav button { border: none; background: var(--soft); width: 40px; height: 40px; border-radius: 12px; font-size: 1.1rem; }
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal .hd { text-align: center; font-size: .72rem; color: var(--dim); padding: 4px 0; }
+.cell { position: relative; aspect-ratio: 1 / 1.15; border-radius: 10px; border: 2px solid transparent; background: var(--soft); padding: 3px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; font-size: .8rem; }
+.cell.empty { background: transparent; }
+.cell.today { border-color: var(--main); }
+.cell.sel { border-color: var(--warn); }
+.cell .n { font-weight: 600; }
+.cell .s { width: 100%; overflow: hidden; text-align: center; border-radius: 7px; color: #fff; font-weight: 700; font-size: .78rem; padding: 2px 0; }
+.cell .mk { position: absolute; top: 1px; right: 3px; font-size: .62rem; }
+.cell .mk2 { position: absolute; top: 1px; left: 3px; font-size: .62rem; color: var(--good); font-weight: 700; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; font-size: .78rem; color: var(--dim); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 4px; vertical-align: -1px; margin-right: 4px; }
+.banner { background: var(--warn-soft); color: var(--warn); border-radius: 12px; padding: 10px 12px; font-weight: 600; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+/* chips */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { border: 2px solid var(--border); background: var(--panel); border-radius: 999px; padding: 6px 12px; font-weight: 600; font-size: .9rem; display: inline-flex; align-items: center; gap: 6px; }
+.chip i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+.chip.on { border-color: var(--main); background: var(--main-soft); }
+
+/* forms */
+label.f { display: block; margin: 10px 0 4px; font-size: .85rem; color: var(--dim); font-weight: 600; }
+input[type=text], input[type=time], input[type=date], input[type=number], select, textarea {
+    width: 100%; border: 2px solid var(--border); border-radius: 12px; padding: 9px 12px; background: var(--panel);
+}
+textarea { min-height: 64px; resize: vertical; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* list */
+.item { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.item:last-child { border-bottom: none; }
+.badge { min-width: 44px; height: 44px; border-radius: 12px; color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.item .grow { flex: 1; min-width: 0; }
+.item .t { font-weight: 600; }
+.ot { color: var(--good); font-weight: 700; font-size: .85rem; }
+.short { color: var(--bad); font-weight: 700; font-size: .85rem; }
+
+.pattern { display: flex; flex-wrap: wrap; gap: 6px; min-height: 44px; padding: 8px; border: 2px dashed var(--border); border-radius: 12px; }
+.pchip { border: none; color: #fff; font-weight: 700; border-radius: 9px; padding: 6px 10px; font-size: .85rem; }
+.pchip small { opacity: .8; font-weight: 400; margin-left: 2px; }
+
+/* bottom tabs */
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; background: var(--panel); border-top: 1px solid var(--border); display: flex; justify-content: center; padding-bottom: env(safe-area-inset-bottom); z-index: 20; }
+.tabs .in { display: flex; max-width: 560px; width: 100%; }
+.tabs button { flex: 1; border: none; background: none; padding: 10px 0 12px; font-size: .75rem; color: var(--dim); font-weight: 600; }
+.tabs button .ic { display: block; font-size: 1.3rem; }
+.tabs button.on { color: var(--main); }
+
+/* sheet */
+.overlay { position: fixed; inset: 0; background: rgba(15, 20, 35, .45); z-index: 40; display: none; align-items: flex-end; justify-content: center; }
+.overlay.open { display: flex; }
+.sheet { background: var(--panel); width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; border-radius: 22px 22px 0 0; padding: 18px 16px calc(20px + env(safe-area-inset-bottom)); }
+.sheet h3 { margin: 0 0 4px; font-size: 1.15rem; }
+.sec { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 12px; }
+.sec > b { display: block; margin-bottom: 8px; }
+
+.toast { position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: #1f2430; color: #fff; padding: 10px 18px; border-radius: 999px; font-size: .9rem; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 60; white-space: nowrap; }
+.toast.show { opacity: 1; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <div class="topbar">
+        <h1>🗓 Duty Planner</h1>
+        <a class="back" href="../">← Home</a>
+    </div>
+
+    <!-- TODAY -->
+    <section id="v-today"></section>
+    <!-- CALENDAR -->
+    <section id="v-cal" class="hidden"></section>
+    <!-- LOG -->
+    <section id="v-log" class="hidden"></section>
+    <!-- SETUP -->
+    <section id="v-setup" class="hidden"></section>
+</div>
+
+<nav class="tabs"><div class="in">
+    <button data-tab="today" class="on"><span class="ic">🏠</span>Today</button>
+    <button data-tab="cal"><span class="ic">📅</span>Plan</button>
+    <button data-tab="log"><span class="ic">📒</span>Log</button>
+    <button data-tab="setup"><span class="ic">⚙️</span>Setup</button>
+</div></nav>
+
+<div class="overlay" id="overlay"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const STORE = 'duty.v1';
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const COLORS = ['#e08a1e', '#3b7dd8', '#5b3fa8', '#2f8f6b', '#c0392b', '#d4a017', '#8a94a6', '#c2185b', '#00838f', '#6d4c41'];
+
+/* ---------- storage ---------- */
+function defaults() {
+    return {
+        shifts: [
+            { id: 'M', name: 'Morning', short: 'M', start: '06:00', end: '14:00', color: '#e08a1e', work: true },
+            { id: 'E', name: 'Evening', short: 'E', start: '14:00', end: '22:00', color: '#3b7dd8', work: true },
+            { id: 'N', name: 'Night',   short: 'N', start: '22:00', end: '06:00', color: '#5b3fa8', work: true },
+            { id: 'G', name: 'General', short: 'G', start: '09:00', end: '17:00', color: '#2f8f6b', work: true },
+            { id: 'O', name: 'Off',     short: 'OFF', start: '', end: '', color: '#8a94a6', work: false },
+            { id: 'L', name: 'Leave',   short: 'L', start: '', end: '', color: '#c0392b', work: false },
+        ],
+        pattern: { start: ymd(new Date()), cycle: ['M', 'M', 'E', 'E', 'N', 'N', 'O', 'O'] },
+        overrides: {},   // date -> { shift, kind: 'change'|'swap'|'leave', note }
+        logs: {},        // date -> { status: 'done'|'absent'|'leave', in, out, note }
+    };
+}
+let S;
+function load() {
+    try { S = JSON.parse(localStorage.getItem(STORE)); } catch (e) { S = null; }
+    if (!S || !Array.isArray(S.shifts)) S = defaults();
+    S.overrides = S.overrides || {}; S.logs = S.logs || {};
+    S.pattern = S.pattern || { start: ymd(new Date()), cycle: [] };
+}
+function save() { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) { toast('⚠ Could not save'); } }
+
+/* ---------- date helpers ---------- */
+function pad(n) { return String(n).padStart(2, '0'); }
+function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function parse(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+function addDays(s, n) { const d = parse(s); d.setDate(d.getDate() + n); return ymd(d); }
+function dayDiff(a, b) { const A = parse(a), B = parse(b); return Math.round((Date.UTC(B.getFullYear(), B.getMonth(), B.getDate()) - Date.UTC(A.getFullYear(), A.getMonth(), A.getDate())) / 864e5); }
+function pretty(s) { const d = parse(s); return DAYS[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS[d.getMonth()].slice(0, 3) + ' ' + d.getFullYear(); }
+function toMin(t) { if (!t) return null; const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+function span(a, b) { const x = toMin(a), y = toMin(b); if (x == null || y == null) return 0; let d = y - x; if (d <= 0) d += 1440; return d; }
+function hm(min) { const neg = min < 0; min = Math.abs(Math.round(min)); const h = Math.floor(min / 60), m = min % 60; return (neg ? '-' : '') + h + 'h' + (m ? ' ' + pad(m) + 'm' : ''); }
+function t12(t) { if (!t) return ''; let [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return h + ':' + pad(m) + ' ' + ap; }
+function nowHM() { const d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+/* ---------- duty logic ---------- */
+function shiftById(id) { return S.shifts.find(s => s.id === id) || null; }
+function planned(date) {
+    const c = S.pattern.cycle;
+    if (!c.length || !S.pattern.start) return null;
+    const i = ((dayDiff(S.pattern.start, date) % c.length) + c.length) % c.length;
+    return c[i];
+}
+function effective(date) { const o = S.overrides[date]; return o ? o.shift : planned(date); }
+function shiftHours(sh) { return sh && sh.work ? span(sh.start, sh.end) : 0; }
+function loggedMinutes(l) { return l && l.status === 'done' ? span(l.in, l.out) : 0; }
+
+function monthStats(y, m) {
+    const st = { duty: 0, off: 0, leave: 0, night: 0, plannedMin: 0, workedMin: 0, ot: 0, logged: 0, changed: 0 };
+    const days = new Date(y, m + 1, 0).getDate();
+    for (let d = 1; d <= days; d++) {
+        const k = y + '-' + pad(m + 1) + '-' + pad(d);
+        const sh = shiftById(effective(k));
+        const lg = S.logs[k];
+        if (S.overrides[k]) st.changed++;
+        if (sh && sh.work) {
+            st.duty++; st.plannedMin += shiftHours(sh);
+            if (toMin(sh.end) <= toMin(sh.start)) st.night++;
+        } else if (sh && sh.id === 'L' || lg && lg.status === 'leave') st.leave++;
+        else st.off++;
+        if (lg) {
+            st.logged++;
+            const w = loggedMinutes(lg); st.workedMin += w;
+            if (lg.status === 'done' && sh && sh.work) st.ot += Math.max(0, w - shiftHours(sh));
+            else if (lg.status === 'done') st.ot += w; // worked on a non-duty day
+        }
+    }
+    return st;
+}
+
+/* ---------- UI helpers ---------- */
+let tab = 'today', calY, calM, swapFrom = null;
+function $(id) { return document.getElementById(id); }
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 1800); }
+function shLabel(sh) { return sh ? sh.short : '–'; }
+function shColor(sh) { return sh ? sh.color : '#c5ccd8'; }
+function timeText(sh) { return sh && sh.work ? t12(sh.start) + ' – ' + t12(sh.end) + ' · ' + hm(shiftHours(sh)) : (sh ? 'No duty' : 'Not planned'); }
+
+function setTab(t) {
+    tab = t; swapFrom = t === 'cal' ? swapFrom : null;
+    ['today', 'cal', 'log', 'setup'].forEach(x => $('v-' + x).classList.toggle('hidden', x !== t));
+    document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+    render(); window.scrollTo(0, 0);
+}
+function render() {
+    if (tab === 'today') renderToday();
+    if (tab === 'cal') renderCal();
+    if (tab === 'log') renderLog();
+    if (tab === 'setup') renderSetup();
+}
+
+/* ---------- TODAY ---------- */
+function dutyWindow(date, sh) {
+    const s = parse(date); const [h1, m1] = sh.start.split(':').map(Number);
+    s.setHours(h1, m1, 0, 0);
+    const e = new Date(s.getTime() + shiftHours(sh) * 60000);
+    return [s, e];
+}
+function renderToday() {
+    const today = ymd(new Date());
+    const yest = addDays(today, -1);
+    let date = today, sh = shiftById(effective(today));
+    // still on last night's duty?
+    const ysh = shiftById(effective(yest));
+    if (ysh && ysh.work) { const [, e] = dutyWindow(yest, ysh); if (new Date() < e) { date = yest; sh = ysh; } }
+    const o = S.overrides[date], lg = S.logs[date];
+    let status = '';
+    if (sh && sh.work) {
+        const [s, e] = dutyWindow(date, sh), now = new Date();
+        if (now < s) status = '⏳ Starts in ' + hm((s - now) / 60000);
+        else if (now < e) status = '🟢 On duty now · ends in ' + hm((e - now) / 60000);
+        else status = '✅ Duty time over';
+    } else if (sh) status = sh.id === 'L' ? '🌴 On leave today' : '😌 Rest day';
+    else status = 'Set up your rotation in ⚙️ Setup';
+
+    const next = shiftNextDuty(today);
+    let h = `<div class="hero" style="background:${shColor(sh)}">
+        <div class="label">${date === today ? 'Today' : 'Night duty (from yesterday)'} · ${pretty(date)}</div>
+        <div class="shift">${sh ? esc(sh.name) : 'No plan'}${o ? '<span class="tag">✎ adjusted</span>' : ''}${lg ? '<span class="tag">✓ logged</span>' : ''}</div>
+        <div class="time">${timeText(sh)}</div>
+        <div class="status">${status}</div>
+    </div>`;
+
+    // log card
+    h += `<div class="card"><h2>Log this duty</h2>`;
+    if (lg) {
+        h += `<div class="spread"><div><b>${logLine(lg)}</b><div class="muted">${esc(lg.note || '')}</div></div>
+              <button class="btn sm ghost" onclick="openDay('${date}')">Edit</button></div>`;
+        if (lg.status === 'done' && lg.in && !lg.out) h += `<button class="btn block good" style="margin-top:10px" onclick="clockOut('${date}')">⏹ Clock out now (${t12(nowHM())})</button>`;
+    } else if (sh && sh.work) {
+        h += `<div class="row">
+            <button class="btn good" onclick="clockIn('${date}')">▶ Clock in now</button>
+            <button class="btn ghost" onclick="logAsPlanned('${date}')">✓ Done as planned</button>
+            <button class="btn ghost" onclick="openDay('${date}')">More…</button></div>`;
+    } else {
+        h += `<div class="row"><span class="muted">No duty planned.</span>
+              <button class="btn sm ghost" onclick="openDay('${date}')">Called in? Log extra duty</button></div>`;
+    }
+    h += `</div>`;
+
+    // next 7 days
+    h += `<div class="card"><div class="spread"><h2>Next 7 days</h2><button class="btn sm ghost" onclick="setTab('cal')">Full plan →</button></div><div class="week">`;
+    for (let i = 0; i < 7; i++) {
+        const k = addDays(today, i), s2 = shiftById(effective(k)), d = parse(k);
+        h += `<div class="wday ${i === 0 ? 'today' : ''}" onclick="openDay('${k}')"><div class="dn">${DAYS[d.getDay()]}</div><div class="dd">${d.getDate()}</div>
+              <div class="ds" style="background:${shColor(s2)}">${esc(shLabel(s2))}</div></div>`;
+    }
+    h += `</div>${next ? `<p class="muted" style="margin:10px 0 0">Next duty: <b>${esc(next.sh.name)}</b> on ${pretty(next.date)} at ${t12(next.sh.start)}</p>` : ''}</div>`;
+
+    // month summary
+    const d = new Date(), st = monthStats(d.getFullYear(), d.getMonth());
+    h += `<div class="card"><h2>${MONTHS[d.getMonth()]} so far</h2>${statsGrid(st)}</div>`;
+    $('v-today').innerHTML = h;
+}
+function shiftNextDuty(from) {
+    for (let i = 1; i <= 60; i++) { const k = addDays(from, i), sh = shiftById(effective(k)); if (sh && sh.work) return { date: k, sh }; }
+    return null;
+}
+function statsGrid(st) {
+    return `<div class="stats">
+        <div class="stat"><b>${st.duty}</b><span>Duty days</span></div>
+        <div class="stat"><b>${st.night}</b><span>Night duties</span></div>
+        <div class="stat"><b>${st.off}</b><span>Off days</span></div>
+        <div class="stat"><b>${st.leave}</b><span>Leave</span></div>
+        <div class="stat"><b>${hm(st.plannedMin)}</b><span>Planned hours</span></div>
+        <div class="stat"><b>${hm(st.workedMin)}</b><span>Logged hours</span></div>
+        <div class="stat"><b style="color:var(--good)">${hm(st.ot)}</b><span>Overtime</span></div>
+        <div class="stat"><b>${st.logged}</b><span>Days logged</span></div>
+        <div class="stat"><b>${st.changed}</b><span>Adjusted</span></div>
+    </div>`;
+}
+function logLine(lg) {
+    if (lg.status === 'leave') return '🌴 Leave';
+    if (lg.status === 'absent') return '✖ Absent';
+    if (lg.in && !lg.out) return '🟢 In at ' + t12(lg.in);
+    return '✓ ' + t12(lg.in) + ' – ' + t12(lg.out) + ' · ' + hm(loggedMinutes(lg));
+}
+function clockIn(date) { S.logs[date] = { status: 'done', in: nowHM(), out: '', note: '' }; save(); toast('Clocked in'); render(); }
+function clockOut(date) { S.logs[date].out = nowHM(); save(); toast('Clocked out · ' + hm(loggedMinutes(S.logs[date]))); render(); }
+function logAsPlanned(date) {
+    const sh = shiftById(effective(date));
+    S.logs[date] = { status: 'done', in: sh.start, out: sh.end, note: '' }; save(); toast('Logged ✓'); render();
+}
+
+/* ---------- CALENDAR ---------- */
+function renderCal() {
+    const y = calY, m = calM, today = ymd(new Date());
+    const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+    let h = '';
+    if (swapFrom) h += `<div class="banner"><span>🔁 Tap another day to swap with ${pretty(swapFrom)}</span><button class="btn sm ghost" onclick="swapFrom=null;render()">Cancel</button></div>`;
+    h += `<div class="card"><div class="monthnav"><button onclick="moveMonth(-1)">‹</button><b>${MONTHS[m]} ${y}</b><button onclick="moveMonth(1)">›</button></div><div class="cal">`;
+    DAYS.forEach(d => h += `<div class="hd">${d[0]}${d[1]}</div>`);
+    for (let i = 0; i < first; i++) h += `<div class="cell empty"></div>`;
+    for (let d = 1; d <= days; d++) {
+        const k = y + '-' + pad(m + 1) + '-' + pad(d), sh = shiftById(effective(k));
+        const cls = (k === today ? ' today' : '') + (k === swapFrom ? ' sel' : '');
+        h += `<div class="cell${cls}" onclick="tapDay('${k}')">
+            ${S.logs[k] ? '<span class="mk2">✓</span>' : ''}${S.overrides[k] ? '<span class="mk">✎</span>' : ''}
+            <span class="n">${d}</span><span class="s" style="background:${shColor(sh)}">${esc(shLabel(sh))}</span></div>`;
+    }
+    h += `</div><div class="legend">${S.shifts.map(s => `<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join('')}<span>✎ adjusted</span><span>✓ logged</span></div></div>`;
+    h += `<div class="card"><h2>${MONTHS[m]} summary</h2>${statsGrid(monthStats(y, m))}</div>`;
+    h += `<p class="muted" style="text-align:center">Tap a day to change its duty, swap, mark leave or log it.</p>`;
+    $('v-cal').innerHTML = h;
+}
+function moveMonth(n) { calM += n; if (calM < 0) { calM = 11; calY--; } if (calM > 11) { calM = 0; calY++; } render(); }
+function tapDay(k) {
+    if (swapFrom) {
+        if (k === swapFrom) { swapFrom = null; render(); return; }
+        const a = effective(swapFrom), b = effective(k);
+        setOverride(swapFrom, b, 'swap', 'Swapped with ' + pretty(k));
+        setOverride(k, a, 'swap', 'Swapped with ' + pretty(swapFrom));
+        swapFrom = null; save(); toast('Duties swapped 🔁'); render(); return;
+    }
+    openDay(k);
+}
+function setOverride(date, shift, kind, note) {
+    if (shift === planned(date) && kind !== 'leave') { delete S.overrides[date]; return; }
+    S.overrides[date] = { shift, kind, note: note || '' };
+}
+
+/* ---------- DAY SHEET ---------- */
+let sheetDate = null, sheetShift = null;
+function openDay(date) {
+    sheetDate = date; sheetShift = effective(date);
+    drawSheet(); $('overlay').classList.add('open');
+}
+function closeSheet() { $('overlay').classList.remove('open'); sheetDate = null; }
+function drawSheet() {
+    const date = sheetDate, p = shiftById(planned(date)), o = S.overrides[date];
+    const lg = S.logs[date] || null;
+    const cur = shiftById(sheetShift);
+    let h = `<div class="spread"><h3>${pretty(date)}</h3><button class="btn sm ghost" onclick="closeSheet()">✕</button></div>
+        <div class="muted">Rotation says: <b>${p ? esc(p.name) : 'nothing'}</b>${o ? ` · <span style="color:var(--warn)">adjusted (${esc(o.kind)})</span>` : ''}</div>`;
+
+    h += `<div class="sec"><b>✎ Adjust duty</b><div class="chips">`;
+    S.shifts.forEach(s => h += `<button class="chip ${sheetShift === s.id ? 'on' : ''}" onclick="sheetShift='${s.id}';drawSheet()"><i style="background:${s.color}"></i>${esc(s.name)}</button>`);
+    h += `</div><p class="muted" style="margin:8px 0 0">${timeText(cur)}</p>
+        <label class="f">Reason / note</label><input type="text" id="ovNote" placeholder="e.g. covering for Rahul, extra duty" value="${esc(o ? o.note : '')}">
+        <div class="row" style="margin-top:10px">
+            <button class="btn" onclick="saveAdjust()">Save change</button>
+            <button class="btn ghost" onclick="startSwap()">🔁 Swap with another day</button>
+            ${o ? `<button class="btn bad" onclick="resetDay()">Reset to rotation</button>` : ''}
+        </div></div>`;
+
+    const w = cur && cur.work;
+    const st = lg ? lg.status : (w ? 'done' : 'done');
+    h += `<div class="sec"><b>📒 Log what actually happened</b>
+        <div class="chips" id="stChips">
+            ${['done', 'absent', 'leave'].map(x => `<button class="chip ${st === x ? 'on' : ''}" data-st="${x}" onclick="pickStatus('${x}')">${{ done: '✓ Worked', absent: '✖ Absent', leave: '🌴 Leave' }[x]}</button>`).join('')}
+        </div>
+        <div id="timeBox" class="${st === 'done' ? '' : 'hidden'}"><div class="two">
+            <div><label class="f">Started</label><input type="time" id="lgIn" value="${lg ? lg.in : (w ? cur.start : '')}"></div>
+            <div><label class="f">Finished</label><input type="time" id="lgOut" value="${lg ? lg.out : (w ? cur.end : '')}"></div>
+        </div><p class="muted" id="lgCalc" style="margin:6px 0 0"></p></div>
+        <label class="f">Notes</label><textarea id="lgNote" placeholder="What happened on duty…">${esc(lg ? lg.note : '')}</textarea>
+        <div class="row" style="margin-top:10px">
+            <button class="btn good" onclick="saveLog()">Save log</button>
+            ${lg ? `<button class="btn bad" onclick="deleteLog()">Delete log</button>` : ''}
+        </div></div>`;
+    $('sheet').innerHTML = h;
+    $('sheet').dataset.st = st;
+    ['lgIn', 'lgOut'].forEach(id => $(id).addEventListener('input', calcPreview));
+    calcPreview();
+}
+function pickStatus(x) {
+    $('sheet').dataset.st = x;
+    document.querySelectorAll('#stChips .chip').forEach(c => c.classList.toggle('on', c.dataset.st === x));
+    $('timeBox').classList.toggle('hidden', x !== 'done');
+}
+function calcPreview() {
+    const a = $('lgIn').value, b = $('lgOut').value, cur = shiftById(sheetShift);
+    if (!a || !b) { $('lgCalc').textContent = ''; return; }
+    const w = span(a, b), p = shiftHours(cur), diff = w - p;
+    $('lgCalc').innerHTML = 'Worked ' + hm(w) + (p ? (diff > 0 ? ` · <span class="ot">+${hm(diff)} overtime</span>` : diff < 0 ? ` · <span class="short">${hm(diff)} short</span>` : ' · exactly as planned') : (w ? ' · <span class="ot">extra duty</span>' : ''));
+}
+function saveAdjust() {
+    const p = planned(sheetDate);
+    if (sheetShift === p && !S.overrides[sheetDate]) { toast('No change'); return; }
+    const kind = sheetShift === 'L' ? 'leave' : 'change';
+    setOverride(sheetDate, sheetShift, kind, $('ovNote').value.trim());
+    save(); toast('Duty updated ✎'); drawSheet(); render();
+}
+function resetDay() { delete S.overrides[sheetDate]; sheetShift = planned(sheetDate); save(); toast('Back to rotation'); drawSheet(); render(); }
+function startSwap() { const d = sheetDate; closeSheet(); swapFrom = d; calY = parse(d).getFullYear(); calM = parse(d).getMonth(); if (tab !== 'cal') setTab('cal'); else render(); }
+function saveLog() {
+    const st = $('sheet').dataset.st;
+    const rec = { status: st, in: '', out: '', note: $('lgNote').value.trim() };
+    if (st === 'done') {
+        rec.in = $('lgIn').value; rec.out = $('lgOut').value;
+        if (!rec.in) { toast('Enter start time'); return; }
+    }
+    // if the shown shift differs from saved, keep the adjustment too
+    if (sheetShift !== effective(sheetDate)) setOverride(sheetDate, sheetShift, sheetShift === 'L' ? 'leave' : 'change', $('ovNote').value.trim());
+    S.logs[sheetDate] = rec; save(); toast('Log saved ✓'); closeSheet(); render();
+}
+function deleteLog() { if (!confirm('Delete this log?')) return; delete S.logs[sheetDate]; save(); toast('Log deleted'); closeSheet(); render(); }
+
+/* ---------- LOG ---------- */
+let logY, logM;
+function renderLog() {
+    const y = logY, m = logM, prefix = y + '-' + pad(m + 1);
+    const keys = Object.keys(S.logs).filter(k => k.startsWith(prefix)).sort().reverse();
+    let h = `<div class="card"><div class="monthnav"><button onclick="moveLog(-1)">‹</button><b>${MONTHS[m]} ${y}</b><button onclick="moveLog(1)">›</button></div>${statsGrid(monthStats(y, m))}</div>`;
+    h += `<div class="card"><div class="spread"><h2>Duty log</h2><button class="btn sm ghost" onclick="exportCSV()">⬇ CSV</button></div>`;
+    if (!keys.length) h += `<p class="muted">Nothing logged this month yet. Log from the Today tab or tap a day in Plan.</p>`;
+    keys.forEach(k => {
+        const lg = S.logs[k], sh = shiftById(effective(k)), d = parse(k);
+        const w = loggedMinutes(lg), p = shiftHours(sh), diff = lg.status === 'done' && lg.out ? w - p : 0;
+        h += `<div class="item" onclick="openDay('${k}')">
+            <div class="badge" style="background:${shColor(sh)}">${esc(shLabel(sh))}</div>
+            <div class="grow"><div class="t">${DAYS[d.getDay()]} ${d.getDate()} · ${sh ? esc(sh.name) : '—'}${S.overrides[k] ? ' ✎' : ''}</div>
+            <div class="muted">${logLine(lg)}${lg.note ? ' · ' + esc(lg.note) : ''}</div></div>
+            ${diff > 0 ? `<span class="ot">+${hm(diff)}</span>` : diff < 0 && p ? `<span class="short">${hm(diff)}</span>` : ''}
+        </div>`;
+    });
+    h += `</div>`;
+    // adjustments list
+    const adj = Object.keys(S.overrides).filter(k => k.startsWith(prefix)).sort();
+    if (adj.length) {
+        h += `<div class="card"><h2>Adjustments this month</h2>`;
+        adj.forEach(k => {
+            const o = S.overrides[k], from = shiftById(planned(k)), to = shiftById(o.shift), d = parse(k);
+            h += `<div class="item" onclick="openDay('${k}')"><div class="badge" style="background:${shColor(to)}">${esc(shLabel(to))}</div>
+                <div class="grow"><div class="t">${DAYS[d.getDay()]} ${d.getDate()} · ${from ? esc(from.name) : '—'} → ${to ? esc(to.name) : '—'}</div>
+                <div class="muted">${esc(o.kind)}${o.note ? ' · ' + esc(o.note) : ''}</div></div></div>`;
+        });
+        h += `</div>`;
+    }
+    $('v-log').innerHTML = h;
+}
+function moveLog(n) { logM += n; if (logM < 0) { logM = 11; logY--; } if (logM > 11) { logM = 0; logY++; } render(); }
+function exportCSV() {
+    const prefix = logY + '-' + pad(logM + 1);
+    const rows = [['Date', 'Day', 'Planned', 'Duty', 'Status', 'In', 'Out', 'Worked hrs', 'Overtime hrs', 'Adjustment', 'Note']];
+    const days = new Date(logY, logM + 1, 0).getDate();
+    for (let d = 1; d <= days; d++) {
+        const k = prefix + '-' + pad(d), p = shiftById(planned(k)), sh = shiftById(effective(k)), lg = S.logs[k], o = S.overrides[k];
+        const w = loggedMinutes(lg), ot = lg && lg.status === 'done' && lg.out ? Math.max(0, w - shiftHours(sh)) : 0;
+        rows.push([k, DAYS[parse(k).getDay()], p ? p.name : '', sh ? sh.name : '', lg ? lg.status : '', lg ? lg.in : '', lg ? lg.out : '',
+            (w / 60).toFixed(2), (ot / 60).toFixed(2), o ? o.kind + (o.note ? ': ' + o.note : '') : '', lg ? lg.note : '']);
+    }
+    download('duty-' + prefix + '.csv', rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n'), 'text/csv');
+}
+function download(name, text, type) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name;
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+/* ---------- SETUP ---------- */
+function renderSetup() {
+    let h = `<div class="card"><h2>1 · My duty rotation</h2>
+        <p class="muted" style="margin-top:0">Tap shifts below to build your repeating cycle (e.g. M M E E N N OFF OFF). Tap a block in the cycle to remove it.</p>
+        <div class="pattern">${S.pattern.cycle.length ? S.pattern.cycle.map((id, i) => { const s = shiftById(id); return `<button class="pchip" style="background:${shColor(s)}" onclick="rmCycle(${i})">${esc(shLabel(s))}<small>×</small></button>`; }).join('') : '<span class="muted">Empty — add shifts ↓</span>'}</div>
+        <div class="chips" style="margin-top:10px">${S.shifts.map(s => `<button class="chip" onclick="addCycle('${s.id}')"><i style="background:${s.color}"></i>+ ${esc(s.name)}</button>`).join('')}</div>
+        <label class="f">Cycle starts on (day 1 of the cycle)</label><input type="date" id="pStart" value="${S.pattern.start}" onchange="S.pattern.start=this.value;save();toast('Saved')">
+        <p class="muted">${S.pattern.cycle.length} day cycle · ${S.pattern.cycle.filter(id => (shiftById(id) || {}).work).length} duty days per cycle</p>
+        <div class="row"><button class="btn sm ghost" onclick="presetCycle('week')">Preset: Mon–Sat General, Sun Off</button>
+        <button class="btn sm bad" onclick="if(confirm('Clear cycle?')){S.pattern.cycle=[];save();render()}">Clear</button></div>
+    </div>`;
+
+    h += `<div class="card"><div class="spread"><h2>2 · My shift types</h2><button class="btn sm" onclick="editShift(null)">+ Add</button></div>`;
+    S.shifts.forEach(s => {
+        h += `<div class="item" onclick="editShift('${s.id}')"><div class="badge" style="background:${s.color}">${esc(s.short)}</div>
+            <div class="grow"><div class="t">${esc(s.name)}</div><div class="muted">${s.work ? t12(s.start) + ' – ' + t12(s.end) + ' · ' + hm(shiftHours(s)) : 'No duty (rest/leave)'}</div></div><span class="muted">Edit ›</span></div>`;
+    });
+    h += `</div>`;
+
+    h += `<div class="card"><h2>3 · Backup</h2><p class="muted" style="margin-top:0">Your data is saved on this phone. Download a backup to keep it safe or move to another phone.</p>
+        <div class="row"><button class="btn ghost" onclick="backup()">⬇ Download backup</button>
+        <label class="btn ghost" style="display:inline-block">⬆ Restore<input type="file" accept=".json" class="hidden" onchange="restore(this.files[0])"></label></div>
+        <div class="row" style="margin-top:10px"><button class="btn sm bad" onclick="resetAll()">Erase everything</button></div></div>`;
+    $('v-setup').innerHTML = h;
+}
+function addCycle(id) { S.pattern.cycle.push(id); if (!S.pattern.start) S.pattern.start = ymd(new Date()); save(); render(); }
+function rmCycle(i) { S.pattern.cycle.splice(i, 1); save(); render(); }
+function presetCycle(kind) {
+    if (kind === 'week') {
+        if (!shiftById('G') || !shiftById('O')) { toast('Need General and Off shifts'); return; }
+        const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // this Monday
+        S.pattern = { start: ymd(d), cycle: ['G', 'G', 'G', 'G', 'G', 'G', 'O'] };
+    }
+    save(); toast('Rotation set'); render();
+}
+function editShift(id) {
+    const s = id ? shiftById(id) : { id: '', name: '', short: '', start: '09:00', end: '17:00', color: COLORS[S.shifts.length % COLORS.length], work: true };
+    let h = `<div class="spread"><h3>${id ? 'Edit shift' : 'New shift'}</h3><button class="btn sm ghost" onclick="closeSheet()">✕</button></div>
+        <label class="f">Name</label><input type="text" id="sName" value="${esc(s.name)}" placeholder="e.g. Night">
+        <label class="f">Short label (shown on calendar)</label><input type="text" id="sShort" maxlength="4" value="${esc(s.short)}" placeholder="N">
+        <label class="f"><input type="checkbox" id="sWork" ${s.work ? 'checked' : ''} onchange="$('sTimes').classList.toggle('hidden',!this.checked)"> This is a working duty</label>
+        <div class="two ${s.work ? '' : 'hidden'}" id="sTimes"><div><label class="f">Start</label><input type="time" id="sStart" value="${s.start}"></div>
+        <div><label class="f">End</label><input type="time" id="sEnd" value="${s.end}"></div></div>
+        <label class="f">Colour</label><div class="chips" id="sCol">${COLORS.map(c => `<button class="chip ${c === s.color ? 'on' : ''}" data-c="${c}" onclick="pickColor('${c}')"><i style="background:${c}"></i></button>`).join('')}</div>
+        <div class="row" style="margin-top:14px"><button class="btn" onclick="saveShift('${id || ''}')">Save</button>
+        ${id ? `<button class="btn bad" onclick="deleteShift('${id}')">Delete</button>` : ''}</div>`;
+    $('sheet').innerHTML = h; $('sheet').dataset.color = s.color; $('overlay').classList.add('open');
+}
+function pickColor(c) { $('sheet').dataset.color = c; document.querySelectorAll('#sCol .chip').forEach(x => x.classList.toggle('on', x.dataset.c === c)); }
+function saveShift(id) {
+    const name = $('sName').value.trim(); if (!name) { toast('Enter a name'); return; }
+    const work = $('sWork').checked;
+    const rec = { name, short: ($('sShort').value.trim() || name[0]).toUpperCase(), start: work ? $('sStart').value : '', end: work ? $('sEnd').value : '', color: $('sheet').dataset.color, work };
+    if (work && (!rec.start || !rec.end)) { toast('Enter start and end'); return; }
+    if (id) Object.assign(shiftById(id), rec);
+    else { rec.id = 's' + Date.now().toString(36); S.shifts.push(rec); }
+    save(); closeSheet(); toast('Shift saved'); render();
+}
+function deleteShift(id) {
+    const used = S.pattern.cycle.includes(id) || Object.values(S.overrides).some(o => o.shift === id);
+    if (!confirm(used ? 'This shift is used in your rotation or adjustments. Delete anyway? Those days will show as unplanned.' : 'Delete this shift?')) return;
+    S.shifts = S.shifts.filter(s => s.id !== id); S.pattern.cycle = S.pattern.cycle.filter(x => x !== id);
+    save(); closeSheet(); render();
+}
+function backup() { download('duty-backup-' + ymd(new Date()) + '.json', JSON.stringify(S, null, 2), 'application/json'); }
+function restore(file) {
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = () => { try { const d = JSON.parse(r.result); if (!Array.isArray(d.shifts)) throw 0; S = Object.assign(defaults(), d); save(); toast('Restored ✓'); render(); } catch (e) { toast('Not a valid backup'); } };
+    r.readAsText(file);
+}
+function resetAll() { if (!confirm('Erase all shifts, plans and logs?')) return; S = defaults(); save(); render(); toast('Reset'); }
+
+/* ---------- init ---------- */
+load();
+const _n = new Date(); calY = logY = _n.getFullYear(); calM = logM = _n.getMonth();
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => setTab(b.dataset.tab));
+$('overlay').addEventListener('click', e => { if (e.target.id === 'overlay') closeSheet(); });
+render();
+setInterval(() => { if (tab === 'today' && !$('overlay').classList.contains('open')) renderToday(); }, 30000);
+</script>
+</body>
+</html>
