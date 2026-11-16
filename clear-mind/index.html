@@ -113,6 +113,15 @@ a { color: var(--accent); }
 .stepper b { min-width: 96px; }
 .goal { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: var(--soft); font-size: 14px; }
 .rankup { margin-top: 12px; padding: 10px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.cards button { font-size: 30px; line-height: 1; padding: 0; }
+.cards button.up { background: var(--soft); }
+.cards button.gone { opacity: .4; }
+.glyphs button { font-size: 26px; font-weight: 600; padding: 0; line-height: 1; }
+.slots { display: flex; gap: 6px; justify-content: center; min-height: 48px; }
+.slots div { width: 34px; height: 46px; border-bottom: 3px solid var(--line); font-size: 26px; font-weight: 700; text-transform: uppercase; }
+.letters { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 340px; }
+.letters button { width: 48px; height: 52px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); font-size: 24px; font-weight: 700; text-transform: uppercase; }
+.letters button.used { visibility: hidden; }
 .breath { width: 120px; height: 120px; border-radius: 50%; background: var(--soft); border: 2px solid var(--accent); transition: transform 4s ease-in-out; }
 .ink-btn { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .ink-btn i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
@@ -156,7 +165,7 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch
 const day = () => S.days[today()] || (S.days[today()] = { habits: {}, played: [] });
 const level = id => S.lv[id] || 1;
 /* Ranked progression: every level cleared in any game is one step up the ladder. */
-const RANKS = [[0, 'Fogbound'], [5, 'Haze'], [12, 'Clearing'], [22, 'Daylight'], [35, 'Sharp'], [50, 'Lucid'], [66, 'Crystal']];
+const RANKS = [[0, 'Fogbound'], [5, 'Haze'], [12, 'Clearing'], [24, 'Daylight'], [42, 'Sharp'], [66, 'Lucid'], [96, 'Crystal']];
 function rank() {
     const steps = Object.keys(GAMES).reduce((n, id) => n + (GAMES[id].unscored ? 0 : level(id) - 1), 0);
     let i = 0; while (i + 1 < RANKS.length && steps >= RANKS[i + 1][0]) i++;
@@ -375,6 +384,148 @@ const GAMES = {
             c.after(600, step);
         }
     },
+    pairs: {
+        fun: true, goal: lvl => `find every pair with no more than ${pairsAllowed(lvl)} wrong flips`,
+        name: 'Pairs', glyph: '🍒', domain: 'Fun · memory', mins: 1,
+        how: 'Cards are face down. Flip two at a time to find matching fruit. Remember where things are and waste as few flips as you can.',
+        run(c) {
+            const P = Math.min(10, 2 + c.lvl), allowed = pairsAllowed(c.lvl), fruit = shuffle([...'🍋🍉🍇🥝🍒🥥🍑🍍🥕🌽']).slice(0, P);
+            const cards = shuffle(fruit.concat(fruit)), cols = cards.length <= 6 ? 3 : cards.length <= 16 ? 4 : 5;
+            c.el.innerHTML = `<div class="prompt">Wrong flips: <b>0</b> of ${allowed} allowed</div><div class="grid cards" style="grid-template-columns:repeat(${cols},1fr)">${cards.map((_, i) => `<button data-i="${i}" aria-label="card"></button>`).join('')}</div>`;
+            const grid = $('.grid', c.el); let open = [], lock = false, miss = 0, done = 0;
+            grid.onclick = e => {
+                const b = e.target.closest('button'); if (!b || lock || b.textContent) return;
+                b.textContent = cards[+b.dataset.i]; b.classList.add('up'); open.push(b);
+                if (open.length < 2) return;
+                const [x, y] = open; open = [];
+                if (x.textContent === y.textContent) {
+                    x.classList.add('gone'); y.classList.add('gone'); done++; c.progress(1 - done / P);
+                    if (done === P) c.after(500, () => c.finish({ acc: P / (P + miss), move: miss <= allowed ? 1 : miss > allowed * 2 ? -1 : 0, stats: [['Pairs', P], ['Wrong flips', miss], ['Allowed', allowed]] }));
+                } else {
+                    miss++; $('.prompt b', c.el).textContent = miss; lock = true;
+                    c.after(750, () => { [x, y].forEach(t => { t.textContent = ''; t.classList.remove('up'); }); lock = false; });
+                }
+            };
+        }
+    },
+    fireflies: {
+        fun: true, goal: () => 'repeat 2 of the 3 sequences perfectly',
+        name: 'Fireflies', glyph: '✨', domain: 'Fun · sequence memory', mins: 1,
+        how: 'Fireflies light up one after another. When they stop, tap the same tiles in the same order. Three rounds.',
+        run(c) {
+            const size = c.lvl >= 7 ? 4 : 3, L = 2 + Math.ceil(c.lvl * .7), R = 3, ms = Math.max(380, 700 - 30 * c.lvl);
+            let r = 0, perfect = 0, steps = 0;
+            c.el.innerHTML = `<div class="prompt"></div><div class="grid" style="grid-template-columns:repeat(${size},1fr);max-width:${size * 84}px">${[...Array(size * size)].map((_, i) => `<button data-i="${i}" aria-label="tile"></button>`).join('')}</div>`;
+            const grid = $('.grid', c.el), prompt = $('.prompt', c.el), tiles = [...grid.children];
+            const round = () => {
+                if (r === R) { const acc = steps / (R * L); return c.finish({ acc, move: perfect >= 2 ? 1 : perfect === 0 && acc < .5 ? -1 : 0, stats: [['Perfect', perfect + '/' + R], ['Length', L], ['Steps right', pct(acc)]] }); }
+                c.progress(1 - r / R); r++;
+                const seq = []; while (seq.length < L) { const t = rnd(size * size); if (t !== seq[seq.length - 1]) seq.push(t); }
+                let pos = 0, open = false;
+                tiles.forEach(t => t.className = ''); prompt.textContent = 'Watch';
+                seq.forEach((t, k) => { c.after(600 + k * ms, () => tiles[t].className = 'lit'); c.after(600 + k * ms + ms * .7, () => tiles[t].className = ''); });
+                c.after(600 + L * ms, () => { prompt.textContent = `Your turn: ${L} taps`; open = true; });
+                grid.onclick = e => {
+                    const b = e.target.closest('button'); if (!b || !open) return;
+                    if (+b.dataset.i === seq[pos]) {
+                        pos++; steps++; b.className = 'lit'; c.after(180, () => { if (b.className === 'lit') b.className = ''; });
+                        if (pos === L) { open = false; perfect++; flash(grid, true); c.after(700, round); }
+                    } else { open = false; b.className = 'miss'; tiles[seq[pos]].className = 'lit'; prompt.textContent = 'The lit one was next'; c.after(1300, round); }
+                };
+            };
+            round();
+        }
+    },
+    pop: {
+        fun: true, goal: () => 'score 85%: catch the suns, leave the clouds',
+        name: 'Sun Catcher', glyph: '☀️', domain: 'Fun · reactions', mins: 0.5,
+        how: 'Suns and clouds pop up for a moment. Tap every sun before it vanishes. Never tap a cloud. 30 seconds.',
+        run(c) {
+            const win = Math.max(450, 1100 - 55 * c.lvl), cloudy = Math.min(.45, .15 + .03 * c.lvl);
+            c.el.innerHTML = `<div class="prompt">Suns caught: <b>0</b></div><div class="grid cards" style="grid-template-columns:repeat(3,1fr)">${[...Array(9)].map((_, i) => `<button data-i="${i}" aria-label="spot"></button>`).join('')}</div>`;
+            const grid = $('.grid', c.el), tiles = [...grid.children];
+            let cur = -1, sun = false, live = false, hits = 0, suns = 0, wrong = 0, over = false;
+            const spawn = () => {
+                if (over) return;
+                let h; do h = rnd(9); while (h === cur);
+                cur = h; sun = Math.random() >= cloudy; if (sun) suns++;
+                tiles[h].textContent = sun ? '☀️' : '☁️'; live = true;
+                c.after(win, () => { if (over) return; tiles[h].textContent = ''; live = false; c.after(180, spawn); });
+            };
+            grid.onclick = e => {
+                const b = e.target.closest('button'); if (!b || !live || +b.dataset.i !== cur) return;
+                live = false; b.textContent = '';
+                if (sun) { hits++; $('.prompt b', c.el).textContent = hits; flash(b, true); } else { wrong++; flash(b, false); }
+            };
+            c.after(500, spawn);
+            c.countdown(30, () => {
+                over = true; if (live && sun) suns--;
+                const acc = suns + wrong ? hits / (suns + wrong) : 0;
+                c.finish({ acc, move: acc >= .85 && hits >= 8 ? 1 : acc < .5 ? -1 : 0, stats: [['Suns caught', hits + '/' + suns], ['Clouds hit', wrong], ['Score', pct(acc)]] });
+            });
+        }
+    },
+    odd: {
+        fun: true, goal: () => 'find 10 with 85% accuracy',
+        name: 'Odd One Out', glyph: '🔍', domain: 'Fun · visual search', mins: 0.75,
+        how: 'Every tile shows the same character except one. Find the odd one and tap it. As many as you can in 40 seconds.',
+        run(c) {
+            const size = Math.min(6, 3 + Math.floor(c.lvl / 2.5)), sets = c.lvl >= 6 ? ODD_HARD : ODD_EASY;
+            let at, found = 0, wrong = 0, last;
+            c.el.innerHTML = `<div class="prompt">Found: <b>0</b></div><div class="grid glyphs" style="grid-template-columns:repeat(${size},1fr)"></div>`;
+            const grid = $('.grid', c.el);
+            const board = () => {
+                let p; do p = pick(sets); while (p === last); last = p;
+                const flip = rnd(2); at = rnd(size * size);
+                grid.innerHTML = [...Array(size * size)].map((_, i) => `<button data-i="${i}">${p[i === at ? flip : 1 - flip]}</button>`).join('');
+            };
+            grid.onclick = e => {
+                const b = e.target.closest('button'); if (!b) return;
+                if (+b.dataset.i === at) { found++; $('.prompt b', c.el).textContent = found; flash(grid, true); board(); }
+                else { wrong++; flash(b, false); }
+            };
+            board();
+            c.countdown(40, () => {
+                const acc = found + wrong ? found / (found + wrong) : 0;
+                c.finish({ acc, move: found >= 10 && acc >= .85 ? 1 : (found < 4 || acc < .6) ? -1 : 0, stats: [['Found', found], ['Wrong taps', wrong], ['Accuracy', pct(acc)]] });
+            });
+        }
+    },
+    scramble: {
+        fun: true, goal: () => 'solve 4 of the 5 words',
+        name: 'Unscramble', glyph: '🔤', domain: 'Fun · words', mins: 1.25,
+        how: lvl => `Five scrambled <b>${WORD_LEN[lvl - 1]}-letter</b> words. Tap the letters in order to spell each word. Tap the answer row to undo a letter. 75 seconds.`,
+        run(c) {
+            const len = WORD_LEN[c.lvl - 1], list = WORDS[len], words = shuffle(list).slice(0, 5), N = words.length;
+            let w = -1, solved = 0, built = [], tiles = [], busy = false;
+            c.el.innerHTML = '<div class="prompt"></div><div class="slots"></div><div class="letters"></div><button class="btn ghost" id="skip" style="max-width:180px">Skip word</button>';
+            const slots = $('.slots', c.el), letters = $('.letters', c.el);
+            const end = () => c.finish({ acc: solved / N, move: solved >= 4 ? 1 : solved <= 1 ? -1 : 0, stats: [['Solved', solved + '/' + N], ['Letters', len], ['Score', pct(solved / N)]] });
+            const draw = () => {
+                slots.innerHTML = [...Array(len)].map((_, i) => `<div>${built[i] != null ? tiles[built[i]] : ''}</div>`).join('');
+                letters.innerHTML = tiles.map((ch, i) => `<button data-i="${i}" class="${built.includes(i) ? 'used' : ''}">${ch}</button>`).join('');
+            };
+            const next = () => {
+                w++; if (w === N) return end();
+                built = []; busy = false; $('.prompt', c.el).textContent = `Word ${w + 1} of ${N}`;
+                do tiles = shuffle(words[w].split('')); while (tiles.join('') === words[w]);
+                draw();
+            };
+            letters.onclick = e => {
+                const b = e.target.closest('button'); if (!b || busy) return;
+                built.push(+b.dataset.i); draw();
+                if (built.length < len) return;
+                busy = true;
+                // any real word from the list counts, in case the letters spell more than one
+                if (list.includes(built.map(i => tiles[i]).join(''))) { solved++; flash(slots, true); c.after(550, next); }
+                else { flash(slots, false); c.after(550, () => { built = []; busy = false; draw(); }); }
+            };
+            slots.onclick = () => { if (!busy && built.length) { built.pop(); draw(); } };
+            $('#skip', c.el).onclick = () => { if (!busy) next(); };
+            next();
+            c.countdown(75, end);
+        }
+    },
     breathe: {
         name: 'Slow Breath', glyph: '○', domain: 'Reset', mins: 1, unscored: true,
         how: 'One minute of slow breathing: in for 4 seconds, out for 6. Nothing to score. It simply settles the system before you think.',
@@ -391,13 +542,24 @@ const GAMES = {
         }
     }
 };
+function pairsAllowed(lvl) { return Math.min(10, 2 + lvl) + 2 - Math.floor(lvl / 3); }
+const ODD_EASY = [['O', 'Q'], ['E', 'F'], ['b', 'd'], ['p', 'q'], ['6', '9'], ['M', 'W'], ['n', 'u'], ['C', 'G'], ['◐', '◑'], ['R', 'P']];
+const ODD_HARD = [['O', '0'], ['I', 'l'], ['5', 'S'], ['8', 'B'], ['Z', '2'], ['◐', '◑'], ['vv', 'w'], ['rn', 'm'], ['c', 'e'], ['i', 'j']];
+const WORD_LEN = [4, 4, 4, 5, 5, 6, 6, 6, 7, 7, 8, 8];
+const WORDS = {
+    4: 'frog jump wind kiwi yoga hawk bulb club drum fizz glow hymn jazz lynx myth quiz puff yawn zoom buzz'.split(' '),
+    5: 'clown brain fresh light quick juicy happy daisy pizza robot zebra jelly vivid funky tulip wagon yacht piano lucky honey'.split(' '),
+    6: 'bright clever breeze sunset wonder puzzle rhythm galaxy jungle rocket frozen wisdom banana cactus dragon flight guitar hiccup jigsaw kitten'.split(' '),
+    7: 'rainbow morning thunder popcorn journey kitchen holiday diamond penguin mystery volcano whisper bicycle dolphin freedom giraffe harmony juggler lantern picture'.split(' '),
+    8: 'sunshine mountain elephant hospital keyboard learning notebook pleasure question sandwich treasure umbrella daylight firework kangaroo lollipop mushroom painting champion dinosaur'.split(' ')
+};
 function nOf(lvl) { return lvl >= 7 ? 3 : lvl >= 3 ? 2 : 1; }
 function flash(el, good) { el.classList.remove('flash-good', 'flash-bad'); void el.offsetWidth; el.classList.add(good ? 'flash-good' : 'flash-bad'); }
 
-/* Today's three: one speed, one memory, one control game, rotating daily. */
+/* Today's four: one speed, one memory, one control drill and one fun game, rotating daily. */
 function dailySet() {
     const d = dayNum();
-    return [['symbol', 'flash'][d % 2], ['nback', 'grid'][d % 2], ['stroop', 'trail', 'steady'][d % 3]];
+    return [['symbol', 'flash'][d % 2], ['nback', 'grid'][d % 2], ['stroop', 'trail', 'steady'][d % 3], ['pairs', 'fireflies', 'pop', 'odd', 'scramble'][d % 5]];
 }
 
 /* ---------- runner ---------- */
@@ -523,10 +685,10 @@ function viewToday() {
             <p class="small dim" style="margin-top:12px">Hours slept last night</p>
             <div class="chips">${[4, 5, 6, 7, 8, 9].map(h => `<button data-s="${h}" class="${d.sleep === h ? 'on' : ''}">${h === 4 ? '≤4' : h === 9 ? '9+' : h}</button>`).join('')}</div>
         </div>
-        <div class="card"><div class="row between"><h3>Today's session</h3><span class="dim small">${foggy ? 'unranked · 4 min' : 'ranked · 3 min'}</span></div>
-            <p class="small dim" style="margin:6px 0 12px">${foggy ? 'Foggy day, so this is a gentle, unranked session: a minute of slow breathing first, then easier levels, and your rank is safe. Pushing through fog tends to make it worse.' : 'Three ranked drills: one for speed, one for memory, one for control. Clear the target and the next level is harder.'}</p>
+        <div class="card"><div class="row between"><h3>Today's session</h3><span class="dim small">${foggy ? 'unranked · 5 min' : 'ranked · 4 min'}</span></div>
+            <p class="small dim" style="margin:6px 0 12px">${foggy ? 'Foggy day, so this is a gentle, unranked session: a minute of slow breathing first, then easier levels, and your rank is safe. Pushing through fog tends to make it worse.' : 'Three ranked drills for speed, memory and control, then a fun game to finish. Clear the target and the next level is harder.'}</p>
             <div style="display:grid;gap:12px;margin-bottom:14px">${(foggy ? ['breathe'] : []).concat(set).map(gameRow).join('')}</div>
-            <button class="btn" id="go">${left.length === 0 ? 'Session complete · play again' : left.length < 3 ? 'Continue session' : 'Start session'}</button>
+            <button class="btn" id="go">${left.length === 0 ? 'Session complete · play again' : left.length < set.length ? 'Continue session' : 'Start session'}</button>
         </div>
         <div class="card"><h3>What actually lifts fog</h3><p class="small dim" style="margin:4px 0 6px">These matter more than any game. Tick what you've done today.</p>
             ${HABITS.map(h => `<button class="habit ${d.habits[h[0]] ? 'on' : ''}" data-h="${h[0]}"><span class="tick">✓</span><span><b>${h[1]}</b><br><span class="dim small">${h[2]}</span></span></button>`).join('')}
@@ -545,9 +707,12 @@ function viewGames() {
     const fr = S.mode === 'free';
     app.innerHTML = `<h1>All games</h1>
         <div class="seg"><button data-m="ranked" class="${fr ? '' : 'on'}">Ranked</button><button data-m="free" class="${fr ? 'on' : ''}">Unranked</button></div>
-        <p class="dim small" style="margin-top:10px">${fr ? 'No progression. Pick any level of any game and play for practice; scores are not kept and your rank does not move.' : 'Progression. Each game has 12 levels. Clear the target to unlock the next, harder level; two rough runs in a row drop you one. Every level cleared lifts your rank.'}</p>
+        <p class="dim small" style="margin-top:10px">${fr ? 'No progression. Pick any level of any game and play for practice; scores are not kept and your rank does not move.' : 'Progression. Every game, fun or drill, has 12 levels. Clear the target to unlock the next, harder level; two rough runs in a row drop you one. Every level cleared lifts your rank.'}</p>
         ${fr ? '' : rankCard()}
-        ${Object.keys(GAMES).map(id => `<div class="card">${gameRow(id, fr)}</div>`).join('')}`;
+        <h2 style="margin-top:22px">Fun games</h2>
+        ${Object.keys(GAMES).filter(id => GAMES[id].fun).map(id => `<div class="card">${gameRow(id, fr)}</div>`).join('')}
+        <h2 style="margin-top:22px">Training drills</h2>
+        ${Object.keys(GAMES).filter(id => !GAMES[id].fun).map(id => `<div class="card">${gameRow(id, fr)}</div>`).join('')}`;
     app.onclick = e => {
         const m = e.target.closest('[data-m]'), b = e.target.closest('[data-play]');
         if (m) { S.mode = m.dataset.m; save(); viewGames(); }
