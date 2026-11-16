@@ -324,7 +324,7 @@ function render(spun) {
             </li>`).join('')}
         </ol>
         <div class="mix">
-            <button class="btn" data-act="playall" id="playall">▶ Play all 3 previews</button>
+            <button class="btn" data-act="playall" id="playall">▶ Play all 3</button>
             <a class="btn ghost" href="${yt(g.n + ' music mix')}" target="_blank" rel="noopener">Full mix ↗</a>
         </div>
         <p class="note">Previews are 30 seconds and play right here. Tap Spotify or YouTube for the full song.</p>
@@ -378,12 +378,21 @@ function render(spun) {
 }
 
 /* ---------- previews ----------
-   Looks each track up in the iTunes Search API (JSONP, no key needed) and
-   falls back to Deezer. Both return 30-second preview clips. Found URLs are
-   cached in localStorage so a track is only looked up once. */
+   Previews are 30-second clips from the iTunes Search API, with Deezer as a
+   fallback. Lookups start as soon as the day's genre is shown, so that a tap
+   can start audio straight away: iPhone Safari only allows audio to start
+   inside the tap itself, not after waiting on the network. Found URLs are
+   cached in localStorage. */
 const audio = new Audio();
-const P = { key: null, idx: -1, queue: false, loading: false, none: {}, cache: {}, unlocked: false };
+audio.setAttribute('playsinline', '');
+const P = {
+    key: null, idx: -1, queue: false, want: null,
+    url: {},      // track key -> preview URL
+    state: {},    // track key -> 'finding' | 'ready' | 'none' | 'offline'
+    blocked: false, cache: {}
+};
 try { P.cache = JSON.parse(localStorage.getItem(KEY + '.previews')) || {}; } catch {}
+const tkey = (a, s) => a + '|' + s;
 
 function jsonp(url) {
     return new Promise((res, rej) => {
@@ -396,11 +405,19 @@ function jsonp(url) {
         document.head.appendChild(sc);
     });
 }
-const norm = x => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+// Plain fetch first (works where the service allows it), JSONP otherwise.
+async function getJSON(url) {
+    try {
+        const r = await fetch(url, { mode: 'cors' });
+        if (r.ok) return await r.json();
+    } catch {}
+    return jsonp(url);
+}
+const norm = x => x.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 const STOP = new Set(['the', 'and', 'los', 'las', 'les', 'del', 'with', 'feat', 'album', 'mandolin']);
 const words = x => norm(x).split(' ').filter(w => w.length > 2 && !STOP.has(w));
 
-// Pick the result that best matches artist (strong) and title (weaker).
+// Pick the result that best matches the artist (strong) and the title (weaker).
 function best(items, a, s, get) {
     const aw = words(a), sw = words(s.replace(/\(.*?\)/g, ''));
     let top = null, topScore = 0;
@@ -412,69 +429,114 @@ function best(items, a, s, get) {
     }
     return top;
 }
+// Resolves to a URL, or to 'none' (no match) / 'offline' (services unreachable).
 async function findPreview(a, s) {
-    const k = a + '|' + s;
+    const k = tkey(a, s);
     if (P.cache[k]) return P.cache[k];
     const term = (a.replace(/\(.*?\)/g, '') + ' ' + s.replace(/\(.*?\)/g, '')).replace(/\s+/g, ' ').trim();
-    let url = null;
+    let url = null, reached = false;
     try {
-        const d = await jsonp('https://itunes.apple.com/search?media=music&entity=song&limit=15&term=' + encodeURIComponent(term));
+        const d = await getJSON('https://itunes.apple.com/search?media=music&entity=song&limit=15&term=' + encodeURIComponent(term));
+        reached = true;
         const hit = best((d.results || []).filter(r => r.previewUrl), a, s, r => [r.artistName || '', r.trackName || '', r.collectionName || '']);
         url = hit && hit.previewUrl;
     } catch {}
     if (!url) try {
         const d = await jsonp('https://api.deezer.com/search?output=jsonp&q=' + encodeURIComponent(term));
+        reached = true;
         const hit = best((d.data || []).filter(r => r.preview), a, s, r => [r.artist?.name || '', r.title || '', r.album?.title || '']);
         url = hit && hit.preview;
     } catch {}
-    if (url) { P.cache[k] = url; try { localStorage.setItem(KEY + '.previews', JSON.stringify(P.cache)); } catch {} }
+    if (!url) return reached ? 'none' : 'offline';
+    P.cache[k] = url; try { localStorage.setItem(KEY + '.previews', JSON.stringify(P.cache)); } catch {}
     return url;
 }
 
-// iPhones only allow audio started from a tap; play a silent clip on the first
-// tap so the real preview can start once the lookup finishes.
-const SILENT = 'data:audio/wav;base64,UklGRrQBAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YZABAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
-function unlock() { if (P.unlocked) return; P.unlocked = true; audio.src = SILENT; audio.play().catch(() => {}); }
+let prefetched = null;
+function prefetch() {
+    const g = S.days[TK].g;
+    if (prefetched === g) return;
+    prefetched = g;
+    GENRES[g].t.forEach(([a, s]) => {
+        const k = tkey(a, s);
+        if (P.state[k] === 'ready' || P.state[k] === 'finding') return;
+        P.state[k] = 'finding';
+        findPreview(a, s).then(r => {
+            if (r === 'none' || r === 'offline') P.state[k] = r;
+            else { P.url[k] = r; P.state[k] = 'ready'; }
+            // If the user tapped this track while it was still being looked up, try now.
+            if (P.want === k) {
+                P.want = null;
+                if (P.state[k] === 'ready') start(P.idx, P.queue);
+                else if (P.queue) next();
+                else P.key = null;
+            }
+            paint();
+        });
+    });
+}
 
-async function play(i, queue) {
-    const [a, s] = GENRES[S.days[TK].g].t[i], k = a + '|' + s;
-    if (P.key === k && !P.loading) {
-        if (audio.paused) audio.play().catch(() => {}); else { audio.pause(); P.queue = false; }
-        return paint();
-    }
-    unlock();
-    Object.assign(P, { key: k, idx: i, queue, loading: true }); paint();
-    const url = await findPreview(a, s);
-    if (P.key !== k) return;
-    P.loading = false;
-    if (!url) { P.none[k] = 1; P.key = null; paint(); if (queue && i < 2) play(i + 1, true); return; }
-    audio.src = url;
-    audio.play().catch(() => { paint(); });
+// Start playback. Called directly from a tap whenever the URL is already known.
+function start(i, queue) {
+    const [a, s] = GENRES[S.days[TK].g].t[i], k = tkey(a, s);
+    Object.assign(P, { key: k, idx: i, queue });
+    if (audio.src !== P.url[k]) audio.src = P.url[k];
+    const pr = audio.play();
+    P.blocked = false;
+    if (pr) pr.then(() => { P.blocked = false; paint(); }).catch(err => {
+        // Safari refused because the tap was too long ago: ask for one more tap.
+        if (err && err.name === 'NotAllowedError') P.blocked = true;
+        paint();
+    });
     paint();
 }
-function stopAudio() { audio.pause(); Object.assign(P, { key: null, idx: -1, queue: false, loading: false }); }
+function play(i, queue) {
+    const [a, s] = GENRES[S.days[TK].g].t[i], k = tkey(a, s), st = P.state[k];
+    if (P.key === k && P.url[k]) {
+        if (audio.paused) { if (queue) P.queue = true; const pr = audio.play(); P.blocked = false; if (pr) pr.catch(() => {}); }
+        else { audio.pause(); if (!queue) P.queue = false; }
+        return paint();
+    }
+    audio.pause();
+    if (st === 'ready') return start(i, queue);
+    if (st === 'none') { if (queue) { P.idx = i; P.queue = true; next(); } return; }
+    // Still looking (or the last lookup failed): wait for it, then try to play.
+    Object.assign(P, { key: k, idx: i, queue, want: k });
+    if (st === 'offline') { P.state[k] = undefined; prefetched = null; }
+    prefetch(); paint();
+}
+function next() {
+    if (P.queue && P.idx < 2) play(P.idx + 1, true);
+    else { Object.assign(P, { key: null, idx: -1, queue: false }); paint(); }
+}
+function stopAudio() { audio.pause(); Object.assign(P, { key: null, idx: -1, queue: false, want: null, blocked: false }); }
 audio.addEventListener('play', paint);
 audio.addEventListener('pause', paint);
-audio.addEventListener('ended', () => {
-    if (audio.src === SILENT) return;
-    if (P.queue && P.idx < 2) play(P.idx + 1, true); else { stopAudio(); paint(); }
-});
+audio.addEventListener('ended', next);
+audio.addEventListener('error', () => { if (P.key) { P.state[P.key] = 'none'; delete P.cache[P.key]; next(); } });
 audio.addEventListener('timeupdate', () => {
     const el = document.querySelector(`li[data-i="${P.idx}"] .bar i`);
     if (el && audio.duration && P.key) el.style.width = (audio.currentTime / audio.duration * 100) + '%';
 });
 
 function paint() {
-    const t = GENRES[S.days[TK].g].t, live = P.key && !P.loading && !audio.paused;
+    prefetch();
+    const t = GENRES[S.days[TK].g].t, live = P.key && !audio.paused;
     document.querySelectorAll('.tracks li').forEach(li => {
-        const i = +li.dataset.i, k = t[i][0] + '|' + t[i][1], cur = P.key === k;
-        const st = cur && P.loading ? 'loading' : cur && live ? 'playing' : cur ? 'paused' : P.none[k] ? 'none' : '';
-        li.className = st;
-        li.querySelector('.pp').textContent = st === 'playing' ? '❚❚' : st === 'loading' ? '…' : '▶';
-        li.querySelector('.status').textContent = st === 'playing' ? '· playing' : st === 'loading' ? '· finding…' : st === 'none' ? '· no preview' : '';
+        const i = +li.dataset.i, k = tkey(t[i][0], t[i][1]), cur = P.key === k, st = P.state[k];
+        let cls = '', btn = '▶', msg = '';
+        if (cur && P.want === k) { cls = 'loading'; btn = '…'; msg = '· finding…'; }
+        else if (cur && live) { cls = 'playing'; btn = '❚❚'; msg = '· playing'; }
+        else if (cur && P.blocked) { cls = 'paused'; msg = '· tap ▶ to play'; }
+        else if (cur) { cls = 'paused'; msg = '· paused'; }
+        else if (st === 'none') { cls = 'none'; msg = '· no preview'; }
+        else if (st === 'offline') { cls = 'none'; msg = '· offline, tap to retry'; }
+        li.className = cls;
+        li.querySelector('.pp').textContent = btn;
+        li.querySelector('.status').textContent = msg;
     });
     const all = document.getElementById('playall');
-    if (all) all.textContent = P.queue && P.key ? (live ? '❚❚ Pause' : '▶ Resume') : '▶ Play all 3 previews';
+    if (all) all.textContent = P.queue && P.key ? (live ? '❚❚ Pause' : '▶ Resume') : '▶ Play all 3';
     const disc = document.querySelector('.disc');
     if (disc) disc.classList.toggle('on', !!live || !!S.days[TK].listened);
 }
@@ -485,7 +547,7 @@ document.getElementById('app').addEventListener('click', e => {
     if (b.dataset.play) { play(+b.dataset.play, false); return; }
     const a = b.dataset.act;
     if (a === 'playall') {
-        if (P.queue && P.key) { if (audio.paused) audio.play().catch(() => {}); else audio.pause(); paint(); }
+        if (P.queue && P.key && P.url[P.key]) play(P.idx, true);
         else play(0, true);
     }
     else if (a === 'swap') swap();
