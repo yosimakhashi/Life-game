@@ -207,6 +207,11 @@ const GENRES = [
  { n: 'UK Jazz Now', o: 'London, UK', e: '2010s–today', h: 160, m: ['groove','energy'], d: 'Young London players mixing jazz with Afrobeat, grime and Caribbean rhythms.', w: 'an energetic afternoon', t: [['Kokoroko','Abusey Junction'],['Sons of Kemet','My Queen Is Harriet Tubman'],['Yussef Kamaal','Strings of Light']] },
 ];
 
+/* Preview clips looked up ahead of time (track -> iTunes preview URL), so the
+   page can play them without searching from the phone. Filled in by a lookup
+   script; anything missing here is searched live. */
+const PREVIEWS = {};
+
 const MOODS = { chill: '😌 Chill', focus: '🎯 Focus', energy: '⚡ Energy', groove: '🕺 Groove', feel: '💭 Feel' };
 
 /* ---------- storage ---------- */
@@ -370,7 +375,7 @@ function render(spun) {
             <a class="small" href="${yt(G.n + ' music mix')}" target="_blank" rel="noopener">Mix ↗</a></li>`).join('')}</ul>
     </div>` : ''}
 
-    <p class="foot">A new genre every day at midnight · no repeats until you’ve heard all ${GENRES.length}<br>
+    <p class="foot">A new genre every day at midnight · no repeats until you’ve heard all ${GENRES.length} · v5<br>
     <button data-act="reset">Reset my history</button></p>`;
 
     if (spun) { const d = document.querySelector('.disc'); d.classList.add('on'); setTimeout(() => render(), 900); }
@@ -389,7 +394,8 @@ const P = {
     key: null, idx: -1, queue: false, want: null,
     url: {},      // track key -> preview URL
     state: {},    // track key -> 'finding' | 'ready' | 'none' | 'offline'
-    blocked: false, cache: {}
+    blocked: false, cache: {},
+    bad: {}       // track key -> URL that failed to play, so it isn't tried again
 };
 try { P.cache = JSON.parse(localStorage.getItem(KEY + '.previews')) || {}; } catch {}
 const tkey = (a, s) => a + '|' + s;
@@ -415,6 +421,7 @@ async function getJSON(url) {
 }
 const norm = x => x.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 const STOP = new Set(['the', 'and', 'los', 'las', 'les', 'del', 'with', 'feat', 'album', 'mandolin']);
+const SKIP = /karaoke|tribute|made famous|in the style of|originally performed|\bcover\b|\(from "/i;
 const words = x => norm(x).split(' ').filter(w => w.length > 2 && !STOP.has(w));
 
 // Pick the result that best matches the artist (strong) and the title (weaker).
@@ -423,10 +430,12 @@ function best(items, a, s, get) {
     let top = null, topScore = 0;
     for (const it of items) {
         const [artist, title, extra] = get(it);
-        if (/karaoke|tribute|made famous|in the style of/i.test(artist + ' ' + title + ' ' + extra)) continue;
-        const hay = norm(artist + ' ' + extra), th = norm(title);
-        const aHit = aw.some(w => hay.includes(w)), sHit = sw.length ? sw.filter(w => th.includes(w)).length / sw.length : 0;
-        const score = (aHit ? 2 : 0) + sHit;
+        if (SKIP.test(artist + ' ' + title + ' ' + extra)) continue;
+        const th = norm(title);
+        // Artist name match counts most; a match only in the album name (e.g. a
+        // composer in a classical album title) counts less.
+        const aHit = aw.some(w => norm(artist).includes(w)) ? 2 : aw.some(w => norm(extra).includes(w)) ? 1 : 0, sHit = sw.length ? sw.filter(w => th.includes(w)).length / sw.length : 0;
+        const score = aHit + sHit;
         if (score > topScore && (aHit || sHit >= .6)) { top = it; topScore = score; }
     }
     return top;
@@ -434,7 +443,8 @@ function best(items, a, s, get) {
 // Resolves to a URL, or to 'none' (no match) / 'offline' (services unreachable).
 async function findPreview(a, s) {
     const k = tkey(a, s);
-    if (P.cache[k]) return P.cache[k];
+    if (P.cache[k] && P.cache[k] !== P.bad[k]) return P.cache[k];
+    if (PREVIEWS[k] && PREVIEWS[k] !== P.bad[k]) return PREVIEWS[k];
     const term = (a.replace(/\(.*?\)/g, '') + ' ' + s.replace(/\(.*?\)/g, '')).replace(/\s+/g, ' ').trim();
     let url = null, reached = false;
     // Note: no media=music here. With it, iTunes redirects iPhones to the Music
@@ -445,14 +455,14 @@ async function findPreview(a, s) {
             const d = await getJSON('https://itunes.apple.com/search?entity=song&limit=15&country=' + country + '&term=' + encodeURIComponent(term));
             reached = true;
             const hit = best((d.results || []).filter(r => r.previewUrl), a, s, r => [r.artistName || '', r.trackName || '', r.collectionName || '']);
-            url = hit && hit.previewUrl;
+            url = hit && hit.previewUrl !== P.bad[k] ? hit.previewUrl : null;
         } catch {}
     }
     if (!url) try {
         const d = await jsonp('https://api.deezer.com/search?output=jsonp&q=' + encodeURIComponent(term));
         reached = true;
         const hit = best((d.data || []).filter(r => r.preview), a, s, r => [r.artist?.name || '', r.title || '', r.album?.title || '']);
-        url = hit && hit.preview;
+        url = hit && hit.preview !== P.bad[k] ? hit.preview : null;
     } catch {}
     if (!url) return reached ? 'none' : 'offline';
     P.cache[k] = url; try { localStorage.setItem(KEY + '.previews', JSON.stringify(P.cache)); } catch {}
@@ -520,7 +530,16 @@ function stopAudio() { audio.pause(); Object.assign(P, { key: null, idx: -1, que
 audio.addEventListener('play', paint);
 audio.addEventListener('pause', paint);
 audio.addEventListener('ended', next);
-audio.addEventListener('error', () => { if (P.key) { P.state[P.key] = 'none'; delete P.cache[P.key]; next(); } });
+// A saved link stopped working: remember it as bad and search live once.
+audio.addEventListener('error', () => {
+    const k = P.key;
+    if (!k || !audio.src || audio.src.startsWith('data:')) return;
+    delete P.cache[k];
+    if (P.bad[k]) { P.state[k] = 'none'; return next(); }
+    P.bad[k] = P.url[k];
+    delete P.url[k]; P.state[k] = undefined; prefetched = null;
+    P.want = k; prefetch(); paint();
+});
 audio.addEventListener('timeupdate', () => {
     const el = document.querySelector(`li[data-i="${P.idx}"] .bar i`);
     if (el && audio.duration && P.key) el.style.width = (audio.currentTime / audio.duration * 100) + '%';
