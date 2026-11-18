@@ -189,6 +189,11 @@ h2 span { color: var(--rose); }
 /* ---------- Hall of Hearts ---------- */
 .hall { display: flex; flex-direction: column; gap: 10px; }
 .girlRow { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); }
+.avatarPreview { border: 0; padding: 0; margin: 0; border-radius: 10px; background: transparent; cursor: pointer; flex: none; display: block; line-height: 0; }
+.avatarPreview:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.modelPreview { width: 100%; height: min(62vh, 520px); min-height: 300px; margin: 10px 0 12px; border-radius: 14px; overflow: hidden; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 30%, #55304f, #1a0d20 72%); border: 1px solid var(--line); }
+.modelPreview svg { display: block; height: 100%; width: auto; max-width: 100%; filter: drop-shadow(0 8px 12px rgba(0,0,0,.3)); }
+.modelHint { color: var(--dim); font-size: 12px; text-align: center; margin: 0 0 8px; }
 .girlRow .av { width: 58px; height: 70px; flex: none; border-radius: 10px; background: radial-gradient(circle at 50% 35%, #ffd6e8, #c98ad8 60%, #6a3a9a); overflow: hidden; display: grid; place-items: end center; }
 .girlRow .av svg { width: 58px; height: 70px; }
 .girlRow .info { flex: 1; min-width: 0; }
@@ -365,6 +370,17 @@ input[type=text] { width: 100%; background: var(--card-2); color: var(--text); b
 
     <h2>Love <span>Log</span></h2>
     <ul class="log" id="log"></ul>
+</div>
+
+<!-- Full-body character preview -->
+<div class="modal" id="modelModal" role="dialog" aria-modal="true" aria-labelledby="modelTitle">
+    <div class="sheet">
+        <h3 id="modelTitle">Character preview</h3>
+        <p id="modelSubtitle">Full-body view</p>
+        <div class="modelPreview" id="modelPreview"></div>
+        <div class="modelHint">Tap another portrait below to preview a different character.</div>
+        <button class="linkBtn" id="closeModel">Close preview</button>
+    </div>
 </div>
 
 <!-- Red flag modal -->
@@ -1405,7 +1421,22 @@ function openLetter(i) {
 }
 $('closeLetter').onclick = () => $('letterModal').classList.remove('open');
 $('winLetter').onclick = () => { const w = S.won[S.won.length - 1]; if (w) openLetter(w.i); };
-$('hall').addEventListener('click', e => { const r = e.target.closest('[data-letter]'); if (r) openLetter(+r.dataset.letter); });
+function openModelPreview(i) {
+    if (!Number.isInteger(i) || i < 0 || i >= GIRLS.length) return;
+    const g = ANIME[i], won = S.won.find(x => x.i === i), current = i === S.level;
+    const label = won ? won.name : current ? nameOf(i) : `Level ${i + 1} · ${g.title}`;
+    $('modelTitle').textContent = label;
+    $('modelSubtitle').textContent = won ? '❤ Heart won · full-body character view' : current ? 'Your current character · full-body view' : 'Locked character · preview only';
+    $('modelPreview').innerHTML = girlSVG(GIRLS[i], 5);
+    $('modelModal').classList.add('open');
+}
+$('hall').addEventListener('click', e => {
+    const p = e.target.closest('[data-preview]');
+    if (p) { e.stopPropagation(); openModelPreview(+p.dataset.preview); return; }
+    const r = e.target.closest('[data-letter]');
+    if (r) openLetter(+r.dataset.letter);
+});
+$('closeModel').onclick = () => $('modelModal').classList.remove('open');
 $('hall').addEventListener('keydown', e => { if (e.key !== 'Enter' && e.key !== ' ') return; const r = e.target.closest('[data-letter]'); if (r) { e.preventDefault(); openLetter(+r.dataset.letter); } });
 
 /* ============================================================
@@ -1466,7 +1497,7 @@ function renderHall() {
                   : `Level ${i + 1} · ${g.title}`;
         const tag = w ? '❤ Together' : now ? 'Chasing' : '🔒 Locked';
         const bar = now ? `<div class="mini"><i style="width:${Math.min(100, S.points / GOAL * 100)}%"></i></div>` : '';
-        return `<div class="girlRow ${cls}"${w ? ` data-letter="${i}" role="button" tabindex="0" aria-label="Read ${esc(nm)}'s letter"` : ''}><div class="av">${girlPortrait(g)}</div>
+        return `<div class="girlRow ${cls}"${w ? ` data-letter="${i}" role="button" tabindex="0" aria-label="Read ${esc(nm)}'s letter"` : ''}><button class="avatarPreview" type="button" data-preview="${i}" aria-label="View full body of ${esc(nm)}"><span class="av">${girlPortrait(g)}</span></button>
             <div class="info"><div class="t">${esc(nm)}</div><div class="q">${sub}</div>${bar}${w ? '<span class="letterLink">💌 Read her letter</span>' : ''}</div><span class="st">${tag}</span></div>`;
     }).join('');
 }
