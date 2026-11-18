@@ -1098,7 +1098,7 @@ function characterImage(g, mode = 'full') {
   const file = 'girl' + String(i + 1).padStart(2, '0') + '.webp';
   const cls = mode === 'portrait' ? 'girl-art portrait-art' : 'girl-art full-art';
   const alt = (g && g.name ? g.name : 'Character') + ' anime illustration';
-  return '<img class="' + cls + '" src="../art/' + file + '" alt="' + alt.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) + '" loading="eager" decoding="async">';
+  return '<img class="' + cls + '" src="/Life-game/art/' + file + '" alt="' + alt.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) + '" loading="eager" decoding="async">';
 }
 function fullBodySVG(w, stage = 0) { return characterImage(GIRLS[Math.max(0, ANIME.indexOf(w))], 'full'); }
 function portraitSVG(w) { return characterImage(GIRLS[Math.max(0, ANIME.indexOf(w))], 'portrait'); }
