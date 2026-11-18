@@ -734,23 +734,22 @@ const STORY = [
      ['mountain', '🌌', 'Under the stars', 'I could do this forever.'], ['garden', '💍', 'The question', 'Yes. A thousand times yes.'], ['wedding', '💒', 'The big day', 'Here we are. Finally.']]
 ];
 const INTIMATE_LINES = [
-  ['You have a dangerously distracting smile.', 'Come closer. I want to kiss you properly.'],
-  ['I keep hoping you will sit a little nearer.', 'I want you beside me all night, darling.'],
-  ['Not bad, handsome. You are making me blush.', 'I have been thinking about your kisses all day.'],
-  ['Hold still. I want to remember this moment.', 'Leave the studio lights on. I like having you this close.'],
-  ['That song was for you. Did you notice?', 'After the show, I want you all to myself.'],
-  ['You make my pulse race, and I know the numbers.', 'Tonight, doctor’s orders: one long kiss.'],
-  ['I was hoping you would ask me to stay.', 'Let’s disappear together for a night. Just us.'],
-  ['Your hands look good holding mine.', 'When the music stops, keep your arms around me.'],
-  ['I cancelled my next meeting. Guess why.', 'No more formalities tonight. Come closer, handsome.'],
-  ['I knew I wanted you before I admitted it.', 'I want a lifetime of kisses, teasing, and late nights with you.']
+  ['You make me blush every time you get that close.', 'You make me wet just thinking about you.'],
+  ['I keep imagining what it would be like to kiss you.', 'You make me wet just thinking about you.'],
+  ['Careful… that smile is making it hard to concentrate.', 'You make me wet just thinking about you.'],
+  ['I want this moment to last a little longer.', 'You make me wet just thinking about you.'],
+  ['Come closer. I want to tell you a secret.', 'You make me wet just thinking about you.'],
+  ['I was trying to act professional. You ruined that.', 'You make me wet just thinking about you.'],
+  ['I could get used to having you this close.', 'You make me wet just thinking about you.'],
+  ['That look in your eyes is making me forget my steps.', 'You make me wet just thinking about you.'],
+  ['I cancelled my plans. I would rather be here with you.', 'You make me wet just thinking about you.'],
+  ['I have one more thing to say before you go… kiss me.', 'You make me wet just thinking about you.']
 ];
-const SPOKEN_LINES = [[["You again? Good. I was hoping you would come by.","Two sugars, one kiss. That is my new chai order.","Walk with me. I like having you beside me.","You can hold my bags, but I am keeping your hand.","I was not watching you. I was admiring you.","Stay for dinner. I am not ready to say goodnight."],["I saved this seat for you. Obviously.","You remembered my favourite book. That is dangerously charming.","Come closer. I want to show you something.","I like arguing with you. It gives me an excuse to stay longer.","Read to me, but sit a little closer.","I wrote your name in the margin. Don’t tease me."],["Nice form. Even nicer smile.","Keep up, handsome. I might reward you.","You make post-workout shakes taste better.","Same team, same heartbeat.","The view is lovely, but you are distracting me.","My favourite victory is ending the day with you."],["Careful, the paint is wet. Unlike my patience for your flirting.","You came. I was secretly hoping you would.","Stay still. I want to sketch that smile.","This frame would look good in our place.","The sunset is beautiful. You are making it difficult to focus.","Come closer. I want to remember this night."],["I saw you in the crowd. My heart did a little backflip.","You sing terribly. Kiss me anyway.","This song is about someone standing right here.","Dance with me. No excuses.","One more song, then maybe one more kiss.","After the show, I am keeping you to myself."],["Your heart rate is up. I wonder why.","Ten minutes? I would rather have the whole evening.","You stayed up with me. That means more than you know.","Walk me home? I might ask you to stay.","No pager tonight. I want your attention.","Doctor’s orders: come here and kiss me."],["Is this seat taken? I was hoping it was yours.","Try the spicy one. I promise to take care of you.","Best campsite. Even better company.","Race you to the water, then warm me up with a hug.","Stop taking photos of the lake. Look at me.","I do not want this trip to end."],["You can stay. I dance better when you watch.","Did you see me? I was looking for you.","Follow my steps, then follow me outside.","Choose the bangles. I want you to notice them.","You waited for me. I owe you a kiss.","This dance is ours. Hold me close."],["You have five minutes. Make me want to cancel the next meeting.","Call me Aisha. And maybe ask me out properly.","Stand next to me. I like showing you off.","I cleared my evening. I hope you have plans for us.","The skyline is lovely. Come share the view with me.","My phone is off. Tonight, I am all yours."],["I feel like I have known you much longer.","One coffee turned into hours. I would do it again.","Stay a little longer. I am not done kissing you.","Under these stars, I only have eyes for you.","Yes. A thousand times yes. Come here.","We made it, darling. Now let us enjoy forever."]]];
-STORY.forEach((dates, i) => dates.forEach((date, k) => { date[3] = SPOKEN_LINES[i][k]; }));
 STORY.forEach((dates, i) => {
   dates[4][3] = INTIMATE_LINES[i][0];
   dates[5][3] = INTIMATE_LINES[i][1];
 });
+
 
 
 const sceneOf = () => finished() ? STORY[GIRLS.length - 1][5] : STORY[S.level][stageOf(S.points)];
@@ -1092,10 +1091,13 @@ function modelArt(w, full = true) {
   const svg='<svg viewBox="0 0 200 450" aria-hidden="true"><defs><linearGradient id="shine'+i+'" x2=".9" y2="1"><stop stop-color="#fff" stop-opacity=".9"/><stop offset=".5" stop-color="#fff" stop-opacity=".13"/><stop offset="1" stop-color="#fff" stop-opacity=".42"/></linearGradient></defs><ellipse cx="100" cy="441" rx="55" ry="6" fill="#000" opacity=".2"/><g class="body">'+hairBack+lower+body+face+'<path d="M75 192 Q100 201 125 192" stroke="#fff" stroke-width="2" opacity=".3" fill="none"/></g></svg>';
   return full?svg:'<svg viewBox="28 20 144 150" aria-hidden="true">'+hairBack+face+'</svg>';
 }
-// Render characters with the built-in SVG artwork so they never depend
-// on external image paths or GitHub Pages asset routing.
+// Character artwork is stored in the repository-root /art folder.
 function characterImage(g, mode = 'full') {
-  return modelArt(g || GIRLS[0], mode !== 'portrait');
+  const i = Math.max(0, GIRLS.indexOf(g));
+  const file = 'girl' + String(i + 1).padStart(2, '0') + '.webp';
+  const cls = mode === 'portrait' ? 'girl-art portrait-art' : 'girl-art full-art';
+  const alt = (g && g.name ? g.name : 'Character') + ' anime illustration';
+  return '<img class="' + cls + '" src="../art/' + file + '" alt="' + alt.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) + '" loading="eager" decoding="async">';
 }
 function fullBodySVG(w, stage = 0) { return characterImage(GIRLS[Math.max(0, ANIME.indexOf(w))], 'full'); }
 function portraitSVG(w) { return characterImage(GIRLS[Math.max(0, ANIME.indexOf(w))], 'portrait'); }
