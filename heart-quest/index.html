@@ -1094,7 +1094,7 @@ function fullBodySVG(w, stage = 0) {
     return `<svg viewBox="0 0 200 450" aria-hidden="true">${defs}
       <ellipse cx="100" cy="438" rx="58" ry="6" fill="rgba(0,0,0,.22)"/>
       <g class="body">
-        <g>${hairBack}</g>
+        <g transform="translate(30 -5) scale(.7)">${hairBack}</g>
         ${skin}${pants}${skirt}
         <path d="${torso}" fill="url(#${id}s)" stroke="rgba(0,0,0,.16)" stroke-width="1.4"/>
         ${neck}${top}${arms}${outer}${gloss}${stageGlow}
