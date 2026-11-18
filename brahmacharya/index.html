@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#14110f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Brahmacharya">
+<title>Brahmacharya Path</title>
+<style>
+/* Brahmacharya Path: a 90-day semen retention guide.
+   One file, no network. Progress is stored in localStorage under KEY.
+   If Iron Will (../iron-will/) has a running streak, its start time is
+   used so both pages agree on the current day.
+   Tabs: Today, Path (90-day map), Teachings, Energy, Urge SOS. */
+:root {
+    --bg: #f6f1e7; --card: #fffaf0; --ink: #2a1f17; --dim: #7a6858; --line: #e3d6c1;
+    --saffron: #c8611a; --saffron-ink: #fff; --soft: #f6e2cc; --gold: #9a6c12;
+    --good: #2f7d4f; --bad: #b4382f;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #14110f; --card: #1e1915; --ink: #f1e6d6; --dim: #a8968a; --line: #342b24;
+        --saffron: #f08a3c; --saffron-ink: #1a0d03; --soft: #3a2614; --gold: #e2b350;
+        --good: #6fd197; --bad: #f2867c;
+    }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body { font: 16px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; }
+h1, h2, h3, .serif { font-family: 'Iowan Old Style', Palatino, 'Palatino Linotype', Georgia, serif; font-weight: 600; line-height: 1.2; margin: 0; text-wrap: balance; }
+h1 { font-size: 30px; } h2 { font-size: 21px; } h3 { font-size: 17px; }
+p { margin: 0 0 10px; } p:last-child { margin-bottom: 0; }
+ul, ol { margin: 6px 0 10px; padding-left: 20px; } li { margin: 3px 0; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; touch-action: manipulation; }
+a { color: var(--saffron); }
+.wrap { max-width: 560px; margin: 0 auto; padding: 18px 16px calc(96px + env(safe-area-inset-bottom)); }
+.eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.dim { color: var(--dim); } .small { font-size: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-top: 14px; }
+.card h3 { margin-bottom: 8px; }
+.label { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--saffron); margin-bottom: 6px; }
+.quote { font-family: 'Iowan Old Style', Palatino, Georgia, serif; font-style: italic; border-left: 3px solid var(--saffron); padding: 2px 0 2px 12px; margin: 10px 0; }
+.quote cite { display: block; font-style: normal; font-size: 13px; color: var(--dim); margin-top: 4px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 16px; border-radius: 12px; font-weight: 600; background: var(--saffron); color: var(--saffron-ink); }
+.btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--ink); }
+.btn.small { padding: 7px 12px; font-size: 14px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.top a { font-size: 14px; text-decoration: none; color: var(--dim); }
+
+/* hero */
+.hero { text-align: center; padding: 22px 16px 18px; background: radial-gradient(circle at 50% 0%, var(--soft), var(--card) 70%); }
+.flame { font-size: 34px; line-height: 1; }
+.dayNum { font-family: 'Iowan Old Style', Palatino, Georgia, serif; font-size: 64px; font-weight: 700; line-height: 1; color: var(--saffron); margin: 6px 0 2px; font-variant-numeric: tabular-nums; }
+.phaseTag { display: inline-block; margin-top: 8px; padding: 4px 10px; border-radius: 999px; background: var(--soft); color: var(--gold); font-size: 13px; font-weight: 600; }
+.bar { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; margin-top: 12px; }
+.bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--gold), var(--saffron)); }
+.dayNav { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+
+/* checklist */
+.check { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-top: 1px solid var(--line); cursor: pointer; }
+.check:first-of-type { border-top: 0; }
+.box { flex: none; width: 24px; height: 24px; border-radius: 7px; border: 2px solid var(--line); display: grid; place-items: center; margin-top: 1px; }
+.check.on .box { background: var(--good); border-color: var(--good); color: #fff; }
+.check.on .box::after { content: "✓"; font-size: 15px; font-weight: 700; }
+.check.on .ctext { color: var(--dim); }
+.ctext b { display: block; }
+
+/* path grid */
+.grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; }
+.cell { aspect-ratio: 1; border-radius: 7px; border: 1px solid var(--line); font-size: 12px; display: grid; place-items: center; font-variant-numeric: tabular-nums; }
+.cell.past { background: var(--soft); }
+.cell.done { background: var(--good); color: #fff; border-color: var(--good); }
+.cell.now { outline: 2px solid var(--saffron); outline-offset: 1px; font-weight: 700; }
+.phaseList .ph { padding: 10px 0; border-top: 1px solid var(--line); }
+.phaseList .ph:first-child { border-top: 0; }
+
+/* accordions */
+details { border-top: 1px solid var(--line); padding: 12px 0; }
+details:first-of-type { border-top: 0; padding-top: 0; }
+summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 10px; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; color: var(--saffron); font-weight: 700; }
+details[open] summary::after { content: "−"; }
+details > div { margin-top: 10px; }
+
+/* SOS */
+.sosBtn { width: 100%; padding: 18px; font-size: 19px; border-radius: 16px; background: var(--bad); color: #fff; font-weight: 700; }
+.breath { text-align: center; padding: 10px 0; }
+.orb { width: 150px; height: 150px; margin: 14px auto; border-radius: 50%; background: radial-gradient(circle, var(--saffron), var(--gold)); opacity: .9; transform: scale(.55); transition: transform 4s ease-in-out; }
+.breathWord { font-family: 'Iowan Old Style', Palatino, Georgia, serif; font-size: 24px; font-weight: 600; }
+.ladder li { margin: 7px 0; }
+
+/* tabs */
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line); display: flex; justify-content: center; padding-bottom: env(safe-area-inset-bottom); z-index: 10; }
+nav.tabs button { flex: 1; max-width: 112px; padding: 9px 2px 10px; font-size: 11px; color: var(--dim); display: flex; flex-direction: column; align-items: center; gap: 2px; }
+nav.tabs button span { font-size: 19px; }
+nav.tabs button.on { color: var(--saffron); font-weight: 700; }
+nav.tabs button.sos { color: var(--bad); }
+section[hidden] { display: none; }
+input[type=date] { font: inherit; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.toast { position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 20; max-width: calc(100% - 32px); text-align: center; }
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <div class="top">
+        <a href="../">← Life Game</a>
+        <span class="eyebrow">ब्रह्मचर्य</span>
+    </div>
+
+    <!-- ===================== TODAY ===================== -->
+    <section id="tab-today">
+        <div id="setup" class="card" hidden>
+            <div class="label">Begin the path</div>
+            <h2>Your 90-day practice starts with a sankalpa.</h2>
+            <p class="dim small" style="margin-top:8px">Pick the day your streak began. Each day gives you one teaching, one practice and one tactic for the lust mind.</p>
+            <div class="row" style="margin-top:12px">
+                <button class="btn" id="startToday">Start today</button>
+                <input type="date" id="startPick" aria-label="Start date">
+                <button class="btn ghost small" id="startSet">Set</button>
+            </div>
+            <p class="small dim" id="ironNote" style="margin-top:10px" hidden></p>
+        </div>
+
+        <div class="card hero" id="hero">
+            <div class="flame">🪔</div>
+            <div class="eyebrow" style="margin-top:6px" id="heroEyebrow">Day</div>
+            <div class="dayNum" id="dayNum">1</div>
+            <div class="serif" style="font-size:20px" id="dayTitle"></div>
+            <div class="phaseTag" id="phaseTag"></div>
+            <div class="bar"><i id="bar" style="width:0%"></i></div>
+            <div class="small dim" style="margin-top:6px" id="barText"></div>
+            <div class="dayNav">
+                <button class="btn ghost small" id="prevDay">← Prev</button>
+                <button class="btn ghost small" id="todayBtn">Today</button>
+                <button class="btn ghost small" id="nextDay">Next →</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="label">Teaching</div>
+            <div id="dLearn"></div>
+            <div id="dQuote"></div>
+        </div>
+        <div class="card">
+            <div class="label">Today's practice</div>
+            <div id="dDo"></div>
+        </div>
+        <div class="card">
+            <div class="label">Handling the lust mind</div>
+            <div id="dMind"></div>
+        </div>
+        <div class="card">
+            <div class="label">Phase focus</div>
+            <h3 id="phName"></h3>
+            <div id="phBody" class="small"></div>
+        </div>
+
+        <div class="card">
+            <div class="label">Daily dinacharya</div>
+            <div class="small dim" style="margin-bottom:6px" id="checkDate"></div>
+            <div id="checks"></div>
+        </div>
+
+        <div class="card">
+            <div class="label">Streak</div>
+            <div class="row">
+                <button class="btn ghost small" id="slipBtn">I slipped. Reset honestly</button>
+                <button class="btn ghost small" id="changeStart">Change start date</button>
+            </div>
+            <p class="small dim" style="margin-top:10px" id="streakInfo"></p>
+        </div>
+    </section>
+
+    <!-- ===================== PATH ===================== -->
+    <section id="tab-path" hidden>
+        <h1 style="margin-top:12px">The 90-day path</h1>
+        <p class="dim" style="margin-top:6px">Tap any day to read its guide. Green days are ones where you finished the daily checklist.</p>
+        <div class="card"><div class="grid" id="grid"></div></div>
+        <div class="card">
+            <div class="label">The eight phases</div>
+            <div class="phaseList" id="phaseList"></div>
+        </div>
+    </section>
+
+    <!-- ===================== TEACHINGS ===================== -->
+    <section id="tab-teach" hidden>
+        <h1 style="margin-top:12px">Teachings</h1>
+        <p class="dim" style="margin-top:6px">What the Hindu, yogic and esoteric traditions say about brahmacharya and sexual energy.</p>
+
+        <div class="card">
+            <div class="label">Hindu & yogic tradition</div>
+            <details open><summary>What brahmacharya actually means</summary><div>
+                <p><b>Brahma + charya</b>: "conduct that moves toward Brahman", the ultimate reality. Its first meaning is a life aimed at the highest. Sexual restraint is how that life protects its energy.</p>
+                <p>It is the fourth of the five <b>yamas</b> in Patanjali's Yoga Sutras: ahimsa, satya, asteya, <b>brahmacharya</b>, aparigraha. It is also the first of the four <b>ashramas</b>, or stages of life. The student (brahmachari) stays celibate and puts all his energy into learning, strength and character.</p>
+                <p>For householders (grihastha), the tradition treats brahmacharya as moderation, fidelity and intention, not total abstinence.</p>
+            </div></details>
+            <details><summary>Yoga Sutra 2.38: the reward is vigour</summary><div>
+                <div class="quote">brahmacharya-pratiṣṭhāyāṃ vīrya-lābhaḥ<cite>"When one is established in continence, vigour (vīrya) is gained." Yoga Sutra 2.38</cite></div>
+                <p><b>Vīrya</b> means courage, strength and creative potency. Patanjali says <i>established</i> (pratishtha): it has to become your nature, not a fight you win once in a while.</p>
+            </div></details>
+            <details><summary>Bhagavad Gita: the ladder of fall</summary><div>
+                <div class="quote">dhyāyato viṣayān puṃsaḥ saṅgas teṣūpajāyate…<cite>Bhagavad Gita 2.62–63</cite></div>
+                <p>Krishna gives the exact chain of a relapse:</p>
+                <ol>
+                    <li><b>Dwelling</b> on sense objects →</li>
+                    <li><b>Attachment</b> (sanga) →</li>
+                    <li><b>Desire</b> (kama) →</li>
+                    <li><b>Anger</b> when desire is blocked (krodha) →</li>
+                    <li><b>Delusion</b> (sammoha) →</li>
+                    <li><b>Loss of memory</b> of your purpose →</li>
+                    <li><b>Loss of discrimination</b> (buddhi-nasha) → ruin.</li>
+                </ol>
+                <p><b>Practical lesson:</b> break the chain at step 1. The fight is easy at "dwelling" and almost lost by "desire".</p>
+            </div></details>
+            <details><summary>Bhagavad Gita: kama is the enemy</summary><div>
+                <div class="quote">kāma eṣa krodha eṣa rajo-guṇa-samudbhavaḥ… viddhy enam iha vairiṇam<cite>"It is desire, it is anger, born of rajas… know this to be the enemy here." Gita 3.37</cite></div>
+                <p>In 3.40 Krishna names where desire lives: the <b>senses, the mind and the intellect</b>. That is why lust argues so cleverly. It uses your own reasoning. In 3.41–43 he says to control the senses first, then know the Self as higher than mind and intellect, and "slay this enemy so hard to conquer".</p>
+                <p>And 2.58: the wise one withdraws the senses from their objects <b>as a tortoise draws in its limbs</b>. This is pratyahara.</p>
+            </div></details>
+            <details><summary>The eight forms of maithuna (sexual indulgence)</summary><div>
+                <p>Traditional texts list eight forms, and brahmacharya avoids all of them, not only the physical act:</p>
+                <ol>
+                    <li><b>Smarana</b>: thinking and fantasising</li>
+                    <li><b>Kirtana</b>: talking about it</li>
+                    <li><b>Keli</b>: flirting and play</li>
+                    <li><b>Prekshana</b>: looking with desire (includes screens)</li>
+                    <li><b>Guhyabhashana</b>: secret, suggestive talk</li>
+                    <li><b>Sankalpa</b>: deciding to do it</li>
+                    <li><b>Adhyavasaya</b>: making the effort toward it</li>
+                    <li><b>Kriya-nivritti</b>: the act itself</li>
+                </ol>
+                <p>The act is the last link. The real practice is at links 1–4.</p>
+            </div></details>
+            <details><summary>Ayurveda: shukra and ojas</summary><div>
+                <p>Ayurveda describes seven dhatus (tissues), each refined from the one before it: <b>rasa</b> (plasma) → <b>rakta</b> (blood) → <b>mamsa</b> (muscle) → <b>meda</b> (fat) → <b>asthi</b> (bone) → <b>majja</b> (marrow) → <b>shukra</b> (reproductive essence).</p>
+                <p>The finest essence of all seven is <b>ojas</b>: vitality, immunity, calm and the glow of the face. The tradition says conserving shukra builds ojas. Ojas then turns into <b>tejas</b> (inner fire and radiance) and <b>prana</b> (life force).</p>
+                <p><b>Ojas-building foods:</b> ghee, warm milk with saffron, cardamom and a little turmeric, soaked almonds, dates, figs, sesame, fresh fruit, rice and mung dal. <b>Ojas-draining things:</b> stress, poor sleep, alcohol, excess stimulants, stale or fried food, overeating and anger.</p>
+            </div></details>
+            <details><summary>Exemplars: Hanuman, Bhishma, Vivekananda</summary><div>
+                <p><b>Hanuman</b> is the ideal brahmachari. His immense strength comes from devotion to Rama, not from suppression. Lesson: give your energy a higher object.</p>
+                <p><b>Bhishma</b> took a lifelong vow of celibacy for his father's happiness and received the boon of choosing his own time of death. Lesson: a vow kept makes you unshakable.</p>
+                <p><b>Swami Vivekananda</b> taught that chastity is the source of a strong brain and will. He held that energy conserved this way becomes <i>ojas</i>, power of mind and personality.</p>
+                <p><b>Shiva and Kamadeva:</b> when Kama, god of desire, shot his arrow at the meditating Shiva, Shiva opened his third eye and burned him to ash. The symbol: <b>awareness burns desire.</b> Shiva is not anti-love. He later marries Parvati. Lust is mastered, then love is chosen.</p>
+            </div></details>
+            <details><summary>The 41-day mandala</summary><div>
+                <p>In South Indian practice a <b>mandala</b> is a 41-day cycle for a vow. Pilgrims to Sabarimala keep a 41-day vratham of celibacy, simple food, sleeping on the floor and daily prayer. Day 41 on your path marks this.</p>
+            </div></details>
+        </div>
+
+        <div class="card">
+            <div class="label">Esoteric teachings</div>
+            <details><summary>Chakras and transmutation</summary><div>
+                <p>Tantric and yogic subtle anatomy describes seven chakras along the spine. Sexual energy is tied to the lower two:</p>
+                <ul>
+                    <li><b>Muladhara</b> (root, earth): survival and grounding. This is where <b>kundalini</b> lies coiled.</li>
+                    <li><b>Svadhisthana</b> (sacral, water): sexuality, pleasure, creativity.</li>
+                    <li><b>Manipura</b> (navel, fire): will, drive, confidence.</li>
+                    <li><b>Anahata</b> (heart): love, compassion.</li>
+                    <li><b>Vishuddha</b> (throat): expression, truth.</li>
+                    <li><b>Ajna</b> (third eye): insight. Shiva's eye.</li>
+                    <li><b>Sahasrara</b> (crown): union.</li>
+                </ul>
+                <p><b>Transmutation</b> means lifting the energy from svadhisthana into manipura (drive), anahata (love) and ajna (clarity) instead of spending it. Your tools are breath, bandhas, mantra and focused work. See the Energy tab.</p>
+            </div></details>
+            <details><summary>Taoist Three Treasures: jing, qi, shen</summary><div>
+                <p>Chinese internal alchemy describes three treasures:</p>
+                <ul>
+                    <li><b>Jing</b>: essence, stored in the kidneys. Semen is its densest form.</li>
+                    <li><b>Qi</b>: vital energy.</li>
+                    <li><b>Shen</b>: spirit and mind.</li>
+                </ul>
+                <p>The work is to <b>conserve jing → refine it into qi → refine qi into shen</b>. The classic method is the <b>Microcosmic Orbit</b>: circulating energy up the spine (governing channel) and down the front of the body (conception channel). See Energy.</p>
+            </div></details>
+            <details><summary>Kundalini: go slow</summary><div>
+                <p>Every serious tradition warns <b>against forcing kundalini</b> with extreme breath holds, marathon sessions or mixing many techniques. Signs of imbalance include insomnia, heat, anxiety, head pressure and mood swings. The traditions say to ground yourself and get guidance from a qualified teacher.</p>
+                <p>Steady daily practice and good food and sleep do more than intensity.</p>
+            </div></details>
+            <details><summary>Lust as misdirected longing</summary><div>
+                <p>In bhakti and in Sufi and Christian mysticism, sexual craving is seen as a <b>longing for union</b> that has picked the wrong object. Suppression alone leaves the longing hungry. Redirection feeds it: devotion, love, beauty, meaningful work, real friendship.</p>
+            </div></details>
+        </div>
+
+        <div class="card">
+            <div class="label">Honest note</div>
+            <p class="small">Many traditional claims, like "one drop of semen equals forty drops of blood", are <b>spiritual teachings, not medical facts</b>. Ejaculation is not harmful, and wet dreams are normal. The well-supported benefits of this practice come from breaking compulsive porn and dopamine loops, building self-control, and putting time and energy into your goals. Treat it as a discipline you chose, not a fear of losing something. If you are dealing with pain, anxiety or depression, talk to a doctor. That is part of taking care of the body you are training.</p>
+        </div>
+    </section>
+
+    <!-- ===================== ENERGY ===================== -->
+    <section id="tab-energy" hidden>
+        <h1 style="margin-top:12px">Balancing the energy</h1>
+        <p class="dim" style="margin-top:6px">Retained energy has to go somewhere. If it sits still it shows up as restlessness, heat, irritability or urges. These practices move it up and out into your life.</p>
+
+        <div class="card">
+            <div class="label">Signs & what to do</div>
+            <details open><summary>Too much heat (restless, irritable, hot, can't sleep)</summary><div>
+                <ul>
+                    <li>Sheetali or sheetkari breath (below), 5–10 min</li>
+                    <li>Cool shower, especially head and feet</li>
+                    <li>Cooling foods: cucumber, coconut water, milk, sweet fruit. Cut chilli, coffee and alcohol.</li>
+                    <li>Walk in nature in the evening and avoid intense late workouts</li>
+                </ul>
+            </div></details>
+            <details><summary>Stuck in the lower body (pressure, constant urge)</summary><div>
+                <ul>
+                    <li>Mula bandha with an upward breath (below)</li>
+                    <li>Squats, lunges, sprints: use the big leg muscles</li>
+                    <li>Inversions: legs up the wall, or shoulder stand if you are trained</li>
+                    <li>Microcosmic orbit, 9 rounds</li>
+                </ul>
+            </div></details>
+            <details><summary>Flatline (low drive, numb, low mood)</summary><div>
+                <ul>
+                    <li>Normal in weeks 2–6 for many people. It passes.</li>
+                    <li>Morning sunlight 10–20 min, exercise, protein, good sleep</li>
+                    <li>Do <b>not</b> "test" your libido. Testing is how relapses start.</li>
+                    <li>Keep the routine going even when you feel nothing</li>
+                </ul>
+            </div></details>
+            <details><summary>Too airy (scattered, anxious, head-heavy)</summary><div>
+                <ul>
+                    <li>Ground yourself: walk barefoot on earth, eat warm cooked meals, do strength training</li>
+                    <li>Breathe down into the belly and lengthen the exhale</li>
+                    <li>Reduce intense breathwork and visualisation. More body, less head.</li>
+                </ul>
+            </div></details>
+        </div>
+
+        <div class="card">
+            <div class="label">Practices</div>
+            <details><summary>Nadi shodhana: alternate nostril breath</summary><div>
+                <ol>
+                    <li>Sit tall. Right thumb closes the right nostril, ring finger closes the left.</li>
+                    <li>Inhale left (4 counts) → close both → exhale right (8).</li>
+                    <li>Inhale right (4) → exhale left (8). That is one round.</li>
+                    <li>10 rounds, morning and evening. Balances ida and pingala, the two side channels.</li>
+                </ol>
+            </div></details>
+            <details><summary>Mula bandha: root lock</summary><div>
+                <ol>
+                    <li>Sit or stand tall. Gently draw up the pelvic floor, the muscles you use to stop urination.</li>
+                    <li>Hold 5 sec while inhaling and imagining energy moving up the spine.</li>
+                    <li>Release on the exhale. 10 reps, 3 sets daily.</li>
+                </ol>
+                <p class="small dim">During an urge: hold the lock, inhale slowly from the base of the spine to the navel and heart, then exhale and relax. Repeat 5 times.</p>
+            </div></details>
+            <details><summary>Ashwini mudra</summary><div>
+                <p>Rhythmically contract and release the anal sphincter, about 1 per second, 30–50 reps. Tradition says it draws energy upward and strengthens the pelvic floor. Keep the breath easy.</p>
+            </div></details>
+            <details><summary>Sheetali & sheetkari: cooling breath</summary><div>
+                <p><b>Sheetali:</b> curl the tongue into a tube and inhale through it. Close the mouth and exhale through the nose. <b>Sheetkari</b> (if you can't curl your tongue): teeth together, lips parted, inhale through the teeth with a hiss. 10–20 rounds. Cools body heat and agitation.</p>
+            </div></details>
+            <details><summary>Microcosmic orbit (Taoist)</summary><div>
+                <ol>
+                    <li>Sit tall, tongue touching the roof of the mouth. This links the two channels.</li>
+                    <li>Inhale: feel or imagine warmth rising from the perineum up the spine, over the crown, to the point between the eyebrows.</li>
+                    <li>Exhale: let it flow down the front of the face, throat and chest to the navel (lower dantian).</li>
+                    <li>9–36 rounds. <b>Always end by resting your attention at the navel</b> to store the energy and stay grounded.</li>
+                </ol>
+            </div></details>
+            <details><summary>Surya namaskar</summary><div>
+                <p>12 rounds of sun salutation in the morning moves energy through the whole body, builds heat in a healthy way and settles the mind. Start slow, with one breath per movement.</p>
+            </div></details>
+            <details><summary>Trataka: candle gazing</summary><div>
+                <p>Gaze at a candle flame at eye level, about an arm's length away, without blinking for 1–3 min. Close your eyes and hold the after-image at the brow centre. Trains concentration and drishti (control of the gaze). Not before sleep if it overstimulates you.</p>
+            </div></details>
+            <details><summary>Japa: mantra repetition</summary><div>
+                <p>Choose one mantra and stay with it: <b>Om Namah Shivaya</b>, the <b>Gayatri mantra</b>, <b>Om Sri Hanumate Namah</b>, <b>Sri Ram Jai Ram Jai Jai Ram</b>, or simply <b>Om</b>. Do 108 repetitions on a mala daily. Use it silently whenever the mind is idle, so your mind has a default other than fantasy.</p>
+            </div></details>
+            <details><summary>Hard exercise</summary><div>
+                <p>The simplest transmutation there is. Heavy lifting, sprints, combat sport, long runs. Train in the morning or afternoon. Very late intense sessions can overheat you and spoil sleep.</p>
+            </div></details>
+        </div>
+
+        <div class="card">
+            <div class="label">Brahmachari diet</div>
+            <p><b>Favour (sattvic):</b> fresh fruit and vegetables, rice, wheat, oats, mung dal, milk, ghee, nuts, seeds, honey, mild spices like cumin, coriander, fennel and cardamom.</p>
+            <p><b>Reduce (rajasic and tamasic):</b> chilli and very spicy food, excess coffee and energy drinks, alcohol, deep-fried and stale food, heavy meat at night, excess sugar.</p>
+            <p><b>Timing:</b> make lunch the main meal and dinner light, at least 2–3 h before sleep. A heavy late dinner is a classic cause of night urges and wet dreams.</p>
+        </div>
+
+        <div class="card">
+            <div class="label">Model day (dinacharya)</div>
+            <ul>
+                <li><b>4:30–5:30</b>: wake in brahma muhurta. Water, toilet, no phone.</li>
+                <li><b>Morning</b>: cold shower, surya namaskar or a workout, pranayama, 15–20 min meditation or japa</li>
+                <li><b>Day</b>: deep work in blocks. Sunlight. A real lunch.</li>
+                <li><b>Evening</b>: walk, light dinner, reading or svadhyaya, journal</li>
+                <li><b>9:30</b>: phone out of the bedroom. Lights low.</li>
+                <li><b>10–10:30</b>: sleep on your side, with a short prayer or intention</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===================== SOS ===================== -->
+    <section id="tab-sos" hidden>
+        <h1 style="margin-top:12px">Urge SOS</h1>
+        <p class="dim" style="margin-top:6px">An urge peaks and falls within about 10–20 minutes. You only have to outlast this one.</p>
+
+        <div class="card">
+            <button class="sosBtn" id="sosStart">I'm having an urge right now</button>
+            <div id="sosFlow" hidden>
+                <div class="breath">
+                    <div class="eyebrow" id="sosStep">Step 1 · Breathe</div>
+                    <div class="orb" id="orb"></div>
+                    <div class="breathWord" id="breathWord">Inhale</div>
+                    <div class="small dim" id="breathCount" style="margin-top:4px"></div>
+                </div>
+                <ol class="ladder" id="ladder">
+                    <li><b>Stand up and leave the room</b> right now. Change the scene.</li>
+                    <li><b>Mula bandha + upward breath</b> × 5. Lift the energy to the heart.</li>
+                    <li><b>Cold water</b> on face, wrists and feet, or a cold shower.</li>
+                    <li><b>20 push-ups or 30 squats.</b> Burn it.</li>
+                    <li><b>Repeat your mantra</b> silently or out loud, 21 times.</li>
+                    <li><b>Read your sankalpa</b> (below). Remember why.</li>
+                    <li><b>Phone face-down across the room</b>, or go outside without it.</li>
+                    <li><b>Call or text a real person.</b></li>
+                </ol>
+                <div class="row" style="margin-top:10px">
+                    <button class="btn" id="sosWon">I held the line 🔥</button>
+                    <button class="btn ghost small" id="sosStop">Stop</button>
+                </div>
+            </div>
+            <p class="small dim" style="margin-top:10px" id="urgeCount"></p>
+        </div>
+
+        <div class="card">
+            <div class="label">My sankalpa</div>
+            <textarea id="sankalpa" rows="3" style="width:100%;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)" placeholder="Why I'm doing this, in one or two sentences. e.g. I am building a disciplined mind and a strong body to serve my purpose."></textarea>
+        </div>
+
+        <div class="card">
+            <div class="label">Handling horniness & the lust mind</div>
+            <details open><summary>The 3-second rule</summary><div>
+                <p>A thought arriving is not your fault. <b>Keeping it is a choice.</b> Within 3 seconds of noticing a sexual image or thought, cut it: change what you look at, say your mantra, move your body. After about 10 seconds of dwelling, the Gita's chain has already started.</p>
+            </div></details>
+            <details><summary>Know the lust mind's lines</summary><div>
+                <p>It repeats the same scripts. Name them and they lose power:</p>
+                <ul>
+                    <li>"Just a quick look, it doesn't count."</li>
+                    <li>"You've done so well, you deserve it."</li>
+                    <li>"It's healthy, science says so."</li>
+                    <li>"Start fresh on Monday."</li>
+                    <li>"Let's just check whether everything still works."</li>
+                    <li>"You already slipped in your head, may as well."</li>
+                </ul>
+                <p>Answer every one the same way: <b>"I see you. Not today."</b></p>
+            </div></details>
+            <details><summary>HALT: what's under the urge</summary><div>
+                <p>Most urges are something else in disguise. Ask: am I <b>H</b>ungry, <b>A</b>ngry, <b>L</b>onely, <b>T</b>ired? Also: bored, stressed, sad? Meet the real need: eat, vent, call someone, sleep, go out.</p>
+            </div></details>
+            <details><summary>Urge surfing</summary><div>
+                <p>Sit and observe the urge as a body sensation: where it is, how hot it is, how it moves. Rate it 1–10 every minute. Don't fight it and don't feed it. Watch it crest and fall like a wave. This is the <b>sakshi</b> (witness) practice from Vedanta: you are the one watching, not the urge.</p>
+            </div></details>
+            <details><summary>Guard the gates</summary><div>
+                <ul>
+                    <li><b>Eyes:</b> bounce your gaze quickly, unfollow triggering accounts, turn off explore and reels, use a content blocker, or set your phone to grayscale.</li>
+                    <li><b>Place:</b> no phone in bed or the bathroom. Keep the laptop in shared spaces.</li>
+                    <li><b>Time:</b> late night and right after waking are the danger hours. Plan for them.</li>
+                    <li><b>Company:</b> avoid crude talk. Spend time with people who lift you (satsang).</li>
+                </ul>
+            </div></details>
+            <details><summary>Seeing people, not objects</summary><div>
+                <p>The tradition teaches <b>matru bhava</b>: seeing women as mother, sister or Shakti. In practice: when you notice someone attractive, remember they are a whole person with a family and a life. Silently wish them well, and move your eyes on. Lust needs an object. Respect removes the object.</p>
+            </div></details>
+            <details><summary>Morning arousal & wet dreams</summary><div>
+                <p><b>Morning arousal</b> is normal physiology. Get out of bed immediately and do not lie there negotiating.</p>
+                <p><b>Wet dreams</b> (svapnadosha) are the body regulating itself. They are <b>not a relapse</b>, so don't reset your count or feel guilt. To reduce them: light early dinner, empty your bladder before bed, sleep on your side, don't watch stimulating content at night, and say a prayer or intention before sleep.</p>
+            </div></details>
+            <details><summary>If you slip</summary><div>
+                <ol>
+                    <li><b>No binge.</b> "I've already failed, may as well" does more damage than the slip.</li>
+                    <li><b>No self-hatred.</b> Guilt and shame are fuel for the next relapse.</li>
+                    <li><b>Investigate:</b> what time was it, where, what mood, which link of the chain? Write it down.</li>
+                    <li><b>Patch the hole</b>: one concrete change, like a blocker or phone out of the bedroom.</li>
+                    <li><b>Restart today.</b> The samskaras you built are not erased. You climb back faster each time.</li>
+                </ol>
+                <div class="quote">No effort on this path is ever lost, and there is no failure.<cite>Bhagavad Gita 2.40 (paraphrased)</cite></div>
+            </div></details>
+        </div>
+    </section>
+</div>
+
+<nav class="tabs">
+    <button data-tab="today" class="on"><span>🪔</span>Today</button>
+    <button data-tab="path"><span>🛕</span>Path</button>
+    <button data-tab="teach"><span>📜</span>Teachings</button>
+    <button data-tab="energy"><span>🌀</span>Energy</button>
+    <button data-tab="sos" class="sos"><span>🛑</span>SOS</button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY = 'brahmacharya-v1';
+const IRON_KEY = 'iron-will-v1';
+const DAY = 86400000;
+const TOTAL = 90;
+
+/* ---------- phases ---------- */
+const PHASES = [
+    { from: 1, to: 7, name: 'Shuddhi · Purification', body: 'Breaking the loop. The brain is used to quick dopamine, so urges are frequent and the mind bargains constantly. Your job is simple: remove triggers, build the routine, survive each urge. Don\'t look for benefits yet.' },
+    { from: 8, to: 14, name: 'Agni · The fire rises', body: 'Energy builds and often turns into restlessness or strong urges. Many people peak here. Channel it hard into exercise and work. Start pranayama.' },
+    { from: 15, to: 21, name: 'Pratyahara · Withdrawing the senses', body: 'A "flatline" of low libido or low mood may appear. That is normal and temporary. Guard your eyes and media and keep the routine even when you feel nothing.' },
+    { from: 22, to: 30, name: 'Dharana · Holding steady', body: 'Habits are setting. A wet dream may come, and it is not a relapse. Start working on fantasy, the subtle form of lust.' },
+    { from: 31, to: 45, name: 'Ojas · Building the reserve', body: 'Clarity, confidence and energy often improve. The danger now is complacency ("I\'ve beaten it"). Add tapas and deeper practices: bandhas, chakra and orbit work, the 41-day mandala.' },
+    { from: 46, to: 60, name: 'Tejas · Radiance', body: 'The reserve becomes fire. Point it at something: deep work, skills, service, physical goals. Unused energy turns back into urges.' },
+    { from: 61, to: 90, name: 'Sthira · The steady mind', body: 'Identity shifts from "trying not to" to "this is who I am". Work on the subtle layers: lingering glances, validation-seeking, stress escapes.' },
+    { from: 91, to: 1e9, name: 'Brahmacharya as a way of life', body: 'Past 90 days the practice becomes a lifestyle. Keep the dinacharya, keep the guard, and decide consciously what role sexuality will play in your life and relationships.' },
+];
+const phaseOf = d => PHASES.find(p => d >= p.from && d <= p.to) || PHASES[PHASES.length - 1];
+
+/* ---------- 90 days: [title, teaching, practice, lust-mind tactic, optional quote] ---------- */
+const DAYS = [
+ ['The Sankalpa', 'Every vow in the Hindu tradition begins with a sankalpa: a clear, resolved intention. Brahmacharya is not about running from something. It is moving toward something. Decide what that is.', 'Write your sankalpa in one present-tense sentence (SOS tab). Then clear the field: delete apps, bookmarks and saved content. Phone charges outside the bedroom tonight.', 'The first urge will say "start tomorrow". That is the old habit talking, not you. Today is Day 1.', ['Yad bhavam tad bhavati: as you feel and intend, so you become.', 'Traditional saying']],
+ ['Know your triggers', 'Urges rarely come from nowhere. They follow cues: a time, a place, a mood, an app. Find the cue and you can stop most urges before they start.', 'List your 5 biggest triggers (e.g. alone in bed with phone, boredom after 11pm, stress). Next to each, write a counter-move.', 'Urges come in waves of 10–20 minutes. Your only job is to outlast this one wave, not the rest of your life.'],
+ ['The ladder of fall', 'Gita 2.62–63: dwelling → attachment → desire → anger → delusion → forgetting → ruin. A relapse is never one decision. It is a ladder you climb one step at a time.', 'Recall your last relapse and map each step of it onto the ladder. Where could you have stepped off earliest?', 'Cut at the thought, not at the act. Stepping off at "dwelling" takes 3 seconds. Stepping off at "desire" takes an hour of fighting.', ['From dwelling on sense objects, attachment is born.', 'Bhagavad Gita 2.62']],
+ ['Body first', 'Retained energy has to move. Hatha yoga starts with the body because a restless body makes a restless mind.', 'Do 30+ minutes of hard exercise, then finish your shower with 60 seconds of cold water.', 'Restlessness isn\'t always lust. Often it\'s energy without a job. Give it a job.'],
+ ['Brahma muhurta', 'The ~96 minutes before sunrise are called brahma muhurta, the time of Brahman. The mind is naturally sattvic then, and practice goes deeper. Early rising and early sleep are the backbone of brahmacharya.', 'Wake by 5:30. No phone for the first 30 minutes. Sit for 10 minutes of breath or japa.', 'Late nights are the danger zone. In bed with lights out by 10:30.'],
+ ['The tortoise', 'Gita 2.58: the wise one withdraws the senses from their objects as a tortoise draws in its limbs. This is pratyahara, the fifth limb of yoga.', 'Digital fast today: no reels, shorts or explore pages. Set your phone to grayscale.', 'The eyes are the first gate. When something triggering appears, bounce your gaze within 2 seconds.', ['Like the tortoise drawing in its limbs, he withdraws the senses.', 'Bhagavad Gita 2.58']],
+ ['First week', 'Week one is mostly withdrawal from a dopamine habit. Feeling edgy, bored or flat is the brain recalibrating, not a sign you need release.', 'Journal: hardest moment this week, what triggered it, what helped. Keep what worked.', 'Don\'t reward yourself for a good week with "a little peek". That is the oldest trick in the book.'],
+ ['Breath is the reins', 'Hatha Yoga Pradipika 2.2: when the breath wanders, the mind is unsteady. When the breath is still, so is the mind. Prana and mind move together.', 'Nadi shodhana (Energy tab): 10 rounds morning and evening.', 'During an urge, make your exhale twice as long as your inhale. This activates the calming nervous system within a minute.', ['When the breath is unsteady, the mind is unsteady.', 'Hatha Yoga Pradipika 2.2']],
+ ['Agni: the surplus', 'Around now many people feel a surge of energy or heat. In yogic terms this is agni, the fire of tapas. It is not a problem. It is fuel.', 'Choose one project to pour this energy into for the rest of the 90 days. Work on it for 45 minutes today.', 'When the surge hits, say "this is fuel" and spend it right away: push-ups, a sprint, a work block.'],
+ ['Sattvic food', 'Ayurveda sorts food by its effect on the mind: sattvic (clarity), rajasic (agitation) and tamasic (dullness). Spicy, fried, stale food, alcohol and too much caffeine stir up lust.', 'Light dinner before 8pm. Skip chilli, alcohol and energy drinks today. Have warm milk with cardamom before bed.', 'Heavy, late meals bring vivid dreams and night urges. Guard the evening plate.'],
+ ['Hanuman\'s strength', 'Hanuman is the model brahmachari. His power comes from devotion to Rama, not from gritting his teeth. Energy that serves something higher stays steady.', 'Recite the Hanuman Chalisa, or do 11 minutes of any devotional practice you connect with.', 'Suppression creates a void. Devotion fills it. Give your longing a higher object.', ['Buddhi heen tanu janike, sumirau pavan kumar. Bal buddhi vidya dehu mohi…', 'Hanuman Chalisa']],
+ ['Urge surfing', 'You are the sakshi, the witness. An urge is a sensation in the body and a story in the mind. You can watch both without obeying either.', 'Sit for 5 minutes. Notice every sensation without reacting. Practise on itches and restlessness so you are ready for urges.', 'When it comes, label it silently: "urge… urge…" and rate it 1–10 each minute. Watch the number fall.'],
+ ['Kama, the enemy', 'Gita 3.37–43: Krishna calls desire born of rajas "the enemy here". It hides in the senses, mind and intellect. That is why lust argues so cleverly. It borrows your own reasoning.', 'Write down the three best arguments your lust mind uses. Next to each, write your reply.', 'When your intellect starts building a case for "just once", recognise kama in a lawyer\'s suit. Stop debating and move.', ['It is desire, it is anger, born of rajas: know this as the enemy.', 'Bhagavad Gita 3.37']],
+ ['Two weeks', 'You have broken the first layer of habit. The tradition says a samskara (mental groove) weakens each time you don\'t act on it.', 'Re-read and re-sign your sankalpa. Add one discipline: cold showers daily, or wake 15 minutes earlier.', 'Days 14–21 are a common relapse window because of overconfidence. Stay on guard.'],
+ ['The flatline', 'Many people hit a phase of low libido, low mood or numbness. It is the nervous system resetting, not damage, and it passes.', 'Get sunlight within an hour of waking, train, eat protein, sleep well. Keep the routine even if you feel nothing.', 'Never "test" whether everything still works. Testing is the road back to relapse.'],
+ ['Mula bandha', 'Hatha yoga uses bandhas (locks) to direct prana. Mula bandha, the root lock, is the traditional tool for drawing sexual energy upward.', '3 sets of 10 slow mula bandha holds, 5 seconds each (Energy tab).', 'In an urge: lock, inhale slowly from base to heart, exhale and release. Five rounds. Feel the energy rise instead of fall.'],
+ ['The eight forms', 'Tradition lists eight forms of maithuna: fantasising, talking, flirting, looking, secret talk, resolving, attempting, the act. Brahmacharya guards all eight.', 'Which of the eight do you still feed? Pick the biggest one and cut it today.', 'Fantasy (smarana) is the first form and it counts. Starve it and the other seven have nothing to eat.'],
+ ['Virya', 'Yoga Sutra 2.38: established in brahmacharya, vigour (virya) is gained. Virya means strength, courage and creative power.', 'Write a list: "If I had double the energy and courage, I would…" Do the first item for 30 minutes.', 'Energy without a target turns back into urges. Keep the target in front of you.', ['Brahmacharya pratishthayam virya labhah.', 'Yoga Sutra 2.38']],
+ ['Sleep discipline', 'A tired brain has weak self-control. Tradition also advises sleeping on the side or back rather than the stomach, with a light stomach and an empty bladder.', '7–8 hours. No screens in bed. Bedroom is for sleep only.', 'If you wake at night with an urge, get up, drink water and walk around. Don\'t lie there negotiating.'],
+ ['Satsang', 'The company you keep shapes the mind. Satsang, the company of truth, is an ancient tool for staying on the path.', 'Spend time with someone who raises your standards. Mute or unfollow one input that drags you down.', 'Loneliness is one of the top triggers. When you feel it, reach out to a real human, not a screen.'],
+ ['New grooves', 'Three weeks in. Every urge you didn\'t act on was a deposit. The old samskara is thinner, and a new one is forming.', 'Reward yourself with something clean: a nature walk, a good meal, a book.', 'Remember: "Every no is a deposit. Every yes is a withdrawal of everything saved."'],
+ ['Wet dreams', 'Svapnadosha (a wet dream) is the body regulating itself. It is not a relapse. Traditional remedies: light early dinner, empty bladder, cool body, prayer before sleep.', 'Build a bedtime ritual: dim lights, 5 minutes of breath, a short prayer or intention, sleep on your side.', 'Don\'t reset your count or feel guilt. Guilt after a wet dream causes far more relapses than the dream does.'],
+ ['People, not objects', 'Matru bhava: the tradition teaches seeing women as mother, sister, or a form of Shakti. In modern terms it means respecting each person as whole, not as an image.', 'Each time you notice someone attractive today, silently wish them well and move your eyes on.', 'Lust needs an object. When you see a person with a family and a life, the object disappears.'],
+ ['Japa', 'Japa, the repetition of a mantra, gives the restless mind a home. The scriptures praise japa as the simplest sadhana for this age.', 'Choose a mantra (Om Namah Shivaya, Gayatri, Ram, or Om). Do 108 repetitions on a mala.', 'Make the mantra your mind\'s default. Whenever it goes idle, the mantra plays instead of fantasy.'],
+ ['Ojas', 'Ayurveda: the seven dhatus are refined one into the next, ending in shukra. Their finest essence is ojas: vitality, immunity, calm and the glow of the face.', 'Eat ojas-building foods today: ghee, soaked almonds, dates, warm milk with saffron.', 'Think of each urge you let pass as ojas being built, not something being denied.'],
+ ['The idle mind', '"An idle mind is the devil\'s workshop." Unstructured time is where most relapses happen.', 'Plan tomorrow hour by hour tonight, especially the evening.', 'Make a list of 5 "boredom moves" (walk, call, read, train, clean) and use them instead of the phone.'],
+ ['Cool the fire', 'Too much heat (pitta) shows up as irritability, restlessness and urges. Yoga offers cooling pranayama.', 'Sheetali or sheetkari breath, 5 minutes, twice today.', 'Cool body, cool mind. When heated, splash cold water on your face, wrists and feet.'],
+ ['The 3-second rule', 'Fantasy is the subtle relapse. Brahmacharya is decided in the mind long before the body.', 'Practise all day: catch any sexual thought within 3 seconds and replace it with a picture of your goal achieved.', 'The thought arriving isn\'t your fault. Keeping it is a choice.'],
+ ['Discipline, not shame', 'Lasting discipline grows from aspiration, not self-hatred. Shame-based streaks break. Purpose-based ones last.', 'Write a kind, firm letter from your future self (Day 90) to you today.', 'If the mind calls you weak or dirty, answer: "I am a student on a path, and I am still walking."'],
+ ['One month', 'Thirty days. Habits are forming. The 41-day mandala is near.', 'Review the month. Write 3 changes you have noticed and 1 weak spot. Commit to the mandala.', 'Complacency is the new enemy. "I\'ve beaten this" is lust mind\'s best opening line.'],
+ ['Tapas', 'Tapas means heat or austerity. Yoga Sutra 2.43: through tapas, impurities are destroyed and body and senses are perfected. Small chosen hardships build the "no" muscle.', 'Choose a tapas for the next 10 days: daily cold shower, no sugar, one hour of silence, or a floor-only seat.', 'Every chosen discomfort makes the next "no" easier.', ['Through austerity, impurities are destroyed and the body and senses gain perfection.', 'Yoga Sutra 2.43']],
+ ['Svadhyaya', 'Self-study and study of sacred texts is a niyama of yoga. Filling the mind with high ideas pushes out low ones.', 'Read 10 pages of the Gita, the Yoga Sutras, or a biography of a disciplined person.', 'A mind full of great ideas has no room for small cravings.'],
+ ['The chakras', 'Sexual energy is tied to svadhisthana (sacral, water). Transmutation means lifting it to manipura (will), anahata (love) and ajna (clarity).', 'Sit for 10 minutes. Breathe as if from the base of the spine up to the navel, heart and brow, pausing at each.', 'In an urge, picture the energy rising from the pelvis to your navel as fire, to your heart as warmth, and to your brow as light.'],
+ ['Jing, qi, shen', 'Taoist alchemy: conserve jing (essence), refine it into qi (energy), refine qi into shen (spirit). Retention is only step one. Refining is the art.', 'Microcosmic orbit, 9 rounds (Energy tab). End with your attention at the navel.', 'When pressure builds, run the orbit. Up the back on the inhale, down the front on the exhale.'],
+ ['Drishti', 'Drishti means controlled gaze. Where your eyes go, your energy follows.', 'Trataka (candle gazing) for 3 minutes. When walking, keep your eyes ahead, not scanning.', 'Lingering eyes feed fantasy. Look, acknowledge, move on.'],
+ ['Clean speech', 'Kirtana, talking about sex, is one of the eight forms. Crude jokes and talk keep the energy in the lower centres.', 'One full day of clean speech. Leave or redirect conversations that turn crude.', 'Notice how much lighter your mind is by evening.'],
+ ['Seva', 'Selfless service (seva) sends energy outward and burns ego. Karma yoga is the Gita\'s main path.', 'Do something useful for someone today without being asked and without telling anyone.', 'Lust is self-focused. Service breaks the self-focus.'],
+ ['Bhishma\'s vow', 'Bhishma took a lifelong vow of celibacy and kept it through every pressure. He was given the power to choose his own time of death. A vow kept makes a man unshakable.', 'Set a physical challenge for yourself and complete it today (a run, a lift PR, a hard hike).', 'Ask yourself: "Would the man I\'m becoming do this?"'],
+ ['Media audit', 'What goes in through the ears and eyes becomes the mind. Songs, films and feeds are full of lust.', 'Audit your playlist and feeds. Remove anything that pulls you down. Add devotional or uplifting content.', 'You don\'t need to fight urges that you never invite in.'],
+ ['Evening protocol', 'Evening is the weakest time for willpower. A fixed ritual takes the decision out of it.', 'Build your evening: walk → light dinner → read or journal → phone out by 9:30 → lights low.', 'The urge negotiates. A routine doesn\'t.'],
+ ['The mandala', 'Day 41 completes a mandala, the traditional 41-day cycle of a vow, as Sabarimala pilgrims keep. Something has been completed in you.', 'Mark it: a temple visit, a sunrise, a fast, or a quiet hour of gratitude. Renew your sankalpa for the full 90.', 'Celebrate cleanly. A mandala is not a licence.'],
+ ['Complacency', 'Past the mandala, the guard drops. Many long streaks end not from strong urges but from small "harmless" looks.', 'Re-read your trigger list from Day 2. Update it. Have new triggers appeared?', '"Just looking" is lust\'s Trojan horse.'],
+ ['The householder', 'For a grihastha (householder), brahmacharya means fidelity, moderation and intention, not abstinence forever. It is about mastery, not denial.', 'Write what you want your future relationship and sexuality to look like at their best.', 'The discipline you build now is the gift you bring to a real relationship later.'],
+ ['Lust and anger', 'Gita 3.37: kama blocked becomes krodha. Surplus energy can show up as irritability.', 'Notice your irritability today. Use sheetali breath and hard exercise as outlets.', 'Snapping at people is often unspent energy. Move your body before you speak.'],
+ ['Halfway to 90', 'Halfway to 90. The reserve is building. This is the ojas phase in full.', 'Review: sleep, food, exercise, practice. Which pillar is weakest? Strengthen it this week.', 'Write down the benefits you\'ve noticed. Read them when the urge lies to you.'],
+ ['Tejas', 'Ojas becomes tejas: inner fire, radiance, sharp intellect. Tejas has to be used, or it scorches.', 'Do one 90-minute deep work block today on your Day 9 project. No phone.', 'Every time you want to spend energy on fantasy, spend it on the project.'],
+ ['Presence', 'Retained energy often shows up as social confidence. Use it with integrity.', 'Make genuine eye contact and conversation with 3 people today, with no agenda.', 'Confidence used to chase validation drains you. Confidence used to connect builds you.'],
+ ['Medha', 'Tradition links brahmacharya to medha: memory, intellect and learning. Students in the gurukula were brahmacharis for exactly this reason.', 'Learn something new for 30 minutes: a language, a skill, a chapter.', 'A mind busy learning has little room left for craving.'],
+ ['Mauna', 'Mauna, or silence, conserves prana like retention conserves ojas. Speech is energy too.', 'Keep 1–2 hours of complete silence. No talking, no messages, no media.', 'In silence you\'ll hear the lust mind more clearly. That makes it easier to see through.'],
+ ['Fifty', 'Fifty days. Most people never get here. You are building a new nervous system.', 'Write what changed between Day 1 and Day 50 in body, mind, habits and confidence.', 'Gratitude is a strong antidote to "I deserve a reward".'],
+ ['Sakshi', 'Vedanta: you are the witness (sakshi) of the body and mind, not the body and mind themselves. Urges happen to you, not as you.', '15 minutes of meditation. Silently note "thinking", "feeling", "hearing" as each arises.', 'From the witness seat an urge is just weather passing through.'],
+ ['The subconscious', 'Dreams with sexual content show old samskaras clearing from deep down. It is not a failure.', 'Before sleep, offer the day and set an intention: "May my sleep be pure and restful."', 'Don\'t replay dreams in the morning. Get up and start the routine.'],
+ ['Surya namaskar', 'The sun salutation honours Surya, source of tejas. It moves energy through the whole spine and body.', '12 rounds of surya namaskar at sunrise.', 'When restless, a few rounds of sun salutation turn agitation into heat and focus.'],
+ ['Grounding', 'Too much rising energy without grounding brings anxiety, insomnia and head pressure. Earth balances fire.', 'Walk barefoot on grass or soil for 15 minutes. Eat a warm, grounding meal.', 'An ungrounded mind is easier for fantasy to grab. Come back to your feet.'],
+ ['"Just looking"', 'Prekshana, looking with desire, is one of the eight forms of maithuna. Long streaks often fall to it.', 'Check your content blocker and settings. Close any loopholes you\'ve been tolerating.', 'If you catch yourself scrolling for "something", put the phone down. You know what you\'re looking for.'],
+ ['Vairagya', 'Yoga Sutra 1.15: vairagya, dispassion, is mastery over craving for things seen or heard about. It comes from seeing that pleasure is brief and leaves you emptier.', 'Reflect: how did you feel 10 minutes after past relapses? Write it down honestly.', 'In an urge, play the movie to the end, including how you feel afterward.', ['Dispassion is the mastery of one who no longer thirsts for objects seen or heard of.', 'Yoga Sutra 1.15']],
+ ['Abhyasa', 'Yoga Sutra 1.14: practice becomes firmly grounded when done for a long time, without break, and with devotion. There are no shortcuts.', 'Do every item on your daily checklist today, even the small ones.', 'Consistency beats intensity. Showing up each day is the victory.', ['Practice becomes firm when done for a long time, without break, with devotion.', 'Yoga Sutra 1.14']],
+ ['Kundalini caution', 'The traditions warn against forcing kundalini with extreme practices. Steady and gentle work is safer and goes deeper.', 'Check yourself for imbalance: sleep, anxiety, heat. If anything is off, cut intense breathwork and add grounding.', 'Chasing big spiritual experiences is another craving. Stay simple.'],
+ ['Bhakti', 'In bhakti, desire is longing for union that has picked the wrong object. Turned toward the divine, the same longing becomes love.', 'Sing or listen to kirtan or bhajans for 15 minutes, or sit with a prayer of your own.', 'When longing arises, offer it upward: "This longing is really for You."'],
+ ['Sixty', 'Sixty days. The reserve is real now. Use it.', 'Set 3 goals for days 61–90 that this energy will power.', 'Write down your strongest reason to keep going and put it where you will see it.'],
+ ['Identity', 'At this stage the shift is from "I\'m trying not to" to "I am a man who doesn\'t". Identity is stronger than willpower.', 'Write 5 "I am" statements about who you are becoming. Read them morning and night.', 'When an urge comes, ask: "Is this who I am?"'],
+ ['Subtle lust', 'Lingering glances, flirting for validation, checking someone\'s profile. These subtle forms keep the fire smouldering.', 'Notice one subtle habit today and stop it.', 'Ask: "What am I really seeking here?" Usually it\'s validation. Give it to yourself through achievement.'],
+ ['Stress', 'Many relapses happen not out of lust but to escape stress. The urge is an anaesthetic.', 'Write a stress plan: when stressed, I will walk / breathe / call / train.', 'Name it: "This isn\'t lust, it\'s stress." Then deal with the stress itself.'],
+ ['Kumbhaka', 'Gentle breath retention (kumbhaka) steadies the mind. Hatha yoga says prana held still makes the mind still.', 'Nadi shodhana with a short, comfortable hold: inhale 4, hold 4, exhale 8. 10 rounds. Never strain.', 'A few calm held breaths can stop an urge before it gathers speed.'],
+ ['Shiva & Kama', 'When Kamadeva shot his arrow at the meditating Shiva, Shiva opened his third eye and burned him to ash. Awareness burns desire.', '5 minutes of meditation with your attention resting gently at the brow (ajna).', 'When lust arises, become totally aware of it, without fighting it. Watched closely enough, it burns out.'],
+ ['Diet review', 'Food becomes mind. Sixty-plus days in, refine it further.', 'Review your diet. Add one ojas food daily (ghee, dates, almonds, milk). Remove one agitating food.', 'Notice which foods precede your strongest urges.'],
+ ['Dharma', 'Dharma is your duty and purpose. Brahmacharya conserves energy for dharma.', 'Write your personal mission in 2–3 sentences.', 'When tempted, ask: "Does this serve my dharma?"'],
+ ['Cleanse, round 2', 'Old inputs creep back. Time for another cleanse.', 'Audit your phone again: screen time, apps, follows. Delete what crept back in.', 'Algorithms learn your weak spots. Retrain them by never engaging.'],
+ ['Moving in Brahman', 'Literally, brahmacharya means "moving in Brahman". It is less about suppression than about orientation: living with your attention on the highest.', 'Spend 20 minutes in contemplation: what is the highest thing you can live for?', 'You are not giving something up. You are choosing something bigger.'],
+ ['Seventy', 'Seventy days. The path is part of you now.', 'Review your progress against the Day 60 goals. Adjust.', 'Watch for the "I\'ve proven it, now I can relax" thought.'],
+ ['Lead by example', 'A disciplined man influences others without preaching.', 'Help a friend with a goal of their own, whether fitness, study or habits. No lectures.', 'Being responsible for others strengthens your own resolve.'],
+ ['Real intimacy', 'Underneath much lust is a real need for closeness and connection. Fantasy only imitates it.', 'Have one deep, honest conversation with a friend or family member today.', 'When you feel lonely, meet the need with real connection, not a screen.'],
+ ['Shanmukhi mudra', 'Shanmukhi mudra closes the six gates (ears, eyes, nose, mouth) to draw awareness inward. It is pratyahara in its purest form.', 'Thumbs over ears, index fingers over eyes, middle fingers by the nose, the rest at the lips. Hum softly (bhramari) for 5 minutes.', 'Turning the senses inward ends the hunt for outer stimulation.'],
+ ['Upavasa', 'Fasting (upavasa), for example on ekadashi, strengthens control over the senses. Mastering the tongue helps master the rest.', 'Do a light fast: fruit and milk only, or skip one meal mindfully. Skip it if it is not right for your health.', 'Each craving you overcome, of any kind, strengthens every other "no".'],
+ ['Gratitude', 'A grateful mind is a full mind, and a full mind craves less.', 'Write 10 specific things you\'re grateful for.', 'Lust says "you lack". Gratitude says "you have".'],
+ ['Discomfort teaches', 'Tapas reframed: discomfort is not something to escape. It is the teacher.', 'Do one uncomfortable thing on purpose today: a cold plunge, a hard conversation, a tough workout.', 'An urge is just discomfort. You\'ve proven you can sit with discomfort.'],
+ ['Ujjayi', 'Ujjayi, the "victorious breath", has a soft ocean sound from a slightly closed throat. It is steady and calming.', 'Use ujjayi breath during your workout or a 10-minute walk.', 'Victorious breath, victorious mind. Use it the moment you feel an urge stirring.'],
+ ['Last tricks', 'Near the finish, the mind tries its last moves: "you\'ve proven it", "a reward for 90", "one time won\'t undo it".', 'Write your answer to each of these tricks now, before you hear them.', 'The finish line is not a door back to the old life.'],
+ ['Vanity', 'Glow, confidence and attention from others can turn into vanity, which pulls you back into seeking validation.', 'Do one thing anonymously and humbly today.', 'Attention you get is a test, not a prize.'],
+ ['Eighty', 'Eighty days. The last stretch.', 'Plan your 90th day: how will you mark it in a clean way?', 'Stay humble and keep your guard up. Most streaks don\'t fall in the final days, but some do.'],
+ ['Ananda', 'Vedanta teaches that bliss (ananda) is your nature, not something outside you. Lust is a search for joy in the wrong place.', '20 minutes of simple sitting. Look for any trace of contentment that is already there.', 'Ask the urge: "Is the joy really in that, or in me?"'],
+ ['Aparigraha', 'Non-grasping (aparigraha), the fifth yama, goes with brahmacharya. Less craving everywhere makes less craving here.', 'Declutter one space: your room, desk, or phone.', 'Grasping is one habit. Loosen it everywhere.'],
+ ['Create', 'Sexual energy is creative energy. Svadhisthana is the seat of creation as well as procreation.', 'Make something today: write, draw, build, compose, cook.', 'Feel the urge turn into creative drive while you work.'],
+ ['The teacher', 'In the Indian tradition a guru or mentor protects the student on the path. Vivekananda and others stressed brahmacharya as the source of a strong will and memory.', 'Find a teacher, book or mentor to guide you after Day 90, and write down who.', 'Accountability multiplies discipline.'],
+ ['Trigger review', 'Your triggers have changed since Day 2. Know your current enemy.', 'Rewrite your trigger list and counter-moves for life after 90.', 'Old triggers can come back when life changes: travel, stress, a breakup. Plan for them now.'],
+ ['After 90', 'Day 90 is a door, not a finish line. Decide consciously what the next stage is.', 'Write your post-90 plan: a new 90-day goal, or a lifestyle commitment, with the rules you\'ll keep.', 'An undecided mind at Day 91 is an open door for lust.'],
+ ['Your story', 'You have walked a path most people never start.', 'Write the story of these 87 days in one page. Keep it for hard days.', 'When you\'re tempted in the future, read your own story.'],
+ ['Rest', 'Discipline includes rest. Too much tapas without rest causes burnout.', 'Rest day: nature, good food, an early night. Keep the core practices.', 'Rest isn\'t indulgence. Choose restorative pleasures, not draining ones.'],
+ ['Vision', 'One day left. Look forward.', 'Write a vision of yourself one year from now, empowered by this practice.', 'Keep this vision as your new sankalpa.'],
+ ['Completion · 90', 'Ninety days. The vow is fulfilled, and the student has grown. As the Gita says, no effort on this path is ever lost.', 'Mark the day cleanly: a sunrise, a temple, a fast, time with family, a letter to yourself. Then set your next sankalpa.', 'You don\'t need lust\'s permission to feel free. You are free.', ['No effort on this path is ever lost, and no obstacle prevails.', 'Bhagavad Gita 2.40']],
+];
+const BEYOND = ['Beyond 90 · Living it', 'Brahmacharya is now a way of life, not a countdown. Keep the dinacharya, guard the gates, and keep refining.', 'Repeat any day from the Path that you need today, or go deeper into one practice in the Energy tab.', 'The same rules still apply: 3-second rule, HALT, move the body, and never "just test".'];
+
+const CHECKS = [
+    ['wake', 'Woke in brahma muhurta', 'Before 5:30, no phone for 30 min'],
+    ['body', 'Exercise', '30+ min, or 12 surya namaskar'],
+    ['cold', 'Cold shower', 'At least the last 60 sec'],
+    ['prana', 'Pranayama', 'Nadi shodhana or today\'s breath practice'],
+    ['japa', 'Meditation / japa', '15 min or 108 repetitions'],
+    ['task', 'Did today\'s practice', 'From the day guide above'],
+    ['guard', 'Guarded the gates', 'No triggering content, 3-second rule kept'],
+    ['sleep', 'Light dinner, in bed by 10:30', 'Phone outside the bedroom'],
+];
+
+/* ---------- state ---------- */
+function fresh() { return { start: null, checks: {}, urgesWon: 0, sankalpa: '', history: [] }; }
+function load() { try { const v = JSON.parse(localStorage.getItem(KEY)); if (v && typeof v === 'object') return Object.assign(fresh(), v); } catch (e) {} return fresh(); }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function ironStart() { try { const v = JSON.parse(localStorage.getItem(IRON_KEY)); return v && v.start ? v.start : null; } catch (e) { return null; } }
+let S = load();
+if (!S.start && ironStart()) { S.start = ironStart(); save(); }
+
+const $ = id => document.getElementById(id);
+const dateKey = t => { const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function currentDay() { return S.start ? Math.floor(Math.max(0, Date.now() - S.start) / DAY) + 1 : 1; }
+function dateForDay(d) { return S.start ? S.start + (d - 1) * DAY : Date.now(); }
+function dayDone(d) { const c = S.checks[dateKey(dateForDay(d))]; return c && CHECKS.every(k => c[k[0]]); }
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2400); }
+
+let view = currentDay();
+
+/* ---------- today ---------- */
+function renderToday() {
+    $('setup').hidden = !!S.start;
+    const today = currentDay();
+    view = Math.max(1, view);
+    const data = view <= TOTAL ? DAYS[view - 1] : BEYOND;
+    const ph = phaseOf(view);
+    $('heroEyebrow').textContent = view === today ? (S.start ? 'Today · Day' : 'Preview · Day') : (view < today ? 'Past · Day' : 'Ahead · Day');
+    $('dayNum').textContent = view;
+    $('dayTitle').textContent = data[0];
+    $('phaseTag').textContent = ph.name;
+    const pct = Math.min(100, (Math.min(today, TOTAL) / TOTAL) * 100);
+    $('bar').style.width = (S.start ? pct : 0) + '%';
+    $('barText').textContent = S.start ? (today >= TOTAL ? `${today} days. The 90-day vow is complete.` : `${TOTAL - today} days to 90`) : 'Not started yet';
+    $('dLearn').innerHTML = `<p>${esc(data[1])}</p>`;
+    $('dQuote').innerHTML = data[4] ? `<div class="quote">${esc(data[4][0])}<cite>${esc(data[4][1])}</cite></div>` : '';
+    $('dDo').innerHTML = `<p>${esc(data[2])}</p>`;
+    $('dMind').innerHTML = `<p>${esc(data[3])}</p>`;
+    $('phName').textContent = ph.name;
+    $('phBody').innerHTML = `<p>${esc(ph.body)}</p>`;
+    $('prevDay').disabled = view <= 1;
+    $('prevDay').style.opacity = view <= 1 ? .4 : 1;
+
+    const k = dateKey(dateForDay(view));
+    const isFuture = S.start && view > today;
+    $('checkDate').textContent = isFuture ? 'Available when this day arrives' : new Date(dateForDay(view)).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+    const c = S.checks[k] || {};
+    $('checks').innerHTML = CHECKS.map(([id, t, s]) => `<div class="check ${c[id] ? 'on' : ''}" data-id="${id}" role="checkbox" aria-checked="${!!c[id]}" tabindex="0" style="${isFuture ? 'opacity:.45;pointer-events:none' : ''}"><div class="box"></div><div class="ctext"><b>${t}</b><span class="small dim">${s}</span></div></div>`).join('');
+
+    const best = Math.max(today, ...S.history.map(h => h.days));
+    $('streakInfo').textContent = S.start ? `Started ${new Date(S.start).toLocaleDateString()}. Best streak: ${best} day${best === 1 ? "" : "s"}. Resets: ${S.history.length}.${ironStart() === S.start ? ' Synced with Iron Will.' : ''}` : '';
+    const iron = ironStart();
+    $('ironNote').hidden = !iron;
+    if (iron) $('ironNote').innerHTML = `Iron Will has a streak from ${new Date(iron).toLocaleDateString()}. <a href="#" id="useIron">Use it</a>`;
+}
+
+$('checks').addEventListener('click', e => {
+    const row = e.target.closest('.check'); if (!row) return;
+    const k = dateKey(dateForDay(view));
+    S.checks[k] = S.checks[k] || {};
+    S.checks[k][row.dataset.id] = !S.checks[k][row.dataset.id];
+    save(); renderToday();
+    if (CHECKS.every(c => S.checks[k][c[0]])) toast('Full dinacharya complete. Ojas building 🔥');
+});
+$('checks').addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); e.target.click(); } });
+$('prevDay').onclick = () => { view = Math.max(1, view - 1); renderToday(); scrollTo(0, 0); };
+$('nextDay').onclick = () => { view++; renderToday(); scrollTo(0, 0); };
+$('todayBtn').onclick = () => { view = currentDay(); renderToday(); };
+$('startToday').onclick = () => { S.start = Date.now(); save(); view = 1; renderToday(); toast('Day 1. Your sankalpa begins.'); };
+$('startSet').onclick = () => {
+    const v = $('startPick').value; if (!v) return;
+    const [y, m, d] = v.split('-').map(Number);
+    const t = new Date(y, m - 1, d).getTime();
+    if (t > Date.now()) { toast('Pick a date that is not in the future'); return; }
+    S.start = t; save(); view = currentDay(); renderToday();
+};
+$('setup').addEventListener('click', e => { if (e.target.id === 'useIron') { e.preventDefault(); S.start = ironStart(); save(); view = currentDay(); renderToday(); } });
+$('changeStart').onclick = () => { $('setup').hidden = false; $('setup').scrollIntoView({ behavior: 'smooth' }); };
+$('slipBtn').onclick = () => {
+    if (!S.start) return;
+    if (!confirm('Reset your streak to Day 1? (A wet dream is NOT a relapse. Don\'t reset for that.)')) return;
+    S.history.push({ start: S.start, end: Date.now(), days: currentDay() - 1 });
+    S.start = Date.now(); save(); view = 1; renderToday();
+    toast('No binge. No shame. Investigate, patch the hole, walk on.');
+};
+
+/* ---------- path ---------- */
+function renderPath() {
+    const today = S.start ? currentDay() : 0;
+    let h = '';
+    for (let d = 1; d <= TOTAL; d++) {
+        const cls = ['cell'];
+        if (d === today) cls.push('now');
+        if (S.start && d <= today && dayDone(d)) cls.push('done'); else if (d < today) cls.push('past');
+        h += `<button class="${cls.join(' ')}" data-d="${d}" title="${esc(DAYS[d - 1][0])}">${d}</button>`;
+    }
+    $('grid').innerHTML = h;
+    $('phaseList').innerHTML = PHASES.map(p => `<div class="ph"><b>${p.to > 1000 ? 'Day ' + p.from + '+' : 'Days ' + p.from + '–' + p.to}: ${esc(p.name)}</b><div class="small dim">${esc(p.body)}</div></div>`).join('');
+}
+$('grid').addEventListener('click', e => { const b = e.target.closest('.cell'); if (!b) return; view = +b.dataset.d; show('today'); });
+
+/* ---------- SOS ---------- */
+let sosTimer = null;
+function stopSos() { clearInterval(sosTimer); sosTimer = null; $('sosFlow').hidden = true; $('sosStart').hidden = false; $('orb').style.transform = 'scale(.55)'; }
+$('sosStart').onclick = () => {
+    $('sosStart').hidden = true; $('sosFlow').hidden = false;
+    const seq = [['Inhale', 4, 1], ['Hold', 4, 1], ['Exhale slowly', 8, .55]];
+    let i = 0, left = seq[0][1], rounds = 0;
+    const orb = $('orb');
+    const apply = () => {
+        const [w, n, sc] = seq[i];
+        $('breathWord').textContent = w;
+        orb.style.transitionDuration = n + 's';
+        orb.style.transform = `scale(${sc})`;
+    };
+    apply();
+    $('breathCount').textContent = left;
+    $('sosStep').textContent = 'Breathe · 6 rounds, then work down the list';
+    sosTimer = setInterval(() => {
+        left--;
+        if (left <= 0) {
+            i = (i + 1) % seq.length;
+            if (i === 0) rounds++;
+            left = seq[i][1]; apply();
+            if (rounds >= 6) $('sosStep').textContent = 'Now act · go down the list';
+        }
+        $('breathCount').textContent = `${left} · round ${Math.min(rounds + 1, 99)}`;
+    }, 1000);
+};
+$('sosStop').onclick = stopSos;
+$('sosWon').onclick = () => { S.urgesWon++; save(); stopSos(); renderSos(); toast('Urge defeated. That was a deposit of ojas. 🔥'); };
+function renderSos() { $('urgeCount').textContent = S.urgesWon ? `Urges you have outlasted: ${S.urgesWon}` : ''; $('sankalpa').value = S.sankalpa || ''; }
+$('sankalpa').addEventListener('input', e => { S.sankalpa = e.target.value; save(); });
+
+/* ---------- tabs ---------- */
+function show(tab) {
+    document.querySelectorAll('section[id^=tab-]').forEach(s => s.hidden = s.id !== 'tab-' + tab);
+    document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+    if (tab === 'today') renderToday();
+    if (tab === 'path') renderPath();
+    if (tab === 'sos') renderSos();
+    if (tab !== 'sos') stopSos();
+    scrollTo(0, 0);
+    try { sessionStorage.setItem(KEY + '-tab', tab); } catch (e) {}
+}
+document.querySelectorAll('nav.tabs button').forEach(b => b.onclick = () => { if (b.dataset.tab === 'today') view = currentDay(); show(b.dataset.tab); });
+
+let startTab = 'today';
+try { startTab = sessionStorage.getItem(KEY + '-tab') || 'today'; } catch (e) {}
+show(startTab);
+</script>
+</body>
+</html>
