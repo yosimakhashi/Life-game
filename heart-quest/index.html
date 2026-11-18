@@ -1006,117 +1006,86 @@ const OUTFIT = {
 };
 
 function fullBodySVG(w, stage = 0) {
-    const id = 'f' + (++fUid), B = BUILD[w.name], O = OUTFIT[w.name], sk = w.skin, sd = w.skinD, c = 100;
+    // New character rig: separately drawn legs, torso, arms and layered clothing.
+    // This replaces the old single-path mannequin silhouette.
+    const id = 'model' + (++fUid), B = BUILD[w.name], O = OUTFIT[w.name];
+    const sk = w.skin, sd = w.skinD, c = 100;
     const { sh, bu, wa, hi, th, arm } = B;
-    const [back, , front] = w.svg.split(/<!--[BF]-->/);
-    const T = 'transform="translate(45 -14) scale(.55)"';
-    // ---- silhouette (torso + legs), one closed path
-    const leg = s => {            // s = -1 left, +1 right; traced from hip down the outside and back up the inside
-        const x = v => c + s * v;
-        return `C${x(hi + 1)} ${250} ${x(30 * th)} 292 ${x(27 * th)} 314 C${x(31 * th)} 350 ${x(27 * th)} 386 ${x(21)} 410 L${x(6)} 410 C${x(4)} 374 ${x(2)} 336 ${x(3)} 314 C${x(2)} 274 ${x(1)} 244 ${c} 226`;
-    };
-    const torsoL = `M93 84 Q${c - sh + 8} 90 ${c - sh} 102 C${c - sh - 1} 114 ${c - bu} 114 ${c - bu} 128 C${c - bu} 144 ${c - wa} 146 ${c - wa} 160 C${c - wa} 176 ${c - hi} 178 ${c - hi} 202`;
-    const torsoR = `C${c + hi} 178 ${c + wa} 176 ${c + wa} 160 C${c + wa} 146 ${c + bu} 144 ${c + bu} 128 C${c + bu} 114 ${c + sh + 1} 114 ${c + sh} 102 Q${c + sh - 8} 90 107 84Z`;
-    // right leg is traced upward (inside first), so build it reversed
-    const rx = v => c + v;
-    const legR = `C${rx(1)} 244 ${rx(2)} 274 ${rx(4)} 314 C${rx(2)} 336 ${rx(4)} 374 ${rx(6)} 410 L${rx(21)} 410 C${rx(27 * th)} 386 ${rx(31 * th)} 350 ${rx(27 * th)} 314 C${rx(30 * th)} 292 ${rx(hi + 1)} 250 ${rx(hi)} 202`;
-    const body = `${torsoL} ${leg(-1)} ${legR} ${torsoR}`;
-    const defs = `<defs><clipPath id="${id}b"><path d="${body}"/></clipPath>
-      <linearGradient id="${id}v" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".26"/><stop offset=".3" stop-color="#000" stop-opacity="0"/><stop offset=".7" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".26"/></linearGradient>
-      <radialGradient id="${id}g" cx=".5" cy=".45" r=".6"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>`;
-    const clip = inner => `<g clip-path="url(#${id}b)">${inner}</g>`;
-    let under = '', mid = '', over = '';
-
-    // ---- legs: tights / socks
-    if (O.legs) under += clip(`<rect x="0" y="200" width="200" height="220" fill="${O.legs}"/>`);
-    if (O.sock) under += clip(`<rect x="0" y="${O.sock}" width="200" height="100" fill="#fff"/><rect x="0" y="${O.sock}" width="200" height="5" fill="#ff7ab0"/>`);
-    // ---- pants
-    if (O.pants) under += clip(`<rect x="0" y="${O.pants.from}" width="200" height="260" fill="${O.pants.c}"/>
-        ${O.pants.stripe ? `<path d="M${c - hi + 4} 200 C${c - hi + 4} 260 ${c - 26} 330 ${c - 16} 410 M${c + hi - 4} 200 C${c + hi - 4} 260 ${c + 26} 330 ${c + 16} 410" stroke="${O.pants.stripe}" stroke-width="3" fill="none"/>` : ''}
-        ${O.pants.pockets ? `<rect x="${c - hi + 4}" y="250" width="17" height="20" rx="2" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1.4"/><rect x="${c + hi - 21}" y="250" width="17" height="20" rx="2" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1.4"/>` : ''}
-        <rect x="0" y="${O.pants.from}" width="200" height="6" fill="rgba(0,0,0,.2)"/>`) + `<path d="M100 228 V300" stroke="rgba(0,0,0,.25)" stroke-width="1.4"/>`;
-    // ---- shoes
-    const shoe = (x, s) => {
-        if (!O.shoe) return '';
-        const [k, col] = O.shoe;
-        let d;
-        if (k === 'heel') d = `<path d="M-9 404 L9 404 Q13 414 17 421 L-5 421 Q-10 414 -9 404Z" fill="${col}"/><path d="M-6 414 L-7 427" stroke="${col}" stroke-width="2.6"/>`;
-        else if (k === 'boot') d = `<path d="M-11 380 L11 380 L11 412 Q20 414 21 425 L-11 425Z" fill="${col}"/><path d="M-11 380 H11" stroke="rgba(255,255,255,.3)" stroke-width="3"/>`;
-        else if (k === 'sneaker') d = `<path d="M-10 402 L10 402 Q19 410 21 425 L-10 425Z" fill="${col}" stroke="#c8c8d4" stroke-width="1"/><path d="M-10 420 H20" stroke="#ff4f5e" stroke-width="3"/>`;
-        else d = `<path d="M-9 406 L9 406 Q17 414 19 423 L-9 423Z" fill="${col}"/>`;
-        return `<g transform="translate(${x} 0) scale(${s} 1)">${d}</g>`;
-    };
-    const shoes = shoe(c - 13.5, -1) + shoe(c + 13.5, 1);
-
-    // ---- top
+    const [, , front] = w.svg.split(/<!--[BF]-->/);
+    const hairBack = w.svg.split(/<!--[BF]-->/)[0];
     const topEnd = O.topEnd || 206, n = O.neck;
-    let neckD;
-    if (n[0] === 'high') neckD = `M0 84 H200`;
-    else if (n[0] === 'v') neckD = `M0 88 L${c - n[1]} 88 L${c} ${88 + n[2]} L${c + n[1]} 88 L200 88`;
-    else if (n[0] === 'sweet') neckD = `M0 116 Q${c - 20} 104 ${c - 8} 112 Q${c} 120 ${c + 8} 112 Q${c + 20} 104 200 116`;
-    else neckD = `M0 90 L${c - n[1]} 90 Q${c} ${90 + n[2] * 2} ${c + n[1]} 90 L200 90`;
-    mid += clip(`<path d="${neckD} L200 ${topEnd} L0 ${topEnd}Z" fill="${O.top}"/>
-        ${O.knit ? `<path d="M0 112 H200 M0 126 H200 M0 140 H200 M0 154 H200 M0 168 H200 M0 182 H200 M0 196 H200" stroke="rgba(0,0,0,.07)" stroke-width="2"/><rect x="0" y="${topEnd - 8}" width="200" height="8" fill="rgba(0,0,0,.12)"/>` : ''}
-        ${O.trimTop ? `<rect x="0" y="${topEnd - 4}" width="200" height="4" fill="${O.trimTop}"/>` : ''}
-        <path d="M${c - bu + 5} 136 Q${c - 15} 150 ${c - 2} 140 M${c + 2} 140 Q${c + 15} 150 ${c + bu - 5} 136" stroke="rgba(0,0,0,.16)" stroke-width="2.4" fill="none" stroke-linecap="round"/>`);
-    if (O.midriff) mid += `<path d="M${c} 172 q1.6 3 0 5" stroke="${sd}" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
-    if (n[0] === 'high') mid += `<path d="M91 76 L109 76 L110 90 Q100 95 90 90Z" fill="${O.top}"/><path d="M95 78 V91 M100 79 V93 M105 78 V91" stroke="rgba(0,0,0,.12)" stroke-width="1"/>`;
-
-    // ---- skirt
-    const S = O.skirt;
-    let skirt = '';
-    if (S) {
-        const y0 = S.from || 172, W = S.w, hem = S.hem;
-        const d = S.pencil
-            ? `M${c - wa - 1} ${y0} C${c - wa - 2} ${y0 + 14} ${c - hi - 2} ${y0 + 14} ${c - hi - 2} 204 C${c - hi - 2} 250 ${c - W + 6} 270 ${c - W + 8} ${hem} L${c + W - 8} ${hem} C${c + W - 6} 270 ${c + hi + 2} 250 ${c + hi + 2} 204 C${c + hi + 2} ${y0 + 14} ${c + wa + 2} ${y0 + 14} ${c + wa + 1} ${y0}Z`
-            : `M${c - wa - 1} ${y0} C${c - wa - 4} ${y0 + 16} ${c - hi - 4} ${y0 + 14} ${c - hi - 5} 206 C${c - hi - 6} ${(206 + hem) / 2} ${c - W} ${hem - 40} ${c - W} ${hem} Q${c - W * .5} ${hem + 9} ${c} ${hem + 4} Q${c + W * .5} ${hem + 9} ${c + W} ${hem} C${c + W} ${hem - 40} ${c + hi + 6} ${(206 + hem) / 2} ${c + hi + 5} 206 C${c + hi + 4} ${y0 + 14} ${c + wa + 4} ${y0 + 16} ${c + wa + 1} ${y0}Z`;
-        skirt = `<path d="${d}" fill="${S.c}"/><clipPath id="${id}s"><path d="${d}"/></clipPath><g clip-path="url(#${id}s)">
-            ${S.layers ? `<rect x="0" y="${hem - 34}" width="200" height="60" fill="${S.layers}"/>` : ''}
-            ${S.plaid ? `<path d="M0 ${y0 + 30} H200 M0 ${y0 + 62} H200 M0 ${y0 + 94} H200 M${c - 40} 0 V500 M${c - 14} 0 V500 M${c + 14} 0 V500 M${c + 40} 0 V500" stroke="${S.plaid}" stroke-width="3" opacity=".8"/>` : ''}
-            ${S.splat ? `<circle cx="${c - 20}" cy="${y0 + 50}" r="6" fill="#ff7ab0"/><circle cx="${c + 18}" cy="${y0 + 84}" r="8" fill="#5ad0e0"/><circle cx="${c - 6}" cy="${y0 + 112}" r="5" fill="#ffd34d"/><circle cx="${c + 30}" cy="${y0 + 40}" r="4" fill="#7a4ab0"/>` : ''}
-            ${S.sparkle ? [[70, 240], [128, 262], [100, 310], [52, 350], [148, 340], [86, 388], [124, 396], [30, 400], [170, 404]].map(([x, y]) => `<path d="M${x} ${y - 4} l1.2 2.800 2.800 1.200 -2.800 1.200 -1.200 2.800 -1.200 -2.800 -2.800 -1.200 2.800 -1.200Z" fill="#ffe9a8"/>`).join('') : ''}
-            ${S.pencil ? '' : `<path d="M${c - 16} ${y0 + 20} Q${c - 30} ${hem - 60} ${c - W * .55} ${hem + 6} M${c} ${y0 + 20} V${hem + 6} M${c + 16} ${y0 + 20} Q${c + 30} ${hem - 60} ${c + W * .55} ${hem + 6}" stroke="rgba(0,0,0,.1)" stroke-width="2" fill="none"/>`}
-            <rect x="0" y="${y0}" width="200" height="${hem - y0 + 12}" fill="url(#${id}v)"/>
-            ${S.trim ? `<path d="M${c - W} ${hem - 3} Q${c - W * .5} ${hem + 6} ${c} ${hem + 1} Q${c + W * .5} ${hem + 6} ${c + W} ${hem - 3}" stroke="${S.trim}" stroke-width="5" fill="none"/>` : ''}
-            ${S.frill ? `<path d="M${c - W} ${hem - 3} Q${c - W * .5} ${hem + 6} ${c} ${hem + 1} Q${c + W * .5} ${hem + 6} ${c + W} ${hem - 3}" stroke="${S.frill}" stroke-width="7" fill="none" stroke-dasharray="7 4"/>` : ''}
-        </g><path d="${d}" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="1.2"/>
-        ${S.band ? `<path d="M${c - wa - 2} ${y0} Q${c} ${y0 + 5} ${c + wa + 2} ${y0} L${c + wa + 3} ${y0 + 7} Q${c} ${y0 + 12} ${c - wa - 3} ${y0 + 7}Z" fill="${S.band}"/>` : ''}`;
-    }
-    if (O.belt) skirt += `<path d="M${c - wa - 1} 164 Q${c} 168 ${c + wa + 1} 164 L${c + wa + 2} 171 Q${c} 175 ${c - wa - 2} 171Z" fill="${O.belt}"/><rect x="${c - 5}" y="164" width="10" height="9" rx="1.6" fill="#e8c46a"/>`;
-
-    // ---- arms (left hangs, right hand on hip)
-    const aL = `M${c - sh + 6} 106 Q${c - hi - 10} 152 ${c - hi - 4} 216`, aR = `M${c + sh - 6} 106 Q${c + hi + 19} 146 ${c + wa + 13} 182`;
-    const lenL = 118, lenR = 92;
-    let arms = `<path d="${aL}" stroke="${sk}" stroke-width="${arm}" fill="none" stroke-linecap="round"/><ellipse cx="${c - hi - 4}" cy="223" rx="${arm * .48}" ry="${arm * .66}" fill="${sk}"/>
-        <path d="${aR}" stroke="${sk}" stroke-width="${arm}" fill="none" stroke-linecap="round"/><ellipse cx="${c + wa + 11}" cy="184" rx="${arm * .62}" ry="${arm * .46}" fill="${sk}"/>`;
-    if (O.gloves) arms += `<path d="${aL}" stroke="${O.gloves}" stroke-width="${arm + 1}" fill="none" stroke-linecap="round" stroke-dasharray="0 ${lenL * .5} 999"/><ellipse cx="${c - hi - 4}" cy="223" rx="${arm * .5}" ry="${arm * .68}" fill="${O.gloves}"/>`;
-    if (O.sleeve) { const [col, f] = O.sleeve; arms += `<path d="${aL}" stroke="${col}" stroke-width="${arm + 2.4}" fill="none" stroke-linecap="round" stroke-dasharray="${lenL * f} 999"/><path d="${aR}" stroke="${col}" stroke-width="${arm + 2.4}" fill="none" stroke-linecap="round" stroke-dasharray="${lenR * f} 999"/>`; }
-    if (O.bangles) arms += `<path d="M${c - hi - 10} 204 h13 M${c - hi - 10} 208 h13" stroke="${O.bangles}" stroke-width="2.4" stroke-linecap="round"/>`;
-    if (O.wrist) arms += `<path d="M${c - hi - 10} 204 h13" stroke="${O.wrist}" stroke-width="6" stroke-linecap="round"/>`;
-
-    // ---- layers over the top: cardigan / coat / jacket / blazer / apron
-    const open = (col, hem, wd) => `<path d="M${c - sh - 1} 100 Q${c - 14} 88 ${c - 9} 86 L${c - 6} 150 L${c - 9} ${hem} L${c - hi - wd} ${hem} C${c - hi - wd} 190 ${c - wa - 3} 170 ${c - wa - 2} 158 C${c - wa - 2} 144 ${c - bu - 2} 142 ${c - bu - 2} 128 C${c - bu - 2} 114 ${c - sh - 3} 114 ${c - sh - 1} 100Z" fill="${col}" stroke="rgba(0,0,0,.2)" stroke-width="1"/>
-        <path d="M${c + sh + 1} 100 Q${c + 14} 88 ${c + 9} 86 L${c + 6} 150 L${c + 9} ${hem} L${c + hi + wd} ${hem} C${c + hi + wd} 190 ${c + wa + 3} 170 ${c + wa + 2} 158 C${c + wa + 2} 144 ${c + bu + 2} 142 ${c + bu + 2} 128 C${c + bu + 2} 114 ${c + sh + 3} 114 ${c + sh + 1} 100Z" fill="${col}" stroke="rgba(0,0,0,.2)" stroke-width="1"/>`;
-    if (O.cardigan) over += open(O.cardigan, 214, 2);
-    if (O.jacket) over += open(O.jacket, 200, 1);
-    if (O.coat) over += open(O.coat, 318, 6) + `<path d="M${c - 9} 86 L${c - 17} 112 L${c - 7} 122 M${c + 9} 86 L${c + 17} 112 L${c + 7} 122" stroke="#c8d0e0" stroke-width="1.6" fill="none"/>`;
-    if (O.blazer) over += open(O.blazer, 222, 2) + `<path d="M${c - 9} 86 L${c - 19} 116 L${c - 6} 130 M${c + 9} 86 L${c + 19} 116 L${c + 6} 130" stroke="#4a4a68" stroke-width="1.6" fill="none"/><circle cx="${c}" cy="166" r="2.200" fill="#e8c46a"/>`;
-    if (O.tie) mid += `<path d="M${c - 3} 96 L${c + 3} 96 L${c + 5} 134 L${c} 142 L${c - 5} 134Z" fill="${O.tie}"/>`;
-    if (O.apron) over += `<path d="M${c - 15} 112 L${c + 15} 112 L${c + wa} 172 L${c - wa} 172Z" fill="${O.apron}" stroke="rgba(0,0,0,.2)" stroke-width="1"/><path d="M${c - 13} 112 L${c - 18} 88 M${c + 13} 112 L${c + 18} 88" stroke="${O.apron}" stroke-width="5"/><circle cx="${c - 6}" cy="140" r="4" fill="#ff7ab0"/><circle cx="${c + 8}" cy="154" r="3" fill="#5ad0e0"/>`;
-    if (O.bow) over += `<path d="M${c} 100 l-13 -7 v14Z M${c} 100 l13 -7 v14Z" fill="${O.bow}"/><circle cx="${c}" cy="100" r="3.600" fill="#ff4f8b"/>`;
-    if (O.steth) over += `<path d="M${c - 10} 88 Q${c - 16} 124 ${c - 2} 136 M${c + 10} 88 Q${c + 14} 116 ${c + 6} 126" stroke="#3a4050" stroke-width="2.200" fill="none"/><circle cx="${c - 2}" cy="138" r="3.400" fill="#9aa4b2" stroke="#3a4050" stroke-width="1.200"/>`;
-    if (O.dupatta) over += `<path d="M${c + sh - 6} 94 Q${c + sh + 12} 96 ${c + sh + 10} 112 Q${c + hi + 26} 230 ${c + hi + 16} 340 L${c + hi + 2} 338 Q${c + hi + 8} 230 ${c + sh - 2} 116Z" fill="${O.dupatta}" opacity=".8"/>`;
-
-    const neck = `<path d="M93 68 L92 88 Q100 93 108 88 L107 68Z" fill="${sk}"/><path d="M93 74 Q100 82 107 74 L107 79 Q100 87 93 79Z" fill="${sd}" opacity=".6"/>`;
-    const glow = stage >= 2 ? `<ellipse cx="70" cy="126" rx="11" ry="6" fill="#ff5f8f" opacity="${Math.min(.6, (stage - 1) * .14)}"/><ellipse cx="130" cy="126" rx="11" ry="6" fill="#ff5f8f" opacity="${Math.min(.6, (stage - 1) * .14)}"/>` : '';
-    const hearts = stage >= 4 ? `<text x="152" y="${stage >= 5 ? 44 : 52}" font-size="${stage >= 5 ? 30 : 22}" fill="#ff2d6f">♥</text>${stage >= 5 ? '<text x="26" y="60" font-size="20" fill="#ff7aa8">♥</text>' : ''}` : '';
+    const hem = O.skirt ? O.skirt.hem : 410;
+    const legShape = (side) => {
+        const sign = side === 'L' ? -1 : 1;
+        const x = v => c + sign * v;
+        return `M${x(hi-8)} 218
+          C${x(hi+2)} 246 ${x(29*th)} 278 ${x(28*th)} 310
+          C${x(30*th)} 342 ${x(25*th)} 380 ${x(21)} 414
+          Q${x(20)} 422 ${x(11)} 422 L${x(5)} 420
+          C${x(6)} 386 ${x(7)} 350 ${x(5)} 318
+          C${x(3)} 282 ${x(2)} 248 ${x(0)} 226Z`;
+    };
+    const legL = legShape('L'), legR = legShape('R');
+    const torso = `M91 78 Q100 72 109 78
+      L${c+sh} 96 Q${c+sh+8} 106 ${c+bu} 119
+      Q${c+bu+8} 137 ${c+wa+5} 151
+      Q${c+wa+2} 164 ${c+wa+7} 178
+      Q${c+hi+5} 190 ${c+hi-7} 218
+      Q100 231 ${c-hi+7} 218
+      Q${c-hi-5} 190 ${c-wa-7} 178
+      Q${c-wa-2} 164 ${c-wa-5} 151
+      Q${c-bu-8} 137 ${c-bu} 119
+      Q${c-sh-8} 106 ${c-sh} 96Z`;
+    const defs = `<defs>
+      <linearGradient id="${id}skin" x1="0" y1="0" x2="1" y2=".2"><stop stop-color="${sd}"/><stop offset=".34" stop-color="${sk}"/><stop offset=".72" stop-color="${sk}"/><stop offset="1" stop-color="${sd}"/></linearGradient>
+      <linearGradient id="${id}cloth" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#000" stop-opacity=".22"/><stop offset=".45" stop-color="#fff" stop-opacity=".12"/><stop offset=".7" stop-color="#fff" stop-opacity=".02"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>
+      <linearGradient id="${id}shine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <clipPath id="${id}torso"><path d="${torso}"/></clipPath>
+      <clipPath id="${id}skirt"><path d="${O.skirt ? `M${c-wa} 170 Q${c-hi} 190 ${c-hi-4} 220 Q${c-hi-10} ${(220+hem)/2} ${c-hi-8} ${hem} Q100 ${hem+9} ${c+hi+8} ${hem} Q${c+hi+10} ${(220+hem)/2} ${c+hi+4} 220 Q${c+hi} 190 ${c+wa} 170Z` : 'M0 0'}"/></clipPath>
+    </defs>`;
+    const legs = `<path d="${legL}" fill="url(#${id}skin)"/><path d="${legR}" fill="url(#${id}skin)"/>
+      <path d="M${c-10} 310 Q${c-14} 365 ${c-13} 405 M${c+10} 310 Q${c+14} 365 ${c+13} 405" stroke="${sd}" opacity=".35" stroke-width="2" fill="none"/>`;
+    let bottoms = '';
+    if (O.legs) bottoms += `<path d="${legL} ${legR}" fill="${O.legs}"/>`;
+    if (O.pants) bottoms += `<path d="${legL} ${legR}" fill="${O.pants.c}" stroke="rgba(0,0,0,.16)" stroke-width="1"/><path d="M100 224 V306" stroke="rgba(0,0,0,.25)" stroke-width="1.5"/>`;
+    if (O.sock) bottoms += `<path d="M${c-20} ${O.sock} h18 v48 h-18Z M${c+2} ${O.sock} h18 v48 h-18Z" fill="#fff"/>`;
+    const shoes = O.shoe ? `<path d="M79 414 Q88 410 94 420 L92 428 H68 Q68 420 79 414Z M106 420 Q112 410 121 414 L132 420 Q132 428 108 428Z" fill="${O.shoe[1]}" stroke="rgba(0,0,0,.3)" stroke-width="1.2"/>` : '';
+    const topPath = `M91 80 Q100 75 109 80 L${c+sh} 96 Q${c+bu+7} 117 ${c+bu} 133 Q${c+wa+2} 151 ${c+wa+4} ${topEnd} L${c-wa-4} ${topEnd} Q${c-wa-2} 151 ${c-bu} 133 Q${c-bu-7} 117 ${c-sh} 96Z`;
+    let top = `<path d="${topPath}" fill="${O.top}" stroke="rgba(0,0,0,.2)" stroke-width="1.3"/><path d="${topPath}" fill="url(#${id}cloth)"/>`;
+    if (O.trimTop) top += `<path d="M${c-wa-4} ${topEnd-3} Q100 ${topEnd+1} ${c+wa+4} ${topEnd-3}" stroke="${O.trimTop}" stroke-width="4" fill="none"/>`;
+    if (n[0] === 'v') top += `<path d="M${c-n[1]} 87 L100 ${87+n[2]} L${c+n[1]} 87" stroke="rgba(255,255,255,.8)" stroke-width="2.2" fill="none"/>`;
+    else if (n[0] !== 'high') top += `<path d="M${c-n[1]} 88 Q100 ${88+n[2]*1.5} ${c+n[1]} 88" stroke="rgba(255,255,255,.7)" stroke-width="2.2" fill="none"/>`;
+    if (O.knit) top += `<path d="M64 116 H136 M64 130 H136 M64 144 H136 M64 158 H136 M64 172 H136 M64 186 H136" stroke="rgba(255,255,255,.18)" stroke-width="1.4"/>`;
+    if (O.midriff) top += `<path d="M100 174 q-2 3 0 5" stroke="${sd}" stroke-width="1.5" fill="none"/>`;
+    const skirt = O.skirt ? `<path d="M${c-wa} 170 Q${c-hi} 190 ${c-hi-4} 220 Q${c-hi-10} ${(220+hem)/2} ${c-hi-8} ${hem} Q100 ${hem+9} ${c+hi+8} ${hem} Q${c+hi+10} ${(220+hem)/2} ${c+hi+4} 220 Q${c+hi} 190 ${c+wa} 170Z" fill="${O.skirt.c}" stroke="rgba(0,0,0,.25)" stroke-width="1.4"/>
+      <path d="M100 184 Q88 280 84 ${hem-3} M100 184 Q112 280 116 ${hem-3}" stroke="rgba(255,255,255,.22)" stroke-width="2" fill="none"/>
+      <path d="M${c-hi-8} ${hem-3} Q100 ${hem+8} ${c+hi+8} ${hem-3}" stroke="${O.skirt.trim || O.skirt.frill || 'rgba(255,255,255,.5)'}" stroke-width="4" fill="none"/>` : '';
+    const armL = `<path d="M${c-sh+5} 102 Q${c-sh-7} 140 ${c-hi-9} 190 Q${c-hi-15} 208 ${c-hi-11} 222" stroke="url(#${id}skin)" stroke-width="${arm}" fill="none" stroke-linecap="round"/><ellipse cx="${c-hi-11}" cy="224" rx="7" ry="9" fill="${sk}"/>`;
+    const armR = `<path d="M${c+sh-5} 102 Q${c+hi+13} 136 ${c+wa+17} 164 Q${c+wa+21} 179 ${c+wa+11} 187" stroke="url(#${id}skin)" stroke-width="${arm}" fill="none" stroke-linecap="round"/><ellipse cx="${c+wa+11}" cy="188" rx="8" ry="7" fill="${sk}"/>`;
+    let outer = '';
+    for (const col of [O.cardigan,O.jacket,O.blazer,O.coat]) if (col) outer += `<path d="M${c-sh} 98 Q${c-13} 88 ${c-8} 84 L${c-5} 160 L${c-hi-4} 218 L${c-wa-2} 170 L${c-bu-2} 125Z M${c+sh} 98 Q${c+13} 88 ${c+8} 84 L${c+5} 160 L${c+hi+4} 218 L${c+wa+2} 170 L${c+bu+2} 125Z" fill="${col}" stroke="rgba(0,0,0,.18)" stroke-width="1"/>`;
+    if (O.apron) outer += `<path d="M86 112 L114 112 L${c+wa} 174 L${c-wa} 174Z" fill="${O.apron}" stroke="rgba(0,0,0,.2)"/>`;
+    if (O.dupatta) outer += `<path d="M${c+sh-4} 90 Q${c+sh+18} 112 ${c+hi+19} 208 L${c+hi+8} 340 L${c+hi-2} 338 Q${c+hi+4} 220 ${c+sh-3} 112Z" fill="${O.dupatta}" opacity=".88"/>`;
+    if (O.bow) outer += `<path d="M100 102 l-15 -10 v20Z M100 102 l15 -10 v20Z" fill="${O.bow}"/><circle cx="100" cy="102" r="3" fill="#ff4f8b"/>`;
+    if (O.tie) outer += `<path d="M97 96 H103 L106 133 L100 141 L94 133Z" fill="${O.tie}"/>`;
+    const neck = `<path d="M91 64 L91 88 Q100 96 109 88 L109 64Z" fill="url(#${id}skin)"/>`;
+    const glow = stage >= 2 ? `<path d="M${c-bu+9} 120 Q${c-bu+4} 145 ${c-wa+3} 162" stroke="#fff" stroke-width="4" opacity=".25" fill="none" stroke-linecap="round"/>` : '';
+    const hearts = stage >= 4 ? `<text x="151" y="50" font-size="24" fill="#ff4b83">♥</text>` : '';
     return `<svg viewBox="0 -16 200 456" aria-hidden="true">${defs}
-        <ellipse cx="100" cy="428" rx="62" ry="6" fill="rgba(0,0,0,.3)"/><g class="body">
-        <g ${T}>${back}</g>
-        <path d="${body}" fill="${sk}"/>${under}${shoes}${n[0] === 'high' ? '' : neck}${mid}
-        ${clip(`<rect x="0" y="80" width="200" height="350" fill="url(#${id}v)"/>`)}<path d="${body}" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1.2"/>
-        ${skirt}<g pointer-events="none" opacity=".38"><path d="M${c - bu + 5} 112 Q${c - 13} 118 ${c - 5} 145 Q${c + 5} 164 ${c + 1} 198" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M${c + 16} 218 Q${c + 34} 270 ${c + 21} 330" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M${c - hi + 8} 244 Q${c - 35} 300 ${c - 29} 350" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" opacity=".72"/><path d="M${c + hi - 8} 244 Q${c + 35} 300 ${c + 29} 350" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" opacity=".72"/></g>${arms}${over}${n[0] === 'high' ?  `<path d="M93 68 L93 78 L107 78 L107 68Z" fill="${sk}"/>` : ''}
-        <g ${T}>${front}${glow}${hearts}</g></g></svg>`;
+      <ellipse cx="100" cy="431" rx="57" ry="6" fill="rgba(0,0,0,.22)"/>
+      <g class="body">
+        <g>${hairBack}</g>
+        ${legs}${bottoms}${shoes}
+        <path d="${torso}" fill="url(#${id}skin)" stroke="rgba(0,0,0,.16)" stroke-width="1.2"/>
+        ${neck}${top}${armL}${armR}${skirt}${outer}
+        <path d="M${c-bu+8} 135 Q100 150 ${c+bu-8} 135" stroke="rgba(0,0,0,.12)" stroke-width="1.5" fill="none"/>
+        <path d="M100 160 V176" stroke="${sd}" opacity=".35" stroke-width="1.3"/>
+        <path d="${topPath}" fill="url(#${id}cloth)" opacity=".32"/>
+        <path d="M${c+sh-4} 103 Q${c+hi+15} 137 ${c+wa+11} 184" stroke="${O.sleeve ? O.sleeve[0] : 'transparent'}" stroke-width="${O.sleeve ? arm+2 : 0}" fill="none" stroke-linecap="round"/>
+        ${glow}
+        <g transform="translate(45 -14) scale(.55)">${front}${hearts}</g>
+      </g>
+    </svg>`;
 }
 // Head-and-shoulders portrait, used for the small pictures in the Hall of Hearts.
 function portraitSVG(w) { return `<svg viewBox="30 14 140 170" aria-hidden="true">${w.svg}</svg>`; }
