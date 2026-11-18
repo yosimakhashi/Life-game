@@ -732,6 +732,24 @@ const STORY = [
     [['park', '🌙', 'Where it all began', 'I feel like I already know you.'], ['cafe', '☕', 'Hours over one coffee', 'Where did the time go?'], ['beach', '🌅', 'Sunset walk', 'Stay a little longer.'],
      ['mountain', '🌌', 'Under the stars', 'I could do this forever.'], ['garden', '💍', 'The question', 'Yes. A thousand times yes.'], ['wedding', '💒', 'The big day', 'Here we are. Finally.']]
 ];
+const INTIMATE_LINES = [
+  ['You make me blush every time you get that close.', 'You make me wet just thinking about you.'],
+  ['I keep imagining what it would be like to kiss you.', 'You make me wet just thinking about you.'],
+  ['Careful… that smile is making it hard to concentrate.', 'You make me wet just thinking about you.'],
+  ['I want this moment to last a little longer.', 'You make me wet just thinking about you.'],
+  ['Come closer. I want to tell you a secret.', 'You make me wet just thinking about you.'],
+  ['I was trying to act professional. You ruined that.', 'You make me wet just thinking about you.'],
+  ['I could get used to having you this close.', 'You make me wet just thinking about you.'],
+  ['That look in your eyes is making me forget my steps.', 'You make me wet just thinking about you.'],
+  ['I cancelled my plans. I would rather be here with you.', 'You make me wet just thinking about you.'],
+  ['I have one more thing to say before you go… kiss me.', 'You make me wet just thinking about you.']
+];
+STORY.forEach((dates, i) => {
+  dates[4][3] = INTIMATE_LINES[i][0];
+  dates[5][3] = INTIMATE_LINES[i][1];
+});
+
+
 
 const sceneOf = () => finished() ? STORY[GIRLS.length - 1][5] : STORY[S.level][stageOf(S.points)];
 let shownScene = null;
