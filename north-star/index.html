@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="North Star">
+<title>North Star</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+/* North Star: an aim helper. You type an aim; it recognises what kind of aim it
+   is (fitness, exam, money, habit...), reads any target and deadline out of the
+   sentence, then builds a roadmap, a daily to-do list, the personality traits
+   the aim needs, and tips + inspiration. Everything is stored on this device. */
+:root {
+    --bg: #0a0e1c;
+    --bg2: #111731;
+    --card: #141b38;
+    --card2: #1b2448;
+    --line: #2a3563;
+    --text: #eef1fb;
+    --dim: #9aa3c7;
+    --gold: #f5c451;
+    --gold2: #ffdf8a;
+    --teal: #5fe0c3;
+    --rose: #ff7a8a;
+    --violet: #a48bff;
+    --gutter: 16px;
+    --r: 14px;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--text); }
+body {
+    font-family: 'DM Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.5;
+    min-height: 100vh; overflow-x: hidden;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    background:
+        radial-gradient(1200px 600px at 80% -10%, rgba(164,139,255,.18), transparent 60%),
+        radial-gradient(900px 500px at -10% 10%, rgba(95,224,195,.10), transparent 60%),
+        var(--bg);
+    background-attachment: fixed;
+}
+#stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.wrap { position: relative; z-index: 1; max-width: 620px; margin: 0 auto; padding: 0 var(--gutter) 40px; }
+h1, h2, h3, .serif { font-family: 'Fraunces', Georgia, serif; font-weight: 700; margin: 0; }
+button { font-family: inherit; }
+a { color: var(--gold); }
+
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 0 4px; gap: 8px; }
+.back { color: var(--dim); text-decoration: none; font-size: 14px; background: none; border: none; cursor: pointer; padding: 6px 0; }
+.brand { font-family: 'Fraunces', serif; font-weight: 900; letter-spacing: .14em; font-size: 15px; color: var(--gold); }
+.brand span { color: var(--text); }
+
+/* Hero */
+.hero { text-align: center; padding: 22px 0 8px; }
+.compass { font-size: 46px; display: inline-block; animation: float 5s ease-in-out infinite; }
+@keyframes float { 50% { transform: translateY(-6px) rotate(6deg); } }
+.hero h1 { font-size: clamp(30px, 8vw, 44px); line-height: 1.05; margin-top: 6px; }
+.hero h1 em { font-style: italic; color: var(--gold); }
+.hero p { color: var(--dim); margin: 10px auto 0; max-width: 440px; }
+
+.card { background: linear-gradient(180deg, var(--card), var(--bg2)); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; margin: 14px 0; }
+.label { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 700; margin-bottom: 8px; display: block; }
+textarea, input[type=text], input[type=date] {
+    width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px; font: inherit; font-size: 16px; resize: vertical; outline: none;
+}
+textarea:focus, input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(245,196,81,.15); }
+.btn { border: 1px solid var(--line); background: var(--card2); color: var(--text); padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px; }
+.btn:active { transform: translateY(1px); }
+.btnGold { background: linear-gradient(180deg, var(--gold2), var(--gold)); color: #241a00; border: none; font-weight: 700; }
+.btnBig { width: 100%; padding: 15px; font-size: 16px; margin-top: 12px; }
+.btnGhost { background: none; }
+.btnDanger { color: var(--rose); border-color: rgba(255,122,138,.4); background: none; }
+.row { display: flex; gap: 8px; align-items: center; }
+.row > input { flex: 1; }
+.examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.chip { font-size: 13px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--dim); cursor: pointer; }
+.chip.on { border-color: var(--gold); color: var(--gold); background: rgba(245,196,81,.08); }
+
+/* Live recognition preview */
+.detect { margin-top: 12px; padding: 12px; border-radius: 10px; border: 1px dashed var(--line); font-size: 14px; color: var(--dim); min-height: 46px; }
+.detect b { color: var(--text); }
+.detect .cat { color: var(--gold); font-weight: 700; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tag { font-size: 12px; padding: 3px 8px; border-radius: 6px; background: var(--card2); color: var(--text); }
+.tag.warn { background: rgba(255,122,138,.15); color: var(--rose); }
+.tag.ok { background: rgba(95,224,195,.12); color: var(--teal); }
+
+/* Aim list */
+.aimItem { display: flex; gap: 12px; align-items: center; cursor: pointer; }
+.aimEmoji { font-size: 28px; width: 48px; height: 48px; border-radius: 12px; background: var(--card2); display: grid; place-items: center; flex-shrink: 0; }
+.aimMeta { flex: 1; min-width: 0; }
+.aimMeta h3 { font-size: 17px; overflow-wrap: anywhere; }
+.aimMeta small { color: var(--dim); }
+.bar { height: 6px; background: var(--bg); border-radius: 6px; overflow: hidden; margin-top: 6px; }
+.bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--teal), var(--gold)); border-radius: 6px; transition: width .4s; }
+
+/* Aim header */
+.aimHead { padding: 16px; border-radius: var(--r); margin: 10px 0 12px; border: 1px solid var(--line);
+    background: radial-gradient(400px 200px at 100% 0%, rgba(245,196,81,.15), transparent 70%), var(--card); }
+.aimHead .catLine { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); font-weight: 700; }
+.aimHead h2 { font-size: 24px; line-height: 1.15; margin: 6px 0 10px; overflow-wrap: anywhere; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat { background: var(--bg); border-radius: 10px; padding: 8px; text-align: center; }
+.stat b { display: block; font-family: 'Fraunces', serif; font-size: 22px; color: var(--text); }
+.stat span { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; }
+.why { margin-top: 10px; font-style: italic; color: var(--dim); font-size: 14px; }
+
+/* Tabs */
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; padding: 4px; position: sticky; top: 6px; z-index: 5; }
+.tab { border: none; background: none; color: var(--dim); padding: 9px 4px; border-radius: 9px; font-weight: 700; font-size: 13px; cursor: pointer; }
+.tab.on { background: var(--card2); color: var(--gold); }
+
+/* Tasks */
+.task { display: flex; gap: 12px; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid rgba(42,53,99,.6); }
+.task:last-child { border-bottom: none; }
+.check { width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--line); background: var(--bg); flex-shrink: 0; cursor: pointer; display: grid; place-items: center; color: #10230f; font-weight: 900; font-size: 15px; transition: all .15s; }
+.check.on { background: var(--teal); border-color: var(--teal); }
+.task .txt { flex: 1; padding-top: 2px; overflow-wrap: anywhere; }
+.task.done .txt { color: var(--dim); text-decoration: line-through; }
+.task .kind { font-size: 11px; color: var(--dim); display: block; text-decoration: none; }
+.x { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 18px; padding: 0 4px; opacity: .6; }
+.x:hover { opacity: 1; color: var(--rose); }
+.dots { display: flex; gap: 5px; margin-top: 10px; flex-wrap: wrap; }
+.dot { width: 16px; height: 16px; border-radius: 5px; background: var(--bg); border: 1px solid var(--line); }
+.dot.part { background: rgba(245,196,81,.45); border-color: transparent; }
+.dot.full { background: var(--teal); border-color: transparent; }
+.dot.today { outline: 2px solid var(--gold); outline-offset: 1px; }
+.nextAction { border-left: 3px solid var(--gold); padding: 10px 12px; background: rgba(245,196,81,.07); border-radius: 0 10px 10px 0; }
+
+/* Roadmap */
+.phase { position: relative; padding-left: 26px; margin-bottom: 16px; }
+.phase::before { content: ""; position: absolute; left: 8px; top: 22px; bottom: -14px; width: 2px; background: var(--line); }
+.phase:last-child::before { display: none; }
+.phase .node { position: absolute; left: 0; top: 4px; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line); background: var(--bg); }
+.phase.complete .node { background: var(--teal); border-color: var(--teal); }
+.phase.current .node { border-color: var(--gold); box-shadow: 0 0 0 4px rgba(245,196,81,.2); }
+.phase h3 { font-size: 16px; }
+.phase .when { font-size: 12px; color: var(--dim); }
+
+/* Traits */
+.trait { display: flex; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(42,53,99,.6); }
+.trait:last-child { border-bottom: none; }
+.ring { width: 52px; height: 52px; flex-shrink: 0; position: relative; }
+.ring svg { transform: rotate(-90deg); }
+.ring b { position: absolute; inset: 0; display: grid; place-items: center; font-family: 'Fraunces', serif; font-size: 16px; }
+.trait .info { flex: 1; min-width: 0; }
+.trait .info h3 { font-size: 16px; }
+.trait .info p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
+.practice { font-size: 12px; padding: 8px 10px; white-space: nowrap; }
+.practice.did { background: rgba(95,224,195,.15); color: var(--teal); border-color: transparent; }
+.identity { font-family: 'Fraunces', serif; font-size: 20px; line-height: 1.3; font-style: italic; }
+.identity::before { content: "“"; color: var(--gold); }
+.identity::after { content: "”"; color: var(--gold); }
+
+/* Fuel */
+.quote { font-family: 'Fraunces', serif; font-size: 21px; line-height: 1.35; }
+.quote cite { display: block; font-family: 'DM Sans', sans-serif; font-style: normal; font-size: 13px; color: var(--gold); margin-top: 8px; }
+ul.list { margin: 0; padding-left: 18px; }
+ul.list li { margin: 6px 0; }
+ul.list.warn li::marker { color: var(--rose); }
+ul.list.good li::marker { color: var(--teal); }
+.insight { font-size: 15px; }
+
+.empty { text-align: center; color: var(--dim); padding: 10px 0; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translate(-50%, 120px); opacity: 0; background: var(--gold); color: #241a00; font-weight: 700; padding: 12px 18px; border-radius: 12px; z-index: 100; transition: transform .3s, opacity .3s; max-width: calc(100% - 32px); text-align: center; }
+.toast.show { transform: translate(-50%, 0); opacity: 1; }
+.hidden { display: none !important; }
+.muted { color: var(--dim); font-size: 13px; }
+.spread { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<canvas id="stars" aria-hidden="true"></canvas>
+<div class="wrap">
+
+    <div class="topbar">
+        <a class="back" id="backLink" href="../index.html">← Life Game</a>
+        <div class="brand">NORTH <span>STAR</span></div>
+        <div style="width:70px"></div>
+    </div>
+
+    <!-- ========== HOME ========== -->
+    <section id="home">
+        <div class="hero">
+            <div class="compass">🧭</div>
+            <h1>What are you <em>aiming</em> for?</h1>
+            <p>Type your aim in your own words. North Star works out what kind of aim it is and builds your roadmap, daily to-dos, the traits to grow, and tips to keep you moving.</p>
+        </div>
+
+        <div class="card">
+            <label class="label" for="aimInput">My aim</label>
+            <textarea id="aimInput" rows="2" placeholder="e.g. Lose 8 kg in 4 months"></textarea>
+            <div class="examples" id="examples"></div>
+
+            <label class="label" for="whyInput" style="margin-top:14px">Why it matters to me <span style="text-transform:none;letter-spacing:0;font-weight:400">(optional, but powerful)</span></label>
+            <textarea id="whyInput" rows="2" placeholder="e.g. I want to feel strong and confident again"></textarea>
+
+            <div class="detect" id="detect">Start typing and I'll recognise your aim…</div>
+            <div id="catPicker" class="hidden">
+                <span class="label" style="margin-top:12px">Not right? Pick the closest:</span>
+                <div class="examples" id="catChips"></div>
+            </div>
+            <button class="btn btnGold btnBig" id="createBtn">✦ Build my plan</button>
+        </div>
+
+        <div id="aimList"></div>
+    </section>
+
+    <!-- ========== AIM VIEW ========== -->
+    <section id="aimView" class="hidden">
+        <div class="aimHead">
+            <div class="catLine" id="vCat"></div>
+            <h2 id="vTitle"></h2>
+            <div class="stats">
+                <div class="stat"><b id="vStreak">0</b><span>Day streak</span></div>
+                <div class="stat"><b id="vRoad">0%</b><span>Roadmap</span></div>
+                <div class="stat"><b id="vDays">—</b><span id="vDaysLbl">Days left</span></div>
+            </div>
+            <div class="tags" id="vTags"></div>
+            <div class="why" id="vWhy"></div>
+        </div>
+
+        <div class="tabs" role="tablist">
+            <button class="tab on" data-tab="today">Today</button>
+            <button class="tab" data-tab="road">Roadmap</button>
+            <button class="tab" data-tab="shape">Shape</button>
+            <button class="tab" data-tab="fuel">Fuel</button>
+        </div>
+
+        <!-- TODAY -->
+        <div id="tab-today">
+            <div class="card">
+                <span class="label">Next best step</span>
+                <div class="nextAction" id="nextAction"></div>
+            </div>
+            <div class="card">
+                <div class="spread"><span class="label" style="margin:0" id="todayLbl">Today</span><span class="muted" id="todayCount"></span></div>
+                <div class="bar" style="margin:8px 0 4px"><i id="todayBar" style="width:0"></i></div>
+                <div id="taskList"></div>
+                <div class="row" style="margin-top:12px">
+                    <input type="text" id="newTask" placeholder="Add a to-do…" maxlength="140">
+                    <button class="btn" id="addTaskBtn">Add</button>
+                </div>
+                <label class="muted" style="display:flex;gap:6px;align-items:center;margin-top:8px;cursor:pointer">
+                    <input type="checkbox" id="newTaskDaily"> Repeat every day
+                </label>
+            </div>
+            <div class="card">
+                <span class="label">Last 21 days</span>
+                <div class="dots" id="dots"></div>
+                <p class="muted" style="margin:8px 0 0">Teal = every daily task done. Gold = some done. Win the day, keep the streak.</p>
+            </div>
+        </div>
+
+        <!-- ROADMAP -->
+        <div id="tab-road" class="hidden">
+            <div class="card">
+                <span class="label">Your roadmap</span>
+                <p class="muted" style="margin:0 0 14px" id="roadIntro"></p>
+                <div id="phases"></div>
+                <div class="row" style="margin-top:6px">
+                    <input type="text" id="newMilestone" placeholder="Add your own milestone…" maxlength="140">
+                    <button class="btn" id="addMsBtn">Add</button>
+                </div>
+            </div>
+            <div class="card">
+                <span class="label">Deadline</span>
+                <div class="row">
+                    <input type="date" id="deadlineInput">
+                    <button class="btn" id="saveDeadline">Save</button>
+                </div>
+                <p class="muted" id="paceNote" style="margin:8px 0 0"></p>
+            </div>
+        </div>
+
+        <!-- SHAPE (personality) -->
+        <div id="tab-shape" class="hidden">
+            <div class="card">
+                <span class="label">Who you're becoming</span>
+                <div class="identity" id="identity"></div>
+                <p class="muted" style="margin:10px 0 0">Read this out loud once today. Every small action is a vote for this person.</p>
+            </div>
+            <div class="card">
+                <span class="label">Traits this aim needs</span>
+                <p class="muted" style="margin:0 0 6px">Tap <b>Practised</b> when you showed the trait today. Every 7 practices = 1 level.</p>
+                <div id="traits"></div>
+            </div>
+            <div class="card">
+                <span class="label">Tonight's reflection</span>
+                <p style="margin:0 0 8px" id="reflectQ"></p>
+                <textarea id="reflectInput" rows="3" placeholder="A few honest lines…"></textarea>
+                <p class="muted" id="reflectSaved" style="margin:6px 0 0"></p>
+            </div>
+            <div class="card">
+                <span class="label">My own identity statement</span>
+                <input type="text" id="ownIdentity" placeholder="I am someone who…" maxlength="160">
+                <p class="muted" style="margin:6px 0 0">Write it in present tense, as if it's already true.</p>
+            </div>
+        </div>
+
+        <!-- FUEL (tips + inspiration) -->
+        <div id="tab-fuel" class="hidden">
+            <div class="card">
+                <span class="label">Today's spark</span>
+                <div class="quote" id="quote"></div>
+            </div>
+            <div class="card">
+                <span class="label">What you need to know</span>
+                <div class="insight" id="insight"></div>
+            </div>
+            <div class="card">
+                <div class="spread"><span class="label" style="margin:0">Tip of the day</span><button class="btn btnGhost" id="nextTip" style="padding:4px 10px;font-size:12px">Another →</button></div>
+                <p style="margin:8px 0 0" id="tipOfDay"></p>
+            </div>
+            <div class="card">
+                <span class="label">All tips</span>
+                <ul class="list good" id="tips"></ul>
+            </div>
+            <div class="card">
+                <span class="label">Traps to avoid</span>
+                <ul class="list warn" id="pitfalls"></ul>
+            </div>
+            <div class="card">
+                <span class="label">Go deeper</span>
+                <ul class="list" id="resources"></ul>
+            </div>
+            <div class="card" style="text-align:center">
+                <button class="btn btnDanger" id="deleteAim">Delete this aim</button>
+            </div>
+        </div>
+    </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   KNOWLEDGE BASE
+   Each aim type: keywords used to recognise it ("!" = strong match),
+   the roadmap, daily habits (become to-dos), traits, identity lines,
+   tips, pitfalls, quotes and resources.
+   ============================================================ */
+const KB = [
+{
+ id: 'fatloss', name: 'Fat loss', emoji: '🔥', unit: 'kg',
+ kw: ['!lose weight','!weight loss','!fat loss','!lose fat','!belly','slim','fat','weight','lean','diet','kg','kilo','obese','waist','tummy','cut'],
+ insight: 'Fat loss comes down to a steady calorie deficit you can live with, enough protein to keep muscle, and daily movement. 0.5–1 kg a week is a sustainable pace; faster usually means water and muscle, and it rebounds. The scale jumps around day to day, so judge by your weekly average.',
+ phases: [
+  { t: 'Set up', w: 'Week 1', items: ['Weigh yourself 3 mornings and note the average as your start', 'Take front/side photos and measure your waist', 'Track everything you eat for 3 days, no changes yet, just honesty'] },
+  { t: 'Build the deficit', w: 'Weeks 2–4', items: ['Cut liquid calories (sugary tea, juice, soft drinks)', 'Get protein in every meal (eggs, dal, chicken, fish, curd, paneer)', 'Reach 7,000+ steps on most days'] },
+  { t: 'Add strength', w: 'Month 2', items: ['Start 3 strength sessions a week (full body)', 'Plan meals for the week each Sunday', 'Hit your first 2–3 kg down'] },
+  { t: 'Lock it in', w: 'Month 3+', items: ['Find 5 go-to meals you enjoy that fit your plan', 'Handle one social event or festival without derailing', 'Reach your target, then practise maintenance for 4 weeks'] }
+ ],
+ daily: ['Walk 8,000 steps', 'Protein in every meal', 'No sugary drinks today', 'Drink 2.5–3 L of water', 'Log what I eat'],
+ traits: [{ n: 'Self-control', d: 'Saying no to the extra plate without drama.' }, { n: 'Patience', d: 'Trusting the weekly trend, not the daily number.' }, { n: 'Consistency', d: 'Good-enough days, repeated.' }],
+ identity: ['I am someone who takes care of my body every day.', 'I eat like the person I want to become.', 'I keep moving, even on lazy days.'],
+ tips: ['Fill half your plate with vegetables first; it fills you up for few calories.', 'Eat slowly. It takes about 20 minutes for fullness to register.', 'Keep junk food out of the house. Willpower is easier at the shop than at midnight.', 'Sleep 7+ hours; short sleep raises hunger the next day.', 'Weigh daily if you like, but only compare weekly averages.', 'Walk 10 minutes after meals. It is easy and adds up fast.', 'Plan for festivals and weddings instead of pretending they will not happen.'],
+ pitfalls: ['Crash dieting: you lose fast, then regain more', 'Quitting after one “bad” day; just make the next meal good', 'Drinking calories without noticing (tea with sugar adds up)'],
+ quotes: [['Take care of your body. It\'s the only place you have to live.', 'Jim Rohn'], ['It does not matter how slowly you go as long as you do not stop.', 'Confucius'], ['Success is the sum of small efforts, repeated day in and day out.', 'Robert Collier']],
+ resources: ['A free calorie-tracking app such as HealthifyMe or MyFitnessPal', 'Book: “Atomic Habits” by James Clear (for making the habits stick)', 'Search “TDEE calculator” to estimate your daily calorie needs']
+},
+{
+ id: 'muscle', name: 'Build muscle & strength', emoji: '💪', unit: 'kg',
+ kw: ['!muscle','!gain weight','gain','!bulk','!six pack','!abs','gym','strong','strength','biceps','chest','bench','deadlift','squat','physique','body','shredded','aesthetic','pull up','pullup','push up','pushup'],
+ insight: 'Muscle grows when you train with progressive overload (a little more weight or reps over time), eat enough protein (about 1.6–2 g per kg of body weight), and sleep well. Beginners can gain fast for the first year if they are consistent, so the program you stick to beats the “perfect” one.',
+ phases: [
+  { t: 'Learn the moves', w: 'Weeks 1–3', items: ['Pick a simple full-body program, 3 days a week', 'Learn squat, push-up/bench, row, deadlift/hinge, overhead press with light weight', 'Start a training log (weights × reps)'] },
+  { t: 'Progressive overload', w: 'Months 1–3', items: ['Add a small amount of weight or 1 rep every week', 'Eat your protein target on 5+ days a week', 'Take progress photos every 4 weeks'] },
+  { t: 'Build volume', w: 'Months 3–6', items: ['Move to an upper/lower or push/pull/legs split', 'Hit a milestone lift (e.g. 10 strict push-ups or bodyweight squat)', 'Fix your weakest muscle group'] },
+  { t: 'Refine', w: 'Month 6+', items: ['Run a planned bulk or cut phase', 'Deload one week every 6–8 weeks', 'Set a new strength goal for the next 6 months'] }
+ ],
+ daily: ['Train or do active recovery', 'Hit protein target', 'Sleep 7–8 hours', 'Log my workout', 'Stretch 5 minutes'],
+ traits: [{ n: 'Grit', d: 'Finishing the last hard set.' }, { n: 'Discipline', d: 'Showing up when motivation is gone.' }, { n: 'Patience', d: 'Muscle is built in months, not days.' }],
+ identity: ['I am an athlete in training.', 'I never miss two workouts in a row.', 'I fuel my body like it matters, because it does.'],
+ tips: ['Write down every set. If you are not tracking, you are guessing.', 'Rest 2–3 minutes on heavy compound lifts.', 'Leave 1–2 reps in reserve on most sets; train hard, not to injury.', 'Protein spread across 3–4 meals works better than one big dose.', 'Film a set now and then to check your form.', 'Creatine monohydrate is the most researched supplement; food comes first.', 'If you are skinny and not gaining, you are not eating enough. Add 300 kcal.'],
+ pitfalls: ['Program hopping every two weeks', 'Ego lifting with bad form and getting injured', 'Skipping legs and sleep'],
+ quotes: [['The only bad workout is the one that didn\'t happen.', 'Unknown'], ['Strength does not come from physical capacity. It comes from an indomitable will.', 'Mahatma Gandhi'], ['We are what we repeatedly do.', 'Will Durant']],
+ resources: ['Program: search “GZCLP” or “5×5 beginner program”', 'Book: “Starting Strength” by Mark Rippetoe for lifting technique', 'Use the Gym Tracker in this app to log your sets']
+},
+{
+ id: 'fitness', name: 'Fitness & endurance', emoji: '🏃', unit: 'km',
+ kw: ['!run','!marathon','!5k','!10k','!half marathon','running','stamina','cardio','endurance','fit','fitness','cycling','swim','swimming','jog','jogging','active','healthy','health','yoga','km'],
+ insight: 'Endurance grows by doing most of your work at an easy, conversational pace and slowly adding volume. The usual rule is not to raise weekly distance by more than about 10% a week. Rest days are when your body adapts, so they count as training.',
+ phases: [
+  { t: 'Start easy', w: 'Weeks 1–2', items: ['Do 3 sessions of run/walk intervals (1 min jog, 2 min walk)', 'Get proper shoes', 'Test your baseline: how far can you go in 20 minutes?'] },
+  { t: 'Build the base', w: 'Weeks 3–8', items: ['Run 20–30 continuous minutes at an easy pace', 'Do 3–4 sessions a week', 'Add one strength session for legs and core'] },
+  { t: 'Add quality', w: 'Months 2–3', items: ['Add one tempo or interval session a week', 'Do one long, slow session a week', 'Do a time trial and compare it to your baseline'] },
+  { t: 'Peak & race', w: 'Month 3+', items: ['Sign up for an event', 'Taper volume in the final week', 'Finish, celebrate, then set the next target'] }
+ ],
+ daily: ['Move for 30 minutes', 'Stretch / mobility 10 minutes', 'Drink enough water', 'Sleep before 11 pm'],
+ traits: [{ n: 'Endurance', d: 'Staying with discomfort a little longer.' }, { n: 'Consistency', d: 'Easy miles, every week.' }, { n: 'Body awareness', d: 'Knowing pain from effort.' }],
+ identity: ['I am a runner. Runners run, even slowly.', 'I move every single day.', 'My body gets stronger each week.'],
+ tips: ['If you cannot talk while running, you are going too fast for an easy day.', 'Lay out your clothes the night before.', 'Run in the early morning to beat Indian heat and your excuses.', 'Track weekly distance, not just single runs.', 'Pain that changes how you move is a stop signal.', 'Find a running buddy or join a local club.'],
+ pitfalls: ['Doing too much too soon (shin splints, knee pain)', 'Running every run hard', 'Ignoring strength training'],
+ quotes: [['The miracle isn\'t that I finished. The miracle is that I had the courage to start.', 'John Bingham'], ['Run when you can, walk if you have to, crawl if you must; just never give up.', 'Dean Karnazes'], ['A journey of a thousand miles begins with a single step.', 'Lao Tzu']],
+ resources: ['App: a free “Couch to 5K” plan', 'Book: “Born to Run” by Christopher McDougall', 'Strava or any GPS app to log distance']
+},
+{
+ id: 'govexam', name: 'Competitive / Govt exam', emoji: '🎯', unit: 'marks',
+ kw: ['!psc','!ssc','!upsc','!kpsc','!ias','!ips','!government job','!govt job','!bank exam','!ibps','!sbi','!railway','!rrb','!neet','!jee','!gate','!cat exam','!cgl','!chsl','exam','rank','crack','clear','qualify','prelims','mains','civil service','lgs','ldc','police','constable','si exam','vacancy','notification','mock test','pyq','gk','current affairs'],
+ insight: 'Competitive exams reward syllabus coverage, revision and practice under time pressure. The toppers aren\'t the ones who read the most; they revise the most and take the most mock tests. Previous year questions (PYQs) show you what really gets asked.',
+ phases: [
+  { t: 'Map the exam', w: 'Week 1', items: ['Download the official syllabus and exam pattern', 'Solve one previous year paper cold to find your level', 'Pick ONE standard book/source per subject'] },
+  { t: 'Cover the syllabus', w: 'Months 1–3', items: ['Make a timetable covering every topic once', 'Make short notes for quick revision', 'Do topic-wise PYQs after each chapter'] },
+  { t: 'Revise & test', w: 'Months 3–5', items: ['Take 2 full mock tests a week', 'Analyse every mock: list wrong answers and why', 'Revise weak topics using the 1-3-7 day rule'] },
+  { t: 'Exam mode', w: 'Final month', items: ['Take daily mocks at the real exam time', 'Revise only from your notes; no new books', 'Plan exam-day logistics: hall ticket, route, sleep'] }
+ ],
+ daily: ['Study 2 focused blocks (50 min each)', 'Solve 30 PYQ / practice questions', 'Read current affairs for 20 minutes', 'Revise yesterday\'s notes', 'Phone in another room while studying'],
+ traits: [{ n: 'Focus', d: 'One topic, phone away, full attention.' }, { n: 'Resilience', d: 'Bouncing back from a bad mock score.' }, { n: 'Discipline', d: 'Following the timetable when bored.' }],
+ identity: ['I am a serious aspirant, and I study every day.', 'I learn from every wrong answer.', 'I am preparing to be selected, not just to pass.'],
+ tips: ['A mock test is useless without analysis. Spend as long reviewing it as taking it.', 'Use spaced revision: revise after 1 day, 3 days, 7 days and 21 days.', 'Keep a “mistakes notebook” and read it weekly.', 'Learn the negative-marking strategy for your exam and practise skipping.', 'Study at the same time daily; your brain learns the routine.', 'Join a serious study group or Telegram channel, but mute the noise.', 'Teach a topic aloud to check if you really understand it.'],
+ pitfalls: ['Collecting too many books and courses and finishing none', 'Avoiding mock tests because scores feel bad', 'Endless notes-making with no revision'],
+ quotes: [['Success is the sum of small efforts, repeated day in and day out.', 'Robert Collier'], ['Arise, awake, and stop not till the goal is reached.', 'Swami Vivekananda'], ['The expert in anything was once a beginner.', 'Helen Hayes']],
+ resources: ['The official exam website for syllabus and notifications', 'Previous year question papers (most important resource)', 'Use PSC Padanam / SSC Edge in this app for practice']
+},
+{
+ id: 'study', name: 'Study & grades', emoji: '📚', unit: '%',
+ kw: ['!marks','!grades','!cgpa','!gpa','!semester','!board exam','study','studies','school','college','university','degree','class','top','topper','score','percentage','plus two','10th','12th','exam','pass','subject','maths','physics','chemistry','biology'],
+ insight: 'The study methods that work best are active recall (testing yourself) and spaced repetition (reviewing over days). Rereading and highlighting feel productive but are some of the weakest methods. Short focused blocks beat long distracted hours.',
+ phases: [
+  { t: 'Get organised', w: 'Week 1', items: ['List every subject, chapter and exam date', 'Find your weakest 2 subjects', 'Set up a fixed daily study slot'] },
+  { t: 'Active learning', w: 'Weeks 2–6', items: ['After each chapter, write questions and answer them from memory', 'Make flashcards for formulas and definitions', 'Ask teachers about anything unclear within the same week'] },
+  { t: 'Practice', w: 'Weeks 6–10', items: ['Solve past papers under timed conditions', 'Mark your answers honestly using the marking scheme', 'Re-learn every topic you lost marks on'] },
+  { t: 'Final revision', w: 'Last 2 weeks', items: ['Revise from flashcards and notes only', 'Do one full paper per subject', 'Sleep well before every exam'] }
+ ],
+ daily: ['2 Pomodoro study blocks (25 + 5)', 'Self-test on today\'s topic', 'Review flashcards 15 minutes', 'Plan tomorrow\'s study'],
+ traits: [{ n: 'Focus', d: 'Deep work without the phone.' }, { n: 'Curiosity', d: 'Asking “why” until it makes sense.' }, { n: 'Discipline', d: 'Studying before you feel like it.' }],
+ identity: ['I am a focused learner.', 'I study smart and I study daily.', 'I understand, I don\'t just memorise.'],
+ tips: ['Close the book and write everything you remember. That is active recall.', 'Use the Pomodoro method: 25 minutes focus, 5 minutes break.', 'Study the hardest subject first, when your energy is highest.', 'Explain the topic to a friend or an empty chair (the Feynman technique).', 'Interleave: mix different problem types instead of doing 20 of the same.', 'Sleep consolidates memory. All-nighters cost you marks.'],
+ pitfalls: ['Rereading and highlighting as your main method', 'Studying with your phone next to you', 'Leaving revision until the last week'],
+ quotes: [['Education is the passport to the future.', 'Malcolm X'], ['An investment in knowledge pays the best interest.', 'Benjamin Franklin'], ['The beautiful thing about learning is that nobody can take it away from you.', 'B.B. King']],
+ resources: ['Anki (free flashcard app with spaced repetition)', 'Book: “Make It Stick” by Brown, Roediger & McDaniel', 'Khan Academy for free lessons on most subjects']
+},
+{
+ id: 'coding', name: 'Learn coding & tech', emoji: '💻', unit: 'projects',
+ kw: ['!coding','!programming','!developer','!software','!python','!javascript','!web development','!data science','!machine learning','code','dev','program','app','website','web','java','react','tech','it job','ai','computer','hacking','cyber','dsa','leetcode','android'],
+ insight: 'You learn to code by building things, not by watching tutorials. Spend a little time learning a concept, then most of your time using it in a small project. Getting stuck and debugging IS the learning. Employers look at what you have built.',
+ phases: [
+  { t: 'Foundations', w: 'Weeks 1–4', items: ['Pick ONE language (Python or JavaScript are good starts)', 'Learn variables, loops, functions, lists/arrays', 'Write 20 tiny programs (calculator, guessing game…)'] },
+  { t: 'First projects', w: 'Months 2–3', items: ['Build 3 small projects without following a tutorial', 'Learn Git and push your code to GitHub', 'Learn to read error messages and search them'] },
+  { t: 'Go deeper', w: 'Months 3–6', items: ['Pick a path: web, data, mobile, or AI', 'Build one bigger project that solves a real problem', 'Practise 2–3 problems a week on LeetCode/HackerRank'] },
+  { t: 'Show the world', w: 'Month 6+', items: ['Polish a portfolio with your 3 best projects', 'Write a clear README for each project', 'Apply for internships, freelance work, or contribute to open source'] }
+ ],
+ daily: ['Code for 60 minutes', 'Solve 1 coding problem', 'Commit something to GitHub', 'Write down one thing I learned'],
+ traits: [{ n: 'Problem solving', d: 'Breaking big problems into small ones.' }, { n: 'Patience', d: 'Debugging calmly.' }, { n: 'Curiosity', d: 'Wondering how things work.' }],
+ identity: ['I am a builder. I make things with code.', 'I don\'t fear errors; I read them.', 'I write code every day.'],
+ tips: ['Follow the 20/80 rule: 20% tutorial, 80% building.', 'When stuck for 30 minutes, ask for help with what you tried and the exact error.', 'Type code out instead of copy-pasting; your fingers learn too.', 'Read other people\'s code on GitHub.', 'Build things YOU want to use; motivation lasts longer.', 'Commit daily, even small changes; it builds a visible streak.'],
+ pitfalls: ['Tutorial hell: watching endlessly, building nothing', 'Switching languages every month', 'Comparing your day 30 to someone\'s year 5'],
+ quotes: [['First, solve the problem. Then, write the code.', 'John Johnson'], ['The expert in anything was once a beginner.', 'Helen Hayes'], ['Talk is cheap. Show me the code.', 'Linus Torvalds']],
+ resources: ['freeCodeCamp.org (free full curriculum)', 'CS50 by Harvard (free online)', 'The Odin Project for web development']
+},
+{
+ id: 'language', name: 'Learn a language', emoji: '🗣️', unit: 'words',
+ kw: ['!english','!fluent','!fluency','!ielts','!toefl','!spoken','!language','speak','hindi','german','french','japanese','korean','arabic','spanish','vocabulary','grammar','accent','communication','oet','pte'],
+ insight: 'Language is learned through lots of input you mostly understand (listening and reading) plus speaking practice from day one. Daily short sessions beat weekly long ones. Fluency means communicating comfortably, not speaking without mistakes.',
+ phases: [
+  { t: 'Daily habit', w: 'Weeks 1–2', items: ['Learn the 100 most common words', 'Set up a daily 20-minute practice', 'Change one app or your phone language'] },
+  { t: 'Input flood', w: 'Months 1–2', items: ['Watch shows with subtitles in the target language', 'Listen to podcasts during commutes', 'Read simple articles or children\'s books'] },
+  { t: 'Start speaking', w: 'Months 2–4', items: ['Talk to yourself about your day out loud', 'Record yourself and listen back', 'Have your first conversation with a partner or tutor'] },
+  { t: 'Real-world use', w: 'Month 4+', items: ['Speak for 10 minutes without switching languages', 'Take a mock test (IELTS/level test) if relevant', 'Think in the language for small daily things'] }
+ ],
+ daily: ['Learn 10 new words', '15 minutes of listening', 'Speak out loud for 5 minutes', 'Read one short article'],
+ traits: [{ n: 'Courage', d: 'Speaking before you feel ready.' }, { n: 'Consistency', d: 'A little every day.' }, { n: 'Openness', d: 'Laughing at your own mistakes.' }],
+ identity: ['I am a confident speaker.', 'Mistakes are proof that I am trying.', 'I use the language every day.'],
+ tips: ['Shadowing: play a sentence, then repeat it with the same rhythm.', 'Learn words in phrases, not alone ("make a decision", not "decision").', 'Write a 5-line diary in the language each night.', 'Find a language exchange partner online.', 'Narrate what you\'re doing while cooking or walking.'],
+ pitfalls: ['Waiting to speak until you are “ready”', 'Only studying grammar rules', 'Translating every word in your head'],
+ quotes: [['The limits of my language mean the limits of my world.', 'Ludwig Wittgenstein'], ['One language sets you in a corridor for life. Two languages open every door along the way.', 'Frank Smith'], ['Practice makes progress.', 'Unknown']],
+ resources: ['Duolingo / similar app for a daily habit', 'YouTube: podcasts and channels for learners in your target language', 'Free language exchange apps for speaking partners']
+},
+{
+ id: 'career', name: 'Career & job', emoji: '💼', unit: 'LPA',
+ kw: ['!job','!promotion','!interview','!career','!salary','!hike','!resume','!cv','hired','work','office','company','manager','switch','placement','appraisal','linkedin','role','position','abroad','gulf'],
+ insight: 'Most career growth comes from three things: skills that are in demand, proof that you have them (projects, results, certificates), and people who know your work. Applying blindly is the slowest route; referrals and a sharp, tailored resume move faster.',
+ phases: [
+  { t: 'Get clear', w: 'Week 1', items: ['Write the exact role and salary you want', 'Study 10 job posts for it and list the common skills', 'Find your top 3 skill gaps'] },
+  { t: 'Close the gaps', w: 'Weeks 2–8', items: ['Learn the #1 missing skill with a short course + project', 'Rewrite your resume with numbers and results', 'Update your LinkedIn headline and summary'] },
+  { t: 'Build your network', w: 'Months 2–3', items: ['Message 2 people in your target role each week', 'Ask for referrals at companies you like', 'Practise answering 20 common interview questions'] },
+  { t: 'Land it', w: 'Month 3+', items: ['Apply to 5 tailored roles a week', 'Do mock interviews and record yourself', 'Negotiate the offer; always ask once'] }
+ ],
+ daily: ['30 minutes of skill-building', 'Send 1 application or networking message', 'Practise 1 interview answer out loud', 'Note 1 achievement at work'],
+ traits: [{ n: 'Initiative', d: 'Asking before being asked.' }, { n: 'Communication', d: 'Explaining your value clearly.' }, { n: 'Resilience', d: 'Rejections are just data.' }],
+ identity: ['I am a professional who keeps growing.', 'I create value people notice.', 'I go after opportunities instead of waiting for them.'],
+ tips: ['Use the STAR method for interview answers: Situation, Task, Action, Result.', 'Every resume bullet should show a result, ideally with a number.', 'Tailor your resume to each job; match their keywords.', 'Keep a “brag document” of wins for appraisals.', 'Ask your manager: “What would make me promotable in 6 months?”', 'Research the salary range before you negotiate.'],
+ pitfalls: ['Sending the same generic resume everywhere', 'Waiting for your boss to notice your work', 'Letting rejection stop the search'],
+ quotes: [['Choose a job you love, and you will never have to work a day in your life.', 'Confucius'], ['Opportunities don\'t happen. You create them.', 'Chris Grosser'], ['The best way to predict the future is to create it.', 'Peter Drucker']],
+ resources: ['LinkedIn and Naukri for job search + networking', 'Book: “So Good They Can\'t Ignore You” by Cal Newport', 'Glassdoor / AmbitionBox for salary and interview info']
+},
+{
+ id: 'business', name: 'Business & side hustle', emoji: '🚀', unit: 'customers',
+ kw: ['!business','!startup','!entrepreneur','!side hustle','!freelance','!freelancing','!own shop','shop','sell','selling','customers','clients','brand','company','revenue','profit','product','service','online store','ecommerce','dropshipping','restaurant','cafe'],
+ insight: 'Most new businesses fail because nobody wants what they built, not because of the idea itself. Talk to customers first, sell before you build, and keep costs low until money is coming in. Your first goal is your first paying customer.',
+ phases: [
+  { t: 'Validate', w: 'Weeks 1–3', items: ['Write down the problem you solve and for whom', 'Talk to 10 potential customers about their problem', 'Check 3 competitors: price, reviews, gaps'] },
+  { t: 'First sale', w: 'Weeks 3–8', items: ['Create the simplest version (MVP) you can sell', 'Get your first paying customer', 'Ask for honest feedback'] },
+  { t: 'Repeatable', w: 'Months 2–6', items: ['Find one marketing channel that works', 'Track income and expenses every week', 'Get to 10 happy customers and ask for referrals'] },
+  { t: 'Grow', w: 'Month 6+', items: ['Document your process so others can help', 'Raise prices or add an upsell', 'Set a monthly revenue target'] }
+ ],
+ daily: ['Talk to 1 customer or prospect', 'Do 1 marketing action', 'Work 1 hour on the business', 'Log today\'s income/expenses'],
+ traits: [{ n: 'Boldness', d: 'Asking for the sale.' }, { n: 'Resourcefulness', d: 'Doing more with less.' }, { n: 'Resilience', d: 'Hearing “no” and continuing.' }],
+ identity: ['I am a builder of value.', 'I solve real problems for real people.', 'I take action before I feel ready.'],
+ tips: ['Sell first, build later; pre-orders prove demand.', 'Keep your day job until the business covers your basic needs.', 'Separate business and personal money from day one.', 'Your best marketing early on is happy customers telling friends.', 'Charge more than feels comfortable; underpricing kills small businesses.', 'Learn basic accounting and GST rules for your business.'],
+ pitfalls: ['Building for months without talking to customers', 'Spending on a fancy setup before revenue', 'Trying to sell to “everyone”'],
+ quotes: [['The way to get started is to quit talking and begin doing.', 'Walt Disney'], ['Your most unhappy customers are your greatest source of learning.', 'Bill Gates'], ['Done is better than perfect.', 'Sheryl Sandberg']],
+ resources: ['Book: “The Mom Test” by Rob Fitzpatrick (how to talk to customers)', 'Book: “The Lean Startup” by Eric Ries', 'Book: “\$100M Offers” by Alex Hormozi']
+},
+{
+ id: 'money', name: 'Money & savings', emoji: '💰', unit: '₹',
+ kw: ['!save money','!save','!saving','!savings','!debt','!invest','!investment','!financial','!emergency fund','!loan','money','rich','wealth','lakh','lakhs','crore','rupees','rs','₹','budget','emi','sip','mutual fund','stock','stocks','house','car','buy','afford','earn','income','free'],
+ insight: 'Wealth is built by spending less than you earn, automating the gap into savings and investments, and giving compounding time. First an emergency fund (3–6 months of expenses), then clear high-interest debt, then invest regularly. Income matters too: past a point, earning more beats cutting more.',
+ phases: [
+  { t: 'See your money', w: 'Weeks 1–2', items: ['Track every expense for 14 days', 'Calculate your monthly income vs spending', 'List all debts with interest rates'] },
+  { t: 'Build the buffer', w: 'Months 1–3', items: ['Make a simple budget (e.g. 50% needs, 30% wants, 20% savings)', 'Automate savings on salary day (“pay yourself first”)', 'Build a starter emergency fund of 1 month\'s expenses'] },
+  { t: 'Kill debt', w: 'Months 3–6', items: ['Pay off the highest-interest debt first (credit cards!)', 'Cancel unused subscriptions', 'Grow the emergency fund to 3–6 months'] },
+  { t: 'Invest & grow', w: 'Month 6+', items: ['Start a monthly SIP in a low-cost index fund', 'Get health and term insurance', 'Find one way to increase income'] }
+ ],
+ daily: ['Log every rupee spent', 'No impulse buys today', 'Read 10 minutes about personal finance', 'Check: did I stick to the budget?'],
+ traits: [{ n: 'Delayed gratification', d: 'Future you over present wants.' }, { n: 'Awareness', d: 'Knowing where every rupee goes.' }, { n: 'Patience', d: 'Letting compounding work.' }],
+ identity: ['I am in control of my money.', 'I pay my future self first.', 'I buy assets, not just things.'],
+ tips: ['Use the 24-hour rule: wait a day before any non-essential purchase.', 'Automate a transfer to savings the day your salary arrives.', 'Never invest money you will need within 3 years in stocks.', 'Avoid “guaranteed high return” schemes; if it sounds too good, it is.', 'Credit card interest (~36–42%/year) destroys wealth; pay in full.', 'Track net worth monthly, not daily stock prices.'],
+ pitfalls: ['Lifestyle inflation: spending every raise', 'Taking loans for things that lose value', 'Chasing tips and get-rich-quick schemes'],
+ quotes: [['Do not save what is left after spending, but spend what is left after saving.', 'Warren Buffett'], ['Beware of little expenses. A small leak will sink a great ship.', 'Benjamin Franklin'], ['Wealth consists not in having great possessions, but in having few wants.', 'Epictetus']],
+ resources: ['Book: “The Psychology of Money” by Morgan Housel', 'Book: “Rich Dad Poor Dad” by Robert Kiyosaki', 'Use the Expenses tracker in this app to log spending']
+},
+{
+ id: 'creator', name: 'Content creator', emoji: '🎬', unit: 'followers',
+ kw: ['!youtube','!youtuber','!instagram','!subscribers','!followers','!content creator','!reels','!channel','creator','content','viral','influencer','vlog','tiktok','podcast','views','edit','editing','shorts','blog'],
+ insight: 'Creator growth comes from volume plus improvement: post consistently, study what works, and get 1% better each video. Pick a clear niche and a target viewer. Your first 50–100 pieces are practice, and most successful creators had very small early numbers.',
+ phases: [
+  { t: 'Define your lane', w: 'Week 1', items: ['Choose your niche and your ideal viewer', 'Study 5 creators in your niche: what hooks do they use?', 'Write a list of 30 content ideas'] },
+  { t: 'Ship volume', w: 'Months 1–2', items: ['Publish on a fixed schedule (e.g. 3×/week)', 'Make your first 20 posts, imperfect is fine', 'Learn basic editing and thumbnails'] },
+  { t: 'Analyse & improve', w: 'Months 2–4', items: ['Check retention and click-through for every post', 'Double down on your top 3 formats', 'Reply to every comment'] },
+  { t: 'Scale', w: 'Month 4+', items: ['Collaborate with a creator your size', 'Build a content system (batch filming)', 'Explore your first income: sponsors, affiliates, products'] }
+ ],
+ daily: ['Write 3 content ideas', 'Work on the next post for 60 minutes', 'Study 1 viral post in my niche', 'Engage with 10 comments / creators'],
+ traits: [{ n: 'Creativity', d: 'Finding fresh angles.' }, { n: 'Consistency', d: 'Posting when numbers are low.' }, { n: 'Thick skin', d: 'Learning from criticism, ignoring hate.' }],
+ identity: ['I am a creator. I publish.', 'I make content that helps or entertains someone.', 'Every post makes me better.'],
+ tips: ['The first 3 seconds decide everything. Start with the hook, not an intro.', 'Batch: film 4–5 pieces in one session.', 'Make content for ONE specific person.', 'Copy formats, not content. Put your own twist on proven formats.', 'Good audio matters more than a good camera.', 'Use the Creator Forge in this app to plan posts.'],
+ pitfalls: ['Waiting for perfect gear before starting', 'Changing niche every week', 'Checking analytics every hour'],
+ quotes: [['Create the things you wish existed.', 'Unknown'], ['You can\'t use up creativity. The more you use, the more you have.', 'Maya Angelou'], ['Done is better than perfect.', 'Sheryl Sandberg']],
+ resources: ['YouTube Creator Academy / Instagram Creators help pages', 'Book: “Show Your Work!” by Austin Kleon', 'CapCut or DaVinci Resolve (free editors)']
+},
+{
+ id: 'quit', name: 'Break a bad habit', emoji: '⛓️', unit: 'days',
+ kw: ['!quit','!stop','!addiction','!smoking','!porn','!nofap','!alcohol','!drinking','!procrastination','!procrastinate','!screen time','!social media','!phone addiction','overthinking','vape','cigarette','gaming','reels addiction','lazy','laziness','junk','sugar','clean','sober','relapse','urges'],
+ insight: 'A habit is a loop: cue → craving → routine → reward. You cannot just delete it; you replace the routine and make the cue harder to meet. Urges peak and pass within about 15–20 minutes if you don\'t act on them. A slip isn\'t a reset to zero. Get back on track at the next decision.',
+ phases: [
+  { t: 'Understand', w: 'Week 1', items: ['Log every urge: time, place, feeling, trigger', 'Find your top 3 triggers (boredom, stress, loneliness, time of day)', 'Write your reasons for quitting on paper'] },
+  { t: 'Redesign', w: 'Weeks 2–3', items: ['Remove access: delete apps, throw it out, add friction', 'Choose a replacement action for each trigger', 'Tell one trusted person about your goal'] },
+  { t: 'Survive the urges', w: 'Weeks 3–8', items: ['Use the urge-surfing technique each time', 'Reach 30 days clean', 'Celebrate milestones (7, 14, 30 days)'] },
+  { t: 'New identity', w: 'Month 3+', items: ['Reach 90 days', 'Write what changed in your life', 'Help someone else start their journey'] }
+ ],
+ daily: ['Stay clean today', 'Note my urge level (1–10)', 'Do my replacement habit when triggered', 'Exercise or walk 20 minutes', 'Phone out of bedroom at night'],
+ traits: [{ n: 'Self-control', d: 'Pausing between urge and action.' }, { n: 'Self-awareness', d: 'Noticing your triggers.' }, { n: 'Self-compassion', d: 'Restarting without shame.' }],
+ identity: ['I am not someone who does that anymore.', 'I am stronger than my urges.', 'I choose my long-term self.'],
+ tips: ['Say “I don\'t” instead of “I can\'t”. It is an identity, not a rule.', 'Urge surfing: notice the urge, rate it, breathe, and watch it fade.', 'HALT check: am I Hungry, Angry, Lonely or Tired?', 'Make the habit hard: logouts, app blockers, leaving it at the shop.', 'Fill the empty time. Boredom is the most common trigger.', 'Use Iron Will in this app to track your streak.'],
+ pitfalls: ['“Just once” thinking', 'All-or-nothing: one slip = giving up', 'Not replacing the habit with anything'],
+ quotes: [['We must all suffer one of two things: the pain of discipline or the pain of regret.', 'Jim Rohn'], ['Fall seven times, stand up eight.', 'Japanese proverb'], ['Chains of habit are too light to be felt until they are too heavy to be broken.', 'Warren Buffett']],
+ resources: ['Book: “Atomic Habits” by James Clear (chapter on breaking habits)', 'Book: “The Power of Habit” by Charles Duhigg', 'App blockers: Digital Wellbeing / Screen Time limits']
+},
+{
+ id: 'routine', name: 'Routine & waking early', emoji: '🌅', unit: 'days',
+ kw: ['!wake up','!wake up early','!wake early','!morning routine','!routine','!sleep','!5 am','!5am','!6am','!early riser','morning','night','schedule','productive','productivity','time management','disciplined','discipline','bedtime','insomnia','oversleep'],
+ insight: 'Waking early starts the night before: you can\'t wake at 5 am rested if you sleep at 1 am. Shift your wake time by 15 minutes every few days, keep it the same on weekends, and get morning sunlight. A routine works when it is short and when the first step is tiny.',
+ phases: [
+  { t: 'Fix the night', w: 'Week 1', items: ['Set a fixed bedtime giving 7–8 hours of sleep', 'Screens off 30 minutes before bed', 'Charge your phone outside the bedroom'] },
+  { t: 'Shift gradually', w: 'Weeks 2–4', items: ['Move wake-up time 15 minutes earlier every 3 days', 'Get 10 minutes of sunlight within an hour of waking', 'Design a 3-step morning routine'] },
+  { t: 'Stabilise', w: 'Months 2–3', items: ['Keep the same wake time on weekends (±30 min)', 'Use your morning hour for your #1 priority', 'Track sleep quality weekly'] },
+  { t: 'Own your day', w: 'Month 3+', items: ['Plan each day the night before', 'Add a weekly review on Sundays', 'Help someone else build their routine'] }
+ ],
+ daily: ['Wake at my target time', 'Out of bed within 1 minute (no snooze)', 'Morning sunlight 10 minutes', 'Screens off 30 min before bed', 'Plan tomorrow tonight'],
+ traits: [{ n: 'Discipline', d: 'Up when the alarm rings.' }, { n: 'Intentionality', d: 'Living by plan, not by default.' }, { n: 'Self-respect', d: 'Keeping promises to yourself.' }],
+ identity: ['I am an early riser.', 'I own my mornings, so I own my day.', 'I keep the promises I make to myself.'],
+ tips: ['Put the alarm across the room so you must stand up.', 'Drink a glass of water as soon as you wake.', 'Do the hardest important task in your first hour.', 'Avoid caffeine after 2 pm.', 'Make the first step tiny: “sit up and put feet on the floor”.', 'Use the Task Alarm in this app for your routine.'],
+ pitfalls: ['Waking early but sleeping late (sleep debt)', 'Copying a 2-hour celebrity routine on day one', 'Sleeping in on weekends and resetting your body clock'],
+ quotes: [['Early to bed and early to rise makes a man healthy, wealthy, and wise.', 'Benjamin Franklin'], ['Win the morning, win the day.', 'Tim Ferriss'], ['How we spend our days is, of course, how we spend our lives.', 'Annie Dillard']],
+ resources: ['Book: “Why We Sleep” by Matthew Walker', 'Book: “The Miracle Morning” by Hal Elrod', 'Book: “Atomic Habits” by James Clear']
+},
+{
+ id: 'confidence', name: 'Confidence & personality', emoji: '🦁', unit: '',
+ kw: ['!confidence','!confident','!personality','!public speaking','!social skills','!shy','!shyness','!introvert','!charisma','!self esteem','!self-esteem','talk','speak','social','people','friends','attractive','presence','fear','nervous','stage','leader','leadership','respect','better person','improve myself','self improvement','grow'],
+ insight: 'Confidence is earned, not felt first. It comes from keeping promises to yourself and from repeated exposure to things that scare you a little. Each time you act despite nerves, your brain updates its belief about what you can handle. Start small and go often.',
+ phases: [
+  { t: 'Self-trust', w: 'Weeks 1–2', items: ['Keep 3 small daily promises to yourself', 'Write 3 things you did well each night', 'Fix posture: shoulders back, eye contact'] },
+  { t: 'Comfort challenges', w: 'Weeks 3–6', items: ['Start one conversation with a stranger daily', 'Give one genuine compliment a day', 'Speak up once in every meeting or class'] },
+  { t: 'Bigger stretches', w: 'Months 2–3', items: ['Give a short talk or presentation', 'Share an opinion that differs from the group', 'Ask for something you want (a discount, a favour, a chance)'] },
+  { t: 'Lead', w: 'Month 3+', items: ['Organise an event or lead a small project', 'Mentor or help someone', 'Look back and write how you have changed'] }
+ ],
+ daily: ['Do 1 thing that scares me a little', 'Talk to someone new', 'Keep my word to myself', 'Write 3 wins tonight', 'Good posture check'],
+ traits: [{ n: 'Courage', d: 'Acting while nervous.' }, { n: 'Self-respect', d: 'Your word to yourself counts.' }, { n: 'Warmth', d: 'Making others feel seen.' }],
+ identity: ['I am someone who walks into rooms calmly.', 'I can handle discomfort.', 'I treat myself and others with respect.'],
+ tips: ['Confidence follows action, not the other way round. Act first.', 'Focus on the other person: ask questions and listen. Nerves drop when attention leaves yourself.', 'Speak 10% slower than feels natural.', 'Prepare 3 open questions before social events.', 'Exercise regularly; it changes how you feel in your body.', 'Dress a bit better than needed; it shifts how you carry yourself.'],
+ pitfalls: ['Waiting to feel confident before acting', 'Comparing your inside to others\' outside', 'Replaying awkward moments; nobody remembers them like you do'],
+ quotes: [['You gain strength, courage and confidence by every experience in which you really stop to look fear in the face.', 'Eleanor Roosevelt'], ['No one can make you feel inferior without your consent.', 'Eleanor Roosevelt'], ['With confidence, you have won before you have started.', 'Marcus Garvey']],
+ resources: ['Book: “How to Win Friends and Influence People” by Dale Carnegie', 'Book: “The Charisma Myth” by Olivia Fox Cabane', 'Toastmasters clubs for public speaking practice']
+},
+{
+ id: 'mind', name: 'Mental peace & wellbeing', emoji: '🧘', unit: '',
+ kw: ['!stress','!anxiety','!peace','!calm','!meditation','!meditate','!mental health','!happiness','!happy','!depression','!overthinking','mind','relax','peaceful','mindful','mindfulness','gratitude','emotions','anger','sad','lonely','burnout','balance','spiritual'],
+ insight: 'Mental wellbeing is built from basics done daily: sleep, movement, sunlight, real connection, and a few minutes of stillness. Thoughts are not facts. You can notice them without obeying them. If low mood or anxiety lasts weeks or affects daily life, talking to a professional is a strong move, not a weak one.',
+ phases: [
+  { t: 'Stabilise basics', w: 'Weeks 1–2', items: ['Sleep and wake at consistent times', 'Walk outside 20 minutes a day', 'Try 5 minutes of breathing or meditation daily'] },
+  { t: 'Understand your mind', w: 'Weeks 3–6', items: ['Journal: what triggered stress today?', 'Name the emotion when it shows up', 'Reduce news and doom-scrolling'] },
+  { t: 'Build supports', w: 'Months 2–3', items: ['Schedule weekly time with a friend or family member', 'Find a hobby that absorbs you (flow)', 'Talk to a counsellor if you need to; it\'s a strength'] },
+  { t: 'Steady state', w: 'Month 3+', items: ['Meditate 10–15 minutes daily', 'Have a go-to toolkit for hard days', 'Help or volunteer for someone else'] }
+ ],
+ daily: ['5–10 minutes of meditation or breathing', 'Walk outside 20 minutes', 'Write 3 things I\'m grateful for', 'Connect with one person', 'No phone first 30 minutes of the day'],
+ traits: [{ n: 'Calm', d: 'Responding, not reacting.' }, { n: 'Gratitude', d: 'Seeing what\'s already good.' }, { n: 'Self-compassion', d: 'Talking to yourself like a friend.' }],
+ identity: ['I am calm at my centre.', 'I treat my mind with care.', 'I let thoughts pass like clouds.'],
+ tips: ['Box breathing: in 4, hold 4, out 4, hold 4. Repeat 4 times.', 'Write worries down and set a fixed 15-minute “worry time”.', 'Movement is one of the strongest natural mood lifters.', 'Limit caffeine if you feel anxious.', 'Ask: will this matter in 5 years?', 'Use Clear Mind in this app for guided calm.', 'If you ever feel unsafe, contact a helpline (in India: Tele-MANAS 14416).'],
+ pitfalls: ['Isolating yourself when low', 'Trying to think your way out of overthinking', 'Ignoring sleep and exercise'],
+ quotes: [['You have power over your mind, not outside events. Realise this, and you will find strength.', 'Marcus Aurelius'], ['Peace comes from within. Do not seek it without.', 'Buddha (attributed)'], ['Almost everything will work again if you unplug it for a few minutes, including you.', 'Anne Lamott']],
+ resources: ['App: Insight Timer or Headspace for guided meditation', 'Book: “The Untethered Soul” by Michael A. Singer', 'Tele-MANAS (14416), India\'s free mental health helpline']
+},
+{
+ id: 'reading', name: 'Reading & knowledge', emoji: '📖', unit: 'books',
+ kw: ['!read','!reading','!books','!book','knowledge','novel','learn','learning','wisdom','smart','smarter','intelligent','general knowledge','pages'],
+ insight: 'Reading grows from a small daily habit, about 20 pages a day adds up to 20–30 books a year. Read what you enjoy, quit boring books without guilt, and retain more by writing short notes or telling someone what you learned.',
+ phases: [
+  { t: 'Start the habit', w: 'Weeks 1–2', items: ['Pick a book you are genuinely excited about', 'Read 10 pages daily at a fixed time', 'Keep the book where your phone usually is'] },
+  { t: 'Build momentum', w: 'Months 1–2', items: ['Increase to 20 pages a day', 'Finish your first book', 'Write a 5-line summary after each book'] },
+  { t: 'Read wider', w: 'Months 2–4', items: ['Alternate fiction and non-fiction', 'Try audiobooks for commutes', 'Join or start a reading circle'] },
+  { t: 'Apply it', w: 'Month 4+', items: ['Use one idea from each book in your life', 'Keep a list of your top 10 lessons', 'Recommend a book to a friend'] }
+ ],
+ daily: ['Read 20 pages', 'Note 1 idea worth remembering', 'No phone for the first 15 min of reading'],
+ traits: [{ n: 'Curiosity', d: 'Hungry to understand.' }, { n: 'Focus', d: 'Long attention in a short-attention world.' }, { n: 'Reflection', d: 'Turning words into wisdom.' }],
+ identity: ['I am a reader.', 'I learn something new every day.', 'I feed my mind before I feed my feed.'],
+ tips: ['Use dead time: carry a book or have an audiobook ready.', 'The 50-page rule: if it\'s not working by page 50, move on.', 'Read physical books before bed instead of scrolling.', 'Highlight less, summarise more.', 'Discuss books with friends; it doubles what you remember.'],
+ pitfalls: ['Forcing yourself through books you hate', 'Buying books instead of reading them', 'Reading without ever applying ideas'],
+ quotes: [['A reader lives a thousand lives before he dies. The man who never reads lives only one.', 'George R.R. Martin'], ['Today a reader, tomorrow a leader.', 'Margaret Fuller'], ['The more that you read, the more things you will know.', 'Dr. Seuss']],
+ resources: ['Your local library or Kindle / Google Play Books', 'Goodreads to track and find books', 'Start with: “Atomic Habits”, “The Alchemist”, “Wings of Fire”']
+},
+{
+ id: 'creative', name: 'Creative skill', emoji: '🎨', unit: 'pieces',
+ kw: ['!guitar','!piano','!singing','!sing','!drawing','!draw','!painting','!paint','!dance','!dancing','!photography','!music','!write a book','!writing','!poetry','art','artist','instrument','song','songs','compose','sketch','design','film','acting','cooking','cook'],
+ insight: 'Creative skills grow through deliberate practice (focused work on what you can\'t do yet) and through making lots of work. Your taste will be ahead of your skill for a while, and that gap is normal. Quantity leads to quality.',
+ phases: [
+  { t: 'Fundamentals', w: 'Weeks 1–4', items: ['Find one beginner course or teacher', 'Practise basics 20–30 minutes daily', 'Record or keep your very first attempt'] },
+  { t: 'First pieces', w: 'Months 1–3', items: ['Complete 10 small finished pieces', 'Learn one piece/technique you love', 'Get feedback from someone better than you'] },
+  { t: 'Deliberate practice', w: 'Months 3–6', items: ['Identify your weakest area and drill it', 'Copy/study the masters you admire', 'Share your work publicly once'] },
+  { t: 'Your voice', w: 'Month 6+', items: ['Create an original piece', 'Perform, exhibit or publish', 'Compare with your first attempt and celebrate'] }
+ ],
+ daily: ['Practise 30 minutes', 'Drill one weak spot for 10 minutes', 'Make or finish something small', 'Study one piece by someone I admire'],
+ traits: [{ n: 'Creativity', d: 'Making something from nothing.' }, { n: 'Patience', d: 'Loving the slow progress.' }, { n: 'Courage', d: 'Sharing unfinished work.' }],
+ identity: ['I am an artist. I create.', 'I practise because I love getting better.', 'I share my work without waiting for perfect.'],
+ tips: ['Practise slowly. Speed comes from accuracy.', 'Short daily practice beats long weekly sessions.', 'Record yourself; you\'ll hear and see what you miss live.', 'Keep a “done” folder to see your progress.', 'Learn songs/pieces you love; it keeps you going.'],
+ pitfalls: ['Only practising what you\'re already good at', 'Comparing with professionals in month one', 'Buying gear instead of practising'],
+ quotes: [['Creativity is intelligence having fun.', 'Albert Einstein (attributed)'], ['Every artist was first an amateur.', 'Ralph Waldo Emerson'], ['Inspiration exists, but it has to find you working.', 'Pablo Picasso']],
+ resources: ['YouTube beginner series in your chosen craft', 'Book: “Art & Fear” by David Bayles & Ted Orland', 'Book: “The War of Art” by Steven Pressfield']
+},
+{
+ id: 'relationship', name: 'Relationships & family', emoji: '❤️', unit: '',
+ kw: ['!relationship','!marriage','!married','!wife','!husband','!girlfriend','!boyfriend','!partner','!family','!parents','love','friend','friendship','wedding','kids','children','mother','father','connection','trust','fight','argument'],
+ insight: 'Strong relationships are built from small, repeated moments of attention, kindness and honesty, not grand gestures. Listening to understand (not to reply), appreciating out loud, and repairing quickly after conflict matter most.',
+ phases: [
+  { t: 'Show up', w: 'Weeks 1–2', items: ['Give undivided attention (no phone) for 15 minutes daily', 'Express one specific appreciation each day', 'Ask a deeper question than “how was your day?”'] },
+  { t: 'Understand', w: 'Weeks 3–6', items: ['Learn what makes them feel loved (words, time, help, gifts, touch)', 'Practise reflective listening: repeat back what you heard', 'Plan one quality time activity a week'] },
+  { t: 'Handle conflict', w: 'Months 2–3', items: ['Use “I feel… when… because…” instead of blame', 'Take a 20-minute break when things get heated, then return', 'Apologise specifically when you\'re wrong'] },
+  { t: 'Grow together', w: 'Month 3+', items: ['Set a shared goal or plan together', 'Create a regular ritual (walk, meal, call)', 'Celebrate how far you\'ve come'] }
+ ],
+ daily: ['15 minutes of full attention, no phone', 'Say one specific appreciation', 'Do one kind act unasked', 'Listen more than I talk'],
+ traits: [{ n: 'Empathy', d: 'Feeling with, not just for.' }, { n: 'Patience', d: 'Pausing before reacting.' }, { n: 'Honesty', d: 'Kind truth, gently said.' }],
+ identity: ['I am a loving and dependable person.', 'People feel safe and heard around me.', 'I give my best, not my leftovers.'],
+ tips: ['Notice the good and say it out loud. Appreciation is fuel.', 'Ask: “Do you want advice or do you want me to listen?”', 'Never fight over text; talk in person.', 'Remember the small details they share.', 'Make repair attempts quickly: a touch, a joke, “I\'m sorry”.'],
+ pitfalls: ['Being physically present but on the phone', 'Keeping score', 'Letting resentment build instead of talking early'],
+ quotes: [['The best thing to hold onto in life is each other.', 'Audrey Hepburn'], ['Love is patient, love is kind.', '1 Corinthians 13:4'], ['Most people do not listen with the intent to understand; they listen with the intent to reply.', 'Stephen R. Covey']],
+ resources: ['Book: “The 5 Love Languages” by Gary Chapman', 'Book: “The Seven Principles for Making Marriage Work” by John Gottman', 'Book: “Nonviolent Communication” by Marshall Rosenberg']
+}
+];
+
+/* Fallback for aims that don't match anything: a universal goal framework. */
+const GENERAL = {
+ id: 'general', name: 'Personal aim', emoji: '⭐', unit: '',
+ kw: [],
+ insight: 'Every big aim follows the same pattern: get crystal clear on what “done” looks like, break it into milestones, turn the next milestone into small daily actions, and review weekly. Progress you can see is the best fuel for motivation.',
+ phases: [
+  { t: 'Clarify', w: 'Week 1', items: ['Write exactly what success looks like (measurable)', 'Write why it matters to you', 'Research how others achieved something similar'] },
+  { t: 'Plan', w: 'Week 2', items: ['Break the aim into 3–5 milestones', 'Identify the skills or resources you need', 'Schedule a fixed daily time for your aim'] },
+  { t: 'Execute', w: 'Months 1–3', items: ['Complete milestone 1', 'Do a weekly review: what worked, what didn\'t', 'Find a mentor or accountability partner'] },
+  { t: 'Finish strong', w: 'Month 3+', items: ['Complete the remaining milestones', 'Remove whatever is slowing you down', 'Celebrate, then set your next aim'] }
+ ],
+ daily: ['Work on my aim for 45 focused minutes', 'Do the next small step', 'Review progress for 5 minutes', 'Plan tomorrow\'s step'],
+ traits: [{ n: 'Clarity', d: 'Knowing exactly what you want.' }, { n: 'Consistency', d: 'Daily action, however small.' }, { n: 'Resilience', d: 'Adjusting, not quitting.' }],
+ identity: ['I am someone who finishes what I start.', 'I take one step forward every day.', 'I am becoming the person who achieves this.'],
+ tips: ['Make it SMART: Specific, Measurable, Achievable, Relevant, Time-bound.', 'Ask: what\'s the ONE thing I can do today that makes everything else easier?', 'Tell someone your goal and your deadline.', 'Track progress visibly; seeing it keeps you going.', 'Plan for obstacles: “If X happens, then I will do Y.”', 'Do the hardest task first, when energy is highest.'],
+ pitfalls: ['Vague goals with no deadline', 'Waiting for motivation instead of building a routine', 'Trying to change everything at once'],
+ quotes: [['A goal without a plan is just a wish.', 'Antoine de Saint-Exupéry (attributed)'], ['The secret of getting ahead is getting started.', 'Mark Twain (attributed)'], ['Arise, awake, and stop not till the goal is reached.', 'Swami Vivekananda']],
+ resources: ['Book: “Atomic Habits” by James Clear', 'Book: “The ONE Thing” by Gary Keller', 'Book: “Deep Work” by Cal Newport']
+};
+
+/* Reflection prompts for the Shape tab (rotates daily). */
+const REFLECT = [
+ 'What did I do today that the future me will thank me for?',
+ 'Where did I hold back today, and why?',
+ 'What is one thing I\'d do differently if I relived today?',
+ 'Which trait did I show best today?',
+ 'What drained my energy today, and can I remove it?',
+ 'What small win am I proud of today?',
+ 'What would the person I\'m becoming have done today?',
+ 'What excuse did I use today? Was it true?',
+ 'Who helped me today, and did I thank them?',
+ 'What is the one most important step for tomorrow?'
+];
+
+const EXAMPLES = ['Lose 8 kg in 4 months', 'Crack Kerala PSC LDC this year', 'Save 1 lakh by December', 'Get 10k YouTube subscribers', 'Quit porn and social media addiction', 'Wake up at 5 am daily', 'Become confident in public speaking', 'Learn Python and get a dev job'];
+
+/* ============================================================
+   RECOGNITION
+   ============================================================ */
+function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function scoreText(text) {
+    const t = ' ' + text.toLowerCase().replace(/[^\p{L}\p{N}₹%\s-]/gu, ' ') + ' ';
+    return KB.map(c => {
+        let s = 0; const hits = [];
+        for (const raw of c.kw) {
+            const strong = raw[0] === '!';
+            const k = strong ? raw.slice(1) : raw;
+            const re = /^[\p{L}\p{N}]/u.test(k) ? new RegExp('(^|[^\\p{L}])' + escRe(k) + '(s|es|ing|ed)?(?=[^\\p{L}\\p{N}]|$)', 'u') : new RegExp(escRe(k));
+            if (re.test(t)) { s += strong ? 3 : 1; hits.push(k); }
+        }
+        return { c, s, hits };
+    }).filter(x => x.s > 0).sort((a, b) => b.s - a.s);
+}
+function recognise(text) {
+    const r = scoreText(text);
+    return r.length ? r : [];
+}
+function catById(id) { return KB.find(c => c.id === id) || GENERAL; }
+
+const WORDNUM = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12 };
+const MONTHS = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+
+/* Pull a deadline out of free text: "in 3 months", "by december", "this year", "by 2027". */
+function parseDeadline(text) {
+    const t = text.toLowerCase();
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    let m = t.match(/(?:in|within|next|for)\s+(\d+|a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s*(day|week|month|year|yr)s?/);
+    if (m) {
+        const n = isNaN(+m[1]) ? WORDNUM[m[1]] : +m[1];
+        const d = new Date(now);
+        if (m[2] === 'day') d.setDate(d.getDate() + n);
+        else if (m[2] === 'week') d.setDate(d.getDate() + n * 7);
+        else if (m[2] === 'month') d.setMonth(d.getMonth() + n);
+        else d.setFullYear(d.getFullYear() + n);
+        return d;
+    }
+    m = t.match(/(\d+)\s*(day|week|month)s?\s+challenge/);
+    if (m) { const d = new Date(now); const n = +m[1]; if (m[2] === 'day') d.setDate(d.getDate() + n); else if (m[2] === 'week') d.setDate(d.getDate() + n * 7); else d.setMonth(d.getMonth() + n); return d; }
+    m = t.match(/(?:by|before|until|till|in)\s+(?:the\s+end\s+of\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*(\d{4})?/);
+    if (m) {
+        const mi = MONTHS.indexOf(m[1]);
+        let y = m[2] ? +m[2] : now.getFullYear();
+        let d = new Date(y, mi + 1, 0);
+        if (!m[2] && d < now) d = new Date(y + 1, mi + 1, 0);
+        return d;
+    }
+    if (/this year|end of (the )?year|year end/.test(t)) return new Date(now.getFullYear(), 11, 31);
+    if (/next year/.test(t)) return new Date(now.getFullYear() + 1, 11, 31);
+    m = t.match(/(?:by|before|in)\s+(20\d\d)/);
+    if (m) return new Date(+m[1], 11, 31);
+    return null;
+}
+
+/* Pull a numeric target: "8 kg", "1 lakh", "10k subscribers", "20 books". */
+function parseTarget(text) {
+    const t = text.toLowerCase().replace(/,/g, '');
+    let m = t.match(/(?:₹|rs\.?|inr)\s*(\d+(?:\.\d+)?)\s*(k|lakh|lakhs|lac|crore|crores|cr)?/);
+    if (m) return { n: +m[1] * mult(m[2]), unit: '₹' };
+    m = t.match(/(\d+(?:\.\d+)?)\s*(k|m)?\s*(?:(?:youtube|yt|instagram|insta|new|more)\s+)?(kg|kgs|kilos?|km|kms|lakhs?|lacs?|crores?|cr|rupees|subscribers|subs|followers|books|pages|words|marks|percent|%|lpa|clients|customers|projects)\b/);
+    if (!m) m = t.match(/(\d+(?:\.\d+)?)\s*(k|m)?\s*(%)/);
+    if (!m) return null;
+    let n = +m[1] * (m[2] === 'k' ? 1000 : m[2] === 'm' ? 1e6 : 1);
+    let u = m[3];
+    if (/^(lakhs?|lacs?)$/.test(u)) return { n: n * 1e5, unit: '₹' };
+    if (/^(crores?|cr)$/.test(u)) return { n: n * 1e7, unit: '₹' };
+    if (u === 'rupees') return { n, unit: '₹' };
+    if (/^(kgs?|kilos?)$/.test(u)) u = 'kg';
+    if (u === 'kms') u = 'km';
+    if (u === 'subs') u = 'subscribers';
+    if (u === 'percent') u = '%';
+    return { n, unit: u };
+}
+function mult(s) { if (!s) return 1; if (s === 'k') return 1000; if (/lakh|lac/.test(s)) return 1e5; if (/cr/.test(s)) return 1e7; return 1; }
+function fmtNum(n, unit) {
+    if (unit === '₹') {
+        if (n >= 1e7) return '₹' + +(n / 1e7).toFixed(2) + ' crore';
+        if (n >= 1e5) return '₹' + +(n / 1e5).toFixed(2) + ' lakh';
+        return '₹' + Math.round(n).toLocaleString('en-IN');
+    }
+    const v = n >= 100 ? Math.round(n).toLocaleString('en-IN') : +n.toFixed(2);
+    return v + (unit === '%' ? '%' : ' ' + unit);
+}
+
+/* Realism check: target per week vs. sensible pace for the aim type. */
+function paceInfo(catId, target, deadline, text) {
+    if (!target || !deadline) return null;
+    const days = Math.max(1, Math.round((deadline - today0()) / 864e5));
+    const weeks = days / 7;
+    const per = target.n / weeks;
+    const perMonth = target.n / (days / 30.4);
+    let msg, warn = false;
+    const lower = (text || '').toLowerCase();
+    if (target.unit === 'kg' && catId === 'fatloss') {
+        msg = `≈ ${per.toFixed(2)} kg/week`;
+        if (per > 1) { warn = true; msg += ', which is aggressive. 0.5–1 kg/week is sustainable; consider extending the deadline.'; }
+        else msg += ', a healthy, realistic pace.';
+    } else if (target.unit === 'kg' && (catId === 'muscle' || /gain/.test(lower))) {
+        msg = `≈ ${per.toFixed(2)} kg/week`;
+        if (per > 0.5) { warn = true; msg += '. Faster than ~0.25–0.5 kg/week is mostly fat, so consider a longer timeline.'; }
+        else msg += ', a lean, realistic gain.';
+    } else if (target.unit === '₹') {
+        msg = `Save ≈ ${fmtNum(perMonth, '₹')} per month (${fmtNum(target.n / days, '₹')} a day).`;
+    } else if (['subscribers', 'followers'].includes(target.unit)) {
+        msg = `≈ ${fmtNum(per, target.unit)} a week. Growth is slow early and speeds up later, so aim for consistency first.`;
+    } else if (target.unit === 'books') {
+        msg = `≈ one book every ${Math.max(1, Math.round(days / target.n))} days.`;
+    } else if (target.unit === 'km') {
+        msg = `${days} days to build up to ${fmtNum(target.n, 'km')}. Raise weekly distance by no more than ~10% a week.`;
+    } else {
+        msg = `≈ ${fmtNum(per, target.unit)} per week.`;
+    }
+    return { msg, warn, days };
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const KEY = 'northstar.v1';
+let state = { aims: [], current: null };
+try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && Array.isArray(s.aims)) state = s; } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+function today0() { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }
+function dkey(d) { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function uid() { return Math.random().toString(36).slice(2, 9); }
+function hashStr(s) { let h = 0; for (const ch of s) h = (h * 31 + ch.charCodeAt(0)) | 0; return Math.abs(h); }
+function dayIndex() { return Math.floor(today0().getTime() / 864e5); }
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+function cap(s) { s = s.trim(); return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function createAim(text, why, catId) {
+    const c = catById(catId);
+    const dl = parseDeadline(text);
+    const target = parseTarget(text);
+    const aim = {
+        id: uid(), text: cap(text), why: why.trim(), cat: c.id,
+        created: dkey(), deadline: dl ? dkey(dl) : null, target,
+        tasks: c.daily.map(t => ({ id: uid(), text: t, daily: true })),
+        phases: c.phases.map(p => ({ t: p.t, w: p.w, items: p.items.map(i => ({ id: uid(), text: i, done: false })) })),
+        traits: c.traits.map(t => ({ n: t.n, d: t.d, xp: 0, last: null })),
+        log: {}, ownIdentity: '', tipShift: 0
+    };
+    // If there's a deadline, add it as a final milestone
+    if (dl) aim.phases[aim.phases.length - 1].items.push({ id: uid(), text: 'Reach the aim: ' + aim.text, done: false });
+    state.aims.unshift(aim);
+    state.current = aim.id;
+    save();
+    return aim;
+}
+function curAim() { return state.aims.find(a => a.id === state.current); }
+function dayLog(aim, k) { k = k || dkey(); if (!aim.log[k]) aim.log[k] = { done: [], reflection: '' }; return aim.log[k]; }
+
+/* Tasks shown today: all daily tasks + one-off tasks not yet done (carried forward). */
+function todaysTasks(aim) {
+    const log = dayLog(aim);
+    return aim.tasks.filter(t => t.daily || !t.doneOn || t.doneOn === dkey()).map(t => ({
+        ...t, isDone: t.daily ? log.done.includes(t.id) : !!t.doneOn
+    }));
+}
+function dayStatus(aim, k) {
+    const log = aim.log[k];
+    const daily = aim.tasks.filter(t => t.daily);
+    if (!log || !daily.length) return 0;
+    const n = daily.filter(t => log.done.includes(t.id)).length;
+    if (n === 0) return 0;
+    return n >= daily.length ? 2 : 1;
+}
+function streak(aim) {
+    let s = 0; const d = today0();
+    if (dayStatus(aim, dkey(d)) < 2) d.setDate(d.getDate() - 1); // today not finished yet doesn't break streak
+    while (dayStatus(aim, dkey(d)) === 2) { s++; d.setDate(d.getDate() - 1); }
+    return s;
+}
+function roadProgress(aim) {
+    const all = aim.phases.flatMap(p => p.items);
+    return all.length ? Math.round(all.filter(i => i.done).length / all.length * 100) : 0;
+}
+
+/* ============================================================
+   UI: HOME
+   ============================================================ */
+const $ = id => document.getElementById(id);
+let pickedCat = null;   // user override of detected category
+
+function renderExamples() {
+    $('examples').innerHTML = EXAMPLES.map(e => `<button class="chip" data-ex="${esc(e)}">${esc(e)}</button>`).join('');
+}
+$('examples').addEventListener('click', e => {
+    const b = e.target.closest('[data-ex]'); if (!b) return;
+    $('aimInput').value = b.dataset.ex; pickedCat = null; updateDetect(); $('aimInput').focus();
+});
+
+function updateDetect() {
+    const text = $('aimInput').value.trim();
+    const el = $('detect');
+    if (text.length < 3) { el.innerHTML = "Start typing and I'll recognise your aim…"; $('catPicker').classList.add('hidden'); return; }
+    const r = recognise(text);
+    const chosen = pickedCat ? catById(pickedCat) : (r[0] ? r[0].c : GENERAL);
+    const also = r.filter(x => x.c.id !== chosen.id).slice(0, 2).map(x => x.c.name);
+    const dl = parseDeadline(text);
+    const tg = parseTarget(text);
+    const tags = [];
+    if (tg) tags.push(`<span class="tag">🎯 ${esc(fmtNum(tg.n, tg.unit))}</span>`);
+    if (dl) {
+        const days = Math.round((dl - today0()) / 864e5);
+        tags.push(`<span class="tag">📅 ${dl.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })} · ${days} days</span>`);
+    } else tags.push(`<span class="tag warn">No deadline yet. Add “in 3 months” or “by June”</span>`);
+    const p = paceInfo(chosen.id, tg, dl, text);
+    if (p) tags.push(`<span class="tag ${p.warn ? 'warn' : 'ok'}">${esc(p.msg)}</span>`);
+    el.innerHTML = `${chosen.emoji} I see a <span class="cat">${esc(chosen.name)}</span> aim${pickedCat ? ' (your pick)' : (r[0] ? '' : ". I'll use a universal plan")}.` +
+        (also.length && !pickedCat ? ` <span class="muted">Also touches: ${esc(also.join(', '))}</span>` : '') +
+        `<div class="tags">${tags.join('')}</div>`;
+    $('catPicker').classList.remove('hidden');
+    $('catChips').innerHTML = [...KB, GENERAL].map(c => `<button class="chip ${c.id === chosen.id ? 'on' : ''}" data-cat="${c.id}">${c.emoji} ${esc(c.name)}</button>`).join('');
+}
+$('aimInput').addEventListener('input', () => { pickedCat = null; updateDetect(); });
+$('catChips').addEventListener('click', e => {
+    const b = e.target.closest('[data-cat]'); if (!b) return;
+    pickedCat = b.dataset.cat; updateDetect();
+});
+$('createBtn').addEventListener('click', () => {
+    const text = $('aimInput').value.trim();
+    if (text.length < 3) { $('aimInput').focus(); toast('Type your aim first ✍️'); return; }
+    const r = recognise(text);
+    const cat = pickedCat || (r[0] ? r[0].c.id : 'general');
+    createAim(text, $('whyInput').value, cat);
+    $('aimInput').value = ''; $('whyInput').value = ''; pickedCat = null; updateDetect();
+    openAim(state.current, 'today');
+    toast('Plan built. Your first step is ready ✦');
+});
+
+function renderAimList() {
+    const box = $('aimList');
+    if (!state.aims.length) { box.innerHTML = ''; return; }
+    box.innerHTML = `<span class="label" style="margin-top:20px">My aims</span>` + state.aims.map(a => {
+        const c = catById(a.cat);
+        const daily = a.tasks.filter(t => t.daily);
+        const log = a.log[dkey()];
+        const doneToday = log ? daily.filter(t => log.done.includes(t.id)).length : 0;
+        const dl = a.deadline ? Math.round((new Date(a.deadline + 'T00:00') - today0()) / 864e5) : null;
+        return `<div class="card aimItem" data-open="${a.id}">
+            <div class="aimEmoji">${c.emoji}</div>
+            <div class="aimMeta">
+                <h3>${esc(a.text)}</h3>
+                <small>${esc(c.name)} · 🔥 ${streak(a)} · today ${doneToday}/${daily.length}${dl !== null ? ' · ' + (dl >= 0 ? dl + ' days left' : 'deadline passed') : ''}</small>
+                <div class="bar"><i style="width:${roadProgress(a)}%"></i></div>
+            </div>
+        </div>`;
+    }).join('');
+}
+$('aimList').addEventListener('click', e => { const c = e.target.closest('[data-open]'); if (c) openAim(c.dataset.open, 'today'); });
+
+/* ============================================================
+   UI: AIM VIEW
+   ============================================================ */
+let currentTab = 'today';
+function openAim(id, tab) {
+    state.current = id; save();
+    $('home').classList.add('hidden'); $('aimView').classList.remove('hidden');
+    $('backLink').textContent = '← My aims'; $('backLink').setAttribute('href', '#');
+    showTab(tab || currentTab);
+    renderAim();
+    window.scrollTo(0, 0);
+}
+function goHome() {
+    state.current = null; save();
+    $('aimView').classList.add('hidden'); $('home').classList.remove('hidden');
+    $('backLink').textContent = '← Life Game'; $('backLink').setAttribute('href', '../index.html');
+    renderAimList(); window.scrollTo(0, 0);
+}
+$('backLink').addEventListener('click', e => { if (state.current) { e.preventDefault(); goHome(); } });
+
+function showTab(t) {
+    currentTab = t;
+    document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+    ['today', 'road', 'shape', 'fuel'].forEach(x => $('tab-' + x).classList.toggle('hidden', x !== t));
+}
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { showTab(b.dataset.tab); renderAim(); }));
+
+function renderAim() {
+    const a = curAim(); if (!a) return goHome();
+    const c = catById(a.cat);
+    $('vCat').textContent = c.emoji + ' ' + c.name;
+    $('vTitle').textContent = a.text;
+    $('vStreak').textContent = streak(a);
+    $('vRoad').textContent = roadProgress(a) + '%';
+    if (a.deadline) {
+        const d = Math.round((new Date(a.deadline + 'T00:00') - today0()) / 864e5);
+        $('vDays').textContent = d >= 0 ? d : '!';
+        $('vDaysLbl').textContent = d >= 0 ? 'Days left' : 'Overdue';
+    } else { $('vDays').textContent = '∞'; $('vDaysLbl').textContent = 'No deadline'; }
+    const tags = [];
+    if (a.target) tags.push(`<span class="tag">🎯 ${esc(fmtNum(a.target.n, a.target.unit))}</span>`);
+    const p = paceInfo(a.cat, a.target, a.deadline ? new Date(a.deadline + 'T00:00') : null, a.text);
+    if (p) tags.push(`<span class="tag ${p.warn ? 'warn' : 'ok'}">${esc(p.msg)}</span>`);
+    $('vTags').innerHTML = tags.join('');
+    $('vWhy').textContent = a.why ? 'Why: ' + a.why : '';
+
+    if (currentTab === 'today') renderToday(a);
+    if (currentTab === 'road') renderRoad(a, c);
+    if (currentTab === 'shape') renderShape(a, c);
+    if (currentTab === 'fuel') renderFuel(a, c);
+}
+
+/* ---- Today ---- */
+function renderToday(a) {
+    const next = a.phases.flatMap(p => p.items.map(i => ({ ...i, phase: p.t }))).find(i => !i.done);
+    $('nextAction').innerHTML = next
+        ? `<b>${esc(next.text)}</b><br><span class="muted">Roadmap · ${esc(next.phase)}</span> <button class="btn" style="padding:4px 10px;font-size:12px;margin-left:6px" data-ms="${next.id}">Mark done</button>`
+        : '<b>Roadmap complete!</b> Add a new milestone or set your next aim. 🏆';
+    $('todayLbl').textContent = 'Today · ' + new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' });
+    const tasks = todaysTasks(a);
+    const done = tasks.filter(t => t.isDone).length;
+    $('todayCount').textContent = `${done}/${tasks.length} done`;
+    $('todayBar').style.width = (tasks.length ? done / tasks.length * 100 : 0) + '%';
+    $('taskList').innerHTML = tasks.length ? tasks.map(t => `
+        <div class="task ${t.isDone ? 'done' : ''}">
+            <button class="check ${t.isDone ? 'on' : ''}" data-task="${t.id}" aria-label="Toggle">${t.isDone ? '✓' : ''}</button>
+            <div class="txt">${esc(t.text)}<span class="kind">${t.daily ? '↻ daily habit' : 'one-time'}</span></div>
+            <button class="x" data-del="${t.id}" aria-label="Remove">×</button>
+        </div>`).join('') : '<div class="empty">No tasks. Add one below.</div>';
+    // dots
+    const d = today0(); d.setDate(d.getDate() - 20);
+    let html = '';
+    for (let i = 0; i < 21; i++) {
+        const k = dkey(d); const s = dayStatus(a, k);
+        html += `<div class="dot ${s === 2 ? 'full' : s === 1 ? 'part' : ''} ${i === 20 ? 'today' : ''}" title="${k}"></div>`;
+        d.setDate(d.getDate() + 1);
+    }
+    $('dots').innerHTML = html;
+}
+$('nextAction').addEventListener('click', e => { const b = e.target.closest('[data-ms]'); if (b) { toggleMilestone(b.dataset.ms); } });
+$('taskList').addEventListener('click', e => {
+    const a = curAim();
+    const c = e.target.closest('[data-task]');
+    if (c) {
+        const t = a.tasks.find(x => x.id === c.dataset.task);
+        const log = dayLog(a);
+        const before = dayStatus(a, dkey());
+        if (t.daily) {
+            const i = log.done.indexOf(t.id);
+            i >= 0 ? log.done.splice(i, 1) : log.done.push(t.id);
+        } else t.doneOn = t.doneOn ? null : dkey();
+        save(); renderAim();
+        if (before < 2 && dayStatus(a, dkey()) === 2) toast('Day won! 🔥 Streak: ' + streak(a));
+        return;
+    }
+    const x = e.target.closest('[data-del]');
+    if (x) {
+        const t = a.tasks.find(y => y.id === x.dataset.del);
+        if (t && confirm('Remove “' + t.text + '”?')) { a.tasks = a.tasks.filter(y => y.id !== t.id); save(); renderAim(); }
+    }
+});
+function addTask() {
+    const v = $('newTask').value.trim(); if (!v) return;
+    curAim().tasks.push({ id: uid(), text: v, daily: $('newTaskDaily').checked });
+    $('newTask').value = ''; save(); renderAim();
+}
+$('addTaskBtn').addEventListener('click', addTask);
+$('newTask').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+
+/* ---- Roadmap ---- */
+function renderRoad(a, c) {
+    $('roadIntro').textContent = 'Built for a ' + c.name.toLowerCase() + ' aim. Tick milestones as you hit them; the first unticked one appears as your “next best step”.';
+    let foundCurrent = false;
+    $('phases').innerHTML = a.phases.map(p => {
+        const complete = p.items.length && p.items.every(i => i.done);
+        let cls = complete ? 'complete' : '';
+        if (!complete && !foundCurrent) { cls = 'current'; foundCurrent = true; }
+        return `<div class="phase ${cls}"><div class="node"></div>
+            <h3>${esc(p.t)}</h3><div class="when">${esc(p.w || '')}</div>
+            ${p.items.map(i => `<div class="task ${i.done ? 'done' : ''}">
+                <button class="check ${i.done ? 'on' : ''}" data-ms="${i.id}">${i.done ? '✓' : ''}</button>
+                <div class="txt">${esc(i.text)}</div></div>`).join('')}
+        </div>`;
+    }).join('');
+    $('deadlineInput').value = a.deadline || '';
+    const pi = paceInfo(a.cat, a.target, a.deadline ? new Date(a.deadline + 'T00:00') : null, a.text);
+    $('paceNote').textContent = pi ? pi.msg : (a.deadline ? '' : 'A deadline turns a wish into a plan. Pick a date that is a stretch but realistic.');
+}
+function toggleMilestone(id) {
+    const a = curAim();
+    for (const p of a.phases) for (const i of p.items) if (i.id === id) {
+        i.done = !i.done; save(); renderAim();
+        if (i.done) toast(roadProgress(a) === 100 ? 'Roadmap complete! You did it 🏆' : 'Milestone hit ✦ ' + roadProgress(a) + '% of the way');
+        return;
+    }
+}
+$('phases').addEventListener('click', e => { const b = e.target.closest('[data-ms]'); if (b) toggleMilestone(b.dataset.ms); });
+function addMilestone() {
+    const v = $('newMilestone').value.trim(); if (!v) return;
+    const a = curAim();
+    let p = a.phases.find(x => x.t === 'My milestones');
+    if (!p) { p = { t: 'My milestones', w: 'Added by you', items: [] }; a.phases.push(p); }
+    p.items.push({ id: uid(), text: v, done: false });
+    $('newMilestone').value = ''; save(); renderAim();
+}
+$('addMsBtn').addEventListener('click', addMilestone);
+$('newMilestone').addEventListener('keydown', e => { if (e.key === 'Enter') addMilestone(); });
+$('saveDeadline').addEventListener('click', () => {
+    const a = curAim(); a.deadline = $('deadlineInput').value || null; save(); renderAim(); toast(a.deadline ? 'Deadline set 📅' : 'Deadline cleared');
+});
+
+/* ---- Shape (personality) ---- */
+function renderShape(a, c) {
+    const idx = dayIndex();
+    $('identity').textContent = a.ownIdentity || c.identity[idx % c.identity.length];
+    $('traits').innerHTML = a.traits.map((t, i) => {
+        const lvl = Math.floor(t.xp / 7) + 1;
+        const frac = (t.xp % 7) / 7;
+        const did = t.last === dkey();
+        const C = 2 * Math.PI * 22;
+        return `<div class="trait">
+            <div class="ring"><svg width="52" height="52"><circle cx="26" cy="26" r="22" stroke="#2a3563" stroke-width="5" fill="none"/>
+                <circle cx="26" cy="26" r="22" stroke="url(#g)" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - frac)}"/>
+                <defs><linearGradient id="g"><stop offset="0" stop-color="#5fe0c3"/><stop offset="1" stop-color="#f5c451"/></linearGradient></defs></svg>
+                <b>${lvl}</b></div>
+            <div class="info"><h3>${esc(t.n)}</h3><p>${esc(t.d)} · ${t.xp} practice${t.xp === 1 ? "" : "s"}</p></div>
+            <button class="btn practice ${did ? 'did' : ''}" data-trait="${i}">${did ? '✓ Today' : 'Practised'}</button>
+        </div>`;
+    }).join('');
+    $('reflectQ').textContent = REFLECT[(idx + hashStr(a.id)) % REFLECT.length];
+    const log = a.log[dkey()];
+    $('reflectInput').value = log ? log.reflection || '' : '';
+    $('reflectSaved').textContent = '';
+    $('ownIdentity').value = a.ownIdentity || '';
+}
+$('traits').addEventListener('click', e => {
+    const b = e.target.closest('[data-trait]'); if (!b) return;
+    const a = curAim(); const t = a.traits[+b.dataset.trait];
+    if (t.last === dkey()) { t.xp = Math.max(0, t.xp - 1); t.last = null; }
+    else { t.xp++; t.last = dkey(); if (t.xp % 7 === 0) toast(t.n + ' reached level ' + (t.xp / 7 + 1) + '! 🌟'); }
+    save(); renderAim();
+});
+let reflTimer;
+$('reflectInput').addEventListener('input', () => {
+    clearTimeout(reflTimer);
+    reflTimer = setTimeout(() => { const a = curAim(); dayLog(a).reflection = $('reflectInput').value; save(); $('reflectSaved').textContent = 'Saved ✓'; }, 500);
+});
+$('ownIdentity').addEventListener('change', () => { const a = curAim(); a.ownIdentity = $('ownIdentity').value.trim(); save(); renderAim(); });
+
+/* ---- Fuel (tips + inspiration) ---- */
+function renderFuel(a, c) {
+    const idx = dayIndex();
+    const q = c.quotes[(idx + hashStr(a.id)) % c.quotes.length];
+    $('quote').innerHTML = `${esc(q[0])}<cite>— ${esc(q[1])}</cite>`;
+    $('insight').textContent = c.insight;
+    $('tipOfDay').textContent = c.tips[(idx + (a.tipShift || 0)) % c.tips.length];
+    $('tips').innerHTML = c.tips.map(t => `<li>${esc(t)}</li>`).join('');
+    $('pitfalls').innerHTML = c.pitfalls.map(t => `<li>${esc(t)}</li>`).join('');
+    $('resources').innerHTML = c.resources.map(t => `<li>${esc(t)}</li>`).join('');
+}
+$('nextTip').addEventListener('click', () => { const a = curAim(); a.tipShift = (a.tipShift || 0) + 1; save(); renderAim(); });
+$('deleteAim').addEventListener('click', () => {
+    const a = curAim();
+    if (confirm('Delete “' + a.text + '” and all its progress? This cannot be undone.')) {
+        state.aims = state.aims.filter(x => x.id !== a.id); save(); goHome(); toast('Aim deleted');
+    }
+});
+
+/* ============================================================
+   Misc
+   ============================================================ */
+let toastTimer;
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2400); }
+
+/* Starfield background */
+(function stars() {
+    const cv = $('stars'), ctx = cv.getContext('2d'); let pts = [];
+    function size() { cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio; pts = Array.from({ length: 90 }, () => ({ x: Math.random() * cv.width, y: Math.random() * cv.height, r: Math.random() * 1.3 + .3, p: Math.random() * 6.28 })); }
+    function draw(t) {
+        ctx.clearRect(0, 0, cv.width, cv.height);
+        for (const s of pts) { ctx.globalAlpha = .25 + .55 * (0.5 + 0.5 * Math.sin(t / 1400 + s.p)); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(s.x, s.y, s.r * devicePixelRatio, 0, 6.28); ctx.fill(); }
+        requestAnimationFrame(draw);
+    }
+    addEventListener('resize', size); size(); requestAnimationFrame(draw);
+})();
+
+renderExamples();
+if (state.current && curAim()) openAim(state.current, 'today'); else { state.current = null; renderAimList(); }
+</script>
+</body>
+</html>
