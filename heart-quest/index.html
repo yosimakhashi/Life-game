@@ -112,7 +112,8 @@ a.iconBtn { display: grid; place-items: center; text-decoration: none; }
 .person { position: absolute; bottom: 18px; width: 124px; height: 186px; z-index: 3; transition: left 1.2s cubic-bezier(.3,.8,.3,1); }
 .person svg { width: 100%; height: 100%; overflow: visible; }
 .person.me { width: 150px; height: 225px; }
-.person.her { width: 118px; height: 269px; bottom: 12px; }
+.person.her { width: 132px; height: 286px; bottom: 10px; }
+.person.her svg { filter: drop-shadow(0 8px 12px rgba(0,0,0,.28)); }
 .person .body { animation: bob 1.4s ease-in-out infinite; transform-box: view-box; }
 .her .body { animation-duration: 1.6s; }
 @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(2.5px)} }
@@ -980,16 +981,16 @@ ${aRing('M64 62 L72 56 L80 62 L90 53 L98 61 L108 52 L116 61 L126 55 L136 62', hl
 let fUid = 0;
 // half-widths: shoulders, bust, waist, hips; th = thigh fullness; arm = arm thickness
 const BUILD = {
-    Meera:     { sh: 32, bu: 33, wa: 28, hi: 44, th: 1.14, arm: 15.5 },
-    Ananya:    { sh: 31, bu: 34, wa: 30, hi: 45, th: 1.18, arm: 16 },
-    Riya:      { sh: 35, bu: 33, wa: 29, hi: 43, th: 1.16, arm: 17 },
-    Zara:      { sh: 30, bu: 31, wa: 27, hi: 43, th: 1.12, arm: 14.5 },
-    Nila:      { sh: 33, bu: 36, wa: 30, hi: 47, th: 1.22, arm: 16.5 },
-    Isha:      { sh: 31, bu: 32, wa: 27, hi: 45, th: 1.16, arm: 15 },
-    Sana:      { sh: 33, bu: 33, wa: 29, hi: 44, th: 1.18, arm: 16 },
-    Kavya:     { sh: 32, bu: 35, wa: 27, hi: 47, th: 1.2, arm: 15.5 },
-    Aisha:     { sh: 32, bu: 34, wa: 27, hi: 45, th: 1.14, arm: 15 },
-    'The One': { sh: 32, bu: 35, wa: 28, hi: 46, th: 1.18, arm: 15.5 }
+    Meera:     { sh: 33, bu: 35, wa: 27, hi: 47, th: 1.18, arm: 15.5 },
+    Ananya:    { sh: 32, bu: 35, wa: 29, hi: 48, th: 1.20, arm: 16 },
+    Riya:      { sh: 36, bu: 35, wa: 28, hi: 46, th: 1.19, arm: 17 },
+    Zara:      { sh: 31, bu: 33, wa: 26, hi: 46, th: 1.16, arm: 14.5 },
+    Nila:      { sh: 34, bu: 37, wa: 29, hi: 50, th: 1.24, arm: 16.5 },
+    Isha:      { sh: 32, bu: 34, wa: 26, hi: 48, th: 1.19, arm: 15 },
+    Sana:      { sh: 34, bu: 35, wa: 28, hi: 47, th: 1.20, arm: 16 },
+    Kavya:     { sh: 33, bu: 37, wa: 26, hi: 50, th: 1.23, arm: 15.5 },
+    Aisha:     { sh: 33, bu: 36, wa: 26, hi: 48, th: 1.18, arm: 15 },
+    'The One': { sh: 33, bu: 37, wa: 27, hi: 49, th: 1.21, arm: 15.5 }
 };
 const OUTFIT = {
     Meera:     { top: '#ff9fb5', neck: ['u', 12, 12], cardigan: '#fff4e2', sleeve: ['#fff4e2', 1], skirt: { c: '#f6c26a', hem: 356, w: 58, trim: '#fff' }, legs: null, shoe: ['flat', '#c8603a'] },
@@ -1114,7 +1115,7 @@ function fullBodySVG(w, stage = 0) {
         <g ${T}>${back}</g>
         <path d="${body}" fill="${sk}"/>${under}${shoes}${n[0] === 'high' ? '' : neck}${mid}
         ${clip(`<rect x="0" y="80" width="200" height="350" fill="url(#${id}v)"/>`)}<path d="${body}" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1.2"/>
-        ${skirt}${arms}${over}${n[0] === 'high' ? `<path d="M93 68 L93 78 L107 78 L107 68Z" fill="${sk}"/>` : ''}
+        ${skirt}<g pointer-events="none" opacity=".22"><path d="M${c - bu + 7} 112 Q${c - 10} 120 ${c - 2} 145 Q${c + 8} 164 ${c + 3} 198" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M${c + 13} 218 Q${c + 30} 270 ${c + 19} 330" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/></g>${arms}${over}${n[0] === 'high' ?  `<path d="M93 68 L93 78 L107 78 L107 68Z" fill="${sk}"/>` : ''}
         <g ${T}>${front}${glow}${hearts}</g></g></svg>`;
 }
 // Head-and-shoulders portrait, used for the small pictures in the Hall of Hearts.
