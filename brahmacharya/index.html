@@ -631,8 +631,14 @@ if (!S.start && ironStart()) { S.start = ironStart(); save(); }
 const $ = id => document.getElementById(id);
 const dateKey = t => { const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-function currentDay() { return S.start ? Math.floor(Math.max(0, Date.now() - S.start) / DAY) + 1 : 1; }
-function dateForDay(d) { return S.start ? S.start + (d - 1) * DAY : Date.now(); }
+/* Day number = full days completed, same as Iron Will, so both pages always agree.
+   The first day stays "Day 1" until the second full day is done. */
+function doneDays() { return S.start ? Math.floor(Math.max(0, Date.now() - S.start) / DAY) : 0; }
+function currentDay() { return Math.max(1, doneDays()); }
+function dateForDay(d) {
+    if (!S.start || d === currentDay()) return Date.now();
+    return d <= 1 ? S.start : S.start + d * DAY;
+}
 function dayDone(d) { const c = S.checks[dateKey(dateForDay(d))]; return c && CHECKS.every(k => c[k[0]]); }
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2400); }
 
@@ -699,7 +705,7 @@ $('changeStart').onclick = () => { $('setup').hidden = false; $('setup').scrollI
 $('slipBtn').onclick = () => {
     if (!S.start) return;
     if (!confirm('Reset your streak to Day 1? (A wet dream is NOT a relapse. Don\'t reset for that.)')) return;
-    S.history.push({ start: S.start, end: Date.now(), days: currentDay() - 1 });
+    S.history.push({ start: S.start, end: Date.now(), days: doneDays() });
     S.start = Date.now(); save(); view = 1; renderToday();
     toast('No binge. No shame. Investigate, patch the hole, walk on.');
 };
