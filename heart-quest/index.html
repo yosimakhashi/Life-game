@@ -1092,13 +1092,10 @@ function modelArt(w, full = true) {
   const svg='<svg viewBox="0 0 200 450" aria-hidden="true"><defs><linearGradient id="shine'+i+'" x2=".9" y2="1"><stop stop-color="#fff" stop-opacity=".9"/><stop offset=".5" stop-color="#fff" stop-opacity=".13"/><stop offset="1" stop-color="#fff" stop-opacity=".42"/></linearGradient></defs><ellipse cx="100" cy="441" rx="55" ry="6" fill="#000" opacity=".2"/><g class="body">'+hairBack+lower+body+face+'<path d="M75 192 Q100 201 125 192" stroke="#fff" stroke-width="2" opacity=".3" fill="none"/></g></svg>';
   return full?svg:'<svg viewBox="28 20 144 150" aria-hidden="true">'+hairBack+face+'</svg>';
 }
-// Character artwork is stored in the repository-root /art folder.
+// Render characters with the built-in SVG artwork so they never depend
+// on external image paths or GitHub Pages asset routing.
 function characterImage(g, mode = 'full') {
-  const i = Math.max(0, GIRLS.indexOf(g));
-  const file = 'girl' + String(i + 1).padStart(2, '0') + '.webp';
-  const cls = mode === 'portrait' ? 'girl-art portrait-art' : 'girl-art full-art';
-  const alt = (g && g.name ? g.name : 'Character') + ' anime illustration';
-  return '<img class="' + cls + '" src="/Life-game/art/' + file + '" alt="' + alt.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) + '" loading="eager" decoding="async">';
+  return modelArt(g || GIRLS[0], mode !== 'portrait');
 }
 function fullBodySVG(w, stage = 0) { return characterImage(GIRLS[Math.max(0, ANIME.indexOf(w))], 'full'); }
 function portraitSVG(w) { return characterImage(GIRLS[Math.max(0, ANIME.indexOf(w))], 'portrait'); }
