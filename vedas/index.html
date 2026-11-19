@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#16120d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Veda School">
+<title>Veda School</title>
+<style>
+/* Veda School: learn the four Vedas in English.
+   One file, no network. Progress is stored in localStorage under KEY.
+   Tabs (hash routed): #path, #vedas, #verses, #gods, #quiz.
+   Layout: a single reading column like a palm-leaf page, saffron for action,
+   deep indigo for the sacred text itself. */
+:root {
+    --bg: #f5efe3; --card: #fffaf1; --ink: #2a2119; --dim: #76685a; --line: #e2d5bf;
+    --saffron: #c25a14; --saffron-ink: #fff; --soft: #f5e1c9; --gold: #94680f;
+    --indigo: #2f3a78; --indigo-soft: #e6e8f5; --good: #2f7d4f;
+    --serif: 'Iowan Old Style', Palatino, 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+    --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --deva: 'Noto Serif Devanagari', 'Noto Sans Devanagari', 'Kohinoor Devanagari', 'Devanagari Sangam MN', 'Mangal', 'Nirmala UI', serif;
+}
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg: #16120d; --card: #201a14; --ink: #f1e7d8; --dim: #a8988a; --line: #362d24;
+        --saffron: #f0883a; --saffron-ink: #1a0d03; --soft: #3b2715; --gold: #e2b350;
+        --indigo: #aab4f2; --indigo-soft: #232847; --good: #6fd197; color-scheme: dark;
+    }
+}
+:root[data-theme="dark"] {
+    --bg: #16120d; --card: #201a14; --ink: #f1e7d8; --dim: #a8988a; --line: #362d24;
+    --saffron: #f0883a; --saffron-ink: #1a0d03; --soft: #3b2715; --gold: #e2b350;
+    --indigo: #aab4f2; --indigo-soft: #232847; --good: #6fd197; color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body { font: 16px/1.6 var(--sans); min-height: 100vh; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; line-height: 1.2; margin: 0; text-wrap: balance; }
+h1 { font-size: 30px; } h2 { font-size: 22px; } h3 { font-size: 18px; }
+p { margin: 0 0 10px; } p:last-child { margin-bottom: 0; }
+ul, ol { margin: 6px 0 10px; padding-left: 20px; } li { margin: 4px 0; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; touch-action: manipulation; }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--saffron); outline-offset: 2px; }
+a { color: var(--saffron); }
+b, strong { font-weight: 650; }
+.wrap { max-width: 620px; margin: 0 auto; padding-top: 18px; padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.dim { color: var(--dim); } .small { font-size: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-top: 14px; }
+.card h3 { margin-bottom: 8px; }
+.label { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--saffron); margin-bottom: 6px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: 12px; font-weight: 600; background: var(--saffron); color: var(--saffron-ink); }
+.btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--ink); }
+.btn.small { padding: 6px 12px; font-size: 14px; }
+.btn.done { background: var(--good); color: var(--card); }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.top a { font-size: 14px; text-decoration: none; color: var(--dim); }
+section[hidden] { display: none !important; }
+
+/* hero */
+.hero { text-align: center; padding: 24px 16px 20px; background: radial-gradient(circle at 50% 0%, var(--soft), var(--card) 72%); }
+.om { font-family: var(--deva); font-size: 44px; line-height: 1; color: var(--saffron); }
+.bar { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; margin-top: 12px; }
+.bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--gold), var(--saffron)); transition: width .3s; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+.stat { background: var(--bg); border-radius: 12px; padding: 10px 6px; text-align: center; }
+.stat b { display: block; font-family: var(--serif); font-size: 22px; color: var(--saffron); font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--dim); }
+
+/* verse */
+.deva { font-family: var(--deva); font-size: 20px; line-height: 1.85; color: var(--indigo); }
+.iast { font-family: var(--serif); font-style: italic; color: var(--dim); font-size: 15px; margin-top: 6px; }
+.eng { font-family: var(--serif); font-size: 17px; margin-top: 10px; padding-left: 12px; border-left: 3px solid var(--saffron); }
+.why { font-size: 14.5px; margin-top: 10px; color: var(--ink); }
+.ref { font-size: 13px; color: var(--dim); }
+.veil .eng, .veil .why { filter: blur(6px); user-select: none; cursor: pointer; }
+.tag { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 99px; background: var(--indigo-soft); color: var(--indigo); }
+.tag.s { background: var(--soft); color: var(--gold); }
+
+/* chips */
+.chips { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 4px; margin-top: 12px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex: none; padding: 7px 13px; border-radius: 99px; border: 1px solid var(--line); background: var(--card); font-size: 14px; font-weight: 600; color: var(--dim); }
+.chip.on { background: var(--saffron); border-color: var(--saffron); color: var(--saffron-ink); }
+
+/* lessons */
+.lesson { padding: 0; overflow: hidden; }
+.lesson > button.head { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px 16px; text-align: left; }
+.num { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-family: var(--serif); font-weight: 700; background: var(--soft); color: var(--gold); font-variant-numeric: tabular-nums; }
+.lesson.complete .num { background: var(--good); color: var(--card); }
+.lesson .t { flex: 1; min-width: 0; }
+.lesson .t b { display: block; font-family: var(--serif); font-size: 17px; }
+.lesson .t span { font-size: 13px; color: var(--dim); }
+.chev { color: var(--dim); transition: transform .2s; }
+.lesson.open .chev { transform: rotate(90deg); }
+.lesson .body { padding: 0 16px 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+.lesson:not(.open) .body { display: none; }
+.note { background: var(--indigo-soft); border-radius: 12px; padding: 12px 14px; font-size: 14.5px; margin: 10px 0; }
+
+/* tables */
+.tbl { overflow-x: auto; margin: 10px 0; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* veda cards */
+.vgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.vcard { text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+.vcard.on { border-color: var(--saffron); box-shadow: 0 0 0 1px var(--saffron) inset; }
+.vcard .dn { font-family: var(--deva); font-size: 20px; color: var(--indigo); }
+.vcard b { display: block; font-family: var(--serif); font-size: 18px; }
+.vcard span { font-size: 13px; color: var(--dim); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 12px 0; }
+.fact { background: var(--bg); border-radius: 12px; padding: 10px; }
+.fact b { display: block; font-family: var(--serif); font-size: 19px; color: var(--saffron); font-variant-numeric: tabular-nums; }
+.fact span { font-size: 12.5px; color: var(--dim); }
+.link-btn { color: var(--saffron); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+/* gods */
+.god { display: flex; gap: 12px; }
+.god .ic { flex: none; width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; font-family: var(--deva); font-size: 22px; background: var(--indigo-soft); color: var(--indigo); }
+.god .gt { min-width: 0; flex: 1; }
+
+/* glossary */
+.search { width: 100%; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; }
+dl { margin: 0; } dt { font-family: var(--serif); font-weight: 700; margin-top: 12px; } dt i { font-weight: 400; color: var(--dim); font-size: 14px; }
+dd { margin: 2px 0 0; font-size: 14.5px; }
+
+/* quiz */
+.opt { display: block; width: 100%; text-align: left; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); margin-top: 8px; }
+.opt.right { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, var(--card)); }
+.opt.wrong { border-color: var(--saffron); background: color-mix(in srgb, var(--saffron) 12%, var(--card)); }
+.opt:disabled { cursor: default; color: var(--ink); }
+
+/* tabs */
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; justify-content: center; background: var(--card); border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+.tabs .in { display: flex; width: 100%; max-width: 620px; }
+.tabs button { flex: 1; padding: 9px 2px 8px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11.5px; font-weight: 600; color: var(--dim); }
+.tabs button .g { font-family: var(--deva); font-size: 19px; line-height: 1.2; }
+.tabs button.on { color: var(--saffron); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <div class="top">
+        <a href="../">← Life Game</a>
+        <span class="eyebrow">Veda School</span>
+    </div>
+
+    <!-- PATH -->
+    <section id="v-path">
+        <div class="card hero">
+            <div class="om" aria-hidden="true">ॐ</div>
+            <h1 style="margin-top:8px">Veda School</h1>
+            <p class="dim" style="margin-top:6px">The four Vedas in plain English: what they are, how they fit together, and their most important verses.</p>
+            <div class="bar"><i id="pathBar" style="width:0%"></i></div>
+            <div class="stats">
+                <div class="stat"><b id="stLessons">0/12</b><span>lessons</span></div>
+                <div class="stat"><b id="stVerses">0</b><span>verses learned</span></div>
+                <div class="stat"><b id="stQuiz">–</b><span>best quiz</span></div>
+            </div>
+        </div>
+
+        <div class="card" id="todayVerse"></div>
+
+        <h2 style="margin-top:26px">The learning path</h2>
+        <p class="dim small" style="margin-top:4px">Twelve short lessons. Read one a day, then mark it complete.</p>
+        <div id="lessons"></div>
+
+        <div class="card">
+            <div class="label">Keep going</div>
+            <h3>Read the complete texts</h3>
+            <p class="small">The Vedas hold over 20,000 verses, far more than any one page can teach. Once you finish the path, these free public-domain English translations let you read every hymn:</p>
+            <ul class="small">
+                <li><a href="https://www.sacred-texts.com/hin/rigveda/index.htm" target="_blank" rel="noopener">Rigveda</a>, tr. Ralph Griffith (1896)</li>
+                <li><a href="https://www.sacred-texts.com/hin/sv.htm" target="_blank" rel="noopener">Samaveda</a>, tr. Ralph Griffith (1895)</li>
+                <li><a href="https://www.sacred-texts.com/hin/wyv/index.htm" target="_blank" rel="noopener">White Yajurveda</a>, tr. Griffith (1899), and <a href="https://www.sacred-texts.com/hin/yv/index.htm" target="_blank" rel="noopener">Black Yajurveda</a>, tr. A. B. Keith (1914)</li>
+                <li><a href="https://www.sacred-texts.com/hin/av/index.htm" target="_blank" rel="noopener">Atharvaveda</a>, tr. Griffith (1895)</li>
+                <li><a href="https://www.sacred-texts.com/hin/upan/index.htm" target="_blank" rel="noopener">The Upanishads</a>, tr. Max Müller (1879–84)</li>
+            </ul>
+            <p class="small dim">These translations are over a century old and their English is dated. Read them alongside the explanations here.</p>
+        </div>
+    </section>
+
+    <!-- VEDAS -->
+    <section id="v-vedas" hidden>
+        <h1 style="margin-top:12px">The four Vedas</h1>
+        <p class="dim" style="margin-top:6px">Tap a Veda to see how it is built, what it is for, and which texts belong to it.</p>
+        <div class="vgrid" id="vgrid"></div>
+        <div id="vdetail"></div>
+
+        <h2 style="margin-top:28px">The principal Upanishads</h2>
+        <p class="dim small" style="margin-top:4px">The philosophical end of each Veda. These eleven were commented on by Adi Shankara and are the core of Vedanta.</p>
+        <div id="upanishads"></div>
+
+        <h2 style="margin-top:28px">Glossary</h2>
+        <input class="search" id="gloss-q" type="search" placeholder="Search terms, e.g. rita, soma, shruti" style="margin-top:10px" aria-label="Search the glossary">
+        <div class="card"><dl id="gloss"></dl></div>
+    </section>
+
+    <!-- VERSES -->
+    <section id="v-verses" hidden>
+        <h1 style="margin-top:12px">Key verses</h1>
+        <p class="dim" style="margin-top:6px">Sanskrit, transliteration, a plain English translation, and what the verse means. Turn on practice mode to hide the English and test yourself.</p>
+        <div class="row" style="margin-top:10px">
+            <button class="btn ghost small" id="practiceBtn" aria-pressed="false">Practice mode: off</button>
+            <span class="small dim" id="verseCount"></span>
+        </div>
+        <div class="chips" id="vchips"></div>
+        <div id="verseList"></div>
+        <p class="small dim" style="margin-top:16px">Translations on this page are fresh plain-English renderings. Transliteration is IAST without the Vedic pitch accents.</p>
+    </section>
+
+    <!-- GODS -->
+    <section id="v-gods" hidden>
+        <h1 style="margin-top:12px">Gods of the Vedas</h1>
+        <p class="dim" style="margin-top:6px">The Vedic hymns address many devas, "shining ones", each tied to a power of nature or of ritual. Counts are approximate numbers of Rigveda hymns addressed to each.</p>
+        <div class="note">The Rigveda itself says these many gods may be names of one reality: <em>"Truth is one; the wise call it by many names"</em> (1.164.46). Later tradition counts <b>33 gods</b>: 8 Vasus, 11 Rudras, 12 Adityas, plus Indra and Prajapati (Brihadaranyaka Upanishad 3.9).</div>
+        <div id="godList"></div>
+    </section>
+
+    <!-- QUIZ -->
+    <section id="v-quiz" hidden>
+        <h1 style="margin-top:12px">Quiz</h1>
+        <p class="dim" style="margin-top:6px">Ten random questions from the lessons. Your best score is saved.</p>
+        <div class="card" id="quizBox"></div>
+    </section>
+</div>
+
+<nav class="tabs" aria-label="Sections">
+    <div class="in">
+        <button data-tab="path"><span class="g" aria-hidden="true">ॐ</span>Path</button>
+        <button data-tab="vedas"><span class="g" aria-hidden="true">वेद</span>Vedas</button>
+        <button data-tab="verses"><span class="g" aria-hidden="true">मन्त्र</span>Verses</button>
+        <button data-tab="gods"><span class="g" aria-hidden="true">देव</span>Gods</button>
+        <button data-tab="quiz"><span class="g" aria-hidden="true">?</span>Quiz</button>
+    </div>
+</nav>
+
+<script>
+const KEY = 'veda-school-v1';
+let S = { lessons: {}, verses: {}, best: null, open: 0 };
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ---------------- VERSES ---------------- */
+const VERSES = [
+ { id: 'rv1.1.1', veda: 'Rig', ref: 'Rigveda 1.1.1', title: 'The very first verse',
+   dev: 'अग्निमीळे पुरोहितं यज्ञस्य देवमृत्विजम् । होतारं रत्नधातमम् ॥',
+   iast: 'agnim īḷe purohitaṃ yajñasya devam ṛtvijam | hotāraṃ ratnadhātamam ||',
+   en: 'I praise Agni, the priest placed in front, the god who serves the sacrifice in its seasons, the invoker, the richest giver of treasure.',
+   why: 'The Rigveda opens with fire. Agni is the messenger who carries offerings from people to the gods, so the whole collection begins by calling on the one who makes worship possible.' },
+ { id: 'rv3.62.10', veda: 'Rig', ref: 'Rigveda 3.62.10', title: 'The Gayatri mantra',
+   dev: 'तत्सवितुर्वरेण्यं भर्गो देवस्य धीमहि । धियो यो नः प्रचोदयात् ॥',
+   iast: 'tat savitur vareṇyaṃ bhargo devasya dhīmahi | dhiyo yo naḥ pracodayāt ||',
+   en: 'We meditate on that excellent radiance of the god Savitri. May he stir and inspire our minds.',
+   why: 'Composed by the sage Vishvamitra and set in the 24-syllable Gayatri meter. It asks the sun\'s life-giving power to awaken understanding. When chanted, it is usually preceded by "Om bhūr bhuvaḥ svaḥ" (earth, atmosphere, heaven), a line taken from the Yajurveda tradition.' },
+ { id: 'rv1.164.46', veda: 'Rig', ref: 'Rigveda 1.164.46', title: 'Truth is one',
+   dev: 'इन्द्रं मित्रं वरुणमग्निमाहुरथो दिव्यः स सुपर्णो गरुत्मान् । एकं सद्विप्रा बहुधा वदन्त्यग्निं यमं मातरिश्वानमाहुः ॥',
+   iast: 'indraṃ mitraṃ varuṇam agnim āhur atho divyaḥ sa suparṇo garutmān | ekaṃ sad viprā bahudhā vadanty agniṃ yamaṃ mātariśvānam āhuḥ ||',
+   en: 'They call it Indra, Mitra, Varuna, Agni; it is also the heavenly, fair-winged Garutman. Reality is one; the wise speak of it in many ways. They call it Agni, Yama, Matarishvan.',
+   why: 'From the long riddle hymn of the sage Dirghatamas. The phrase "ekaṃ sad viprā bahudhā vadanti" is the most quoted line in Hindu thought on the unity behind many gods.' },
+ { id: 'rv10.129.1', veda: 'Rig', ref: 'Rigveda 10.129.1', title: 'Hymn of Creation (Nasadiya), opening',
+   dev: 'नासदासीन्नो सदासीत्तदानीं नासीद्रजो नो व्योमा परो यत् । किमावरीवः कुह कस्य शर्मन्नम्भः किमासीद्गहनं गभीरम् ॥',
+   iast: 'nāsad āsīn no sad āsīt tadānīṃ nāsīd rajo no vyomā paro yat | kim āvarīvaḥ kuha kasya śarmann ambhaḥ kim āsīd gahanaṃ gabhīram ||',
+   en: 'Then there was neither non-being nor being. There was no air, and no sky beyond it. What covered it all? Where? Under whose protection? Was there water, deep beyond measure?',
+   why: 'The Nasadiya Sukta asks how the universe began and refuses to pretend it knows. It is one of the earliest pieces of philosophical speculation in any language.' },
+ { id: 'rv10.129.7', veda: 'Rig', ref: 'Rigveda 10.129.7', title: 'Hymn of Creation, closing',
+   dev: 'इयं विसृष्टिर्यत आबभूव यदि वा दधे यदि वा न । यो अस्याध्यक्षः परमे व्योमन्त्सो अङ्ग वेद यदि वा न वेद ॥',
+   iast: 'iyaṃ visṛṣṭir yata ābabhūva yadi vā dadhe yadi vā na | yo asyādhyakṣaḥ parame vyoman so aṅga veda yadi vā na veda ||',
+   en: 'Where this creation came from, whether it was made or whether it was not, the one who watches over it in the highest heaven surely knows. Or perhaps even he does not know.',
+   why: 'The hymn ends in open doubt. A sacred text that leaves room for "perhaps no one knows" sets the tone for the Indian tradition of free inquiry.' },
+ { id: 'rv10.90.1', veda: 'Rig', ref: 'Rigveda 10.90.1', title: 'Purusha Sukta',
+   dev: 'सहस्रशीर्षा पुरुषः सहस्राक्षः सहस्रपात् । स भूमिं विश्वतो वृत्वात्यतिष्ठद्दशाङ्गुलम् ॥',
+   iast: 'sahasraśīrṣā puruṣaḥ sahasrākṣaḥ sahasrapāt | sa bhūmiṃ viśvato vṛtvāty atiṣṭhad daśāṅgulam ||',
+   en: 'The Cosmic Person has a thousand heads, a thousand eyes, a thousand feet. He covers the earth on every side and stands ten fingers\' breadth beyond it.',
+   why: 'The universe is pictured as one vast being, both filling the world and exceeding it. Later verses describe creation as a sacrifice of this Purusha. The hymn is still recited in temple worship.' },
+ { id: 'rv7.59.12', veda: 'Rig', ref: 'Rigveda 7.59.12', title: 'Mahamrityunjaya mantra',
+   dev: 'त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम् । उर्वारुकमिव बन्धनान्मृत्योर्मुक्षीय माऽमृतात् ॥',
+   iast: 'tryambakaṃ yajāmahe sugandhiṃ puṣṭivardhanam | urvārukam iva bandhanān mṛtyor mukṣīya māmṛtāt ||',
+   en: 'We worship the Three-Eyed One, fragrant, who increases nourishment. As a ripe cucumber is freed from its stem, may I be freed from death, but not from immortality.',
+   why: 'Addressed to Rudra, later identified with Shiva. The image is gentle: a ripe fruit falls from the vine without force. It is chanted for healing and at times of fear.' },
+ { id: 'rv10.191.2', veda: 'Rig', ref: 'Rigveda 10.191.2', title: 'The hymn of unity (last hymn of the Rigveda)',
+   dev: 'सं गच्छध्वं सं वदध्वं सं वो मनांसि जानताम् । देवा भागं यथा पूर्वे संजानाना उपासते ॥',
+   iast: 'saṃ gacchadhvaṃ saṃ vadadhvaṃ saṃ vo manāṃsi jānatām | devā bhāgaṃ yathā pūrve saṃjānānā upāsate ||',
+   en: 'Walk together, speak together, let your minds be in harmony, just as the gods of old, of one mind, sat together to receive their share.',
+   why: 'The Rigveda closes not with a god but with a call for people to agree and live together. It is often recited at the start of meetings and gatherings.' },
+ { id: 'rv1.89.1', veda: 'Rig', ref: 'Rigveda 1.89.1 (first line)', title: 'Let noble thoughts come',
+   dev: 'आ नो भद्राः क्रतवो यन्तु विश्वतः ।',
+   iast: 'ā no bhadrāḥ kratavo yantu viśvataḥ |',
+   en: 'Let noble thoughts come to us from every side.',
+   why: 'A short line with a large idea: good ideas are welcome from anywhere. It is a common motto for schools and institutions in India.' },
+ { id: 'rv1.164.20', veda: 'Rig', ref: 'Rigveda 1.164.20 · Mundaka Up. 3.1.1', title: 'Two birds on one tree',
+   dev: 'द्वा सुपर्णा सयुजा सखाया समानं वृक्षं परिषस्वजाते । तयोरन्यः पिप्पलं स्वाद्वत्त्यनश्नन्नन्यो अभिचाकशीति ॥',
+   iast: 'dvā suparṇā sayujā sakhāyā samānaṃ vṛkṣaṃ pariṣasvajāte | tayor anyaḥ pippalaṃ svādv atty anaśnann anyo abhicākaśīti ||',
+   en: 'Two birds, close companions and friends, cling to the same tree. One of them eats the sweet fig; the other, not eating, simply watches.',
+   why: 'The Mundaka Upanishad reads this as the individual self, who tastes the joys and sorrows of life, and the higher Self, the calm witness. The same body holds both.' },
+ { id: 'sv1.1', veda: 'Sama', ref: 'Samaveda 1.1 (= Rigveda 6.16.10)', title: 'First verse of the Samaveda',
+   dev: 'अग्न आ याहि वीतये गृणानो हव्यदातये । नि होता सत्सि बर्हिषि ॥',
+   iast: 'agna ā yāhi vītaye gṛṇāno havyadātaye | ni hotā satsi barhiṣi ||',
+   en: 'Come, Agni, to the feast, praised in song, to receive the offerings. Sit down as our invoker on the sacred grass.',
+   why: 'Nearly every verse of the Samaveda is taken from the Rigveda and set to melody. Like the Rigveda, it begins by inviting Agni to the ritual.' },
+ { id: 'ch6.8.7', veda: 'Sama', ref: 'Chandogya Upanishad 6.8.7', title: 'You are that (tat tvam asi)',
+   dev: 'स य एषोऽणिमैतदात्म्यमिदं सर्वं तत्सत्यं स आत्मा तत्त्वमसि श्वेतकेतो ॥',
+   iast: 'sa ya eṣo \'ṇimaitad ātmyam idaṃ sarvaṃ tat satyaṃ sa ātmā tat tvam asi śvetaketo ||',
+   en: 'That subtlest essence: the whole world has it as its Self. That is the truth. That is the Self. You are that, Shvetaketu.',
+   why: 'The sage Uddalaka teaches his son that the reality behind the universe and his own innermost self are the same. One of the four Great Sayings (mahāvākyas), one from each Veda.' },
+ { id: 'kena1.2', veda: 'Sama', ref: 'Kena Upanishad 1.2', title: 'The ear of the ear',
+   dev: 'श्रोत्रस्य श्रोत्रं मनसो मनो यद्वाचो ह वाचं स उ प्राणस्य प्राणः । चक्षुषश्चक्षुरतिमुच्य धीराः प्रेत्यास्माल्लोकादमृता भवन्ति ॥',
+   iast: 'śrotrasya śrotraṃ manaso mano yad vāco ha vācaṃ sa u prāṇasya prāṇaḥ | cakṣuṣaś cakṣur atimucya dhīrāḥ pretyāsmāl lokād amṛtā bhavanti ||',
+   en: 'It is the ear of the ear, the mind of the mind, the speech of speech, the breath of breath, the eye of the eye. The wise, letting go, rise beyond this world and become immortal.',
+   why: 'Kena means "by whom?" The Upanishad asks what power makes the senses work. The answer is the Self, which can never be seen as an object because it is the one who sees.' },
+ { id: 'isha1', veda: 'Yajur', ref: 'Isha Upanishad 1 (= Shukla Yajurveda 40.1)', title: 'Enjoy by letting go',
+   dev: 'ईशा वास्यमिदं सर्वं यत्किञ्च जगत्यां जगत् । तेन त्यक्तेन भुञ्जीथा मा गृधः कस्यस्विद्धनम् ॥',
+   iast: 'īśā vāsyam idaṃ sarvaṃ yat kiñca jagatyāṃ jagat | tena tyaktena bhuñjīthā mā gṛdhaḥ kasya svid dhanam ||',
+   en: 'All this, whatever moves in this moving world, is pervaded by the Lord. Enjoy it by letting go. Do not covet; whose is wealth, after all?',
+   why: 'Gandhi said that if all scripture were lost and only this verse survived, Hinduism would live on. It joins two ideas: the divine is in everything, and true enjoyment comes from not grasping.' },
+ { id: 'bu1.3.28', veda: 'Yajur', ref: 'Brihadaranyaka Upanishad 1.3.28', title: 'Lead me from the unreal to the real',
+   dev: 'असतो मा सद्गमय । तमसो मा ज्योतिर्गमय । मृत्योर्माऽमृतं गमय ॥',
+   iast: 'asato mā sad gamaya | tamaso mā jyotir gamaya | mṛtyor mā amṛtaṃ gamaya ||',
+   en: 'Lead me from the unreal to the real. Lead me from darkness to light. Lead me from death to immortality.',
+   why: 'Called the Pavamana mantras, they were chanted during the Soma ritual. Today they are among the most widely recited prayers in India.' },
+ { id: 'bu1.4.10', veda: 'Yajur', ref: 'Brihadaranyaka Upanishad 1.4.10', title: 'I am Brahman (aham brahmāsmi)',
+   dev: 'अहं ब्रह्मास्मि ॥',
+   iast: 'ahaṃ brahmāsmi ||',
+   en: 'I am Brahman.',
+   why: 'The Great Saying of the Yajurveda. Whoever truly knows "I am Brahman" becomes the whole; the passage adds that even the gods cannot stop such a person.' },
+ { id: 'bu5.1.1', veda: 'Yajur', ref: 'Brihadaranyaka Upanishad 5.1.1', title: 'That is whole, this is whole',
+   dev: 'पूर्णमदः पूर्णमिदं पूर्णात्पूर्णमुदच्यते । पूर्णस्य पूर्णमादाय पूर्णमेवावशिष्यते ॥',
+   iast: 'pūrṇam adaḥ pūrṇam idaṃ pūrṇāt pūrṇam udacyate | pūrṇasya pūrṇam ādāya pūrṇam evāvaśiṣyate ||',
+   en: 'That is whole. This is whole. From the whole, the whole arises. Take the whole from the whole, and the whole remains.',
+   why: 'The infinite cannot be reduced: the world that comes from Brahman is complete, and Brahman loses nothing. This is the peace invocation of the Isha Upanishad.' },
+ { id: 'yv36.17', veda: 'Yajur', ref: 'Shukla Yajurveda 36.17', title: 'The peace chant',
+   dev: 'द्यौः शान्तिरन्तरिक्षं शान्तिः पृथिवी शान्तिरापः शान्तिरोषधयः शान्तिः । वनस्पतयः शान्तिर्विश्वे देवाः शान्तिर्ब्रह्म शान्तिः सर्वं शान्तिः शान्तिरेव शान्तिः सा मा शान्तिरेधि ॥',
+   iast: 'dyauḥ śāntir antarikṣaṃ śāntiḥ pṛthivī śāntir āpaḥ śāntir oṣadhayaḥ śāntiḥ | vanaspatayaḥ śāntir viśve devāḥ śāntir brahma śāntiḥ sarvaṃ śāntiḥ śāntir eva śāntiḥ sā mā śāntir edhi ||',
+   en: 'Peace in the sky, peace in the air between, peace on earth. Peace in the waters, peace in the healing plants, peace in the trees. Peace in all the gods, peace in Brahman, peace in everything. Peace itself, peace. May that peace come to me.',
+   why: 'A prayer that peace fill every layer of the world, from heaven down to plants, before it is asked for oneself.' },
+ { id: 'tu2.1', veda: 'Yajur', ref: 'Taittiriya Upanishad (peace invocation)', title: 'May we study together',
+   dev: 'ॐ सह नाववतु । सह नौ भुनक्तु । सह वीर्यं करवावहै । तेजस्वि नावधीतमस्तु मा विद्विषावहै ॥ ॐ शान्तिः शान्तिः शान्तिः ॥',
+   iast: 'oṃ saha nāv avatu | saha nau bhunaktu | saha vīryaṃ karavāvahai | tejasvi nāv adhītam astu mā vidviṣāvahai || oṃ śāntiḥ śāntiḥ śāntiḥ ||',
+   en: 'May he protect us both, teacher and student. May he nourish us both. May we work together with energy. May our study be brilliant. May we never resent each other. Om, peace, peace, peace.',
+   why: 'Chanted by teacher and student before a lesson in the Krishna Yajurveda tradition. A good verse to begin your own study with.' },
+ { id: 'tu1.11', veda: 'Yajur', ref: 'Taittiriya Upanishad 1.11.1–2 (excerpt)', title: 'The graduation address',
+   dev: 'सत्यं वद । धर्मं चर । स्वाध्यायान्मा प्रमदः ॥ मातृदेवो भव । पितृदेवो भव । आचार्यदेवो भव । अतिथिदेवो भव ॥',
+   iast: 'satyaṃ vada | dharmaṃ cara | svādhyāyān mā pramadaḥ || mātṛdevo bhava | pitṛdevo bhava | ācāryadevo bhava | atithidevo bhava ||',
+   en: 'Speak the truth. Live by dharma. Never neglect your study. Treat your mother as a god. Treat your father as a god. Treat your teacher as a god. Treat your guest as a god.',
+   why: 'The teacher\'s parting advice to students finishing their Vedic education. "Atithi devo bhava" is now India\'s tourism slogan.' },
+ { id: 'katha1.3.14', veda: 'Yajur', ref: 'Katha Upanishad 1.3.14', title: 'Arise, awake',
+   dev: 'उत्तिष्ठत जाग्रत प्राप्य वरान्निबोधत । क्षुरस्य धारा निशिता दुरत्यया दुर्गं पथस्तत्कवयो वदन्ति ॥',
+   iast: 'uttiṣṭhata jāgrata prāpya varān nibodhata | kṣurasya dhārā niśitā duratyayā durgaṃ pathas tat kavayo vadanti ||',
+   en: 'Arise! Awake! Go to the great teachers and learn. Like the sharp edge of a razor, hard to walk, is that path, say the wise.',
+   why: 'Death (Yama) teaches the boy Nachiketa. Swami Vivekananda made the first line his call to India. The razor\'s edge names how demanding real self-knowledge is.' },
+ { id: 'av12.1.12', veda: 'Atharva', ref: 'Atharvaveda 12.1.12 (line)', title: 'Hymn to the Earth',
+   dev: 'माता भूमिः पुत्रो अहं पृथिव्याः ।',
+   iast: 'mātā bhūmiḥ putro ahaṃ pṛthivyāḥ |',
+   en: 'The Earth is my mother, and I am her child.',
+   why: 'From the Bhumi Sukta, 63 verses praising the Earth that carries mountains, rivers, plants and many peoples speaking many languages. Often cited as an early ecological text.' },
+ { id: 'mu3.1.6', veda: 'Atharva', ref: 'Mundaka Upanishad 3.1.6', title: 'Truth alone triumphs',
+   dev: 'सत्यमेव जयते नानृतं सत्येन पन्था विततो देवयानः ।',
+   iast: 'satyam eva jayate nānṛtaṃ satyena panthā vitato devayānaḥ |',
+   en: 'Truth alone wins, not falsehood. By truth the road of the gods is laid open.',
+   why: '"Satyameva Jayate" is India\'s national motto, written beneath the Lion Capital on every currency note.' },
+ { id: 'mand2', veda: 'Atharva', ref: 'Mandukya Upanishad 2', title: 'This Self is Brahman (ayam ātmā brahma)',
+   dev: 'सर्वं ह्येतद् ब्रह्मायमात्मा ब्रह्म सोऽयमात्मा चतुष्पात् ॥',
+   iast: 'sarvaṃ hy etad brahma ayam ātmā brahma so \'yam ātmā catuṣpāt ||',
+   en: 'All this is Brahman. This Self is Brahman. This Self has four quarters.',
+   why: 'The Great Saying of the Atharvaveda. The four quarters are waking, dreaming, deep sleep, and turīya, the pure awareness underlying all three, which the syllable Om stands for.' },
+ { id: 'ait3.3', veda: 'Rig', ref: 'Aitareya Upanishad 3.3', title: 'Consciousness is Brahman (prajñānaṃ brahma)',
+   dev: 'प्रज्ञानं ब्रह्म ॥',
+   iast: 'prajñānaṃ brahma ||',
+   en: 'Consciousness is Brahman.',
+   why: 'The Great Saying of the Rigveda. Everything, from the gods to the smallest creature, is guided by consciousness, and that consciousness is the ultimate reality.' }
+];
+
+/* ---------------- VEDAS ---------------- */
+const VEDAS = {
+ Rig: { dn: 'ऋग्वेद', name: 'Rigveda', sub: 'Veda of praise', meaning: 'ṛc = verse of praise',
+   facts: [['10', 'books (mandalas)'], ['1,028', 'hymns (suktas)'], ['~10,550', 'verses'], ['c. 1500–1200 BCE', 'scholarly dating']],
+   body: `<p>The oldest Veda and the foundation of the others: a collection of hymns praising the gods, recited by the <b>hotṛ</b> priest during the fire sacrifice.</p>
+   <p><b>How it is arranged.</b> Books 2 to 7 are the "family books", the oldest core, each from one family of seers: Gritsamada (2), Vishvamitra (3), Vamadeva (4), Atri (5), Bharadvaja (6), Vasishtha (7). Book 9 is devoted entirely to Soma. Books 1 and 10 were added later; book 10 holds the great philosophical hymns.</p>
+   <p><b>Famous hymns:</b> Agni hymn (1.1), Gayatri (3.62.10), Purusha Sukta (10.90), Hymn of Creation (10.129), the riddle hymn (1.164), the hymn of unity (10.191). Most hymns go to Indra, Agni and Soma.</p>`,
+   texts: [['Samhita', 'Shakala recension (the only complete one surviving)'], ['Brahmanas', 'Aitareya, Kaushitaki (Shankhayana)'], ['Aranyakas', 'Aitareya, Kaushitaki'], ['Upanishads', 'Aitareya, Kaushitaki']],
+   upaveda: 'Ayurveda (medicine), by one tradition' },
+ Sama: { dn: 'सामवेद', name: 'Samaveda', sub: 'Veda of chants', meaning: 'sāman = melody',
+   facts: [['1,875', 'verses (Kauthuma)'], ['~75', 'verses not found in the Rigveda'], ['2', 'parts: Purvarchika, Uttararchika'], ['3', 'surviving recensions']],
+   body: `<p>The Rigveda set to music. Almost every verse is borrowed from the Rigveda, mostly from books 8 and 9, and arranged for singing by the <b>udgātṛ</b> priest during the Soma sacrifice.</p>
+   <p>The verse book (ārcika) is the words; separate song books (gānas) give the melodies, which stretch, repeat and add syllables to the words. Indian classical music traditionally traces its roots here. In the Bhagavad Gita (10.22) Krishna says, "Among the Vedas, I am the Samaveda."</p>`,
+   texts: [['Samhita', 'Kauthuma, Ranayaniya, Jaiminiya recensions'], ['Brahmanas', 'Panchavimsha (Tandya), Shadvimsha, Jaiminiya'], ['Upanishads', 'Chandogya, Kena']],
+   upaveda: 'Gandharvaveda (music and dance)' },
+ Yajur: { dn: 'यजुर्वेद', name: 'Yajurveda', sub: 'Veda of ritual', meaning: 'yajus = sacrificial formula',
+   facts: [['2', 'branches: White and Black'], ['40', 'chapters in the White Samhita'], ['~1,975', 'mantras (White)'], ['4', 'Black Samhitas survive']],
+   body: `<p>The handbook of the sacrifice. Its prose formulas and verses are spoken by the <b>adhvaryu</b>, the priest who physically builds the altar, handles the fire and pours the offerings.</p>
+   <p><b>White (Shukla) Yajurveda:</b> mantras kept separate from explanation. Its Vajasaneyi Samhita comes in two versions, Madhyandina and Kanva, and its Shatapatha Brahmana ("of a hundred paths") is the largest Brahmana. Its last chapter is the Isha Upanishad.</p>
+   <p><b>Black (Krishna) Yajurveda:</b> mantras and prose explanation mixed together. Samhitas: Taittiriya, Maitrayani, Kathaka, Kapishthala.</p>`,
+   texts: [['White Samhita', 'Vajasaneyi (Madhyandina, Kanva)'], ['White Brahmana', 'Shatapatha'], ['White Upanishads', 'Isha, Brihadaranyaka'], ['Black Samhitas', 'Taittiriya, Maitrayani, Kathaka, Kapishthala'], ['Black Brahmana', 'Taittiriya'], ['Black Upanishads', 'Taittiriya, Katha, Shvetashvatara, Maitri']],
+   upaveda: 'Dhanurveda (archery and warfare)' },
+ Atharva: { dn: 'अथर्ववेद', name: 'Atharvaveda', sub: 'Veda of daily life', meaning: 'named after the seers Atharvan and Angiras',
+   facts: [['20', 'books (kandas)'], ['~730', 'hymns'], ['~6,000', 'verses'], ['~1/6', 'shared with the Rigveda']],
+   body: `<p>The Veda of everyday life. Alongside hymns to the gods, it holds prayers for healing illness, long life, a good harvest, a happy marriage, protection from snakes and enemies, and harmony at home. It is a window into how ordinary people lived and worried.</p>
+   <p>It also contains deep philosophy: the Hymn to the Earth (12.1), hymns on Time (19.53–54) and on the cosmic pillar Skambha (10.7). Its priest, the <b>brahman</b>, silently oversees the whole sacrifice and fixes mistakes.</p>
+   <p>Two recensions survive: Shaunaka (the standard one) and Paippalada, found in Kashmir and Odisha.</p>`,
+   texts: [['Samhita', 'Shaunaka, Paippalada'], ['Brahmana', 'Gopatha'], ['Upanishads', 'Mundaka, Mandukya, Prashna']],
+   upaveda: 'Sthapatyaveda (architecture); Ayurveda is also often linked here' }
+};
+
+const UPANISHADS = [
+ ['Isha', 'Yajur (White)', '18 verses. The Lord pervades everything; act without clinging to results; knowledge and action together.'],
+ ['Kena', 'Sama', '"By whom?" The power behind the senses is Brahman. The story of the goddess Uma teaching the proud gods.'],
+ ['Katha', 'Yajur (Black)', 'The boy Nachiketa asks Death what happens after we die. The image of the body as a chariot, the senses as horses, the mind as reins.'],
+ ['Prashna', 'Atharva', 'Six students bring six questions to the sage Pippalada: on life-breath, the senses, Om and the self.'],
+ ['Mundaka', 'Atharva', 'Higher and lower knowledge; the two birds; "Truth alone triumphs".'],
+ ['Mandukya', 'Atharva', 'Only 12 verses, the shortest. Om and the four states: waking, dream, deep sleep, and turīya.'],
+ ['Taittiriya', 'Yajur (Black)', 'The five layers (koshas) of a person: food, breath, mind, understanding, bliss. The graduation address.'],
+ ['Aitareya', 'Rig', 'The Self creates the world and enters it. "Consciousness is Brahman".'],
+ ['Chandogya', 'Sama', 'Om as the essence of the chant. Uddalaka teaches his son Shvetaketu: "You are that".'],
+ ['Brihadaranyaka', 'Yajur (White)', 'The largest. The sage Yajnavalkya debates Gargi and teaches his wife Maitreyi; Brahman described as "not this, not this" (neti neti).'],
+ ['Shvetashvatara', 'Yajur (Black)', 'A personal God (Rudra-Shiva) as the one reality; early teachings on yoga and meditation.']
+];
+
+const GODS = [
+ ['इ', 'Indra', '~250 hymns', 'King of the gods and wielder of the thunderbolt (vajra). His great deed is slaying the serpent Vritra, who had trapped the waters, so the rivers flow again. A god of strength, rain and victory, and the Soma-drinker.'],
+ ['अ', 'Agni', '~200 hymns', 'Fire, in the hearth, the altar, the lightning and the sun. The messenger who carries offerings to the gods and the priest among gods. The Rigveda begins with him.'],
+ ['सो', 'Soma', '~120 hymns', 'A sacred plant whose pressed juice was offered and drunk in ritual, and the god of that drink. All 114 hymns of Rigveda book 9 are to Soma Pavamana, "Soma being purified". Later linked with the moon.'],
+ ['व', 'Varuna', '~12 hymns, more with Mitra', 'Guardian of ṛta, the cosmic order, and of moral law. He sees every lie and binds wrongdoers with his noose, but forgives the repentant. Often paired with Mitra, god of friendship and contracts.'],
+ ['उ', 'Ushas', '~20 hymns', 'The Dawn, a radiant young woman who wakes all creatures and opens the doors of the day. Her hymns are among the most beautiful poetry in the Rigveda.'],
+ ['सू', 'Surya & Savitri', '~10 hymns each', 'Surya is the sun itself, the eye of the gods. Savitri is the sun\'s power to stir and move all things, the god of the Gayatri mantra.'],
+ ['रु', 'Rudra', '3 hymns, many mentions', 'The fierce archer of the storms, who sends disease and also heals; the "best physician". He becomes Shiva in later Hinduism.'],
+ ['वि', 'Vishnu', '~5 hymns', 'Famous for his three strides, with which he measured out earth, air and heaven. A minor Vedic god who became one of the supreme gods of later Hinduism.'],
+ ['अ', 'Ashvins', '~50 hymns', 'Twin horsemen of the dawn, divine physicians who rescue sailors, heal the sick and restore youth.'],
+ ['म', 'Maruts', '~33 hymns', 'A band of young storm gods, sons of Rudra, who ride with Indra in golden armour.'],
+ ['य', 'Yama', 'a few hymns', 'The first mortal to die, who found the path to the other world and became king of the ancestors.'],
+ ['स', 'Sarasvati', 'a few hymns', 'A mighty river, "best of mothers, best of rivers, best of goddesses" (2.41.16), who later becomes the goddess of speech and learning.'],
+ ['वा', 'Vayu', 'a few hymns', 'The Wind, swift and first to drink the Soma.'],
+ ['पृ', 'Dyaus & Prithvi', 'a few hymns', 'Father Sky and Mother Earth, the oldest divine pair, parents of the gods.']
+];
+
+const GLOSS = [
+ ['Veda', 'वेद', 'Knowledge. From the root vid, "to know". The four Vedas are Rig, Sama, Yajur and Atharva.'],
+ ['Shruti', 'श्रुति', '"That which is heard." Revealed scripture, believed to have been heard by the seers in deep meditation. The Vedas, including the Upanishads, are shruti.'],
+ ['Smriti', 'स्मृति', '"That which is remembered." Texts of human authorship that build on the Vedas: the epics, Puranas, law books. The Bhagavad Gita is technically smriti.'],
+ ['Apaurusheya', 'अपौरुषेय', '"Not made by a person." The traditional view that the Vedas are authorless and eternal.'],
+ ['Rishi', 'ऋषि', 'A seer who "saw" or received a hymn. Each hymn is traditionally recorded with its rishi, deity and meter.'],
+ ['Mantra', 'मन्त्र', 'A sacred verse or formula, a "tool of thought".'],
+ ['Sukta', 'सूक्त', '"Well said." A hymn, a group of verses addressed to one deity.'],
+ ['Mandala', 'मण्डल', '"Circle." One of the ten books of the Rigveda.'],
+ ['Samhita', 'संहिता', '"Collection." The core collection of mantras in each Veda.'],
+ ['Brahmana', 'ब्राह्मण', 'Prose texts that explain the rituals and their meaning.'],
+ ['Aranyaka', 'आरण्यक', '"Of the forest." Texts on the inner meaning of ritual, studied in seclusion.'],
+ ['Upanishad', 'उपनिषद्', '"Sitting down near" a teacher. The philosophical texts at the end of each Veda.'],
+ ['Vedanta', 'वेदान्त', '"End of the Veda." The Upanishads, and the schools of philosophy based on them.'],
+ ['Rita', 'ऋत', 'Cosmic order: the law that keeps the sun moving, the seasons turning and people truthful. The forerunner of dharma.'],
+ ['Dharma', 'धर्म', 'That which upholds: duty, right conduct, the order of things.'],
+ ['Yajna', 'यज्ञ', 'Sacrifice or worship, especially offerings into the sacred fire. The ritual that the Vedas were composed to serve.'],
+ ['Soma', 'सोम', 'A plant whose juice was pressed and offered in the most important rituals, and the god of that drink. Its exact botanical identity is debated.'],
+ ['Brahman', 'ब्रह्मन्', 'The ultimate reality, the ground of everything. Not to be confused with Brahma the creator god, or the brahman priest.'],
+ ['Atman', 'आत्मन्', 'The innermost Self. The Upanishads teach that Atman is Brahman.'],
+ ['Mahavakya', 'महावाक्य', '"Great saying." Four short statements, one from each Veda, that sum up Upanishadic teaching.'],
+ ['Om', 'ॐ', 'The sacred syllable, said to contain all sound and all reality. Made of A, U and M plus the silence after.'],
+ ['Chandas', 'छन्दस्', 'Meter. Gayatri (3 × 8 = 24 syllables), Anushtubh (4 × 8 = 32), Trishtubh (4 × 11 = 44, the most common in the Rigveda), Jagati (4 × 12 = 48).'],
+ ['Vedanga', 'वेदाङ्ग', '"Limbs of the Veda." Six sciences for preserving and using the Vedas: phonetics, meter, grammar, etymology, astronomy, ritual.'],
+ ['Shakha', 'शाखा', '"Branch." A school or recension of a Veda, with its own version of the text passed down a lineage.'],
+ ['Patha', 'पाठ', 'A recitation method. In pada patha each word is chanted separately; in krama, jata and ghana words are repeated in fixed patterns, forward and backward, to lock the text in memory.'],
+ ['Hotri', 'होतृ', 'The Rigveda priest, who recites hymns of praise.'],
+ ['Udgatri', 'उद्गातृ', 'The Samaveda priest, who sings the chants.'],
+ ['Adhvaryu', 'अध्वर्यु', 'The Yajurveda priest, who performs the ritual actions.'],
+ ['Upaveda', 'उपवेद', '"Secondary Veda." Applied sciences traditionally linked to each Veda: medicine, archery, music, architecture.']
+];
+
+/* ---------------- LESSONS ---------------- */
+const vbtn = (v, t) => `<button class="link-btn" data-goveda="${v}">${t}</button>`;
+const sbtn = (id, t) => `<button class="link-btn" data-goverse="${id}">${t}</button>`;
+const LESSONS = [
+ { t: 'What are the Vedas?', s: 'The oldest scriptures of Hinduism',
+   b: `<p>The Vedas are the oldest sacred texts of India and among the oldest religious texts in the world. The word <b>veda</b> means "knowledge".</p>
+   <p>There are four: the <b>Rigveda</b> (hymns of praise), the <b>Samaveda</b> (chants), the <b>Yajurveda</b> (ritual formulas) and the <b>Atharvaveda</b> (prayers for daily life).</p>
+   <p>Hindus regard the Vedas as <b>shruti</b>, "what was heard": not written by any person, but heard by ancient seers (rishis) in deep meditation and passed on exactly. Every other Hindu text, including the epics and the Bhagavad Gita, treats the Vedas as its final authority.</p>
+   <div class="note">Scholars date the Rigveda to roughly 1500–1200 BCE and the later Vedic texts to about 1000–500 BCE. Tradition holds that the Vedas are eternal and were arranged into four by the sage <b>Vyasa</b>, whose name means "the arranger".</div>
+   <p>Start your study with the verse teachers and students chant together: ${sbtn('tu2.1', 'May we study together')}.</p>` },
+ { t: 'Four layers in every Veda', s: 'From hymn to philosophy',
+   b: `<p>Each Veda is not one book but a library built in layers, roughly from oldest to newest:</p>
+   <div class="tbl"><table><tr><th>Layer</th><th>What it is</th><th>Used by</th></tr>
+   <tr><td><b>Samhita</b></td><td>The collection of mantras and hymns</td><td>Everyone</td></tr>
+   <tr><td><b>Brahmana</b></td><td>Prose explaining how and why to do the rituals</td><td>Householders</td></tr>
+   <tr><td><b>Aranyaka</b></td><td>"Forest texts": the inner, symbolic meaning of ritual</td><td>Those withdrawing to the forest</td></tr>
+   <tr><td><b>Upanishad</b></td><td>Philosophy: the Self, Brahman, liberation</td><td>Seekers</td></tr></table></div>
+   <p>The first two are called the <b>karma-kanda</b> (section on action, ritual). The last two are the <b>jnana-kanda</b> (section on knowledge). Because the Upanishads come at the end, they are called <b>Vedanta</b>, "the end of the Veda".</p>
+   <p>When people say "the Vedas" they often mean just the Samhitas. Strictly, all four layers are Veda.</p>` },
+ { t: 'How the Vedas survived', s: '3,000 years without writing',
+   b: `<p>For most of their history the Vedas were never written down. They were memorised and passed from teacher to student, syllable by syllable, including the exact pitch accent of each syllable.</p>
+   <p>To prevent even one error, students learn each text in several patterns (pāṭhas):</p>
+   <ul><li><b>Samhita patha:</b> the text as it flows, words joined by sound rules.</li>
+   <li><b>Pada patha:</b> each word separately: <i>a b c d</i>.</li>
+   <li><b>Krama patha:</b> overlapping pairs: <i>ab, bc, cd</i>.</li>
+   <li><b>Jata patha:</b> forward and back: <i>ab ba ab, bc cb bc</i>.</li>
+   <li><b>Ghana patha:</b> the hardest: <i>ab ba abc cba abc</i>…</li></ul>
+   <p>If any one version drifted, the others would expose the mistake. The method worked so well that Rigveda recitations from opposite ends of India match almost perfectly.</p>
+   <div class="note">In 2003 UNESCO proclaimed the tradition of Vedic chanting a Masterpiece of the Oral and Intangible Heritage of Humanity.</div>` },
+ { t: 'The Rigveda', s: 'The Veda of praise',
+   b: `<p>The Rigveda is the oldest and largest of the hymn collections: <b>10 books, 1,028 hymns, about 10,550 verses</b>. The other three Vedas draw heavily on it.</p>
+   <p>Its hymns praise the gods of nature and ritual: Indra the storm-king, Agni the fire, Soma the sacred drink, Varuna the guardian of order, Ushas the dawn. They ask for rain, cattle, children, victory and long life, but also wonder about the origin of everything.</p>
+   <p>Read: ${sbtn('rv1.1.1', 'the first verse')}, ${sbtn('rv3.62.10', 'the Gayatri')}, ${sbtn('rv10.129.1', 'the Hymn of Creation')}.</p>
+   <p>${vbtn('Rig', 'See how the Rigveda is built →')}</p>` },
+ { t: 'The Samaveda', s: 'The Veda of chants',
+   b: `<p>The Samaveda takes verses from the Rigveda and sets them to melody. Of its 1,875 verses, only about 75 are not found in the Rigveda. What makes it a separate Veda is the music.</p>
+   <p>The words are in the verse book; the melodies are recorded in song books (gānas), where vowels are stretched and extra syllables (stobhas) like <i>hāu</i> and <i>hoyi</i> are added. The singer is the udgātṛ priest.</p>
+   <p>Its Upanishads, the <b>Chandogya</b> and <b>Kena</b>, are among the most important. Read: ${sbtn('ch6.8.7', 'You are that')}.</p>
+   <p>${vbtn('Sama', 'See how the Samaveda is built →')}</p>` },
+ { t: 'The Yajurveda', s: 'The Veda of ritual',
+   b: `<p>If the Rigveda is what to praise and the Samaveda how to sing it, the Yajurveda is what to <b>do</b>. Its formulas (yajus) are recited by the adhvaryu priest while building the altar, kindling the fire and making offerings.</p>
+   <p>It comes in two branches. The <b>White (Shukla)</b> Yajurveda keeps the mantras clean and puts the explanations in a separate book, the Shatapatha Brahmana. The <b>Black (Krishna)</b> Yajurveda mixes mantra and explanation together.</p>
+   <p>It holds more major Upanishads than any other Veda: Isha, Brihadaranyaka, Taittiriya, Katha and Shvetashvatara. Read: ${sbtn('isha1', 'Enjoy by letting go')}, ${sbtn('bu1.3.28', 'Lead me from the unreal')}.</p>
+   <p>${vbtn('Yajur', 'See how the Yajurveda is built →')}</p>` },
+ { t: 'The Atharvaveda', s: 'The Veda of daily life',
+   b: `<p>The Atharvaveda was the last to be accepted as a full Veda. It is different in spirit: much of it is about ordinary life, with charms and prayers for healing fever and wounds, for love and marriage, for crops, for protection from danger and for peace in the family.</p>
+   <p>That makes it a treasure for historians and the root of Indian medicine (Ayurveda). It also reaches great heights, as in the Hymn to the Earth: ${sbtn('av12.1.12', 'The Earth is my mother')}.</p>
+   <p>Its Upanishads, Mundaka, Mandukya and Prashna, are short and profound. Read: ${sbtn('mu3.1.6', 'Truth alone triumphs')}.</p>
+   <p>${vbtn('Atharva', 'See how the Atharvaveda is built →')}</p>` },
+ { t: 'The gods of the Vedas', s: 'Devas, the shining ones',
+   b: `<p>The word <b>deva</b> comes from a root meaning "to shine". Vedic gods are powers of nature and ritual: fire, storm, sun, dawn, wind, the sacred drink.</p>
+   <p>Hymns often praise one god as if he were the greatest of all, then praise another the same way the next day. The scholar Max Müller called this <b>henotheism</b>. Behind it lies the Rigveda's own insight: ${sbtn('rv1.164.46', 'Truth is one, the wise call it by many names')}.</p>
+   <p>Some of the biggest Vedic gods, like Indra and Varuna, became less central later, while minor ones, Vishnu and Rudra (Shiva), became the supreme gods of later Hinduism.</p>
+   <p>Open the <b>Gods</b> tab to meet them one by one.</p>` },
+ { t: 'Rita and yajna', s: 'Cosmic order and sacrifice',
+   b: `<p>Two ideas hold the Vedic world together.</p>
+   <p><b>Ṛta</b> is the order of the universe: the reason the sun rises, rivers flow and seasons return, and also the reason people should speak the truth and keep promises. Varuna guards it. Ṛta later grows into the idea of <b>dharma</b>.</p>
+   <p><b>Yajña</b> is sacrifice: offerings of ghee, grain and Soma poured into the sacred fire with mantras. People give to the gods; the gods give rain, food and order back. The sacrifice keeps ṛta turning. Four priests, one for each Veda, run a major sacrifice:</p>
+   <div class="tbl"><table><tr><th>Priest</th><th>Veda</th><th>Role</th></tr>
+   <tr><td>Hotṛ</td><td>Rig</td><td>Recites the hymns</td></tr>
+   <tr><td>Udgātṛ</td><td>Sama</td><td>Sings the chants</td></tr>
+   <tr><td>Adhvaryu</td><td>Yajur</td><td>Performs the actions</td></tr>
+   <tr><td>Brahman</td><td>Atharva</td><td>Oversees silently, corrects errors</td></tr></table></div>
+   <p>The Upanishads later turn the outer fire inward: the true sacrifice is offering the ego in the fire of knowledge.</p>` },
+ { t: 'The Upanishads', s: 'Atman is Brahman',
+   b: `<p>The Upanishads ask the deepest questions: Who am I? What is real? What happens at death? Their central answer is that <b>Atman</b>, your innermost Self, is the same as <b>Brahman</b>, the reality behind the whole universe.</p>
+   <p>The four <b>Great Sayings</b>, one from each Veda, say this in four ways:</p>
+   <div class="tbl"><table><tr><th>Saying</th><th>Meaning</th><th>Source</th></tr>
+   <tr><td>${sbtn('ait3.3', 'Prajñānaṃ brahma')}</td><td>Consciousness is Brahman</td><td>Rig · Aitareya</td></tr>
+   <tr><td>${sbtn('bu1.4.10', 'Ahaṃ brahmāsmi')}</td><td>I am Brahman</td><td>Yajur · Brihadaranyaka</td></tr>
+   <tr><td>${sbtn('ch6.8.7', 'Tat tvam asi')}</td><td>You are that</td><td>Sama · Chandogya</td></tr>
+   <tr><td>${sbtn('mand2', 'Ayam ātmā brahma')}</td><td>This Self is Brahman</td><td>Atharva · Mandukya</td></tr></table></div>
+   <p>Knowing this directly, not just believing it, is <b>moksha</b>, liberation from the cycle of birth and death. The Bhagavad Gita and all schools of Vedanta grow from these texts. See the list of eleven principal Upanishads in the <b>Vedas</b> tab.</p>` },
+ { t: 'Meter, sound and the Vedangas', s: 'The six limbs of the Veda',
+   b: `<p>Because the exact sound mattered, ancient India developed whole sciences to protect the Vedas. These are the six <b>Vedangas</b>, "limbs of the Veda":</p>
+   <ol><li><b>Shiksha</b>: phonetics and pronunciation</li>
+   <li><b>Chandas</b>: meter</li>
+   <li><b>Vyakarana</b>: grammar (Panini's grammar is the great example)</li>
+   <li><b>Nirukta</b>: etymology, the meaning of rare words (Yaska)</li>
+   <li><b>Jyotisha</b>: astronomy, to time the rituals</li>
+   <li><b>Kalpa</b>: ritual procedure, household rites and law</li></ol>
+   <p><b>Meters</b> count syllables, not stresses. The main ones: Gayatri (3 lines × 8 = 24 syllables), Anushtubh (4 × 8 = 32, which became the shloka of the epics), Trishtubh (4 × 11 = 44, the most common in the Rigveda) and Jagati (4 × 12 = 48).</p>
+   <p>Try counting the Gayatri: <i>tat sa-vi-tur va-re-ṇyaṃ</i> is 7; reciters add a syllable, <i>va-re-ṇi-yaṃ</i>, to make 8.</p>` },
+ { t: 'How to keep learning', s: 'A practice for every day',
+   b: `<p>You now have a map of all four Vedas. A simple daily practice to go deeper:</p>
+   <ol><li>Read today's verse on the Path tab, aloud, in Sanskrit and English.</li>
+   <li>Use <b>practice mode</b> on the Verses tab: read the Sanskrit and try to recall the meaning before revealing it. Mark a verse learned once you can explain it.</li>
+   <li>Take the quiz once a week.</li>
+   <li>Read one full hymn or Upanishad section a week from the translations linked at the bottom of this page. Start with Rigveda 10.129, then the Isha Upanishad (18 short verses), then the Katha Upanishad.</li>
+   <li>Learn chanting from a qualified teacher if you can. The sound is part of the Veda.</li></ol>
+   <p>Close with: ${sbtn('bu5.1.1', 'That is whole, this is whole')}.</p>` }
+];
+
+/* ---------------- QUIZ ---------------- */
+const QUIZ = [
+ ['What does the word "veda" mean?', ['Knowledge', 'Song', 'Fire', 'God'], 0],
+ ['Which is the oldest of the four Vedas?', ['Rigveda', 'Samaveda', 'Yajurveda', 'Atharvaveda'], 0],
+ ['How many books (mandalas) does the Rigveda have?', ['10', '4', '12', '20'], 0],
+ ['Which Veda is mainly the Rigveda set to melody?', ['Samaveda', 'Yajurveda', 'Atharvaveda', 'Rigveda'], 0],
+ ['Which Veda is divided into White and Black branches?', ['Yajurveda', 'Rigveda', 'Samaveda', 'Atharvaveda'], 0],
+ ['Which Veda is best known for healing charms and prayers for daily life?', ['Atharvaveda', 'Samaveda', 'Rigveda', 'Yajurveda'], 0],
+ ['What are the four layers of each Veda, in order?', ['Samhita, Brahmana, Aranyaka, Upanishad', 'Upanishad, Samhita, Purana, Sutra', 'Brahmana, Samhita, Gita, Upanishad', 'Sutra, Samhita, Aranyaka, Purana'], 0],
+ ['What does "shruti" mean?', ['That which is heard', 'That which is remembered', 'That which is written', 'That which is sung'], 0],
+ ['Which god does the Rigveda\'s first verse praise?', ['Agni', 'Indra', 'Varuna', 'Soma'], 0],
+ ['The Gayatri mantra is addressed to which god?', ['Savitri, the sun', 'Indra', 'Rudra', 'Ushas'], 0],
+ ['"Tat tvam asi" (You are that) comes from which Upanishad?', ['Chandogya', 'Isha', 'Katha', 'Mandukya'], 0],
+ ['Which Upanishad tells the story of Nachiketa and Death?', ['Katha', 'Kena', 'Mundaka', 'Aitareya'], 0],
+ ['India\'s motto "Satyameva Jayate" comes from which Upanishad?', ['Mundaka', 'Chandogya', 'Brihadaranyaka', 'Prashna'], 0],
+ ['Who receives the most hymns in the Rigveda?', ['Indra', 'Vishnu', 'Agni', 'Rudra'], 0],
+ ['What is ṛta?', ['Cosmic order', 'A sacred drink', 'A type of priest', 'A meter'], 0],
+ ['Which priest sings the Samaveda chants?', ['Udgātṛ', 'Hotṛ', 'Adhvaryu', 'Brahman'], 0],
+ ['Which Rigveda book is devoted entirely to Soma?', ['Book 9', 'Book 1', 'Book 10', 'Book 3'], 0],
+ ['How many syllables does the Gayatri meter have?', ['24', '32', '44', '48'], 0],
+ ['Which Upanishad, only 12 verses long, explains Om and the four states of consciousness?', ['Mandukya', 'Isha', 'Kena', 'Taittiriya'], 0],
+ ['Who traditionally arranged the Vedas into four?', ['Vyasa', 'Valmiki', 'Panini', 'Shankara'], 0],
+ ['"Ahaṃ brahmāsmi" (I am Brahman) is the Great Saying of which Veda?', ['Yajurveda', 'Rigveda', 'Samaveda', 'Atharvaveda'], 0],
+ ['What does "Upanishad" literally suggest?', ['Sitting down near a teacher', 'Song of the forest', 'End of the ritual', 'Hymn of fire'], 0],
+ ['Rigveda 10.129, which ends "perhaps even he does not know", is the hymn of…', ['Creation', 'the Earth', 'Unity', 'the Dawn'], 0],
+ ['Which Vedanga studies grammar?', ['Vyakarana', 'Jyotisha', 'Nirukta', 'Shiksha'], 0]
+];
+
+/* ---------------- RENDER ---------------- */
+function verseCard(v, opts = {}) {
+    const learned = !!S.verses[v.id];
+    return `<div class="card ${opts.veil ? 'veil' : ''}" id="verse-${v.id}" data-vid="${v.id}">
+        <div class="top" style="align-items:flex-start">
+            <div><div class="label" style="margin-bottom:2px">${esc(v.title)}</div><div class="ref">${esc(v.ref)}</div></div>
+            <span class="tag">${v.veda}</span>
+        </div>
+        <div class="deva" lang="sa" style="margin-top:10px">${v.dev}</div>
+        <div class="iast" lang="sa-Latn">${esc(v.iast)}</div>
+        <div class="eng" data-reveal>${esc(v.en)}</div>
+        <div class="why" data-reveal>${esc(v.why)}</div>
+        ${opts.noLearn ? '' : `<div class="row" style="margin-top:12px"><button class="btn small ${learned ? 'done' : 'ghost'}" data-learn="${v.id}">${learned ? '✓ Learned' : 'Mark as learned'}</button></div>`}
+    </div>`;
+}
+
+function renderToday() {
+    const day = Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
+    const v = VERSES[day % VERSES.length];
+    $('#todayVerse').outerHTML = `<div id="todayVerse">${verseCard(v).replace('class="card ', 'class="card today ')}</div>`;
+    const lab = document.querySelector('#todayVerse .label');
+    if (lab) lab.insertAdjacentHTML('beforebegin', '<div class="eyebrow" style="margin-bottom:4px">Verse of the day</div>');
+}
+
+function renderLessons() {
+    $('#lessons').innerHTML = LESSONS.map((l, i) => {
+        const done = !!S.lessons[i], open = S.open === i;
+        return `<div class="card lesson ${done ? 'complete' : ''} ${open ? 'open' : ''}" id="lesson-${i}">
+            <button class="head" data-open="${i}" aria-expanded="${open}">
+                <span class="num">${done ? '✓' : i + 1}</span>
+                <span class="t"><b>${esc(l.t)}</b><span>${esc(l.s)}</span></span>
+                <span class="chev" aria-hidden="true">›</span>
+            </button>
+            <div class="body">${l.b}
+                <div class="row" style="margin-top:14px">
+                    <button class="btn small ${done ? 'done' : ''}" data-complete="${i}">${done ? '✓ Completed' : 'Mark complete'}</button>
+                    ${i < LESSONS.length - 1 ? `<button class="btn ghost small" data-open="${i + 1}">Next lesson ›</button>` : ''}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderStats() {
+    const n = Object.values(S.lessons).filter(Boolean).length;
+    const vn = Object.values(S.verses).filter(Boolean).length;
+    $('#stLessons').textContent = `${n}/${LESSONS.length}`;
+    $('#stVerses').textContent = `${vn}/${VERSES.length}`;
+    $('#stQuiz').textContent = S.best == null ? '–' : `${S.best}/10`;
+    $('#pathBar').style.width = (n / LESSONS.length * 100) + '%';
+}
+
+let curVeda = 'Rig';
+function renderVedas() {
+    $('#vgrid').innerHTML = Object.entries(VEDAS).map(([k, v]) =>
+        `<button class="vcard ${k === curVeda ? 'on' : ''}" data-veda="${k}" aria-pressed="${k === curVeda}"><div class="dn" lang="sa">${v.dn}</div><b>${v.name}</b><span>${v.sub}</span></button>`).join('');
+    const v = VEDAS[curVeda];
+    const verses = VERSES.filter(x => x.veda === curVeda);
+    $('#vdetail').innerHTML = `<div class="card">
+        <div class="eyebrow">${esc(v.meaning)}</div>
+        <h2 style="margin-top:4px">${v.name}</h2>
+        <div class="facts">${v.facts.map(f => `<div class="fact"><b>${f[0]}</b><span>${f[1]}</span></div>`).join('')}</div>
+        ${v.body}
+        <h3 style="margin-top:14px">Texts that belong to it</h3>
+        <div class="tbl"><table>${v.texts.map(t => `<tr><td style="width:38%"><b>${t[0]}</b></td><td>${t[1]}</td></tr>`).join('')}</table></div>
+        <p class="small"><b>Upaveda:</b> ${v.upaveda}</p>
+        <h3 style="margin-top:14px">Verses to learn</h3>
+        <ul class="small">${verses.map(x => `<li>${sbtn(x.id, esc(x.title))} <span class="dim">· ${esc(x.ref)}</span></li>`).join('')}</ul>
+    </div>`;
+}
+
+function renderUpanishads() {
+    $('#upanishads').innerHTML = `<div class="card"><div class="tbl"><table>
+        <tr><th>Upanishad</th><th>Veda</th><th>Key teaching</th></tr>
+        ${UPANISHADS.map(u => `<tr><td><b>${u[0]}</b></td><td class="n">${u[1]}</td><td>${u[2]}</td></tr>`).join('')}
+    </table></div></div>`;
+}
+
+function renderGloss() {
+    const q = ($('#gloss-q').value || '').trim().toLowerCase();
+    const items = GLOSS.filter(g => !q || (g[0] + ' ' + g[2]).toLowerCase().includes(q));
+    $('#gloss').innerHTML = items.length ? items.map(g => `<dt>${g[0]} <i lang="sa">${g[1]}</i></dt><dd>${g[2]}</dd>`).join('')
+        : `<p class="dim small">No term matches "${esc(q)}". Try a shorter word.</p>`;
+}
+
+let vFilter = 'All', practice = false;
+function renderVerses() {
+    const filters = ['All', 'Rig', 'Sama', 'Yajur', 'Atharva', 'Not learned'];
+    $('#vchips').innerHTML = filters.map(f => `<button class="chip ${f === vFilter ? 'on' : ''}" data-vf="${f}">${f === 'All' || f === 'Not learned' ? f : f + 'veda'}</button>`).join('');
+    const list = VERSES.filter(v => vFilter === 'All' ? true : vFilter === 'Not learned' ? !S.verses[v.id] : v.veda === vFilter);
+    $('#verseCount').textContent = `${list.length} verse${list.length === 1 ? '' : 's'}`;
+    $('#verseList').innerHTML = list.length ? list.map(v => verseCard(v, { veil: practice })).join('')
+        : `<div class="card"><p>You've marked every verse as learned. Switch to "All" to review them.</p></div>`;
+    $('#practiceBtn').textContent = `Practice mode: ${practice ? 'on' : 'off'}`;
+    $('#practiceBtn').setAttribute('aria-pressed', practice);
+    $('#practiceBtn').classList.toggle('ghost', !practice);
+}
+
+function renderGods() {
+    $('#godList').innerHTML = GODS.map(g => `<div class="card god">
+        <div class="ic" lang="sa" aria-hidden="true">${g[0]}</div>
+        <div class="gt"><div class="top"><h3>${g[1]}</h3><span class="tag s">${g[2]}</span></div><p class="small" style="margin-top:6px">${g[3]}</p></div>
+    </div>`).join('');
+}
+
+/* quiz state */
+let Q = null;
+function newQuiz() {
+    const pool = QUIZ.map((q, i) => i).sort(() => Math.random() - .5).slice(0, 10);
+    Q = { items: pool.map(i => {
+        const [text, opts, ans] = QUIZ[i];
+        const order = opts.map((o, j) => j).sort(() => Math.random() - .5);
+        return { text, opts: order.map(j => opts[j]), ans: order.indexOf(ans) };
+    }), i: 0, score: 0, picked: null };
+    renderQuiz();
+}
+function renderQuiz() {
+    if (!Q) {
+        $('#quizBox').innerHTML = `<h3>Test what you've learned</h3><p class="small dim" style="margin-top:6px">${QUIZ.length} questions in the bank, 10 per round.${S.best != null ? ` Your best so far: ${S.best}/10.` : ''}</p><button class="btn" data-quiz="start" style="margin-top:10px">Start quiz</button>`;
+        return;
+    }
+    if (Q.i >= Q.items.length) {
+        const msg = Q.score >= 9 ? 'Excellent. You know your Vedas.' : Q.score >= 6 ? 'Good work. Review the lessons you missed and try again.' : 'Keep going. Re-read the path and try again.';
+        $('#quizBox').innerHTML = `<div class="eyebrow">Result</div><div style="font-family:var(--serif);font-size:48px;font-weight:700;color:var(--saffron);line-height:1.1;font-variant-numeric:tabular-nums">${Q.score}/10</div><p style="margin-top:6px">${msg}</p><button class="btn" data-quiz="start" style="margin-top:10px">Try another round</button>`;
+        return;
+    }
+    const it = Q.items[Q.i];
+    $('#quizBox').innerHTML = `<div class="top"><span class="eyebrow">Question ${Q.i + 1} of 10</span><span class="small dim">Score ${Q.score}</span></div>
+        <div class="bar" style="margin-top:8px"><i style="width:${Q.i * 10}%"></i></div>
+        <h3 style="margin-top:14px">${esc(it.text)}</h3>
+        ${it.opts.map((o, j) => {
+            let cls = '';
+            if (Q.picked != null) { if (j === it.ans) cls = 'right'; else if (j === Q.picked) cls = 'wrong'; }
+            return `<button class="opt ${cls}" data-pick="${j}" ${Q.picked != null ? 'disabled' : ''}>${esc(o)}</button>`;
+        }).join('')}
+        ${Q.picked != null ? `<p class="small" style="margin-top:10px">${Q.picked === it.ans ? '✓ Correct.' : `Not quite. The answer is <b>${esc(it.opts[it.ans])}</b>.`}</p><button class="btn" data-quiz="next" style="margin-top:6px">${Q.i === 9 ? 'See result' : 'Next question'}</button>` : ''}`;
+}
+
+/* ---------------- ROUTING ---------------- */
+const TABS = ['path', 'vedas', 'verses', 'gods', 'quiz'];
+function show(tab, scrollTo) {
+    if (!TABS.includes(tab)) tab = 'path';
+    TABS.forEach(t => { $('#v-' + t).hidden = t !== tab; });
+    document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+    if (scrollTo) { const el = document.getElementById(scrollTo); if (el) { el.scrollIntoView({ block: 'start' }); window.scrollBy(0, -12); return; } }
+    window.scrollTo(0, 0);
+}
+function route() { show((location.hash || '#path').slice(1)); }
+function go(tab, scrollTo) {
+    if (location.hash !== '#' + tab) history.replaceState(null, '', '#' + tab);
+    show(tab, scrollTo);
+}
+
+/* ---------------- EVENTS ---------------- */
+document.addEventListener('click', e => {
+    const t = e.target.closest('button, .veil [data-reveal]');
+    if (!t) return;
+    const d = t.dataset;
+    if (t.matches('[data-reveal]')) { t.closest('.veil').classList.remove('veil'); return; }
+    if (d.tab) { history.replaceState(null, '', '#' + d.tab); show(d.tab); return; }
+    if (d.open != null) {
+        const i = +d.open; S.open = S.open === i && !t.closest('.body') ? -1 : i; save(); renderLessons();
+        if (S.open === i) document.getElementById('lesson-' + i).scrollIntoView({ block: 'start', behavior: 'smooth' });
+        return;
+    }
+    if (d.complete != null) { const i = +d.complete; S.lessons[i] = !S.lessons[i]; save(); renderLessons(); renderStats(); return; }
+    if (d.learn) {
+        S.verses[d.learn] = !S.verses[d.learn]; save(); renderStats();
+        document.querySelectorAll(`[data-learn="${d.learn}"]`).forEach(b => {
+            const on = !!S.verses[d.learn]; b.classList.toggle('done', on); b.classList.toggle('ghost', !on); b.textContent = on ? '✓ Learned' : 'Mark as learned';
+        });
+        return;
+    }
+    if (d.goveda) { curVeda = d.goveda; renderVedas(); go('vedas', 'vgrid'); return; }
+    if (d.goverse) { vFilter = 'All'; renderVerses(); go('verses', 'verse-' + d.goverse); return; }
+    if (d.veda) { curVeda = d.veda; renderVedas(); return; }
+    if (d.vf) { vFilter = d.vf; renderVerses(); return; }
+    if (t.id === 'practiceBtn') { practice = !practice; renderVerses(); return; }
+    if (d.quiz === 'start') { newQuiz(); return; }
+    if (d.pick != null && Q && Q.picked == null) {
+        Q.picked = +d.pick; if (Q.picked === Q.items[Q.i].ans) Q.score++; renderQuiz(); return;
+    }
+    if (d.quiz === 'next') {
+        Q.i++; Q.picked = null;
+        if (Q.i >= Q.items.length && (S.best == null || Q.score > S.best)) { S.best = Q.score; save(); renderStats(); }
+        renderQuiz(); return;
+    }
+});
+$('#gloss-q').addEventListener('input', renderGloss);
+window.addEventListener('hashchange', route);
+
+renderToday(); renderLessons(); renderStats(); renderVedas(); renderUpanishads(); renderGloss(); renderVerses(); renderGods(); renderQuiz();
+route();
+</script>
+</body>
+</html>
