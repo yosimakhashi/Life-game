@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#fbf6ee">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Language School">
+<title>Language School</title>
+<style>
+/* Language School: step-by-step language practice. Spanish only for now.
+   One file, no network. Progress lives in localStorage under KEY.
+   To add a language later, add another entry to COURSES with the same shape.
+   Pronunciation uses the browser's built-in speech (speechSynthesis). */
+:root {
+    --bg: #fbf6ee; --card: #ffffff; --ink: #24201b; --dim: #74695d; --line: #eadfce;
+    --brand: #d2452c; --brand-ink: #fff; --brand-soft: #fbe3dc; --sun: #e9a514; --sun-soft: #fdf0cf;
+    --good: #2e8a4e; --good-soft: #dff3e5; --bad: #c53030; --bad-soft: #fbe2e2; --lock: #c9bfb1;
+    --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg: #17130f; --card: #221d18; --ink: #f3ebe0; --dim: #a99c8d; --line: #3a3129;
+        --brand: #ff7a5c; --brand-ink: #200a04; --brand-soft: #3d221a; --sun: #f5bf45; --sun-soft: #3a2d10;
+        --good: #6fd497; --good-soft: #17301f; --bad: #ff8585; --bad-soft: #3a1b1b; --lock: #5a4f44; color-scheme: dark;
+    }
+}
+:root[data-theme="dark"] {
+    --bg: #17130f; --card: #221d18; --ink: #f3ebe0; --dim: #a99c8d; --line: #3a3129;
+    --brand: #ff7a5c; --brand-ink: #200a04; --brand-soft: #3d221a; --sun: #f5bf45; --sun-soft: #3a2d10;
+    --good: #6fd497; --good-soft: #17301f; --bad: #ff8585; --bad-soft: #3a1b1b; --lock: #5a4f44; color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body { font: 16px/1.5 var(--sans); min-height: 100vh; }
+h1, h2, h3 { margin: 0; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: 28px; } h2 { font-size: 21px; } h3 { font-size: 17px; }
+p { margin: 0 0 8px; } p:last-child { margin-bottom: 0; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; touch-action: manipulation; }
+button:disabled { cursor: default; }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+a { color: var(--brand); }
+.wrap { max-width: 600px; margin: 0 auto; padding-top: 16px; padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.top a { text-decoration: none; font-weight: 600; }
+.chips { display: flex; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
+.chip.fire b { color: var(--brand); } .chip.xp b { color: var(--sun); }
+.dim { color: var(--dim); } .small { font-size: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; margin-top: 14px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 18px; border-radius: 14px; font-weight: 700; background: var(--brand); color: var(--brand-ink); box-shadow: 0 3px 0 color-mix(in srgb, var(--brand) 70%, #000); }
+.btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 color-mix(in srgb, var(--brand) 70%, #000); }
+.btn:disabled { background: var(--line); color: var(--dim); box-shadow: none; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); box-shadow: none; }
+.btn.wide { width: 100%; }
+.btn.good { background: var(--good); color: var(--card); box-shadow: 0 3px 0 color-mix(in srgb, var(--good) 70%, #000); }
+.btn.bad { background: var(--bad); color: var(--card); box-shadow: 0 3px 0 color-mix(in srgb, var(--bad) 70%, #000); }
+
+/* hero */
+.hero { display: flex; gap: 14px; align-items: center; }
+.flag { font-size: 44px; line-height: 1; }
+.goal { margin-top: 10px; }
+.bar { height: 10px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--sun); border-radius: 99px; transition: width .4s; }
+.goalRow { display: flex; justify-content: space-between; font-size: 13px; color: var(--dim); margin-bottom: 4px; }
+
+/* path */
+.unit { margin-top: 18px; border-radius: 18px; overflow: hidden; border: 1px solid var(--line); background: var(--card); }
+.unitHead { padding: 14px 16px; background: var(--brand); color: var(--brand-ink); display: flex; gap: 12px; align-items: center; }
+.unit.locked .unitHead { background: var(--lock); color: var(--card); }
+.unitHead .em { font-size: 28px; }
+.unitHead small { display: block; opacity: .85; font-size: 13px; }
+.lesson { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); width: 100%; text-align: left; }
+.lesson:first-of-type { border-top: 0; }
+.dot { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 16px; background: var(--line); color: var(--dim); }
+.lesson.done .dot { background: var(--sun); color: #3a2900; }
+.lesson.cur .dot { background: var(--brand); color: var(--brand-ink); box-shadow: 0 0 0 4px var(--brand-soft); }
+.lesson .lt { flex: 1; min-width: 0; }
+.lesson .lt b { display: block; }
+.lesson .lt span { font-size: 13px; color: var(--dim); }
+.lesson.locked { opacity: .55; }
+.lesson .go { font-size: 13px; font-weight: 700; color: var(--brand); }
+.stars { color: var(--sun); letter-spacing: 1px; font-size: 13px; }
+
+/* words */
+.wlist { margin-top: 6px; }
+.wrow { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
+.wrow:first-child { border-top: 0; }
+.wrow .es { font-weight: 700; flex: 1; }
+.wrow .en { color: var(--dim); flex: 1; text-align: right; font-size: 14px; }
+.spk { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand); font-size: 16px; }
+.weak { font-size: 11px; font-weight: 700; color: var(--bad); background: var(--bad-soft); padding: 1px 6px; border-radius: 6px; margin-left: 6px; }
+
+/* tabs */
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; justify-content: center; background: var(--card); border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom, 0px); }
+.tabs .in { display: flex; width: 100%; max-width: 600px; }
+.tabs button { flex: 1; padding: 8px 2px; display: flex; flex-direction: column; align-items: center; gap: 1px; font-size: 12px; font-weight: 700; color: var(--dim); }
+.tabs button .g { font-size: 21px; line-height: 1.2; }
+.tabs button.on { color: var(--brand); }
+
+/* lesson player */
+#player { position: fixed; inset: 0; z-index: 20; background: var(--bg); display: none; flex-direction: column; }
+#player.open { display: flex; }
+.pTop { display: flex; align-items: center; gap: 12px; padding: 12px max(16px, env(safe-area-inset-left, 0px)); padding-top: max(12px, env(safe-area-inset-top, 0px)); max-width: 600px; width: 100%; margin: 0 auto; }
+.pTop .x { font-size: 26px; color: var(--dim); width: 36px; height: 36px; flex: none; }
+.pTop .bar { flex: 1; height: 14px; }
+.pTop .bar i { background: var(--good); }
+#stage { flex: 1; overflow-y: auto; padding: 8px 16px 20px; max-width: 600px; width: 100%; margin: 0 auto; }
+.prompt { font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); margin: 10px 0 6px; }
+.q { font-size: 24px; font-weight: 700; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.opts { display: grid; gap: 10px; }
+.opt { padding: 14px 16px; border-radius: 14px; border: 2px solid var(--line); background: var(--card); text-align: left; font-size: 17px; font-weight: 600; box-shadow: 0 2px 0 var(--line); }
+.opt.sel { border-color: var(--brand); background: var(--brand-soft); box-shadow: 0 2px 0 var(--brand); }
+.opt.right { border-color: var(--good); background: var(--good-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.learnCard { text-align: center; padding: 26px 16px; }
+.learnCard .big { font-size: 38px; font-weight: 800; margin: 6px 0; }
+.learnCard .mean { font-size: 20px; color: var(--dim); }
+.learnCard .note { margin-top: 16px; font-size: 15px; background: var(--sun-soft); border-radius: 12px; padding: 10px 12px; text-align: left; }
+.newTag { display: inline-block; font-size: 12px; font-weight: 800; letter-spacing: .1em; color: var(--sun); background: var(--sun-soft); padding: 3px 10px; border-radius: 99px; }
+.sayRow { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+.bigSpk { width: 64px; height: 64px; border-radius: 18px; background: var(--brand); color: var(--brand-ink); font-size: 28px; display: grid; place-items: center; box-shadow: 0 3px 0 color-mix(in srgb, var(--brand) 70%, #000); }
+.bigSpk.slow { width: 48px; height: 48px; font-size: 20px; background: var(--brand-soft); color: var(--brand); box-shadow: none; align-self: end; }
+.tipCard { font-size: 17px; line-height: 1.6; }
+.tipCard .ex { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--brand-soft); }
+/* match */
+.match { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.match .col { display: grid; gap: 10px; align-content: start; }
+.mt { padding: 14px 8px; border-radius: 14px; border: 2px solid var(--line); background: var(--card); font-weight: 600; font-size: 16px; box-shadow: 0 2px 0 var(--line); min-height: 56px; }
+.mt.sel { border-color: var(--brand); background: var(--brand-soft); }
+.mt.ok { border-color: var(--good); background: var(--good-soft); color: var(--good); opacity: .6; }
+.mt.no { border-color: var(--bad); background: var(--bad-soft); animation: shake .3s; }
+@keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+/* build */
+.line { min-height: 64px; border-bottom: 2px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 0; margin-bottom: 18px; align-content: flex-start; }
+.line + .line { margin-top: -10px; }
+.bank { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.tile { padding: 9px 14px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); font-weight: 600; font-size: 17px; box-shadow: 0 2px 0 var(--line); }
+.tile.used { visibility: hidden; }
+/* type */
+.typeIn { width: 100%; font: inherit; font-size: 20px; padding: 14px; border-radius: 14px; border: 2px solid var(--line); background: var(--card); color: var(--ink); }
+.typeIn:focus { border-color: var(--brand); outline: none; }
+.accents { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.accents button { min-width: 40px; padding: 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); font-weight: 700; font-size: 17px; }
+/* footer */
+.pFoot { border-top: 1px solid var(--line); background: var(--card); padding: 14px 16px; padding-bottom: max(14px, env(safe-area-inset-bottom, 0px)); }
+.pFoot .in { max-width: 600px; margin: 0 auto; }
+.pFoot.good { background: var(--good-soft); border-color: transparent; }
+.pFoot.bad { background: var(--bad-soft); border-color: transparent; }
+.fb { margin-bottom: 12px; display: none; }
+.pFoot.good .fb, .pFoot.bad .fb { display: block; }
+.fb h3 { font-size: 20px; }
+.pFoot.good .fb h3 { color: var(--good); } .pFoot.bad .fb h3 { color: var(--bad); }
+.fb p { margin-top: 4px; font-size: 15px; }
+.skipLink { display: block; margin: 16px auto 0; font-size: 14px; color: var(--dim); text-decoration: underline; }
+/* end */
+.endWrap { text-align: center; padding-top: 30px; }
+.endWrap .em { font-size: 64px; }
+.endStats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+.endStats div { border: 2px solid var(--line); border-radius: 14px; padding: 12px; background: var(--card); }
+.endStats b { display: block; font-size: 24px; }
+.endStats span { font-size: 13px; color: var(--dim); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <div class="top">
+        <a href="../">← Life Game</a>
+        <div class="chips">
+            <span class="chip fire" title="Day streak">🔥 <b id="stStreak">0</b></span>
+            <span class="chip xp" title="Total XP">⭐ <b id="stXp">0</b></span>
+        </div>
+    </div>
+
+    <section id="v-learn">
+        <div class="card">
+            <div class="hero">
+                <div class="flag" aria-hidden="true">🇪🇸</div>
+                <div>
+                    <h1 id="courseName">Spanish</h1>
+                    <p class="dim small" id="courseSub">0 of 0 lessons · 0 words learned</p>
+                </div>
+            </div>
+            <div class="goal">
+                <div class="goalRow"><span>Daily goal</span><span id="goalTxt">0 / 20 XP</span></div>
+                <div class="bar"><i id="goalBar" style="width:0%"></i></div>
+            </div>
+            <button class="btn wide" id="continueBtn" style="margin-top:14px">Start lesson 1</button>
+        </div>
+        <div id="units"></div>
+        <p class="dim small" style="text-align:center;margin-top:22px">More languages are coming soon.</p>
+    </section>
+
+    <section id="v-practice" hidden>
+        <h2 style="margin-top:18px">Practice</h2>
+        <p class="dim" style="margin-top:4px">A quick mixed review of words you've already learned. Words you got wrong come up more often.</p>
+        <div class="card">
+            <h3>Quick review</h3>
+            <p class="dim small" style="margin-top:4px">12 questions · about 3 minutes</p>
+            <button class="btn wide" id="pracBtn" style="margin-top:12px">Start practice</button>
+        </div>
+        <div class="card">
+            <h3>Tricky words</h3>
+            <p class="dim small" style="margin-top:4px">Only the words you've missed before.</p>
+            <button class="btn ghost wide" id="weakBtn" style="margin-top:12px">Practice tricky words</button>
+        </div>
+        <div class="card">
+            <h3>Listening</h3>
+            <p class="dim small" style="margin-top:4px">Hear a word, pick what you heard.</p>
+            <button class="btn ghost wide" id="listenBtn" style="margin-top:12px">Practice listening</button>
+        </div>
+    </section>
+
+    <section id="v-words" hidden>
+        <h2 style="margin-top:18px">My words</h2>
+        <p class="dim" style="margin-top:4px">Everything you've learned so far. Tap 🔊 to hear it.</p>
+        <div id="wordList"></div>
+    </section>
+</div>
+
+<nav class="tabs"><div class="in">
+    <button data-tab="learn" class="on"><span class="g">🏠</span>Learn</button>
+    <button data-tab="practice"><span class="g">🏋</span>Practice</button>
+    <button data-tab="words"><span class="g">📖</span>Words</button>
+</div></nav>
+
+<div id="player" role="dialog" aria-modal="true" aria-label="Lesson">
+    <div class="pTop">
+        <button class="x" id="pClose" aria-label="Close lesson">✕</button>
+        <div class="bar"><i id="pBar" style="width:0%"></i></div>
+    </div>
+    <div id="stage"></div>
+    <div class="pFoot" id="pFoot"><div class="in">
+        <div class="fb" id="fb"></div>
+        <button class="btn wide" id="pBtn" disabled>Check</button>
+    </div></div>
+</div>
+
+<script>
+/* ---------- course content ----------
+   Each word: [spanish, english, optional note]. Each sentence: [spanish, english].
+   A lesson's words should have distinct English meanings across the course. */
+const COURSES = {
+es: {
+    name: 'Spanish', flag: '🇪🇸', lang: 'es-ES',
+    units: [
+    { title: 'Greetings', sub: 'Say hello and be polite', em: '👋', lessons: [
+        { title: 'Hello & goodbye',
+          tip: 'Spanish is spelled the way it sounds. Each vowel has just one sound: <b>a</b> "ah", <b>e</b> "eh", <b>i</b> "ee", <b>o</b> "oh", <b>u</b> "oo".<div class="ex">Tap 🔊 on any word to hear it. Tap 🐢 to hear it slowly.</div>',
+          words: [['hola','hello','Say OH-lah. The h in Spanish is always silent.'],['adiós','goodbye','Say ah-DYOHS.'],['buenos días','good morning','Say BWEH-nohs DEE-ahs.'],['buenas tardes','good afternoon'],['buenas noches','good night','Also used for "good evening".'],['hasta luego','see you later','Say AHS-tah LWEH-goh.']],
+          sents: [['Hola, buenos días.','Hello, good morning.'],['Adiós, hasta luego.','Goodbye, see you later.']] },
+        { title: 'Polite words',
+          tip: 'Two words will take you a long way: <b>por favor</b> (please) and <b>gracias</b> (thank you).',
+          words: [['gracias','thank you','Say GRAH-syahs.'],['por favor','please'],['de nada','you are welcome','Literally "of nothing".'],['sí','yes','With the accent it means yes. Without it, si means if.'],['no','no'],['perdón','sorry','Also means "excuse me".']],
+          sents: [['Sí, por favor.','Yes, please.'],['No, gracias.','No, thank you.']] },
+        { title: 'How are you?',
+          tip: 'Spanish questions start with an upside-down <b>¿</b> and end with <b>?</b>, so you know a question is coming.<div class="ex">¿Cómo estás? = How are you?</div>',
+          words: [['¿cómo estás?','how are you?'],['bien','well'],['mal','bad'],['muy','very'],['¿y tú?','and you?'],['más o menos','so-so','Literally "more or less".']],
+          sents: [['Muy bien, gracias.','Very well, thank you.'],['Bien, ¿y tú?','Well, and you?']] },
+        { title: 'Your name',
+          words: [['me llamo','my name is','Literally "I call myself". The ll sounds like the y in "yes".'],['¿cómo te llamas?','what is your name?'],['mucho gusto','nice to meet you'],['soy','I am'],['el nombre','the name'],['encantado','delighted','A woman says encantada.']],
+          sents: [['Hola, me llamo Ana.','Hello, my name is Ana.'],['Mucho gusto, soy Carlos.','Nice to meet you, I am Carlos.']] },
+    ]},
+    { title: 'People', sub: 'I, you, he, she and more', em: '🧑‍🤝‍🧑', lessons: [
+        { title: 'I, you, he, she',
+          tip: 'An accent mark can change the meaning: <b>él</b> = he, but <b>el</b> = the. <b>tú</b> = you, but <b>tu</b> = your.',
+          words: [['yo','I'],['tú','you'],['él','he'],['ella','she','The ll sounds like y: EH-yah.'],['nosotros','we'],['es','is','He is = él es. She is = ella es.']],
+          sents: [['Yo soy Ana.','I am Ana.'],['Ella es María.','She is María.'],['Él es Carlos.','He is Carlos.']] },
+        { title: 'People around you',
+          tip: 'Every Spanish noun is masculine or feminine. Masculine words use <b>el</b> (the) and <b>un</b> (a). Feminine words use <b>la</b> and <b>una</b>.<div class="ex">el niño (the boy) · la niña (the girl)</div>',
+          words: [['el hombre','the man'],['la mujer','the woman'],['el niño','the boy','ñ sounds like the ny in "canyon": NEE-nyoh.'],['la niña','the girl'],['el amigo','the friend','A female friend is la amiga.'],['un','a','Use una for feminine words: una niña.']],
+          sents: [['Él es un hombre.','He is a man.'],['Ella es una niña.','She is a girl.']] },
+        { title: 'To be',
+          words: [['eres','you are'],['somos','we are'],['son','they are'],['ellos','they'],['ustedes','you all'],['también','also']],
+          sents: [['Tú eres un amigo.','You are a friend.'],['Nosotros somos amigos.','We are friends.'],['Ellos también son amigos.','They are also friends.']] },
+    ]},
+    { title: 'Numbers', sub: 'Count from zero to ten', em: '🔢', lessons: [
+        { title: 'Zero to five',
+          words: [['cero','zero'],['uno','one'],['dos','two'],['tres','three','Roll the r a little: TREHS.'],['cuatro','four'],['cinco','five','Say SEEN-koh.']],
+          sents: [['Uno, dos, tres.','One, two, three.'],['Dos amigos.','Two friends.']] },
+        { title: 'Six to ten',
+          words: [['seis','six'],['siete','seven'],['ocho','eight'],['nueve','nine'],['diez','ten'],['cien','one hundred']],
+          sents: [['Seis, siete, ocho.','Six, seven, eight.'],['Diez niños.','Ten boys.']] },
+        { title: 'How many?',
+          words: [['¿cuántos?','how many?'],['hay','there is / there are','Sounds like "eye".'],['muchos','many'],['pocos','few'],['y','and','Sounds like "ee".']],
+          sents: [['Hay dos niños.','There are two boys.'],['Hay muchos amigos.','There are many friends.']] },
+    ]},
+    { title: 'Food & drink', sub: 'Order at a café', em: '🥐', lessons: [
+        { title: 'Basics',
+          tip: '<b>El agua</b> uses el even though agua is feminine. It just sounds better than "la agua".',
+          words: [['el agua','the water'],['el pan','the bread'],['la leche','the milk'],['el café','the coffee'],['el queso','the cheese','Say KEH-soh. The u is silent.'],['la manzana','the apple']],
+          sents: [['El pan y el queso.','The bread and the cheese.'],['Agua, por favor.','Water, please.']] },
+        { title: 'I want...',
+          tip: 'Spanish often drops "I". <b>Quiero</b> already means "I want", so you don\'t need to say yo.',
+          words: [['quiero','I want'],['como','I eat','Not to be confused with ¿cómo? (how?).'],['bebo','I drink'],['la comida','the food'],['el té','the tea'],['la sopa','the soup']],
+          sents: [['Quiero un café.','I want a coffee.'],['Bebo agua.','I drink water.'],['Como una manzana.','I eat an apple.']] },
+        { title: 'At the restaurant',
+          words: [['la cuenta','the bill'],['el menú','the menu'],['delicioso','delicious','For feminine words: deliciosa.'],['¿cuánto cuesta?','how much does it cost?'],['el restaurante','the restaurant'],['la mesa','the table']],
+          sents: [['La cuenta, por favor.','The bill, please.'],['La sopa es deliciosa.','The soup is delicious.']] },
+    ]},
+    { title: 'Describing', sub: 'Colors and sizes', em: '🎨', lessons: [
+        { title: 'Colors',
+          tip: 'Describing words usually come <b>after</b> the noun, and many change their ending to match: -o for masculine, -a for feminine.<div class="ex">un coche rojo · una manzana roja</div>',
+          words: [['rojo','red'],['azul','blue'],['verde','green'],['amarillo','yellow'],['negro','black'],['blanco','white']],
+          sents: [['La manzana es roja.','The apple is red.'],['El café es negro.','The coffee is black.']] },
+        { title: 'Big and small',
+          words: [['grande','big'],['pequeño','small'],['bonito','pretty'],['nuevo','new'],['viejo','old'],['el coche','the car']],
+          sents: [['El coche es nuevo.','The car is new.'],['Un coche rojo.','A red car.'],['La niña es pequeña.','The girl is small.']] },
+    ]},
+    { title: 'Family', sub: 'Talk about the people you love', em: '👪', lessons: [
+        { title: 'My family',
+          words: [['la familia','the family'],['la madre','the mother'],['el padre','the father'],['el hermano','the brother'],['la hermana','the sister'],['mi','my']],
+          sents: [['Él es mi padre.','He is my father.'],['Ella es mi hermana.','She is my sister.']] },
+        { title: 'I have...',
+          words: [['tengo','I have'],['tu','your','No accent: tu = your. With accent: tú = you.'],['el hijo','the son','The j sounds like a soft h: EE-hoh.'],['la hija','the daughter'],['el perro','the dog','Roll the double rr.'],['el gato','the cat']],
+          sents: [['Tengo un perro.','I have a dog.'],['Tengo dos hermanos.','I have two brothers.'],['Tu hija es pequeña.','Your daughter is small.']] },
+    ]},
+    { title: 'Places', sub: 'Find your way around', em: '🗺', lessons: [
+        { title: 'Around town',
+          words: [['la casa','the house'],['el baño','the bathroom'],['el hotel','the hotel','The h is silent: oh-TEHL.'],['la playa','the beach'],['la ciudad','the city'],['la escuela','the school']],
+          sents: [['La playa es bonita.','The beach is pretty.'],['La casa es grande.','The house is big.']] },
+        { title: 'Where is it?',
+          tip: 'Use <b>está</b> to say where something is.<div class="ex">El hotel está aquí. = The hotel is here.</div>',
+          words: [['¿dónde está?','where is?'],['aquí','here'],['allí','there'],['cerca','near'],['lejos','far'],['a la derecha','to the right'],['a la izquierda','to the left']],
+          sents: [['¿Dónde está el baño?','Where is the bathroom?'],['El hotel está aquí.','The hotel is here.'],['La playa está cerca.','The beach is near.']] },
+        { title: 'Going places',
+          words: [['voy','I go'],['vamos','we go','Also means "let\'s go!"'],['el tren','the train'],['el autobús','the bus'],['a','to'],['el aeropuerto','the airport']],
+          sents: [['Voy a la playa.','I go to the beach.'],['Vamos a la ciudad.','We go to the city.']] },
+    ]},
+    { title: 'Time & weather', sub: 'Days of the week and the weather', em: '📅', lessons: [
+        { title: 'Weekdays',
+          tip: 'Days of the week are <b>not</b> capitalized in Spanish.',
+          words: [['lunes','Monday'],['martes','Tuesday'],['miércoles','Wednesday'],['jueves','Thursday'],['viernes','Friday'],['hoy','today','The h is silent: OY.']],
+          sents: [['Hoy es lunes.','Today is Monday.'],['Hoy es viernes.','Today is Friday.']] },
+        { title: 'The weekend',
+          words: [['sábado','Saturday'],['domingo','Sunday'],['mañana','tomorrow','Also means "morning".'],['ayer','yesterday'],['la semana','the week'],['el día','the day']],
+          sents: [['Mañana es sábado.','Tomorrow is Saturday.'],['Hoy es domingo.','Today is Sunday.']] },
+        { title: 'Weather',
+          tip: 'For weather, Spanish says "it makes": <b>hace frío</b> = "it makes cold" = it is cold.',
+          words: [['hace calor','it is hot'],['hace frío','it is cold'],['hace sol','it is sunny'],['llueve','it is raining'],['el tiempo','the weather'],['¿qué tiempo hace?','what is the weather like?']],
+          sents: [['Hoy hace frío.','Today it is cold.'],['Mañana hace sol.','Tomorrow it is sunny.']] },
+    ]},
+    ]
+}
+};
+
+const COURSE_ID = 'es';
+const C = COURSES[COURSE_ID];
+// flatten lessons with ids
+const LESSONS = [];
+C.units.forEach((u, ui) => u.lessons.forEach((l, li) => { l.id = `u${ui + 1}l${li + 1}`; l.unit = ui; l.idx = LESSONS.length; LESSONS.push(l); }));
+const ALL_WORDS = LESSONS.flatMap(l => l.words.map(w => ({ es: w[0], en: w[1], note: w[2] || '', lesson: l.idx })));
+const ALL_SENTS = LESSONS.flatMap(l => l.sents.map(s => ({ es: s[0], en: s[1], lesson: l.idx })));
+const XP_LESSON = 10, XP_PERFECT = 5, XP_PRACTICE = 8, GOAL = 20;
+
+/* ---------- state ---------- */
+const KEY = 'language-school-v1';
+let S = { done: {}, xp: 0, streak: 0, lastDay: '', todayDate: '', todayXp: 0, miss: {} };
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+const dayStr = d => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+function today() { return dayStr(new Date()); }
+function yesterday() { const d = new Date(); d.setDate(d.getDate() - 1); return dayStr(d); }
+function liveStreak() { return (S.lastDay === today() || S.lastDay === yesterday()) ? S.streak : 0; }
+function todayXp() { return S.todayDate === today() ? S.todayXp : 0; }
+function addXp(n) {
+    const t = today();
+    if (S.lastDay !== t) { S.streak = S.lastDay === yesterday() ? S.streak + 1 : 1; S.lastDay = t; }
+    if (S.todayDate !== t) { S.todayDate = t; S.todayXp = 0; }
+    S.xp += n; S.todayXp += n; save();
+}
+const isDone = l => !!S.done[l.id];
+const firstOpen = () => LESSONS.find(l => !isDone(l));
+const unlocked = l => l.idx === 0 || isDone(LESSONS[l.idx - 1]) || isDone(l);
+const learnedWords = () => ALL_WORDS.filter(w => isDone(LESSONS[w.lesson]));
+const learnedSents = () => ALL_SENTS.filter(s => isDone(LESSONS[s.lesson]));
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const PUNCT = /[¿?¡!.,]/g;
+const loose = s => s.toLowerCase().replace(PUNCT, '').replace(/\s+/g, ' ').trim();
+const bare = s => loose(s).normalize('NFD').replace(/[̀-ͯ]/g, '');
+const noArticle = s => s.replace(/^(el|la|los|las|un|una) /, '');
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+/* ---------- speech ---------- */
+const canSpeak = 'speechSynthesis' in window;
+let voice = null, noAudioUntil = 0;
+function pickVoice() {
+    if (!canSpeak) return;
+    const v = speechSynthesis.getVoices();
+    const base = C.lang.split('-')[0];
+    voice = v.find(x => x.lang.replace('_', '-') === C.lang) || v.find(x => x.lang.toLowerCase().startsWith(base)) || null;
+}
+if (canSpeak) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function say(text, slow) {
+    if (!canSpeak) return;
+    try {
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text.replace(/[¿¡]/g, ''));
+        u.lang = C.lang; if (voice) u.voice = voice; u.rate = slow ? 0.55 : 0.9;
+        speechSynthesis.speak(u);
+    } catch (e) {}
+}
+const audioOn = () => canSpeak && Date.now() > noAudioUntil;
+
+/* little sounds */
+let actx = null;
+function blip(ok) {
+    try {
+        actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+        const notes = ok ? [660, 880] : [220, 180];
+        notes.forEach((f, i) => {
+            const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + i * 0.1;
+            o.type = ok ? 'sine' : 'triangle'; o.frequency.value = f;
+            g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+            o.connect(g).connect(actx.destination); o.start(t); o.stop(t + 0.2);
+        });
+    } catch (e) {}
+}
+
+/* ---------- home rendering ---------- */
+function render() {
+    $('stStreak').textContent = liveStreak();
+    $('stXp').textContent = S.xp;
+    const doneCount = LESSONS.filter(isDone).length;
+    $('courseName').textContent = C.name;
+    $('courseSub').textContent = `${doneCount} of ${LESSONS.length} lessons · ${learnedWords().length} words learned`;
+    const tx = todayXp();
+    $('goalTxt').textContent = tx >= GOAL ? `${tx} XP · goal reached 🎉` : `${tx} / ${GOAL} XP`;
+    $('goalBar').style.width = Math.min(100, tx / GOAL * 100) + '%';
+    const next = firstOpen();
+    const cb = $('continueBtn');
+    if (next) { cb.textContent = doneCount ? `Continue: ${next.title}` : 'Start your first lesson'; cb.onclick = () => startLesson(next); }
+    else { cb.textContent = 'Course complete! Practice to stay sharp'; cb.onclick = () => startPractice('mix'); }
+
+    $('units').innerHTML = C.units.map((u, ui) => {
+        const ls = LESSONS.filter(l => l.unit === ui);
+        const uLocked = !unlocked(ls[0]);
+        return `<div class="unit ${uLocked ? 'locked' : ''}">
+            <div class="unitHead"><span class="em">${u.em}</span><div><b>Unit ${ui + 1}: ${esc(u.title)}</b><small>${esc(u.sub)}</small></div></div>
+            ${ls.map((l, li) => {
+                const d = isDone(l), cur = next === l, lock = !unlocked(l);
+                const best = S.done[l.id];
+                return `<button class="lesson ${d ? 'done' : ''} ${cur ? 'cur' : ''} ${lock ? 'locked' : ''}" data-l="${l.idx}" ${lock ? 'disabled' : ''}>
+                    <span class="dot">${d ? '✓' : lock ? '🔒' : li + 1}</span>
+                    <span class="lt"><b>${esc(l.title)}</b><span>${l.words.slice(0, 3).map(w => esc(w[0])).join(', ')}…</span></span>
+                    ${d ? `<span class="stars">${'★'.repeat(best.stars || 1)}${'☆'.repeat(3 - (best.stars || 1))}</span>` : cur ? '<span class="go">START</span>' : ''}
+                </button>`;
+            }).join('')}
+        </div>`;
+    }).join('');
+    document.querySelectorAll('.lesson[data-l]').forEach(b => b.onclick = () => startLesson(LESSONS[+b.dataset.l]));
+
+    // words tab
+    const lw = learnedWords();
+    if (!lw.length) $('wordList').innerHTML = `<div class="card dim">Finish your first lesson and your words will show up here.</div>`;
+    else $('wordList').innerHTML = C.units.map((u, ui) => {
+        const ws = lw.filter(w => LESSONS[w.lesson].unit === ui);
+        if (!ws.length) return '';
+        return `<div class="card"><h3>${u.em} ${esc(u.title)}</h3><div class="wlist">${ws.map(w =>
+            `<div class="wrow"><button class="spk" data-say="${esc(w.es)}" aria-label="Hear ${esc(w.es)}">🔊</button><span class="es">${esc(w.es)}${(S.miss[w.es] || 0) > 1 ? '<span class="weak">tricky</span>' : ''}</span><span class="en">${esc(w.en)}</span></div>`).join('')}</div></div>`;
+    }).join('');
+    document.querySelectorAll('[data-say]').forEach(b => b.onclick = () => say(b.dataset.say));
+
+    const has = lw.length > 0;
+    $('pracBtn').disabled = !has;
+    $('weakBtn').disabled = !lw.some(w => S.miss[w.es] > 0);
+    $('listenBtn').disabled = !has || !canSpeak;
+}
+
+function showTab(t) {
+    ['learn', 'practice', 'words'].forEach(n => { $('v-' + n).hidden = n !== t; });
+    document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+    window.scrollTo(0, 0);
+    if (location.hash !== '#' + t) history.replaceState(null, '', '#' + t);
+}
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+$('pracBtn').onclick = () => startPractice('mix');
+$('weakBtn').onclick = () => startPractice('weak');
+$('listenBtn').onclick = () => startPractice('listen');
+
+/* ---------- exercise building ---------- */
+function W(w) { return { es: w[0], en: w[1], note: w[2] || '' }; }
+
+function lessonSteps(lesson, replay) {
+    const ws = lesson.words.map(W), steps = [];
+    if (!replay && lesson.tip) steps.push({ t: 'tip', text: lesson.tip, title: lesson.title });
+    for (let i = 0; i < ws.length; i += 2) {
+        const pair = ws.slice(i, i + 2);
+        if (!replay) pair.forEach(w => steps.push({ t: 'learn', w }));
+        pair.forEach((w, j) => steps.push({ t: j ? 'listen' : 'choose', w }));
+    }
+    steps.push({ t: 'match', ws: shuffle(ws).slice(0, 5) });
+    lesson.sents.forEach((s, i) => steps.push({ t: i % 2 ? 'buildEn' : 'buildEs', s: { es: s[0], en: s[1] } }));
+    const sh = shuffle(ws);
+    sh.slice(0, 2).forEach(w => steps.push({ t: 'type', w }));
+    sh.slice(2, 4).forEach(w => steps.push({ t: 'chooseRev', w }));
+    return steps;
+}
+
+function practiceSteps(mode) {
+    const lw = learnedWords();
+    let pool = lw;
+    if (mode === 'weak') pool = lw.filter(w => S.miss[w.es] > 0);
+    const weight = w => 1 + (S.miss[w.es] || 0) * 3 + (w.lesson === Math.max(...lw.map(x => x.lesson)) ? 1 : 0);
+    const pick = n => {
+        const out = [], bag = pool.slice();
+        while (out.length < n && bag.length) {
+            const tot = bag.reduce((a, w) => a + weight(w), 0);
+            let r = Math.random() * tot, k = 0;
+            for (; k < bag.length - 1; k++) { r -= weight(bag[k]); if (r <= 0) break; }
+            out.push(bag.splice(k, 1)[0]);
+        }
+        return out;
+    };
+    const steps = [];
+    if (mode === 'listen') {
+        pick(10).forEach(w => steps.push({ t: 'listen', w }));
+        return steps;
+    }
+    const ws = pick(10);
+    const kinds = ['choose', 'chooseRev', 'listen', 'type'];
+    ws.forEach((w, i) => steps.push({ t: kinds[i % kinds.length], w }));
+    if (pool.length >= 4) steps.splice(4, 0, { t: 'match', ws: pick(5) });
+    const sents = shuffle(mode === 'weak' ? [] : learnedSents()).slice(0, 2);
+    sents.forEach((s, i) => steps.push({ t: i ? 'buildEn' : 'buildEs', s }));
+    return shuffle(steps.slice(0, 4)).concat(shuffle(steps.slice(4)));
+}
+
+function distractors(target, field, n) {
+    // prefer same lesson, then same unit, then any learned/earlier word
+    const t = ALL_WORDS.find(w => w.es === target.es);
+    const tl = t ? t.lesson : 0;
+    const seen = new Set([target[field]]);
+    const tiers = [
+        ALL_WORDS.filter(w => w.lesson === tl),
+        ALL_WORDS.filter(w => LESSONS[w.lesson].unit === LESSONS[tl].unit),
+        ALL_WORDS.filter(w => w.lesson <= tl),
+        ALL_WORDS,
+    ];
+    const out = [];
+    for (const tier of tiers) for (const w of shuffle(tier)) {
+        if (out.length >= n) return out;
+        if (!seen.has(w[field])) { seen.add(w[field]); out.push(w[field]); }
+    }
+    return out;
+}
+
+/* ---------- player ---------- */
+let P = null; // { steps, i, mode, lesson, right, wrong, answered, answer, check }
+
+function startLesson(lesson) {
+    const replay = isDone(lesson);
+    open({ steps: lessonSteps(lesson, replay), lesson, mode: 'lesson' });
+}
+function startPractice(mode) {
+    if (!learnedWords().length) return;
+    open({ steps: practiceSteps(mode), mode });
+}
+function open(p) {
+    P = Object.assign(p, { i: 0, right: 0, wrong: 0, base: p.steps.length, missed: new Set() });
+    $('player').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    showStep();
+}
+function close() {
+    if (canSpeak) speechSynthesis.cancel();
+    $('player').classList.remove('open');
+    document.body.style.overflow = '';
+    P = null; render();
+}
+$('pClose').onclick = () => {
+    if (!P || P.done || P.i === 0 || confirm('Quit this lesson? Your progress in it will be lost.')) close();
+};
+
+function setFoot(state, html, label, enabled) {
+    const f = $('pFoot');
+    f.className = 'pFoot' + (state ? ' ' + state : '');
+    $('fb').innerHTML = html || '';
+    const b = $('pBtn');
+    b.textContent = label; b.disabled = !enabled;
+    b.className = 'btn wide' + (state === 'good' ? ' good' : state === 'bad' ? ' bad' : '');
+}
+
+function showStep() {
+    let st = P.steps[P.i];
+    if (!st) return finish();
+    if (st.t === 'listen' && !audioOn()) st = P.steps[P.i] = { t: 'chooseRev', w: st.w };
+    $('pBar').style.width = Math.min(100, P.i / P.steps.length * 100) + '%';
+    P.answered = false; P.answer = null; P.check = null;
+    const g = $('stage');
+    g.scrollTop = 0;
+    setFoot('', '', 'Check', false);
+    RENDER[st.t](st, g);
+}
+
+function spkBtns(text) {
+    if (!canSpeak) return '';
+    return `<div class="sayRow"><button class="bigSpk" data-s="${esc(text)}" aria-label="Play">🔊</button><button class="bigSpk slow" data-s="${esc(text)}" data-slow="1" aria-label="Play slowly">🐢</button></div>`;
+}
+function wireSpk(g) { g.querySelectorAll('[data-s]').forEach(b => b.onclick = () => say(b.dataset.s, !!b.dataset.slow)); }
+function inlineSpk(text) { return canSpeak ? `<button class="spk" data-s="${esc(text)}" aria-label="Hear it">🔊</button>` : ''; }
+
+function ready(fn) { P.check = fn; $('pBtn').disabled = false; }
+
+const RENDER = {
+    tip(st, g) {
+        g.innerHTML = `<div class="prompt">Quick tip</div><h2 style="margin-bottom:14px">${esc(st.title)}</h2><div class="card tipCard">${st.text}</div>`;
+        setFoot('', '', 'Got it', true); P.check = 'continue';
+    },
+    learn(st, g) {
+        const w = st.w;
+        g.innerHTML = `<div class="prompt">New word</div><div class="card learnCard"><span class="newTag">NEW</span>
+            <div class="big">${esc(w.es)}</div><div class="mean">${esc(w.en)}</div>${spkBtns(w.es)}
+            ${w.note ? `<div class="note">💡 ${esc(w.note)}</div>` : ''}</div>`;
+        wireSpk(g); say(w.es);
+        setFoot('', '', 'Continue', true); P.check = 'continue';
+    },
+    choose(st, g) { choice(g, 'What does this mean?', `${inlineSpk(st.w.es)}${esc(st.w.es)}`, st.w.en, distractors(st.w, 'en', 3), st.w, st.w.es); },
+    chooseRev(st, g) { choice(g, 'How do you say this in ' + C.name + '?', esc(st.w.en), st.w.es, distractors(st.w, 'es', 3), st.w); },
+    listen(st, g) {
+        const w = st.w;
+        const opts = shuffle([w.es, ...distractors(w, 'es', 3)]);
+        g.innerHTML = `<div class="prompt">What do you hear?</div>${spkBtns(w.es)}<div class="opts" style="margin-top:22px">${opts.map(o => `<button class="opt" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div>
+            <button class="skipLink" id="noAudio">Can't listen right now</button>`;
+        wireSpk(g); setTimeout(() => say(w.es), 250);
+        wireOpts(g, w.es, w, `<b>${esc(w.es)}</b> — ${esc(w.en)}`);
+        $('noAudio').onclick = () => { noAudioUntil = Date.now() + 15 * 60 * 1000; P.steps[P.i] = { t: 'chooseRev', w }; showStep(); };
+    },
+    match(st, g) {
+        const ws = st.ws;
+        const L = shuffle(ws), R = shuffle(ws);
+        g.innerHTML = `<div class="prompt">Tap the matching pairs</div><div class="match"><div class="col">${L.map(w => `<button class="mt" data-side="es" data-k="${esc(w.es)}">${esc(w.es)}</button>`).join('')}</div>
+            <div class="col">${R.map(w => `<button class="mt" data-side="en" data-k="${esc(w.es)}">${esc(w.en)}</button>`).join('')}</div></div>`;
+        let sel = null, left = ws.length, errs = 0;
+        g.querySelectorAll('.mt').forEach(b => b.onclick = () => {
+            if (b.classList.contains('ok')) return;
+            if (b.dataset.side === 'es') say(b.dataset.k);
+            if (!sel || sel.dataset.side === b.dataset.side) {
+                if (sel) sel.classList.remove('sel');
+                sel = b; b.classList.add('sel'); return;
+            }
+            const a = sel; sel = null; a.classList.remove('sel');
+            if (a.dataset.k === b.dataset.k) {
+                [a, b].forEach(x => { x.classList.add('ok'); x.disabled = true; });
+                if (--left === 0) {
+                    blip(true); P.right++;
+                    setFoot('good', `<h3>${errs ? 'All matched!' : 'Perfect match!'}</h3>`, 'Continue', true); P.check = 'continue';
+                }
+            } else {
+                errs++; blip(false);
+                const k = (a.dataset.side === 'es' ? a : b).dataset.k;
+                noteMiss(k);
+                [a, b].forEach(x => { x.classList.add('no'); setTimeout(() => x.classList.remove('no'), 400); });
+            }
+        });
+        setFoot('', '', 'Continue', false);
+    },
+    buildEs(st, g) { build(g, st.s, 'es'); },
+    buildEn(st, g) { build(g, st.s, 'en'); },
+    type(st, g) {
+        const w = st.w;
+        g.innerHTML = `<div class="prompt">Type this in ${C.name}</div><div class="q">${esc(w.en)}</div>
+            <input class="typeIn" id="typeIn" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Type here…">
+            <div class="accents">${['á', 'é', 'í', 'ó', 'ú', 'ñ', 'ü', '¿', '¡'].map(c => `<button data-c="${c}">${c}</button>`).join('')}</div>`;
+        const inp = $('typeIn');
+        g.querySelectorAll('[data-c]').forEach(b => b.onclick = () => {
+            const s = inp.selectionStart ?? inp.value.length, e = inp.selectionEnd ?? s;
+            inp.value = inp.value.slice(0, s) + b.dataset.c + inp.value.slice(e);
+            inp.focus(); inp.setSelectionRange(s + 1, s + 1); inp.dispatchEvent(new Event('input'));
+        });
+        inp.oninput = () => { $('pBtn').disabled = !inp.value.trim(); };
+        inp.onkeydown = e => { if (e.key === 'Enter' && !$('pBtn').disabled) { e.preventDefault(); $('pBtn').click(); } };
+        setTimeout(() => inp.focus(), 50);
+        P.check = () => {
+            const v = inp.value; inp.disabled = true;
+            g.querySelectorAll('[data-c]').forEach(b => b.disabled = true);
+            if (loose(v) === loose(w.es)) return grade(true, w, '');
+            if (bare(v) === bare(w.es)) return grade(true, w, `Watch the accents: <b>${esc(w.es)}</b>`);
+            if (noArticle(bare(w.es)) !== bare(w.es) && bare(v) === noArticle(bare(w.es))) return grade(true, w, `Remember the little word in front: <b>${esc(w.es)}</b>`);
+            return grade(false, w, `Correct answer: <b>${esc(w.es)}</b>`);
+        };
+    },
+};
+
+function choice(g, prompt, qHtml, answer, wrongs, w, speakText) {
+    const opts = shuffle([answer, ...wrongs]);
+    g.innerHTML = `<div class="prompt">${esc(prompt)}</div><div class="q">${qHtml}</div><div class="opts">${opts.map(o => `<button class="opt" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;
+    wireSpk(g);
+    if (speakText) say(speakText);
+    wireOpts(g, answer, w, `<b>${esc(w.es)}</b> = ${esc(w.en)}`);
+}
+function wireOpts(g, answer, w, reveal) {
+    const opts = g.querySelectorAll('.opt');
+    opts.forEach(b => b.onclick = () => {
+        if (P.answered) return;
+        opts.forEach(x => x.classList.remove('sel')); b.classList.add('sel');
+        if (/^[a-záéíóúñü¿¡ ]/i.test(b.dataset.v) && ALL_WORDS.some(x => x.es === b.dataset.v)) say(b.dataset.v);
+        P.answer = b.dataset.v;
+        ready(() => {
+            const ok = P.answer === answer;
+            opts.forEach(x => { x.disabled = true; if (x.dataset.v === answer) x.classList.add('right'); else if (x === b) x.classList.add('wrong'); });
+            grade(ok, w, ok ? reveal : `Correct answer: ${reveal}`);
+        });
+    });
+}
+
+function tokens(text, side) {
+    return text.split(' ').map((t, i) => {
+        let x = t.replace(PUNCT, '');
+        if (i === 0 && !(side === 'en' && x === 'I') && !/^(Ana|Carlos|María)$/.test(x)) x = x.toLowerCase();
+        return x;
+    }).filter(Boolean);
+}
+function build(g, s, target) {
+    const from = target === 'es' ? s.en : s.es;
+    const goal = tokens(s[target], target);
+    const goalSet = new Set(goal.map(bare));
+    const others = shuffle(ALL_SENTS.filter(x => x.es !== s.es).flatMap(x => tokens(x[target], target)))
+        .filter(t => !goalSet.has(bare(t)));
+    const extra = [...new Set(others)].slice(0, Math.min(4, Math.max(2, Math.ceil(goal.length / 2))));
+    const bank = shuffle(goal.concat(extra)).map((t, i) => ({ t, i }));
+    const line = [];
+    g.innerHTML = `<div class="prompt">Translate this sentence</div>
+        <div class="q">${target === 'en' ? inlineSpk(s.es) : ''}${esc(from)}</div>
+        <div class="line" id="bLine"></div><div class="bank" id="bBank"></div>`;
+    wireSpk(g);
+    if (target === 'en') say(s.es);
+    const draw = () => {
+        $('bLine').innerHTML = line.map((x, k) => `<button class="tile" data-k="${k}">${esc(x.t)}</button>`).join('');
+        $('bBank').innerHTML = bank.map(x => `<button class="tile ${line.includes(x) ? 'used' : ''}" data-i="${x.i}">${esc(x.t)}</button>`).join('');
+        $('bLine').querySelectorAll('.tile').forEach(b => b.onclick = () => { if (P.answered) return; line.splice(+b.dataset.k, 1); draw(); });
+        $('bBank').querySelectorAll('.tile').forEach(b => b.onclick = () => {
+            if (P.answered) return;
+            const x = bank.find(y => y.i === +b.dataset.i);
+            if (line.includes(x)) return;
+            line.push(x); if (target === 'es') say(x.t); draw();
+        });
+        $('pBtn').disabled = !line.length;
+    };
+    draw();
+    P.check = () => {
+        const got = line.map(x => bare(x.t)).join(' ');
+        const ok = got === goal.map(bare).join(' ');
+        const w = { es: s.es, en: s.en };
+        grade(ok, null, ok ? `<b>${esc(s.es)}</b> = ${esc(s.en)}` : `Correct answer: <b>${esc(s[target])}</b>`);
+        if (!ok) P.steps.push({ t: target === 'es' ? 'buildEs' : 'buildEn', s: w });
+        say(s.es);
+    };
+}
+
+function noteMiss(es) { P.missed.add(es); S.miss[es] = (S.miss[es] || 0) + 1; save(); }
+
+function grade(ok, w, msg) {
+    P.answered = true;
+    blip(ok);
+    if (ok) {
+        P.right++;
+        if (w && P.mode !== 'lesson' && S.miss[w.es]) { S.miss[w.es] = Math.max(0, S.miss[w.es] - 1); save(); }
+        const cheers = ['Nice!', 'Great job!', '¡Muy bien!', 'Correct!', '¡Excelente!', 'You got it!'];
+        setFoot('good', `<h3>${cheers[Math.floor(Math.random() * cheers.length)]}</h3>${msg ? `<p>${msg}</p>` : ''}`, 'Continue', true);
+    } else {
+        P.wrong++;
+        if (w) { noteMiss(w.es); const st = P.steps[P.i]; P.steps.push({ t: st.t === 'listen' ? 'listen' : st.t, w: st.w }); }
+        setFoot('bad', `<h3>Not quite</h3><p>${msg}</p><p class="dim small" style="margin-top:6px">You'll see this one again at the end.</p>`, 'Got it', true);
+    }
+    P.check = 'continue';
+}
+
+$('pBtn').onclick = () => {
+    if (!P) return;
+    if (P.done) return close();
+    if (P.check === 'continue') { P.i++; return showStep(); }
+    if (typeof P.check === 'function') P.check();
+};
+
+function finish() {
+    P.done = true;
+    $('pBar').style.width = '100%';
+    const scored = P.right + P.wrong;
+    const acc = scored ? Math.round(P.right / scored * 100) : 100;
+    let xp, title, em, extra = '';
+    if (P.mode === 'lesson') {
+        const l = P.lesson;
+        const stars = P.wrong === 0 ? 3 : acc >= 75 ? 2 : 1;
+        const first = !isDone(l);
+        xp = XP_LESSON + (P.wrong === 0 ? XP_PERFECT : 0);
+        S.done[l.id] = { stars: Math.max(stars, (S.done[l.id] || {}).stars || 0), at: Date.now() };
+        title = first ? 'Lesson complete!' : 'Lesson practiced!'; em = stars === 3 ? '🏆' : '🎉';
+        extra = `<div class="card" style="text-align:left"><h3>Words in this lesson</h3><div class="wlist">${l.words.map(w =>
+            `<div class="wrow"><button class="spk" data-s="${esc(w[0])}" aria-label="Hear ${esc(w[0])}">🔊</button><span class="es">${esc(w[0])}</span><span class="en">${esc(w[1])}</span></div>`).join('')}</div></div>`;
+        if (first && l.idx === LESSONS.length - 1) { title = 'Course complete!'; em = '🏅'; }
+    } else {
+        xp = XP_PRACTICE + (P.wrong === 0 ? XP_PERFECT : 0);
+        title = 'Practice done!'; em = '💪';
+    }
+    addXp(xp);
+    const tx = todayXp();
+    const goalLine = tx >= GOAL && tx - xp < GOAL ? '<p style="margin-top:8px"><b>Daily goal reached! 🎯</b></p>' : '';
+    $('stage').innerHTML = `<div class="endWrap"><div class="em">${em}</div><h1>${title}</h1>
+        <p class="dim" style="margin-top:6px">🔥 ${liveStreak()} day streak</p>${goalLine}
+        <div class="endStats"><div><b style="color:var(--sun)">+${xp}</b><span>XP earned</span></div><div><b style="color:var(--good)">${acc}%</b><span>Accuracy</span></div></div>
+        ${extra}</div>`;
+    wireSpk($('stage'));
+    setFoot('', '', 'Continue', true);
+    blip(true);
+}
+
+/* ---------- boot ---------- */
+render();
+const h = location.hash.slice(1);
+showTab(['practice', 'words'].includes(h) ? h : 'learn');
+</script>
+</body>
+</html>
