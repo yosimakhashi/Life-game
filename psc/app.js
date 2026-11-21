@@ -7,7 +7,7 @@ const $top = document.getElementById('top');
 
 // ---------- state ----------
 function blank() {
-    return { done: {}, videos: {}, mynotes: {}, exams: [], wrong: {}, attempts: [], study: {}, log: [], last: null, goal: 60, daily: {}, marks: {}, theme: 'auto' };
+    return { done: {}, videos: {}, mynotes: {}, exams: [], wrong: {}, attempts: [], study: {}, log: [], last: null, goal: 60, daily: {}, marks: {}, theme: 'auto', seen: {}, dailyPick: null };
 }
 let S = blank();
 try { S = Object.assign(blank(), JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* storage blocked: start fresh */ }
@@ -332,7 +332,8 @@ function practice() {
     const nWrong = Object.keys(S.wrong).length;
     const recent = S.attempts.slice(-5).reverse();
     $app.innerHTML = `
-    <div class="small muted">${allQuestions().length} questions in the bank</div>
+    <div class="small muted">${allQuestions().length} questions in the bank · ${unseenCount()} you haven't answered yet</div>
+    <a class="item" href="#/quiz/fresh" style="border-color:var(--green)"><div class="ico">🆕</div><div class="txt"><b>New questions only</b><span class="small muted">${unseenCount() ? `20 questions you have never answered (${unseenCount()} left)` : 'You have answered them all!'}</span></div><span class="chev">›</span></a>
     ${dailyCard()}
     <a class="item" href="#/quiz/full"><div class="ico">🏛️</div><div class="txt"><b>Full exam: 100 questions</b><span class="small muted">75 minutes · +1 right, −⅓ wrong · just like the real OMR exam</span></div><span class="chev">›</span></a>
     <a class="item" href="#/quiz/mock"><div class="ico">🧾</div><div class="txt"><b>Mini mock test</b><span class="small muted">25 questions · 20 minutes · same marking</span></div><span class="chev">›</span></a>
@@ -346,21 +347,29 @@ function practice() {
     ${recent.length ? `<div class="card"><h2>Recent scores</h2>${recent.map(a => `<div class="row small" style="padding:6px 0;border-top:1px solid var(--line)"><span>${esc(a.label)}</span><span class="spacer"></span><b>${isExam(a.mode) ? a.score.toFixed(2) + ' / ' + a.n : a.right + ' / ' + a.n}</b><span class="muted">${a.date.slice(5)}</span></div>`).join('')}</div>` : ''}`;
 }
 const isExam = m => m === 'mock' || m === 'full';
+// Unseen questions first, then the ones answered longest ago.
+function freshOrder(pool, rnd) { return shuffle(pool, rnd).sort((x, y) => (S.seen[x.key] || 0) - (S.seen[y.key] || 0)); }
+const unseenCount = () => allQuestions().filter(q => !S.seen[q.key]).length;
 function startQuiz(mode, a, b) {
     let pool = allQuestions(), label = 'Quick quiz', n = 10, limit = 0;
     if (mode === 'mock') { n = 25; limit = 20 * 60; label = 'Mini mock test'; }
     if (mode === 'full') { n = 100; limit = 75 * 60; label = 'Full exam (100)'; }
     if (mode === 'marks') { pool = pool.filter(q => S.marks[q.key]); n = pool.length; label = 'Saved questions'; }
-    if (mode === 'daily') { const seed = Number(today().replace(/-/g, '')); pool = shuffle(pool, seeded(seed)).slice(0, 10); n = 10; label = 'Daily challenge'; }
+    if (mode === 'daily') {
+        // Pick today's 10 once (preferring questions you haven't seen) and keep them for retries.
+        if (!S.dailyPick || S.dailyPick.date !== today()) { S.dailyPick = { date: today(), keys: freshOrder(pool, seeded(Number(today().replace(/-/g, '')))).slice(0, 10).map(q => q.key) }; save(); }
+        const want = S.dailyPick.keys; pool = pool.filter(q => want.includes(q.key)); n = 10; label = 'Daily challenge';
+    }
+    if (mode === 'fresh') { pool = pool.filter(q => !S.seen[q.key]); n = 20; label = 'New questions'; }
     if (mode === 'subject') { pool = pool.filter(q => q.sid === a); n = pool.length; label = SUBJ[a] ? SUBJ[a].name : 'Subject'; }
     if (mode === 'topic') { pool = pool.filter(q => q.sid === a && q.tid === b); n = pool.length; const t = topic(a, b); label = t ? t.title : 'Topic'; }
     if (mode === 'mistakes') { pool = pool.filter(q => S.wrong[q.key]); n = pool.length; label = 'Mistakes'; }
-    const qs = shuffle(pool).slice(0, n).map(q => { const order = shuffle(q.opts.map((_, i) => i)); return Object.assign({}, q, { order }); });
+    const qs = (mode === 'fresh' || mode === 'daily' ? shuffle(pool) : freshOrder(pool)).slice(0, n).map(q => { const order = shuffle(q.opts.map((_, i) => i)); return Object.assign({}, q, { order }); });
     quiz = { mode, label, qs, i: 0, picks: Array(qs.length).fill(null), limit, start: Date.now(), done: false, back: mode === 'topic' ? `#/topic/${a}/${b}/quiz` : '#/practice' };
 }
 function quizView(mode, a, b) {
     if (!quiz || quiz.done || quiz.key !== location.hash) { startQuiz(mode || 'quick', a, b); quiz.key = location.hash; }
-    if (!quiz.qs.length) { header('Quiz', '#/practice'); $app.innerHTML = '<div class="card">No questions here yet.</div>'; return; }
+    if (!quiz.qs.length) { header('Quiz', '#/practice'); $app.innerHTML = quiz.mode === 'fresh' ? '<div class="card">🎉 You have answered every question in the bank. Quizzes now show the ones you answered longest ago first. Try your mistakes list or a full exam.</div>' : '<div class="card">No questions here yet.</div>'; return; }
     const isMock = isExam(quiz.mode);
     header(quiz.label, quiz.back, isMock ? `<span class="chip" id="clock">--:--</span>` : `<span class="chip">${quiz.i + 1}/${quiz.qs.length}</span>`);
     const q = quiz.qs[quiz.i], pick = quiz.picks[quiz.i];
@@ -412,6 +421,7 @@ function finishQuiz() {
     const per = quiz.qs.map((q, i) => {
         const p = quiz.picks[i];
         if (p === null) return { sid: q.sid, ok: false, skip: true };
+        S.seen[q.key] = Date.now();
         if (p === q.ans) { right++; delete S.wrong[q.key]; return { sid: q.sid, ok: true }; }
         wrong++; S.wrong[q.key] = 1; return { sid: q.sid, ok: false };
     });
@@ -598,6 +608,7 @@ function settings() {
     <div class="card"><h2>Back up your progress</h2><p class="small muted" style="margin-top:0">Everything is stored on this device only. Download a backup to move it to another phone.</p>
     <div class="row wrap"><button class="btn" id="exp">⬇ Download backup</button><label class="btn">⬆ Restore backup<input type="file" id="imp" accept="application/json" hidden></label></div></div>
     <div class="card"><h2>Theme</h2><div class="row">${[["auto","Auto"],["light","☀️ Light"],["dark","🌙 Dark"]].map(([k,l]) => `<button class="btn ${S.theme === k ? "primary" : ""}" data-th="${k}" style="flex:1">${l}</button>`).join("")}</div></div>
+    <div class="card"><h2>Question history</h2><p class="small muted" style="margin-top:0">Quizzes show questions you haven't answered first. Clear the history to start the whole bank fresh (your scores are kept).</p><button class="btn" id="rseen">Clear answered-question history</button></div>
     <div class="card"><h2>Reset</h2><button class="btn danger" id="rst">Erase all progress</button></div>
     <div class="card small muted">PSC Padanam · notes follow the common Kerala PSC preliminary syllabus. Always confirm dates and syllabus on the official site.</div>
     <a class="btn ghost" href="../index.html">‹ Back to Life RPG</a>`;
@@ -610,6 +621,7 @@ function settings() {
         const f = ev.target.files[0]; if (!f) return;
         f.text().then(t => { S = Object.assign(blank(), JSON.parse(t)); save(); toast('Backup restored'); }).catch(() => toast('Could not read that file'));
     };
+    document.getElementById('rseen').onclick = () => { if (confirm('Treat every question as new again?')) { S.seen = {}; S.dailyPick = null; save(); toast('History cleared'); } };
     document.getElementById('rst').onclick = () => { if (confirm('Erase all progress, videos, notes and exams?')) { S = blank(); save(); toast('Reset done'); location.hash = '#/home'; } };
 }
 
