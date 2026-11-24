@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f0f10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="40 Days">
+<title>40-Day YouTube Focus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=JetBrains+Mono:wght@600;700&display=swap">
+<style>
+/* 40-Day YouTube Focus: a 40-day challenge for focused YouTube work.
+   Daily checklist + mission, focus timer, streaks, XP, badges,
+   video log, channel metrics. All data lives in localStorage. */
+:root {
+  --bg: #0f0f10;
+  --panel: #18181b;
+  --panel-2: #222226;
+  --line: #2e2e33;
+  --fg: #f4f4f5;
+  --dim: #a1a1aa;
+  --red: #ff3b3b;
+  --red-dim: #5a1d1d;
+  --on-red: #ffffff;
+  --gold: #f5c04a;
+  --green: #4ade80;
+  --green-dim: #1d4730;
+  --blue: #60a5fa;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f6f6f7; --panel: #ffffff; --panel-2: #f0f0f2; --line: #e2e2e6;
+    --fg: #18181b; --dim: #62626b; --red: #e11d1d; --red-dim: #fde0e0;
+    --gold: #b7860b; --green: #16a34a; --green-dim: #d6f5e0; --blue: #2563eb;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 16px/1.5 "Inter", system-ui, -apple-system, sans-serif;
+  padding: env(safe-area-inset-top, 0) 16px calc(90px + env(safe-area-inset-bottom, 0));
+}
+button, input, textarea, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+a { color: var(--blue); }
+.wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+.top { display: flex; align-items: center; justify-content: space-between; padding-top: 14px; gap: 8px; }
+.top a.back { color: var(--dim); text-decoration: none; font-size: 14px; }
+h1 { margin: 0; font-size: clamp(26px, 6vw, 38px); font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+h1 .play { display: inline-grid; place-items: center; width: 1.25em; height: .9em; background: var(--red); border-radius: .22em; vertical-align: -.08em; margin-right: .25em; }
+h1 .play::after { content: ""; border-left: .32em solid #fff; border-top: .2em solid transparent; border-bottom: .2em solid transparent; margin-left: .06em; }
+h2 { margin: 0; font-size: 18px; font-weight: 700; }
+.muted { color: var(--dim); }
+.small { font-size: 13px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.spread { justify-content: space-between; }
+.btn { border: 1px solid var(--line); background: var(--panel-2); border-radius: 10px; padding: 10px 14px; cursor: pointer; font-weight: 600; }
+.btn:hover { border-color: var(--dim); }
+.btn.primary { background: var(--red); border-color: var(--red); color: var(--on-red); }
+.btn.ghost { background: transparent; }
+.btn.sm { padding: 6px 10px; font-size: 13px; border-radius: 8px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+input[type=text], input[type=number], input[type=date], input[type=url], textarea, select {
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; min-width: 0;
+}
+textarea { resize: vertical; min-height: 80px; }
+label.field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--dim); flex: 1; min-width: 140px; }
+
+/* Hero */
+.hero { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: center; }
+.ring { width: 118px; height: 118px; position: relative; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .lbl { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; line-height: 1.05; }
+.ring .lbl b { font: 700 34px var(--mono); display: block; }
+.ring .lbl span { font-size: 12px; color: var(--dim); }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.stat { background: var(--panel-2); border-radius: 10px; padding: 8px 10px; }
+.stat b { font: 700 20px var(--mono); display: block; }
+.stat span { font-size: 12px; color: var(--dim); }
+.phase-pill { display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: var(--red-dim); color: var(--red); letter-spacing: .03em; }
+.xpbar { height: 8px; background: var(--panel-2); border-radius: 99px; overflow: hidden; }
+.xpbar i { display: block; height: 100%; background: linear-gradient(90deg, var(--gold), var(--red)); transition: width .4s; }
+.quote { font-style: italic; color: var(--dim); border-left: 3px solid var(--red); padding-left: 12px; margin: 0; }
+.alert { background: var(--red-dim); color: var(--fg); border: 1px solid var(--red); border-radius: 12px; padding: 12px 14px; font-weight: 600; }
+
+/* Checklist */
+.mission { background: linear-gradient(135deg, var(--red-dim), transparent); border: 1px solid var(--red); border-radius: 12px; padding: 14px; }
+.mission .tag { font-size: 12px; font-weight: 800; color: var(--red); letter-spacing: .08em; text-transform: uppercase; }
+.check { display: flex; gap: 12px; align-items: flex-start; padding: 11px 12px; border-radius: 10px; background: var(--panel-2); cursor: pointer; user-select: none; border: 1px solid transparent; transition: background .15s; }
+.check:hover { border-color: var(--line); }
+.check input { appearance: none; -webkit-appearance: none; flex: none; width: 24px; height: 24px; border: 2px solid var(--dim); border-radius: 7px; margin: 0; display: grid; place-items: center; cursor: pointer; transition: all .15s; }
+.check input:checked { background: var(--green); border-color: var(--green); }
+.check input:checked::after { content: ""; width: 6px; height: 12px; border: solid #fff; border-width: 0 3px 3px 0; transform: rotate(45deg) translate(-1px, -1px); }
+.check.done { background: var(--green-dim); }
+.check.done .txt { text-decoration: line-through; text-decoration-color: var(--green); opacity: .8; }
+.check .txt { flex: 1; }
+.check .xp { font: 600 12px var(--mono); color: var(--gold); white-space: nowrap; padding-top: 3px; }
+.checklist { display: flex; flex-direction: column; gap: 8px; }
+.dayprog { height: 10px; background: var(--panel-2); border-radius: 99px; overflow: hidden; }
+.dayprog i { display: block; height: 100%; background: var(--green); transition: width .3s; }
+
+/* Timer */
+.timer { text-align: center; }
+.timer .clock { font: 700 clamp(48px, 14vw, 72px) var(--mono); letter-spacing: -.02em; line-height: 1; }
+.timer .mode { font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--red); }
+.timer .mode.brk { color: var(--green); }
+.seg { display: inline-flex; background: var(--panel-2); border-radius: 10px; padding: 3px; gap: 2px; flex-wrap: wrap; justify-content: center; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--dim); }
+.seg button.on { background: var(--panel); color: var(--fg); box-shadow: 0 1px 2px #0003; }
+
+/* Grid */
+.grid40 { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+.cell { aspect-ratio: 1; border-radius: 9px; background: var(--panel-2); border: 1px solid var(--line); display: grid; place-items: center; font: 700 14px var(--mono); cursor: pointer; position: relative; color: var(--dim); padding: 0; }
+.cell.future { opacity: .45; }
+.cell.partial { background: color-mix(in srgb, var(--green) 30%, var(--panel-2)); color: var(--fg); }
+.cell.won { background: var(--green); color: #06240f; border-color: var(--green); }
+.cell.perfect { background: var(--gold); color: #2b1d00; border-color: var(--gold); }
+.cell.missed { background: var(--red-dim); color: var(--red); border-color: var(--red-dim); }
+.cell.today { outline: 2px solid var(--red); outline-offset: 2px; }
+.cell.sel { box-shadow: inset 0 0 0 2px var(--fg); }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--dim); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 4px; }
+
+/* Badges */
+.badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+.badge { background: var(--panel-2); border-radius: 12px; padding: 12px 8px; text-align: center; border: 1px solid var(--line); }
+.badge .ico { font-size: 28px; filter: grayscale(1); opacity: .35; }
+.badge.got { border-color: var(--gold); }
+.badge.got .ico { filter: none; opacity: 1; }
+.badge b { display: block; font-size: 13px; margin-top: 4px; }
+.badge span { font-size: 11px; color: var(--dim); }
+
+/* Lists */
+.list { display: flex; flex-direction: column; gap: 6px; }
+.item { display: flex; gap: 10px; align-items: center; background: var(--panel-2); border-radius: 10px; padding: 10px 12px; }
+.item .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.x { background: none; border: 0; color: var(--dim); cursor: pointer; font-size: 18px; padding: 0 4px; }
+.x:hover { color: var(--red); }
+.spark { width: 100%; height: 90px; display: block; }
+
+/* Tabs */
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; background: color-mix(in srgb, var(--panel) 92%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-top: 1px solid var(--line); display: flex; justify-content: center; padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0)); z-index: 10; }
+nav.tabs .in { display: flex; width: 100%; max-width: 760px; }
+nav.tabs button { flex: 1; background: none; border: 0; cursor: pointer; padding: 6px 2px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; font-weight: 600; color: var(--dim); border-radius: 10px; }
+nav.tabs button .i { font-size: 20px; line-height: 1; }
+nav.tabs button.on { color: var(--red); background: var(--panel-2); }
+.view { display: none; flex-direction: column; gap: 16px; }
+.view.on { display: flex; }
+
+/* Toast + confetti */
+.toast { position: fixed; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom, 0)); transform: translateX(-50%) translateY(20px); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-weight: 700; font-size: 14px; opacity: 0; transition: all .25s; pointer-events: none; z-index: 30; max-width: calc(100% - 32px); text-align: center; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#confetti { position: fixed; inset: 0; pointer-events: none; z-index: 40; }
+
+/* Setup overlay */
+.overlay { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(6px); z-index: 50; display: grid; place-items: center; padding: 16px; overflow-y: auto; }
+.overlay .card { width: min(520px, 100%); }
+.hidden { display: none !important; }
+
+@media (max-width: 520px) {
+  .hero { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .hero .stats { width: 100%; }
+  .grid40 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div class="wrap">
+  <div class="top">
+    <a class="back" href="../">← Life Game</a>
+    <span class="small muted" id="channelName"></span>
+  </div>
+  <h1><span class="play" aria-hidden="true"></span>40 Days of Focus</h1>
+
+  <!-- ============ TODAY ============ -->
+  <section class="view on" id="v-today">
+    <div class="card">
+      <div class="hero">
+        <div class="ring" aria-label="Challenge progress">
+          <svg viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="var(--panel-2)" stroke-width="12"/>
+            <circle id="ringArc" cx="60" cy="60" r="52" fill="none" stroke="var(--red)" stroke-width="12" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" style="transition: stroke-dashoffset .5s"/>
+          </svg>
+          <div class="lbl"><div><b id="dayNum">1</b><span>of 40</span></div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;min-width:0;width:100%">
+          <div class="row spread"><span class="phase-pill" id="phasePill">Phase 1</span><span class="small muted" id="dateLbl"></span></div>
+          <div class="stats">
+            <div class="stat"><b id="sStreak">0🔥</b><span>day streak</span></div>
+            <div class="stat"><b id="sHours">0h</b><span>focus hours</span></div>
+            <div class="stat"><b id="sWon">0</b><span>days won</span></div>
+            <div class="stat"><b id="sVideos">0</b><span>videos published</span></div>
+          </div>
+          <div>
+            <div class="row spread small"><b id="lvlName">Lv 1 · Viewer</b><span class="muted" id="xpLbl">0 XP</span></div>
+            <div class="xpbar"><i id="xpFill" style="width:0"></i></div>
+          </div>
+        </div>
+      </div>
+      <p class="quote" id="quote"></p>
+    </div>
+
+    <div class="alert hidden" id="missAlert"></div>
+
+    <div class="card">
+      <div class="row spread">
+        <h2 id="checkTitle">Today's checklist</h2>
+        <div class="row">
+          <button class="btn sm ghost" id="prevDay" aria-label="Previous day">‹</button>
+          <button class="btn sm ghost" id="goToday">Today</button>
+          <button class="btn sm ghost" id="nextDay" aria-label="Next day">›</button>
+        </div>
+      </div>
+      <div class="mission">
+        <div class="tag" id="missionTag">Day 1 mission</div>
+        <div style="font-weight:700;margin:4px 0 2px" id="missionTitle"></div>
+        <div class="small muted" id="missionTip"></div>
+      </div>
+      <div class="checklist" id="checklist"></div>
+      <div>
+        <div class="row spread small"><span id="dayPct">0% done</span><span class="muted">≥70% wins the day · 100% = perfect</span></div>
+        <div class="dayprog"><i id="dayFill" style="width:0"></i></div>
+      </div>
+      <label class="field">Notes for this day — what did you ship, learn, struggle with?
+        <textarea id="note" placeholder="Today I…"></textarea>
+      </label>
+    </div>
+
+    <div class="card timer">
+      <div class="row spread"><h2>Focus timer</h2><span class="small muted" id="focusToday">0 / 120 min today</span></div>
+      <div class="seg" id="presets">
+        <button data-m="25">25 / 5</button>
+        <button data-m="50" class="on">50 / 10</button>
+        <button data-m="90">90 / 15</button>
+      </div>
+      <div class="mode" id="tMode">Deep work</div>
+      <div class="clock" id="tClock">50:00</div>
+      <div class="row" style="justify-content:center">
+        <button class="btn primary" id="tStart">Start</button>
+        <button class="btn" id="tReset">Reset</button>
+        <button class="btn ghost" id="tSkip">Skip</button>
+      </div>
+      <div class="small muted">Minutes count toward the selected day. Hit your daily goal and the focus box ticks itself.</div>
+    </div>
+  </section>
+
+  <!-- ============ JOURNEY ============ -->
+  <section class="view" id="v-journey">
+    <div class="card">
+      <div class="row spread"><h2>Your 40 days</h2><span class="small muted" id="gridSummary"></span></div>
+      <div class="grid40" id="grid"></div>
+      <div class="legend">
+        <span><i style="background:var(--gold)"></i>Perfect</span>
+        <span><i style="background:var(--green)"></i>Won</span>
+        <span><i style="background:color-mix(in srgb,var(--green) 30%,var(--panel-2))"></i>Started</span>
+        <span><i style="background:var(--red-dim);border:1px solid var(--red)"></i>Missed</span>
+      </div>
+      <div class="small muted">Tap a day to open its checklist. Rule: <b>never miss twice in a row.</b></div>
+    </div>
+    <div class="card">
+      <h2>The plan</h2>
+      <div class="list" id="planList"></div>
+    </div>
+  </section>
+
+  <!-- ============ VIDEOS & METRICS ============ -->
+  <section class="view" id="v-videos">
+    <div class="card">
+      <div class="row spread"><h2>Video ideas</h2><span class="small muted" id="ideaCount"></span></div>
+      <form class="row" id="ideaForm">
+        <input type="text" id="ideaIn" placeholder="New idea / title…" style="flex:1" required>
+        <button class="btn primary">Add</button>
+      </form>
+      <div class="list" id="ideaList"></div>
+    </div>
+    <div class="card">
+      <div class="row spread"><h2>Published videos</h2><span class="small muted" id="vidCount"></span></div>
+      <form class="row" id="vidForm">
+        <input type="text" id="vidTitle" placeholder="Video title" style="flex:2;min-width:160px" required>
+        <select id="vidType" style="flex:0 0 110px"><option>Long</option><option>Short</option></select>
+        <input type="url" id="vidUrl" placeholder="Link (optional)" style="flex:2;min-width:160px">
+        <button class="btn primary">Log it</button>
+      </form>
+      <div class="list" id="vidList"></div>
+    </div>
+    <div class="card">
+      <h2>Channel metrics</h2>
+      <form class="row" id="metForm">
+        <label class="field">Subscribers<input type="number" id="metSubs" min="0" required></label>
+        <label class="field">Total views<input type="number" id="metViews" min="0"></label>
+        <button class="btn primary" style="align-self:flex-end">Save today</button>
+      </form>
+      <svg class="spark" id="spark" viewBox="0 0 300 90" preserveAspectRatio="none"></svg>
+      <div class="small muted" id="metSummary">Log your numbers every few days to see the curve.</div>
+    </div>
+  </section>
+
+  <!-- ============ BADGES ============ -->
+  <section class="view" id="v-badges">
+    <div class="card">
+      <h2>Badges</h2>
+      <div class="badges" id="badges"></div>
+    </div>
+    <div class="card">
+      <h2>Rules of the 40 days</h2>
+      <div class="list small">
+        <div class="item">1. Show up every day — even 20 minutes counts as showing up.</div>
+        <div class="item">2. Never miss twice in a row.</div>
+        <div class="item">3. Done &gt; perfect. Publish, then improve the next one.</div>
+        <div class="item">4. Phone in another room during deep work.</div>
+        <div class="item">5. Create before you consume. No scrolling until the work block is done.</div>
+        <div class="item">6. Judge yourself on reps, not views. Views follow reps.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section class="view" id="v-settings">
+    <div class="card">
+      <h2>Challenge settings</h2>
+      <div class="row">
+        <label class="field">Channel name<input type="text" id="setName"></label>
+        <label class="field">Start date<input type="date" id="setStart"></label>
+        <label class="field">Daily focus goal (min)<input type="number" id="setGoal" min="10" step="10"></label>
+      </div>
+      <label class="field">Why are you doing this? (shown when you miss a day)
+        <textarea id="setWhy" placeholder="I want to…"></textarea>
+      </label>
+      <button class="btn primary" id="saveSettings">Save</button>
+    </div>
+    <div class="card">
+      <h2>Daily habits</h2>
+      <div class="small muted">These boxes appear every day, alongside the day's mission.</div>
+      <div class="list" id="habitList"></div>
+      <form class="row" id="habitForm">
+        <input type="text" id="habitIn" placeholder="Add a daily habit…" style="flex:1" required>
+        <button class="btn">Add</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Reminders</h2>
+      <div class="small muted">Get a browser notification when a focus block ends (works while this tab is open).</div>
+      <button class="btn" id="notifBtn">Enable notifications</button>
+    </div>
+    <div class="card">
+      <h2>Backup</h2>
+      <div class="small muted">Your progress is saved on this device only. Export a backup now and then.</div>
+      <div class="row">
+        <button class="btn" id="exportBtn">Export JSON</button>
+        <label class="btn">Import JSON<input type="file" id="importIn" accept="application/json" hidden></label>
+        <button class="btn ghost" id="resetBtn" style="color:var(--red)">Reset everything</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<nav class="tabs"><div class="in">
+  <button data-v="today" class="on"><span class="i">✅</span>Today</button>
+  <button data-v="journey"><span class="i">🗺️</span>40 Days</button>
+  <button data-v="videos"><span class="i">🎬</span>Videos</button>
+  <button data-v="badges"><span class="i">🏆</span>Badges</button>
+  <button data-v="settings"><span class="i">⚙️</span>Settings</button>
+</div></nav>
+
+<div class="toast" id="toast"></div>
+
+<div class="overlay hidden" id="setup">
+  <div class="card">
+    <h2 style="font-size:24px">Start your 40 days 🎬</h2>
+    <p class="muted" style="margin:0">Forty days of focused YouTube work. One mission a day, a short checklist, a focus timer. Show up daily and the channel follows.</p>
+    <label class="field">Channel name<input type="text" id="suName" placeholder="My Channel"></label>
+    <div class="row">
+      <label class="field">Start date<input type="date" id="suStart"></label>
+      <label class="field">Daily focus goal (min)<input type="number" id="suGoal" value="120" min="10" step="10"></label>
+    </div>
+    <label class="field">Why are you doing this?<textarea id="suWhy" placeholder="To build a channel that…"></textarea></label>
+    <button class="btn primary" id="suGo">Begin Day 1</button>
+  </div>
+</div>
+
+<script>
+const KEY = "yt40.v1";
+const DAYS = 40, WIN = 0.7;
+
+const PHASES = [
+  { name: "Phase 1 · Foundation", from: 1 },
+  { name: "Phase 2 · Rhythm", from: 11 },
+  { name: "Phase 3 · Growth", from: 21 },
+  { name: "Phase 4 · Systems", from: 31 },
+];
+
+const MISSIONS = [
+  ["Define your niche and your viewer in one sentence", "\"I make ___ for ___ who want ___.\" Pin it above your desk."],
+  ["Study 5 channels in your niche", "Note their top 10 titles and thumbnails. What patterns repeat?"],
+  ["Build a list of 30 video ideas", "Quantity first. Add them in the Videos tab."],
+  ["Set up the channel properly", "Banner, profile picture, About section, links, upload defaults."],
+  ["Script video #1", "Write the hook first: what will they get, and why watch to the end?"],
+  ["Record video #1", "Done beats perfect. Get it on camera today."],
+  ["Edit and publish video #1 🎉", "Cut the dead air. Ship it. Log it in Videos."],
+  ["Fix your setup", "Watch video #1 back. Fix the single worst thing: audio, light or framing."],
+  ["Script video #2 with a stronger hook", "Rewrite the first 15 seconds three ways and pick the best."],
+  ["Record and edit video #2", "Use what you learned from #1."],
+  ["Publish #2 — design 3 thumbnail options", "Big face or object, 3 words max, high contrast."],
+  ["Batch: outline 3 videos", "Bullet outlines only. Future-you will thank you."],
+  ["Record video #3", "Try recording in one take per section."],
+  ["Edit and publish #3 + week-2 review", "What's taking the most time? How can you cut it?"],
+  ["Make 3 Shorts from existing footage", "Best 30–45 seconds. Hook in the first second."],
+  ["Learn one editing skill", "Jump cuts, B-roll, captions or sound design. Practice it."],
+  ["Script #4 with a story structure", "Problem → struggle → turning point → result."],
+  ["Record #4", "Energy up 20% — camera eats energy."],
+  ["Edit and publish #4", "Add the new editing skill you learned."],
+  ["Analytics day", "Check CTR and retention graphs. Write 3 insights in your notes."],
+  ["Repackage your weakest video", "New title and thumbnail. Packaging is half the battle."],
+  ["Script #5 on a searchable topic", "Use YouTube search suggestions to find what people type."],
+  ["Record #5", "Keep it tight. Cut anything that doesn't serve the viewer."],
+  ["Publish #5 + 2 Shorts", "Shorts point to the long video."],
+  ["Community day", "Reply to every comment. Leave thoughtful comments on 10 niche videos."],
+  ["Plan a series / playlist", "3–5 connected videos that make people binge."],
+  ["Script #6 (series part 1)", "End with a reason to watch the next one."],
+  ["Record and edit #6", "Batch-record intros/outros for the series."],
+  ["Publish #6 + a community post", "Poll your audience: what should part 2 cover?"],
+  ["Day-30 review", "What worked best? Double down on it for the last 10 days."],
+  ["Build your templates", "Script template, edit project template, thumbnail template."],
+  ["Batch-script #7 and #8", "Two scripts, one session. Use the template."],
+  ["Batch-record #7 and #8", "Same setup, same day, same outfit change between."],
+  ["Edit and publish #7", "Time how long it takes — you're getting faster."],
+  ["Edit #8 and schedule it", "Scheduled uploads = consistency on autopilot."],
+  ["Collab outreach", "Message 3 creators your size with a specific idea."],
+  ["Make 3 Shorts", "Repurpose your best moments from #7 and #8."],
+  ["Script #9 — your best idea yet", "Use everything you've learned. Make it the one."],
+  ["Record, edit and publish #9", "Final upload of the challenge. Make it count."],
+  ["Final review and the next 40 🏁", "Compare Day 1 to now. Plan the next 40 days."],
+];
+
+const QUOTES = [
+  "Consistency beats intensity.",
+  "Your first 100 videos are your film school.",
+  "Done is better than perfect. Perfect is never done.",
+  "Discipline is choosing what you want most over what you want now.",
+  "Small daily improvements are the key to staggering long-term results.",
+  "You don't need more time. You need more focus.",
+  "Make the video you wish existed.",
+  "The algorithm rewards people who keep showing up.",
+  "Every expert was once a beginner who didn't quit.",
+  "Hard work compounds. So does laziness.",
+  "Don't break the chain.",
+  "One upload at a time.",
+  "Motivation gets you started. Habit keeps you going.",
+  "Create before you consume.",
+  "Never miss twice.",
+];
+
+const DEFAULT_HABITS = [
+  "🎯 Hit my deep-focus goal",
+  "📵 No social media until the work block is done",
+  "✍️ Wrote something: script, outline or ideas",
+  "🎥 Created: recorded or edited",
+  "🔍 Studied one successful video (hook, structure, packaging)",
+  "💬 Engaged with my audience or niche community",
+  "🗓 Planned tomorrow's top task",
+];
+
+const LEVELS = [
+  [0, "Viewer"], [150, "Uploader"], [400, "Creator"], [800, "Grinder"],
+  [1300, "Rising Star"], [1900, "Pro"], [2600, "Authority"], [3400, "Legend"],
+];
+
+const BADGES = [
+  ["🚀", "Liftoff", "Win day 1", s => wonCount(s) >= 1],
+  ["🔥", "Week Streak", "7-day streak", s => bestStreak(s) >= 7],
+  ["⚡", "Fortnight", "14-day streak", s => bestStreak(s) >= 14],
+  ["🧱", "Habit Formed", "21-day streak", s => bestStreak(s) >= 21],
+  ["🎬", "First Upload", "Publish 1 video", s => s.videos.length >= 1],
+  ["📼", "Five Alive", "Publish 5 videos", s => s.videos.length >= 5],
+  ["🏭", "Content Machine", "Publish 10 videos", s => s.videos.length >= 10],
+  ["📱", "Shorts Master", "Publish 5 Shorts", s => s.videos.filter(v => v.type === "Short").length >= 5],
+  ["⏱", "10 Hours", "10h focused", s => totalMin(s) >= 600],
+  ["🧠", "50 Hours", "50h focused", s => totalMin(s) >= 3000],
+  ["💎", "Perfectionist", "5 perfect days", s => perfectCount(s) >= 5],
+  ["💡", "Idea Bank", "30 ideas logged", s => s.ideas.length >= 30],
+  ["🏔", "Halfway", "Win 20 days", s => wonCount(s) >= 20],
+  ["👑", "40 Days Done", "Win 40 days", s => wonCount(s) >= 40],
+];
+
+// ---------- State ----------
+let S = load();
+function blank() {
+  return { started: false, name: "", start: todayISO(), goal: 120, why: "",
+    habits: DEFAULT_HABITS.slice(), days: {}, ideas: [], videos: [], metrics: [], badges: [],
+    timer: { preset: 50, mode: "work", endAt: null, remaining: 50 * 60, workStartedAt: null } };
+}
+function load() {
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) return Object.assign(blank(), s); } catch (e) {}
+  return blank();
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+// ---------- Dates ----------
+function todayISO() { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
+function parseISO(s) { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); }
+function dayIndexToday() { return Math.floor((parseISO(todayISO()) - parseISO(S.start)) / 864e5) + 1; }
+function curDay() { return Math.max(1, Math.min(DAYS, dayIndexToday())); }
+function dateOf(n) { const d = parseISO(S.start); d.setDate(d.getDate() + n - 1); return d; }
+function fmtDate(d) { return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }); }
+
+// ---------- Day logic ----------
+function dayData(n) { return S.days[n] || (S.days[n] = { checks: {}, focus: 0, note: "" }); }
+function tasksFor(n) { return ["mission", ...S.habits.map((_, i) => "h" + i)]; }
+function dayRatio(n) {
+  const d = S.days[n]; if (!d) return 0;
+  const t = tasksFor(n); return t.filter(k => d.checks[k]).length / t.length;
+}
+function status(n) {
+  const r = dayRatio(n), today = dayIndexToday();
+  if (r >= 1) return "perfect";
+  if (r >= WIN) return "won";
+  if (n > today) return "future";
+  if (n < today) return "missed";
+  return r > 0 ? "partial" : "open";
+}
+const isWon = n => { const s = status(n); return s === "won" || s === "perfect"; };
+function wonCount() { let c = 0; for (let i = 1; i <= DAYS; i++) if (isWon(i)) c++; return c; }
+function perfectCount() { let c = 0; for (let i = 1; i <= DAYS; i++) if (status(i) === "perfect") c++; return c; }
+function totalMin() { return Object.values(S.days).reduce((a, d) => a + (d.focus || 0), 0); }
+function curStreak() {
+  let n = Math.min(DAYS, dayIndexToday()); if (n < 1) return 0;
+  if (!isWon(n)) n--; let c = 0;
+  while (n >= 1 && isWon(n)) { c++; n--; } return c;
+}
+function bestStreak() { let b = 0, c = 0; for (let i = 1; i <= DAYS; i++) { if (isWon(i)) { c++; b = Math.max(b, c); } else c = 0; } return b; }
+function xp() {
+  let x = 0;
+  for (const [n, d] of Object.entries(S.days)) {
+    for (const [k, v] of Object.entries(d.checks)) if (v) x += k === "mission" ? 30 : 10;
+    if (status(+n) === "perfect") x += 25;
+    x += Math.floor((d.focus || 0) / 10) * 2;
+  }
+  x += S.videos.length * 50 + S.ideas.length * 2;
+  return x;
+}
+function level(x) {
+  let i = 0; while (i + 1 < LEVELS.length && x >= LEVELS[i + 1][0]) i++;
+  const next = LEVELS[i + 1]; return { i, name: LEVELS[i][1], base: LEVELS[i][0], next: next ? next[0] : null };
+}
+
+// ---------- UI ----------
+const $ = id => document.getElementById(id);
+let sel = 1;
+
+function render() {
+  const today = dayIndexToday(), cd = curDay();
+  $("channelName").textContent = S.name;
+  // hero
+  const shown = Math.max(0, Math.min(DAYS, today));
+  $("dayNum").textContent = today < 1 ? "–" : shown;
+  $("ringArc").setAttribute("stroke-dashoffset", 326.7 * (1 - wonCount() / DAYS));
+  const ph = [...PHASES].reverse().find(p => cd >= p.from);
+  $("phasePill").textContent = today > DAYS ? "Challenge complete 🏁" : today < 1 ? "Starts " + fmtDate(parseISO(S.start)) : ph.name;
+  $("dateLbl").textContent = fmtDate(new Date());
+  $("sStreak").textContent = curStreak() + "🔥";
+  $("sHours").textContent = (totalMin() / 60).toFixed(1) + "h";
+  $("sWon").textContent = wonCount() + "/" + DAYS;
+  $("sVideos").textContent = S.videos.length;
+  const X = xp(), L = level(X);
+  $("lvlName").textContent = `Lv ${L.i + 1} · ${L.name}`;
+  $("xpLbl").textContent = L.next ? `${X} / ${L.next} XP` : `${X} XP · max level`;
+  $("xpFill").style.width = (L.next ? (X - L.base) / (L.next - L.base) * 100 : 100) + "%";
+  $("quote").textContent = "“" + QUOTES[(Math.max(1, today) - 1) % QUOTES.length] + "”";
+
+  // miss alert: yesterday missed
+  const alert = $("missAlert");
+  if (today >= 2 && today <= DAYS && status(today - 1) === "missed") {
+    const twice = today >= 3 && status(today - 2) === "missed";
+    alert.innerHTML = (twice ? "⚠️ Two days missed. The challenge isn't over — today is the restart. Win today." : "Yesterday slipped. That's fine — <b>never miss twice.</b> Win today.") +
+      (S.why ? `<div class="small" style="font-weight:400;margin-top:6px">Remember why: ${esc(S.why)}</div>` : "");
+    alert.classList.remove("hidden");
+  } else alert.classList.add("hidden");
+
+  renderDay(); renderGrid(); renderPlan(); renderVideos(); renderBadges(); renderHabits(); renderTimer();
+}
+
+function renderDay() {
+  const n = sel, d = dayData(n), today = dayIndexToday(), locked = n > today;
+  const m = MISSIONS[n - 1];
+  $("checkTitle").textContent = n === today ? "Today's checklist" : `Day ${n} checklist`;
+  $("missionTag").textContent = `Day ${n} mission · ${fmtDate(dateOf(n))}` + (locked ? " · locked" : "");
+  $("missionTitle").textContent = m[0];
+  $("missionTip").textContent = m[1];
+  const items = [["mission", "⭐ Complete today's mission", 30], ...S.habits.map((h, i) => ["h" + i, h, 10])];
+  $("checklist").innerHTML = items.map(([k, t, x]) => `
+    <label class="check ${d.checks[k] ? "done" : ""}">
+      <input type="checkbox" data-k="${k}" ${d.checks[k] ? "checked" : ""} ${locked ? "disabled" : ""}>
+      <span class="txt">${esc(t)}</span><span class="xp">+${x}</span>
+    </label>`).join("");
+  const r = dayRatio(n);
+  $("dayPct").textContent = Math.round(r * 100) + "% done" + (r >= 1 ? " · PERFECT 💎" : r >= WIN ? " · day won ✅" : "");
+  $("dayFill").style.width = r * 100 + "%";
+  const note = $("note"); if (document.activeElement !== note) note.value = d.note || "";
+  note.disabled = locked;
+  $("prevDay").disabled = n <= 1; $("nextDay").disabled = n >= DAYS;
+  $("focusToday").textContent = `${d.focus || 0} / ${S.goal} min ${n === today ? "today" : "on day " + n}`;
+}
+
+function renderGrid() {
+  const today = dayIndexToday();
+  let h = "";
+  for (let i = 1; i <= DAYS; i++) {
+    h += `<button class="cell ${status(i)} ${i === today ? "today" : ""} ${i === sel ? "sel" : ""}" data-d="${i}" title="Day ${i}: ${esc(MISSIONS[i - 1][0])}">${i}</button>`;
+  }
+  $("grid").innerHTML = h;
+  let missed = 0; for (let i = 1; i <= DAYS; i++) if (status(i) === "missed") missed++;
+  $("gridSummary").textContent = `${wonCount()} won · ${perfectCount()} perfect · ${missed} missed`;
+}
+
+function renderPlan() {
+  const today = dayIndexToday();
+  $("planList").innerHTML = MISSIONS.map((m, i) => {
+    const n = i + 1, ph = PHASES.find(p => p.from === n);
+    const st = status(n), ico = st === "perfect" ? "💎" : st === "won" ? "✅" : st === "missed" ? "✖️" : n === today ? "▶️" : "○";
+    return (ph ? `<div class="small" style="font-weight:800;color:var(--red);margin-top:${n > 1 ? 10 : 0}px">${ph.name}</div>` : "") +
+      `<div class="item" style="cursor:pointer" data-d="${n}"><span style="width:22px;text-align:center">${ico}</span><span class="grow"><b>Day ${n}</b> · ${esc(m[0])}</span></div>`;
+  }).join("");
+}
+
+function renderVideos() {
+  $("ideaCount").textContent = S.ideas.length + " ideas";
+  $("ideaList").innerHTML = S.ideas.map((t, i) => `
+    <div class="item"><span class="grow">${esc(t)}</span>
+      <button class="btn sm" data-promote="${i}" title="Mark as published">Published</button>
+      <button class="x" data-delidea="${i}" aria-label="Delete">×</button></div>`).join("") || `<div class="small muted">No ideas yet. Aim for 30.</div>`;
+  $("vidCount").textContent = S.videos.length + " published";
+  $("vidList").innerHTML = S.videos.slice().reverse().map((v, ri) => {
+    const i = S.videos.length - 1 - ri;
+    const title = v.url ? `<a href="${esc(v.url)}" target="_blank" rel="noopener">${esc(v.title)}</a>` : esc(v.title);
+    return `<div class="item"><span class="grow">${v.type === "Short" ? "📱" : "🎬"} ${title}<div class="small muted">Day ${v.day} · ${v.date}</div></span>
+      <button class="x" data-delvid="${i}" aria-label="Delete">×</button></div>`;
+  }).join("") || `<div class="small muted">Nothing yet. Your first upload is the hardest one.</div>`;
+
+  // metrics sparkline
+  const ms = S.metrics, svg = $("spark");
+  if (ms.length >= 2) {
+    const vals = ms.map(m => m.subs), min = Math.min(...vals), max = Math.max(...vals), span = max - min || 1;
+    const pts = vals.map((v, i) => [i / (vals.length - 1) * 296 + 2, 84 - (v - min) / span * 78]);
+    const line = pts.map(p => p.join(",")).join(" ");
+    svg.innerHTML = `<polygon points="2,88 ${line} 298,88" fill="var(--red)" opacity=".12"/>
+      <polyline points="${line}" fill="none" stroke="var(--red)" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`;
+    const first = ms[0], last = ms[ms.length - 1], diff = last.subs - first.subs;
+    $("metSummary").textContent = `${last.subs.toLocaleString()} subscribers (${diff >= 0 ? "+" : ""}${diff.toLocaleString()} since ${first.date})` +
+      (last.views ? ` · ${last.views.toLocaleString()} views` : "");
+  } else {
+    svg.innerHTML = "";
+    $("metSummary").textContent = ms.length ? `${ms[0].subs.toLocaleString()} subscribers on ${ms[0].date}. Log again in a few days to see the curve.` : "Log your numbers every few days to see the curve.";
+  }
+}
+
+function renderBadges() {
+  $("badges").innerHTML = BADGES.map(([ico, name, desc, test]) => {
+    const got = test(S);
+    return `<div class="badge ${got ? "got" : ""}"><div class="ico">${ico}</div><b>${name}</b><span>${desc}</span></div>`;
+  }).join("");
+}
+
+function renderHabits() {
+  $("habitList").innerHTML = S.habits.map((h, i) => `
+    <div class="item"><span class="grow">${esc(h)}</span>
+      <button class="x" data-uph="${i}" aria-label="Move up" ${i === 0 ? "disabled" : ""}>↑</button>
+      <button class="x" data-delh="${i}" aria-label="Delete">×</button></div>`).join("");
+}
+
+function checkBadges() {
+  BADGES.forEach(([ico, name, , test]) => {
+    if (test(S) && !S.badges.includes(name)) { S.badges.push(name); toast(`${ico} Badge unlocked: ${name}`); confetti(); }
+  });
+  save();
+}
+
+// ---------- Interactions ----------
+$("checklist").addEventListener("change", e => {
+  const k = e.target.dataset.k; if (!k) return;
+  const before = dayRatio(sel);
+  dayData(sel).checks[k] = e.target.checked;
+  const after = dayRatio(sel);
+  save();
+  if (before < WIN && after >= WIN && after < 1) { toast("✅ Day won! Keep going for perfect."); confetti(60); }
+  if (before < 1 && after >= 1) { toast("💎 Perfect day!"); confetti(160); }
+  checkBadges(); render();
+});
+$("note").addEventListener("input", e => { dayData(sel).note = e.target.value; save(); });
+$("prevDay").onclick = () => { sel = Math.max(1, sel - 1); render(); };
+$("nextDay").onclick = () => { sel = Math.min(DAYS, sel + 1); render(); };
+$("goToday").onclick = () => { sel = curDay(); render(); };
+
+function openDay(n) { sel = n; showView("today"); render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+$("grid").addEventListener("click", e => { const d = e.target.closest("[data-d]"); if (d) openDay(+d.dataset.d); });
+$("planList").addEventListener("click", e => { const d = e.target.closest("[data-d]"); if (d) openDay(+d.dataset.d); });
+
+function showView(v) {
+  document.querySelectorAll(".view").forEach(el => el.classList.toggle("on", el.id === "v-" + v));
+  document.querySelectorAll("nav.tabs button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
+  try { localStorage.setItem(KEY + ".tab", v); } catch (e) {}
+}
+document.querySelectorAll("nav.tabs button").forEach(b => b.onclick = () => { showView(b.dataset.v); window.scrollTo(0, 0); });
+
+// ideas + videos
+$("ideaForm").onsubmit = e => { e.preventDefault(); const v = $("ideaIn").value.trim(); if (!v) return; S.ideas.push(v); $("ideaIn").value = ""; save(); checkBadges(); render(); };
+$("ideaList").addEventListener("click", e => {
+  const del = e.target.dataset.delidea, pro = e.target.dataset.promote;
+  if (del != null) { S.ideas.splice(+del, 1); }
+  if (pro != null) { addVideo(S.ideas[+pro], "Long", ""); S.ideas.splice(+pro, 1); }
+  save(); render();
+});
+function addVideo(title, type, url) {
+  S.videos.push({ title, type, url, day: curDay(), date: todayISO() });
+  toast(type === "Short" ? "📱 Short logged! +50 XP" : "🎬 Video published! +50 XP"); confetti(120); save(); checkBadges();
+}
+$("vidForm").onsubmit = e => {
+  e.preventDefault(); const t = $("vidTitle").value.trim(); if (!t) return;
+  addVideo(t, $("vidType").value, $("vidUrl").value.trim()); $("vidTitle").value = ""; $("vidUrl").value = ""; render();
+};
+$("vidList").addEventListener("click", e => { const i = e.target.dataset.delvid; if (i != null && confirm("Remove this video?")) { S.videos.splice(+i, 1); save(); render(); } });
+$("metForm").onsubmit = e => {
+  e.preventDefault();
+  const subs = +$("metSubs").value, views = +$("metViews").value || 0, date = todayISO();
+  const ex = S.metrics.find(m => m.date === date);
+  if (ex) Object.assign(ex, { subs, views }); else S.metrics.push({ date, subs, views });
+  S.metrics.sort((a, b) => a.date < b.date ? -1 : 1);
+  save(); toast("📈 Metrics saved"); render();
+};
+
+// habits
+$("habitForm").onsubmit = e => { e.preventDefault(); const v = $("habitIn").value.trim(); if (!v) return; S.habits.push(v); $("habitIn").value = ""; save(); render(); };
+$("habitList").addEventListener("click", e => {
+  const del = e.target.dataset.delh, up = e.target.dataset.uph;
+  // Habit check keys are positional (h0, h1…); remap stored checks so ticks follow their habit.
+  const remap = fn => { for (const d of Object.values(S.days)) { const c = {}; for (const [k, v] of Object.entries(d.checks)) { if (k === "mission") { c[k] = v; continue; } const j = fn(+k.slice(1)); if (j != null) c["h" + j] = v; } d.checks = c; } };
+  if (del != null) {
+    const i = +del; if (!confirm(`Remove "${S.habits[i]}"?`)) return;
+    S.habits.splice(i, 1); remap(j => j === i ? null : j > i ? j - 1 : j);
+  }
+  if (up != null && +up > 0) {
+    const i = +up; [S.habits[i - 1], S.habits[i]] = [S.habits[i], S.habits[i - 1]];
+    remap(j => j === i ? i - 1 : j === i - 1 ? i : j);
+  }
+  save(); render();
+});
+
+// settings
+function fillSettings() { $("setName").value = S.name; $("setStart").value = S.start; $("setGoal").value = S.goal; $("setWhy").value = S.why; }
+$("saveSettings").onclick = () => {
+  S.name = $("setName").value.trim(); S.start = $("setStart").value || S.start;
+  S.goal = Math.max(10, +$("setGoal").value || 120); S.why = $("setWhy").value.trim();
+  save(); sel = curDay(); toast("Saved"); render();
+};
+$("exportBtn").onclick = () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 2)], { type: "application/json" }));
+  a.download = `yt40-backup-${todayISO()}.json`; a.click(); URL.revokeObjectURL(a.href);
+};
+$("importIn").onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  f.text().then(t => { const d = JSON.parse(t); if (!d || typeof d !== "object" || !d.days) throw 0; S = Object.assign(blank(), d); save(); fillSettings(); sel = curDay(); render(); toast("Backup restored"); })
+    .catch(() => toast("That file isn't a valid backup"));
+  e.target.value = "";
+};
+$("resetBtn").onclick = () => { if (confirm("Erase all 40-day progress on this device?") && confirm("Really? This can't be undone.")) { localStorage.removeItem(KEY); location.reload(); } };
+$("notifBtn").onclick = () => {
+  if (!("Notification" in window)) return toast("Notifications aren't supported here");
+  Notification.requestPermission().then(p => toast(p === "granted" ? "🔔 Notifications on" : "Notifications blocked"));
+};
+
+// setup
+$("suStart").value = todayISO();
+$("suGo").onclick = () => {
+  S.name = $("suName").value.trim(); S.start = $("suStart").value || todayISO();
+  S.goal = Math.max(10, +$("suGoal").value || 120); S.why = $("suWhy").value.trim(); S.started = true;
+  save(); $("setup").classList.add("hidden"); fillSettings(); sel = curDay(); render(); confetti(150); toast("Day 1 begins. Let's go! 🎬");
+};
+
+// ---------- Focus timer ----------
+const T = () => S.timer;
+const BREAK = { 25: 5, 50: 10, 90: 15 };
+let tick = null;
+function fmt(s) { s = Math.max(0, Math.round(s)); return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); }
+function remaining() { const t = T(); return t.endAt ? (t.endAt - Date.now()) / 1000 : t.remaining; }
+function renderTimer() {
+  const t = T(), r = remaining();
+  $("tClock").textContent = fmt(r);
+  $("tMode").textContent = t.mode === "work" ? "Deep work" : "Break — step away";
+  $("tMode").classList.toggle("brk", t.mode !== "work");
+  $("tStart").textContent = t.endAt ? "Pause" : (r < (t.mode === "work" ? t.preset : BREAK[t.preset]) * 60 ? "Resume" : "Start");
+  document.querySelectorAll("#presets button").forEach(b => b.classList.toggle("on", +b.dataset.m === t.preset));
+  document.title = t.endAt ? `${fmt(r)} · ${t.mode === "work" ? "Focus" : "Break"}` : "40-Day YouTube Focus";
+}
+function creditFocus() {
+  // Credit whole minutes of work done since workStartedAt to the selected day.
+  const t = T(); if (t.mode !== "work" || !t.workStartedAt) return;
+  const mins = Math.floor((Date.now() - t.workStartedAt) / 60000);
+  t.workStartedAt = null;
+  if (mins <= 0) return;
+  const n = Math.max(1, Math.min(sel, dayIndexToday(), DAYS));
+  const d = dayData(n), wasBelow = (d.focus || 0) < S.goal;
+  d.focus = (d.focus || 0) + mins;
+  if (wasBelow && d.focus >= S.goal && S.habits.length) {
+    const fi = S.habits.findIndex(h => /focus/i.test(h));
+    if (fi >= 0 && !d.checks["h" + fi]) { d.checks["h" + fi] = true; toast(`🎯 ${S.goal} min of focus — goal hit!`); confetti(80); }
+  }
+  save(); checkBadges();
+}
+function startTimer() {
+  const t = T(); t.endAt = Date.now() + t.remaining * 1000;
+  if (t.mode === "work") t.workStartedAt = Date.now();
+  save(); runTick();
+}
+function pauseTimer() { const t = T(); t.remaining = remaining(); t.endAt = null; creditFocus(); save(); clearInterval(tick); render(); }
+function resetTimer(mode) {
+  const t = T(); if (t.endAt) creditFocus();
+  t.endAt = null; t.mode = mode || "work"; t.remaining = (t.mode === "work" ? t.preset : BREAK[t.preset]) * 60;
+  clearInterval(tick); save(); render();
+}
+function runTick() {
+  clearInterval(tick);
+  tick = setInterval(() => {
+    if (remaining() <= 0) finishPhase(); else renderTimer();
+  }, 500);
+  renderTimer();
+}
+function finishPhase() {
+  const t = T(); const wasWork = t.mode === "work";
+  creditFocus();
+  beep(); notify(wasWork ? "Focus block done! Take a break." : "Break over. Back to work.");
+  if (wasWork) toast(`⏱ ${t.preset} min focused. Nice!`);
+  resetTimer(wasWork ? "break" : "work");
+}
+$("tStart").onclick = () => { T().endAt ? pauseTimer() : startTimer(); };
+$("tReset").onclick = () => resetTimer(T().mode);
+$("tSkip").onclick = () => { if (T().mode === "work" && T().endAt) creditFocus(); resetTimer(T().mode === "work" ? "break" : "work"); };
+$("presets").addEventListener("click", e => {
+  const m = +e.target.dataset.m; if (!m) return;
+  if (T().endAt && !confirm("Change preset and stop the current block?")) return;
+  T().preset = m; resetTimer("work");
+});
+function beep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, .25, .5].forEach(dt => { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(.2, ctx.currentTime + dt); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + dt + .2); o.start(ctx.currentTime + dt); o.stop(ctx.currentTime + dt + .22); });
+  } catch (e) {}
+}
+function notify(msg) { try { if (Notification.permission === "granted") new Notification("40 Days of Focus", { body: msg }); } catch (e) {} }
+
+// ---------- Helpers ----------
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+let toastT;
+function toast(m) { const t = $("toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 2600); }
+function confetti(n = 100) {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const c = $("confetti"), x = c.getContext("2d"); c.width = innerWidth; c.height = innerHeight;
+  const cols = ["#ff3b3b", "#f5c04a", "#4ade80", "#60a5fa", "#ffffff"];
+  const P = Array.from({ length: n }, () => ({ x: innerWidth / 2 + (Math.random() - .5) * 120, y: innerHeight * .35, vx: (Math.random() - .5) * 12, vy: -Math.random() * 12 - 4, s: Math.random() * 6 + 4, c: cols[Math.random() * 5 | 0], r: Math.random() * 6 }));
+  let f = 0;
+  (function step() {
+    x.clearRect(0, 0, c.width, c.height);
+    P.forEach(p => { p.vy += .35; p.x += p.vx; p.y += p.vy; p.r += .1; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); x.restore(); });
+    if (++f < 110) requestAnimationFrame(step); else x.clearRect(0, 0, c.width, c.height);
+  })();
+}
+
+// ---------- Boot ----------
+if (!S.started) $("setup").classList.remove("hidden");
+fillSettings();
+sel = curDay();
+try { const tab = localStorage.getItem(KEY + ".tab"); if (tab && $("v-" + tab)) showView(tab); } catch (e) {}
+render();
+if (T().endAt) { if (remaining() <= 0) finishPhase(); else runTick(); }
+// Roll over to the new day at midnight / when the tab regains focus.
+let lastDay = todayISO();
+setInterval(() => { if (todayISO() !== lastDay) { lastDay = todayISO(); sel = curDay(); render(); } }, 60000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
+</script>
+</body>
+</html>
