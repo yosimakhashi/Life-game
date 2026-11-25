@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>My Streaks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Rajdhani:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="common.css">
+<style>
+.habit .head { display: flex; align-items: center; gap: 12px; }
+.habit .name { font-weight: 700; font-size: 1.1rem; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.habit .fire { text-align: right; }
+.habit .fire b { font-family: var(--display); font-weight: 400; font-size: 1.8rem; color: var(--red); line-height: 1; }
+.habit .fire small { display: block; font-size: .7rem; letter-spacing: .15em; color: var(--dim); text-transform: uppercase; }
+.habit.today { border-color: var(--red); }
+.days { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; margin-top: 12px; }
+.days button { aspect-ratio: 1; padding: 0; border-radius: 3px; font-size: .62rem; letter-spacing: 0; color: var(--dim); background: rgba(255,255,255,.06); border: 1px solid transparent; }
+.days button.on { background: var(--red); color: #fff; }
+.days button.now { border-color: var(--fg); }
+.meta { display: flex; justify-content: space-between; margin-top: 8px; }
+.big { width: 40px; height: 40px; flex-basis: 40px; font-size: 1.2rem; }
+</style>
+</head>
+<body>
+<div class="father" aria-hidden="true"></div>
+<main>
+  <div class="top"><a href="./">← In His Name</a><span id="today"></span></div>
+  <section class="hero">
+    <h1>MY STREAKS</h1>
+    <div class="sub">One day at a time. Do not break the chain.</div>
+  </section>
+
+  <section class="card red">
+    <h2>Add a streak</h2>
+    <form class="add" id="addForm">
+      <input id="name" placeholder="e.g. Pray 5 min, No sugar, Talk to Amma" maxlength="80">
+      <button class="primary">Add</button>
+    </form>
+    <p class="hint">Tap the big box each day you do it. Forgot to log? Tap any of the last 14 days to fix it.</p>
+  </section>
+
+  <div id="list"></div>
+  <footer>For my father. For his name.</footer>
+</main>
+
+<script>
+const KEY = "inHisName.streaks.v1";
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)) || { habits: [] }; } catch { S = { habits: [] }; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const dk = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const back = n => { const d = new Date(); d.setDate(d.getDate() - n); return d; };
+
+function current(h) {
+  let n = h.days[dk(back(0))] ? 0 : 1, c = 0;   // today not done yet still keeps yesterday's chain
+  while (h.days[dk(back(n))]) { c++; n++; }
+  return c;
+}
+function best(h) {
+  const ds = Object.keys(h.days).filter(k => h.days[k]).sort();
+  let b = 0, run = 0, prev = null;
+  ds.forEach(k => {
+    const t = new Date(k + "T12:00:00");
+    run = prev && Math.round((t - prev) / 864e5) === 1 ? run + 1 : 1;
+    b = Math.max(b, run); prev = t;
+  });
+  return b;
+}
+
+function render() {
+  $("#today").textContent = new Date().toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+  const t = dk(new Date());
+  $("#list").innerHTML = S.habits.map((h, i) => {
+    const done = !!h.days[t];
+    const days = Array.from({ length: 14 }, (_, j) => {
+      const d = back(13 - j), k = dk(d);
+      return `<button data-day="${i}|${k}" class="${h.days[k] ? "on" : ""} ${j === 13 ? "now" : ""}" title="${k}">${d.getDate()}</button>`;
+    }).join("");
+    const total = Object.values(h.days).filter(Boolean).length;
+    return `<div class="card habit ${done ? "today" : ""}">
+      <div class="head">
+        <button class="box big ${done ? "on" : ""}" data-day="${i}|${t}" aria-label="Done today">${done ? "✓" : ""}</button>
+        <div class="name">${esc(h.name)}</div>
+        <div class="fire"><b>${current(h)}</b><small>day streak</small></div>
+      </div>
+      <div class="days">${days}</div>
+      <div class="meta"><span class="hint">Best ${best(h)} · ${total} days total</span><button class="ghost" data-del="${i}">Delete</button></div>
+    </div>`;
+  }).join("") || `<div class="card empty">No streaks yet. Add the first thing you will do every day.</div>`;
+}
+
+$("#addForm").onsubmit = e => {
+  e.preventDefault();
+  const n = $("#name").value.trim();
+  if (!n) return;
+  S.habits.push({ name: n, created: dk(new Date()), days: {} });
+  $("#name").value = ""; save(); render();
+};
+document.addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.day) {
+    const [i, k] = b.dataset.day.split("|"), h = S.habits[i];
+    if (h.days[k]) delete h.days[k]; else h.days[k] = true;
+    save(); render();
+  }
+  if (b.dataset.del && confirm("Delete \"" + S.habits[b.dataset.del].name + "\" and its history?")) {
+    S.habits.splice(b.dataset.del, 1); save(); render();
+  }
+});
+render();
+</script>
+</body>
+</html>

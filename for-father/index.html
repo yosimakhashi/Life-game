@@ -126,6 +126,10 @@ input:focus, textarea:focus { outline: none; border-color: var(--red); }
 .modal h1 { font-size: clamp(2rem, 10vw, 3.2rem); }
 .modal p { font-size: 1.1rem; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 4px; }
+.tools a { display: block; text-align: center; text-decoration: none; background: rgba(0,0,0,.6); border: 1px solid var(--line); border-radius: 6px; padding: 12px 6px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: .85rem; }
+.tools a:hover { border-color: var(--red); }
+.tools span { display: block; font-size: 1.5rem; margin-bottom: 4px; }
 footer { text-align: center; color: var(--dim); font-size: .85rem; margin-top: 30px; }
 </style>
 </head>
@@ -154,6 +158,12 @@ footer { text-align: center; color: var(--dim); font-size: .85rem; margin-top: 3
       <div class="hint" id="lvHint"></div>
     </div>
   </section>
+
+  <div class="tools">
+    <a href="streaks.html"><span>🔥</span>My Streaks</a>
+    <a href="todo.html"><span>✅</span>To-Do</a>
+    <a href="year.html"><span>📜</span>Year Review</a>
+  </div>
 
   <nav class="tabs">
     <button data-v="levels" class="on">Missions</button>
@@ -192,7 +202,7 @@ footer { text-align: center; color: var(--dim); font-size: .85rem; margin-top: 3
     </div>
     <div class="card">
       <h2>Backup</h2>
-      <p class="hint">Progress lives only in this browser. Export it now and then.</p>
+      <p class="hint">Everything (game, streaks, to-dos, year review) lives only in this browser. Export it now and then.</p>
       <div class="row">
         <button id="exp">Export</button>
         <button id="imp">Import</button>
@@ -249,6 +259,7 @@ const LEVELS = [
       { t: "Hit your protein goal, no junk food", n: 21, p: 10, day: true },
       { t: "Do 100 push-ups in one day", n: 1, p: 60 },
       { t: "Sleep 7+ hours", n: 14, p: 5, day: true },
+      { t: "Yoga 20 minutes (sun salutations, stretching, breathing)", n: 14, p: 10, day: true },
     ]},
   { rank: "Assistant Sub-Inspector", enemy: "THE FEAR OF THE ROAD", lore: "Every rider once wobbled. Then they kept going.", bonus: 300,
     reward: "A proper riding helmet and gloves",
@@ -306,7 +317,7 @@ const LEVELS = [
 
 const DAILY = [
   { id: "first", t: "Hardest task done first, no postponing", p: 5 },
-  { id: "train", t: "Trained the body", p: 5 },
+  { id: "train", t: "Trained the body or did yoga", p: 5 },
   { id: "yt", t: "1 hour on the YouTube channel", p: 5 },
   { id: "clean", t: "House tidy, dishes done", p: 5 },
   { id: "screen", t: "Screen time under 2 hours", p: 5 },
@@ -331,6 +342,7 @@ const ACH = [
 
 // ---------- State ----------
 const KEY = "inHisName.v2";
+const EXTRA_KEYS = ["inHisName.streaks.v1", "inHisName.todo.v1", "inHisName.year.v1"];
 const blank = () => ({ points: 0, prog: {}, lastTap: {}, rewards: {}, claimed: {}, daily: {}, streak: 0, best: 0, lastOath: "", oathDays: 0, reports: [], ach: {} });
 let S;
 try { S = Object.assign(blank(), JSON.parse(localStorage.getItem(KEY)) || {}); } catch { S = blank(); }
@@ -498,12 +510,19 @@ $("#repSave").onclick = () => {
 
 $("#exp").onclick = () => {
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 1)], { type: "application/json" }));
+  const extra = {};
+  EXTRA_KEYS.forEach(k => { try { extra[k] = JSON.parse(localStorage.getItem(k)); } catch {} });
+  a.href = URL.createObjectURL(new Blob([JSON.stringify({ game: S, extra }, null, 1)], { type: "application/json" }));
   a.download = "in-his-name-" + dayKey() + ".json"; a.click();
 };
 $("#imp").onclick = () => $("#impFile").click();
 $("#impFile").onchange = async e => {
-  try { S = Object.assign(blank(), JSON.parse(await e.target.files[0].text())); save(); render(); toast("Imported"); }
+  try {
+    const d = JSON.parse(await e.target.files[0].text());
+    S = Object.assign(blank(), d.game || d);
+    if (d.extra) EXTRA_KEYS.forEach(k => { if (d.extra[k]) try { localStorage.setItem(k, JSON.stringify(d.extra[k])); } catch {} });
+    save(); render(); toast("Imported");
+  }
   catch { toast("Could not read that file"); }
 };
 $("#reset").onclick = () => { if (confirm("Erase all progress?")) { S = blank(); save(); openLv = null; render(); } };
