@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>To-Do</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Rajdhani:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="common.css">
+<style>
+.opts { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 8px; align-items: center; }
+.opts label { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: .9rem; white-space: nowrap; cursor: pointer; }
+.opts input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--red); }
+.filters { display: flex; gap: 6px; margin: 14px 0 0; }
+.filters button { flex: 1; }
+.task { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px dashed var(--line); }
+.task:first-child { border-top: 0; }
+.task .body { flex: 1; min-width: 0; }
+.task .t { font-weight: 600; font-size: 1.05rem; overflow-wrap: anywhere; cursor: text; }
+.task .m { font-size: .8rem; color: var(--dim); margin-top: 2px; }
+.task .m .late { color: var(--red-hot); font-weight: 700; }
+.task.imp .t::before { content: "★ "; color: var(--red); }
+.task.done .t { color: var(--dim); text-decoration: line-through; text-decoration-color: var(--red); }
+.count { font-family: var(--display); color: var(--red); }
+</style>
+</head>
+<body>
+<div class="father" aria-hidden="true"></div>
+<main>
+  <div class="top"><a href="./">← In His Name</a><span id="today"></span></div>
+  <section class="hero">
+    <h1>TO-DO</h1>
+    <div class="sub">Write it. Do it. Do not postpone.</div>
+  </section>
+
+  <section class="card red">
+    <form id="addForm">
+      <div class="add">
+        <input id="text" placeholder="What needs doing?" maxlength="160">
+        <button class="primary">Add</button>
+      </div>
+      <div class="opts">
+        <input type="date" id="due" aria-label="Due date">
+        <label><input type="checkbox" id="imp"> Important</label>
+      </div>
+    </form>
+    <div class="filters">
+      <button data-f="open" class="on">To do</button>
+      <button data-f="done">Done</button>
+      <button data-f="all">All</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="row" style="justify-content:space-between">
+      <span class="hint"><span class="count" id="nOpen">0</span> left · <span id="nDone">0</span> done</span>
+      <button class="ghost" id="clear">Clear done</button>
+    </div>
+    <div id="list"></div>
+  </section>
+  <footer>For my father. For his name.</footer>
+</main>
+
+<script>
+const KEY = "inHisName.todo.v1";
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)) || { tasks: [] }; } catch { S = { tasks: [] }; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const dk = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const pretty = k => new Date(k + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" });
+let filter = "open";
+
+function render() {
+  const today = dk(new Date());
+  $("#today").textContent = new Date().toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+  const rows = S.tasks.map((t, i) => ({ ...t, i }))
+    .filter(t => filter === "all" || (filter === "done") === !!t.done)
+    .sort((a, b) => (a.done - b.done) || (b.imp - a.imp) || ((a.due || "9999") < (b.due || "9999") ? -1 : (a.due || "9999") > (b.due || "9999") ? 1 : 0) || a.i - b.i);
+  $("#list").innerHTML = rows.map(t => {
+    const late = !t.done && t.due && t.due < today, isToday = t.due === today;
+    const meta = [
+      t.due ? (late ? `<span class="late">Overdue · ${pretty(t.due)}</span>` : isToday ? `<span class="late">Due today</span>` : "Due " + pretty(t.due)) : "",
+      t.done ? "Done " + pretty(t.done) : "",
+    ].filter(Boolean).join(" · ");
+    return `<div class="task ${t.done ? "done" : ""} ${t.imp ? "imp" : ""}">
+      <button class="box ${t.done ? "on" : ""}" data-tog="${t.i}" aria-label="Done">${t.done ? "✓" : ""}</button>
+      <div class="body"><div class="t" data-edit="${t.i}" title="Tap to edit">${esc(t.text)}</div>${meta ? `<div class="m">${meta}</div>` : ""}</div>
+      <button class="ghost" data-del="${t.i}" aria-label="Delete">✕</button>
+    </div>`;
+  }).join("") || `<div class="empty">${filter === "done" ? "Nothing finished yet." : "Nothing left. Add the next thing."}</div>`;
+  $("#nOpen").textContent = S.tasks.filter(t => !t.done).length;
+  $("#nDone").textContent = S.tasks.filter(t => t.done).length;
+}
+
+$("#addForm").onsubmit = e => {
+  e.preventDefault();
+  const text = $("#text").value.trim();
+  if (!text) return;
+  S.tasks.push({ text, due: $("#due").value || "", imp: $("#imp").checked, done: "" });
+  $("#text").value = ""; $("#due").value = ""; $("#imp").checked = false;
+  save(); render(); $("#text").focus();
+};
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-tog],[data-del],[data-edit],[data-f]");
+  if (!b) return;
+  if (b.dataset.f) { filter = b.dataset.f; document.querySelectorAll(".filters button").forEach(x => x.classList.toggle("on", x === b)); }
+  if (b.dataset.tog) { const t = S.tasks[b.dataset.tog]; t.done = t.done ? "" : dk(new Date()); }
+  if (b.dataset.del) S.tasks.splice(b.dataset.del, 1);
+  if (b.dataset.edit) {
+    const t = S.tasks[b.dataset.edit], v = prompt("Edit task", t.text);
+    if (v !== null && v.trim()) t.text = v.trim();
+  }
+  save(); render();
+});
+$("#clear").onclick = () => {
+  const n = S.tasks.filter(t => t.done).length;
+  if (n && confirm("Remove " + n + " finished task(s)?")) { S.tasks = S.tasks.filter(t => !t.done); save(); render(); }
+};
+render();
+</script>
+</body>
+</html>
