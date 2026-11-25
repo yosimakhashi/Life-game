@@ -13,7 +13,8 @@
    One file, no network. Progress is stored in localStorage under KEY.
    If Iron Will (../iron-will/) has a running streak, its start time is
    used so both pages agree on the current day.
-   Tabs: Today, Path (90-day map), Teachings, Energy, Urge SOS. */
+   Tabs: Today, Path (90-day map), Balance (daily energy-balance checklist,
+   mudras, cooling diet), Teachings, Energy, Urge SOS. */
 :root {
     --bg: #f6f1e7; --card: #fffaf0; --ink: #2a1f17; --dim: #7a6858; --line: #e3d6c1;
     --saffron: #c8611a; --saffron-ink: #fff; --soft: #f6e2cc; --gold: #9a6c12;
@@ -103,6 +104,20 @@ section[hidden] { display: none; }
 input[type=date] { font: inherit; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
 .toast { position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 20; max-width: calc(100% - 32px); text-align: center; }
 .toast.show { opacity: 1; }
+
+/* balance tab */
+.reliefBtn { width: 100%; padding: 14px; font-size: 17px; border-radius: 14px; background: #2f6f8f; color: #fff; font-weight: 700; }
+.relief ol li { margin: 8px 0; }
+.weekTag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); background: var(--soft); border-radius: 999px; padding: 2px 8px; margin-top: 14px; }
+.check.locked { opacity: .45; cursor: default; }
+.check.locked .box::after { content: "🔒"; font-size: 11px; }
+.when { font-size: 12px; font-weight: 700; color: var(--saffron); text-transform: uppercase; letter-spacing: .06em; }
+.meal { padding: 10px 0; border-top: 1px solid var(--line); }
+.meal:first-of-type { border-top: 0; padding-top: 0; }
+summary .dur { margin-left: auto; font-weight: 400; font-size: 13px; color: var(--dim); white-space: nowrap; }
+.headDay { font-size: 14px; background: var(--soft); border-radius: 10px; padding: 10px 12px; margin: 10px 0 4px; }
+.invTag { display: inline-block; font-size: 12px; font-weight: 700; color: var(--bad); margin-bottom: 4px; }
+.mudraHand { font-size: 14px; color: var(--dim); }
 </style>
 </head>
 <body>
@@ -167,6 +182,15 @@ input[type=date] { font: inherit; padding: 8px 10px; border-radius: 10px; border
         </div>
 
         <div class="card">
+            <div class="label">Energy balance</div>
+            <p class="small" id="balSummary" style="margin-bottom:10px"></p>
+            <div class="row">
+                <button class="btn small" id="goBalance">Open balance list</button>
+                <button class="btn ghost small" id="goRelief">Head heating up?</button>
+            </div>
+        </div>
+
+        <div class="card">
             <div class="label">Streak</div>
             <div class="row">
                 <button class="btn ghost small" id="slipBtn">I slipped. Reset honestly</button>
@@ -184,6 +208,169 @@ input[type=date] { font: inherit; padding: 8px 10px; border-radius: 10px; border
         <div class="card">
             <div class="label">The eight phases</div>
             <div class="phaseList" id="phaseList"></div>
+        </div>
+    </section>
+
+    <!-- ===================== BALANCE ===================== -->
+    <section id="tab-balance" hidden>
+        <h1 style="margin-top:12px">Energy balance</h1>
+        <p class="dim" style="margin-top:6px">Held energy that is not grounded rises and gets stuck in the head as heat, pressure, sensitive eyes or a floating, detached feeling. The answer is not to hold harder. Cool it, ground it downward, and move it through the body. Build up week by week so the nadis can adjust.</p>
+
+        <div class="card relief" id="reliefCard">
+            <button class="reliefBtn" id="reliefToggle">💧 Head heating up? Cool it now</button>
+            <div id="reliefBody" hidden>
+                <ol>
+                    <li><b>Stop and close your eyes.</b> Splash cool water on your closed eyes, face and the back of the neck. Don't open your eyes to bright light or a screen yet.</li>
+                    <li><b>Chandra Bhedana, 9 rounds.</b> Close the right nostril with your right thumb. Inhale slowly through the left (the cool moon channel, ida). Close the left, exhale through the right. Repeat.</li>
+                    <li><b>Sheetali or Sheetkari, 10 breaths.</b> Inhale through a curled tongue or through the teeth, exhale through the nose.</li>
+                    <li><b>Apana Mudra and the feet.</b> Hold Apana Mudra in both hands and put all your attention in the soles of your feet for 2–3 minutes. Feel the weight sink into the earth.</li>
+                    <li><b>Ground it.</b> Stand barefoot on earth or a cool floor, or soak your feet in cool water. Rub a little coconut oil or ghee on the crown and the soles.</li>
+                    <li><b>Rest the energy at the navel.</b> Lie down, hands on the belly below the navel, and breathe into your hands for 2 minutes.</li>
+                    <li><b>For the rest of today</b>, ease off anything that pulls energy upward: Mula Bandha, breath holds, the upward half of the orbit, trataka and screens. Keep the grounding.</li>
+                </ol>
+                <button class="btn ghost small" id="reliefDone">I feel cooler</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="label">Today's balance list</div>
+            <div class="small dim" id="balDate"></div>
+            <div class="bar"><i id="balBar" style="width:0%"></i></div>
+            <div class="small dim" style="margin-top:6px" id="balCount"></div>
+            <div id="balChecks"></div>
+            <p class="small dim" style="margin-top:12px">Don't push for a long streak. If pressure builds, ease off the practice, not the grounding.</p>
+        </div>
+
+        <div class="card">
+            <div class="label">Mudras</div>
+            <p class="small dim">Sit comfortably, spine tall, hands resting on the thighs, palms up. Hold each with light pressure, both hands, 10–15 minutes (or 3 × 5 min through the day). Breathe slowly through the nose.</p>
+            <details open><summary>Apana Mudra: downward, grounding</summary><div>
+                <ol>
+                    <li>Touch the tips of the <b>middle and ring fingers</b> to the tip of the thumb.</li>
+                    <li>Keep the index and little fingers straight and relaxed.</li>
+                    <li>With each exhale, feel energy flowing down to the navel, the pelvis and the feet.</li>
+                </ol>
+                <p class="mudraHand">Best for: heat and pressure in the head, eye strain, the detached feeling. Apana vayu is the downward wind, so this is your first mudra when energy is stuck high.</p>
+            </div></details>
+            <details><summary>Varuna Mudra: water, cooling</summary><div>
+                <ol>
+                    <li>Touch the tip of the <b>little finger</b> to the tip of the thumb.</li>
+                    <li>Keep the other three fingers straight.</li>
+                    <li>Imagine cool water flowing through the head and eyes.</li>
+                </ol>
+                <p class="mudraHand">Best for: burning eyes, dryness, pitta heat. Balances the water element. Do it in the afternoon heat or alongside Sheetali.</p>
+            </div></details>
+            <details><summary>Prana Mudra: vitality, root</summary><div>
+                <ol>
+                    <li>Touch the tips of the <b>ring and little fingers</b> to the tip of the thumb.</li>
+                    <li>Keep the index and middle fingers straight.</li>
+                    <li>Rest attention at the base of the spine (Muladhara).</li>
+                </ol>
+                <p class="mudraHand">Best for: low energy, weakness, eye fatigue. Awakens prana in the root and helps retained energy settle as strength instead of restlessness. Morning is best.</p>
+            </div></details>
+            <details><summary>Shuni Mudra: patience, steadiness</summary><div>
+                <ol>
+                    <li>Touch the tip of the <b>middle finger</b> to the tip of the thumb.</li>
+                    <li>Keep the other fingers straight.</li>
+                    <li>Sit still and let the breath slow down by itself.</li>
+                </ol>
+                <p class="mudraHand">Best for: impatience, restlessness and the urge to "release" the pressure. Ruled by Saturn: discipline and staying power.</p>
+            </div></details>
+            <details><summary>Gyan Mudra: calm mind</summary><div>
+                <ol>
+                    <li>Touch the tip of the <b>index finger</b> to the tip of the thumb.</li>
+                    <li>Keep the other three fingers straight.</li>
+                    <li>Use it for meditation and japa.</li>
+                </ol>
+                <p class="mudraHand">Best for: a scattered, racing mind and lustful thoughts. If your head is already hot, do Apana first and Gyan after.</p>
+            </div></details>
+            <details><summary>Ashwini Mudra: horse gesture (Week 3)</summary><div>
+                <ol>
+                    <li>Sit in Vajrasana or cross-legged, breathing normally.</li>
+                    <li>Gently contract the anal sphincter, then release. About one per second.</li>
+                    <li>Start with <b>10–20 contractions</b>. Keep the face, jaw and eyes soft.</li>
+                </ol>
+                <p class="mudraHand">Gheranda Samhita praises it for strength and turning retained energy into ojas. Keep it light. If the head heats up, stop and do Apana Mudra.</p>
+            </div></details>
+            <details><summary>Mula Bandha: root lock (Week 3)</summary><div>
+                <ol>
+                    <li>Sit tall. Exhale fully.</li>
+                    <li>Lightly draw up the perineum, about 20% effort, not a hard squeeze.</li>
+                    <li>Hold 3–5 seconds with easy breathing, then release completely. 5–10 rounds.</li>
+                    <li>Finish by resting attention below the navel for a minute.</li>
+                </ol>
+                <p class="mudraHand">The Hatha Yoga Pradipika says Mula Bandha unites prana and apana. Done hard, it pushes energy up into the head. Done gently and followed by grounding, it seals it. Skip it on days the head is hot.</p>
+            </div></details>
+        </div>
+
+        <div class="card">
+            <div class="label">Yoga sequence · about 20 min</div>
+            <p class="small dim">Hatha yoga turns retained energy into ojas without it rushing to the head. Do the poses in this order, on an empty stomach, morning or evening. Breathe through the nose and never strain.</p>
+            <div class="headDay"><b>Headache or eye-pressure day?</b> Do only 1, 2, 3, 8 and 9. Skip the inversions (5, 6, 7).</div>
+            <details><summary><span>1. Vajrasana · thunderbolt</span><span class="dur">3–5 min</span></summary><div>
+                <ol><li>Kneel with knees together and sit back on your heels.</li><li>Spine tall, hands on thighs, eyes closed.</li><li>Breathe slowly into the belly.</li></ol>
+                <p class="mudraHand">Grounds the energy and calms the sexual centre. You can also sit like this after meals.</p>
+            </div></details>
+            <details><summary><span>2. Baddha Konasana · butterfly</span><span class="dur">1 min + hold</span></summary><div>
+                <ol><li>Sit with the soles of the feet together, heels near the body.</li><li>Hold the feet and gently flap the knees for 1 min.</li><li>Then hold still, spine tall, for a few breaths.</li></ol>
+                <p class="mudraHand">Opens the pelvis so energy does not stagnate there.</p>
+            </div></details>
+            <details><summary><span>3. Paschimottanasana · seated forward bend</span><span class="dur">1 min</span></summary><div>
+                <ol><li>Sit with legs straight together.</li><li>Inhale and lengthen the spine, exhale and fold forward from the hips.</li><li>Hold the shins or feet, breathe slowly, never pull.</li></ol>
+                <p class="mudraHand">Cools the body and draws energy inward.</p>
+            </div></details>
+            <details><summary><span>4. Bhujangasana · cobra</span><span class="dur">3 × 30 sec</span></summary><div>
+                <ol><li>Lie on your belly, palms under the shoulders.</li><li>Inhale and lift the chest, elbows slightly bent, shoulders down.</li><li>Hold, then lower on the exhale. Rest between rounds.</li></ol>
+                <p class="mudraHand">Moves energy gently up the spine.</p>
+            </div></details>
+            <details><summary><span>5. Sarvangasana · shoulder stand (or Viparita Karani)</span><span class="dur">1–3 min</span></summary><div>
+                <div class="invTag">Inversion · skip on headache days</div><ol><li>Lie on your back, lift the legs and hips, support the back with your hands.</li><li>Body straight, chin toward the chest, breathe evenly.</li><li>If this is hard, do Viparita Karani: legs up a wall, hips on the floor.</li><li>Come down slowly, one vertebra at a time.</li></ol>
+                <p class="mudraHand">The classic brahmacharya pose for converting energy.</p>
+            </div></details>
+            <details><summary><span>6. Halasana · plough</span><span class="dur">30 sec</span></summary><div>
+                <div class="invTag">Inversion · skip on headache days</div><ol><li>From shoulder stand, slowly lower the feet to the floor behind your head.</li><li>Keep the neck still, arms on the floor.</li><li>Roll out slowly.</li></ol>
+                <p class="mudraHand">Skip it whenever the head already feels heavy.</p>
+            </div></details>
+            <details><summary><span>7. Matsyasana · fish</span><span class="dur">30 sec</span></summary><div>
+                <div class="invTag">Inversion · skip on headache days</div><ol><li>Lie on your back, hands under the hips.</li><li>Press the elbows down and arch the chest up.</li><li>Rest the crown of the head lightly on the floor. No weight on the neck.</li></ol>
+                <p class="mudraHand">Balances the shoulder stand and opens the throat.</p>
+            </div></details>
+            <details><summary><span>8. Balasana · child's pose</span><span class="dur">1 min</span></summary><div>
+                <ol><li>Kneel, sit back on your heels and fold forward.</li><li>Forehead on the floor, arms beside the body.</li><li>Breathe into the lower back.</li></ol>
+                <p class="mudraHand">Brings energy down and settles the head.</p>
+            </div></details>
+            <details><summary><span>9. Shavasana · rest</span><span class="dur">3–5 min</span></summary><div>
+                <ol><li>Lie flat on your back, arms by the sides, palms up.</li><li>Let the whole body go heavy.</li><li>Rest your attention below the navel.</li></ol>
+                <p class="mudraHand">Never skip this. It is where the energy gets stored.</p>
+            </div></details>
+        </div>
+
+        <div class="card">
+            <div class="label">Cooling sattvic diet for the day</div>
+            <div class="meal">
+                <div class="when">On waking</div>
+                <p>A glass of room-temperature water (from a copper vessel if you have one). <b>5–7 almonds soaked overnight</b>, peeled. Peeling removes the heating skin.</p>
+            </div>
+            <div class="meal">
+                <div class="when">Morning, after practice</div>
+                <p>Sweet, juicy <b>fruit</b>: pomegranate, sweet grapes, pear, melon, ripe banana or papaya. Or warm <b>milk</b> with a pinch of cardamom and 2 dates. <b>Brahmi</b>: ¼–½ tsp powder in warm water or a little ghee, or a few fresh leaves. It cools the head and calms the mind.</p>
+            </div>
+            <div class="meal">
+                <div class="when">Midday, the main meal</div>
+                <p>Rice or wheat roti with <b>a spoon of ghee</b>, mung dal, and cooked cooling vegetables: bottle gourd (lauki), ash gourd, zucchini, pumpkin, cucumber, leafy greens. Sweet buttermilk or cucumber raita with roasted cumin and coriander. Chew a little <b>fennel</b> after the meal.</p>
+            </div>
+            <div class="meal">
+                <div class="when">Evening, around 5 PM</div>
+                <p><b>Coconut water</b> or fruit, plus a handful of soaked raisins. Coriander, cumin and fennel tea (½ tsp each, steeped) in place of tea or coffee.</p>
+            </div>
+            <div class="meal">
+                <div class="when">Night, light and by 8 PM</div>
+                <p>Moong dal khichdi with ghee, or a vegetable soup with roti. Before sleep, a cup of warm <b>milk with ½ tsp shatavari</b> and a pinch of cardamom. Shatavari nourishes shukra and cools pitta, so retained essence builds ojas instead of heat.</p>
+            </div>
+            <div class="meal">
+                <div class="when">Avoid</div>
+                <p>Chilli and very spicy food, sour and fermented food (pickles, vinegar, sour curd, too much tomato), deep-fried and stale food, excess garlic and onion, tea, coffee and energy drinks, alcohol and tobacco, meat and eggs at night, and heavy or late dinners. These are rajasic and tamasic and push heat into the head.</p>
+            </div>
         </div>
     </section>
 
@@ -489,6 +676,7 @@ input[type=date] { font: inherit; padding: 8px 10px; border-radius: 10px; border
 <nav class="tabs">
     <button data-tab="today" class="on"><span>🪔</span>Today</button>
     <button data-tab="path"><span>🛕</span>Path</button>
+    <button data-tab="balance"><span>🌿</span>Balance</button>
     <button data-tab="teach"><span>📜</span>Teachings</button>
     <button data-tab="energy"><span>🌀</span>Energy</button>
     <button data-tab="sos" class="sos"><span>🛑</span>SOS</button>
@@ -620,8 +808,34 @@ const CHECKS = [
     ['sleep', 'Light dinner, in bed by 10:30', 'Phone outside the bedroom'],
 ];
 
+/* Energy-balance list (Balance tab). Separate from CHECKS so the green days on
+   the Path keep their meaning. Week 2 and 3 items unlock by streak day. */
+const BAL = [
+    { week: 1, from: 1, title: 'Week 1 · Cool and ground', items: [
+        ['surya', 'Morning: 5 rounds of Surya Namaskar', 'Slow, one breath per movement'],
+        ['sheetali', 'Morning: Sheetali or Sheetkari, 5 min', 'Inhale through curled tongue or teeth, exhale through nose'],
+        ['asana', 'Yoga sequence, about 20 min', 'Headache day: only poses 1, 2, 3, 8 and 9'],
+        ['mudra', 'Mudra, 10–15 min', 'Apana when the head is hot, Varuna for the eyes'],
+        ['earth', 'Barefoot on earth or grass, 10–15 min', 'Feel the weight in the soles'],
+        ['food', 'Cooling sattvic food, plenty of water', 'No chilli, sour food, tea or coffee today'],
+        ['oil', 'Night: coconut oil on scalp, ghee on soles', 'Massage gently for a few minutes'],
+        ['navel', 'Night: 5 min attention below the navel', 'Rest the energy in the lower dantian'],
+        ['sleep', 'Asleep before 11 PM', 'Lustful thought? Breathe it down to the navel and move'],
+    ]},
+    { week: 2, from: 8, title: 'Week 2 · Add', items: [
+        ['viparita', 'Evening: Viparita Karani, 5 min', 'Legs up the wall, eyes closed'],
+        ['nadi', 'Nadi Shodhana, 5 rounds before meditation', 'Balances ida and pingala'],
+    ]},
+    { week: 3, from: 15, title: 'Week 3 · Add', items: [
+        ['mula', 'Gentle Mula Bandha + Ashwini Mudra', '10–20 contractions, never strain'],
+        ['orbit', 'End meditation by guiding energy down to the navel', 'Down the front of the body, rest at the dantian'],
+    ]},
+];
+const balDay = () => S.start ? currentDay() : 1;
+const balOpen = () => BAL.filter(g => balDay() >= g.from).flatMap(g => g.items);
+
 /* ---------- state ---------- */
-function fresh() { return { start: null, checks: {}, urgesWon: 0, sankalpa: '', history: [] }; }
+function fresh() { return { start: null, checks: {}, balance: {}, urgesWon: 0, sankalpa: '', history: [] }; }
 function load() { try { const v = JSON.parse(localStorage.getItem(KEY)); if (v && typeof v === 'object') return Object.assign(fresh(), v); } catch (e) {} return fresh(); }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 function ironStart() { try { const v = JSON.parse(localStorage.getItem(IRON_KEY)); return v && v.start ? v.start : null; } catch (e) { return null; } }
@@ -676,6 +890,7 @@ function renderToday() {
     const best = Math.max(today, ...S.history.map(h => h.days));
     $('streakInfo').textContent = S.start ? `Started ${new Date(S.start).toLocaleDateString()}. Best streak: ${best} day${best === 1 ? "" : "s"}. Resets: ${S.history.length}.${ironStart() === S.start ? ' Synced with Iron Will.' : ''}` : '';
     const iron = ironStart();
+    renderBalSummary();
     $('ironNote').hidden = !iron;
     if (iron) $('ironNote').innerHTML = `Iron Will has a streak from ${new Date(iron).toLocaleDateString()}. <a href="#" id="useIron">Use it</a>`;
 }
@@ -725,6 +940,40 @@ function renderPath() {
 }
 $('grid').addEventListener('click', e => { const b = e.target.closest('.cell'); if (!b) return; view = +b.dataset.d; show('today'); });
 
+/* ---------- balance ---------- */
+function balToday() { return S.balance[dateKey(Date.now())] || {}; }
+function renderBalSummary() {
+    const open = balOpen(), b = balToday(), n = open.filter(i => b[i[0]]).length;
+    const wk = BAL.filter(g => balDay() >= g.from).length;
+    $('balSummary').textContent = `Week ${wk} routine · ${n} of ${open.length} done today.`;
+}
+function renderBalance() {
+    const day = balDay(), b = balToday(), open = balOpen();
+    const n = open.filter(i => b[i[0]]).length;
+    $('balDate').textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) + (S.start ? ` · Day ${day}` : '');
+    $('balBar').style.width = (open.length ? n / open.length * 100 : 0) + '%';
+    $('balCount').textContent = `${n} of ${open.length} done`;
+    $('balChecks').innerHTML = BAL.map(g => {
+        const locked = day < g.from;
+        return `<div class="weekTag">${esc(g.title)}${locked ? ` · unlocks on Day ${g.from}` : ''}</div>` +
+            g.items.map(([id, t, sub]) => `<div class="check ${!locked && b[id] ? 'on' : ''} ${locked ? 'locked' : ''}" data-id="${id}" ${locked ? 'aria-disabled="true"' : `role="checkbox" aria-checked="${!!b[id]}" tabindex="0"`}><div class="box"></div><div class="ctext"><b>${esc(t)}</b><span class="small dim">${esc(sub)}</span></div></div>`).join('');
+    }).join('');
+}
+$('balChecks').addEventListener('click', e => {
+    const row = e.target.closest('.check'); if (!row || row.classList.contains('locked')) return;
+    const k = dateKey(Date.now());
+    S.balance[k] = S.balance[k] || {};
+    S.balance[k][row.dataset.id] = !S.balance[k][row.dataset.id];
+    save(); renderBalance();
+    if (balOpen().every(i => S.balance[k][i[0]])) toast('Energy cooled, grounded and moved. Ojas, not heat 🌿');
+});
+$('balChecks').addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); e.target.click(); } });
+function openRelief() { $('reliefBody').hidden = false; $('reliefToggle').textContent = '💧 Cool it now'; }
+$('reliefToggle').onclick = () => { if ($('reliefBody').hidden) openRelief(); else { $('reliefBody').hidden = true; $('reliefToggle').textContent = '💧 Head heating up? Cool it now'; } };
+$('reliefDone').onclick = () => { $('reliefBody').hidden = true; $('reliefToggle').textContent = '💧 Head heating up? Cool it now'; toast('Good. Keep the rest of today soft and grounded.'); };
+$('goBalance').onclick = () => show('balance');
+$('goRelief').onclick = () => { show('balance'); openRelief(); };
+
 /* ---------- SOS ---------- */
 let sosTimer = null;
 function stopSos() { clearInterval(sosTimer); sosTimer = null; $('sosFlow').hidden = true; $('sosStart').hidden = false; $('orb').style.transform = 'scale(.55)'; }
@@ -764,6 +1013,7 @@ function show(tab) {
     document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
     if (tab === 'today') renderToday();
     if (tab === 'path') renderPath();
+    if (tab === 'balance') renderBalance();
     if (tab === 'sos') renderSos();
     if (tab !== 'sos') stopSos();
     scrollTo(0, 0);
