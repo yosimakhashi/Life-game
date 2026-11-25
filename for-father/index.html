@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>In His Name</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Rajdhani:wght@500;600;700&display=swap">
+<style>
+/* In His Name: a life game played for a father.
+   10 ranks, each guarded by an inner enemy. Beat every mission in a rank
+   to rise. Points, rewards, achievements, daily oath. Data in localStorage. */
+:root {
+  --bg: #000;
+  --fg: #f2f2f2;
+  --dim: #9a9a9a;
+  --line: rgba(255,255,255,.14);
+  --panel: rgba(0,0,0,.55);
+  --red: #e10600;
+  --red-hot: #ff2a1f;
+  --red-dim: rgba(225,6,0,.18);
+  --display: "Black Ops One", Impact, sans-serif;
+  --body: "Rajdhani", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 17px; font-weight: 500; }
+body { min-height: 100vh; overflow-x: hidden; }
+
+/* Father in the background: fixed, visible, content floats over him */
+.father {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: url("father.png") center 12vh / min(92vw, 560px) auto no-repeat;
+  opacity: .34;
+}
+.father::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 35%, transparent 30%, rgba(0,0,0,.75) 85%),
+    linear-gradient(180deg, transparent 60%, rgba(120,0,0,.18));
+}
+main { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 18px 16px 80px; }
+
+h1, h2, h3, .display { font-family: var(--display); font-weight: 400; color: var(--red); letter-spacing: .04em; }
+h1 { font-size: clamp(2.4rem, 11vw, 4.4rem); margin: 0; line-height: .95; text-shadow: 0 0 18px rgba(225,6,0,.55), 0 2px 0 #000; }
+h2 { font-size: 1.5rem; margin: 0 0 12px; }
+h3 { font-size: 1.1rem; margin: 0; }
+a { color: var(--fg); }
+
+.top { display: flex; justify-content: space-between; align-items: center; font-size: .9rem; color: var(--dim); }
+.top a { text-decoration: none; color: var(--dim); }
+.hero { text-align: center; padding: 34vh 0 18px; }
+.hero .sub { letter-spacing: .35em; text-transform: uppercase; font-size: .85rem; color: var(--fg); margin-top: 10px; }
+.hero .oath { font-style: italic; color: var(--dim); margin-top: 6px; }
+
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px; margin: 14px 0; backdrop-filter: blur(1.5px); -webkit-backdrop-filter: blur(1.5px); }
+.card.red { border-color: var(--red); box-shadow: inset 0 0 0 1px var(--red-dim); }
+
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+.stat .n { font-family: var(--display); font-size: 1.9rem; color: var(--red); line-height: 1; }
+.stat .l { font-size: .75rem; letter-spacing: .2em; text-transform: uppercase; color: var(--dim); margin-top: 4px; }
+.rank { text-align: center; margin-top: 14px; }
+.rank .title { font-family: var(--display); font-size: 1.6rem; color: var(--fg); }
+.bar { height: 10px; background: rgba(255,255,255,.1); border-radius: 5px; overflow: hidden; margin-top: 8px; }
+.bar > i { display: block; height: 100%; background: linear-gradient(90deg, #7a0000, var(--red-hot)); width: 0; transition: width .5s; }
+.hint { font-size: .85rem; color: var(--dim); }
+
+.tabs { display: flex; gap: 6px; position: sticky; top: 0; z-index: 5; padding: 8px 0; background: linear-gradient(#000 70%, transparent); overflow-x: auto; }
+.tabs button { flex: 1 0 auto; }
+button { font-family: var(--body); font-weight: 700; font-size: .95rem; letter-spacing: .08em; text-transform: uppercase; color: var(--fg); background: rgba(0,0,0,.6); border: 1px solid var(--line); border-radius: 4px; padding: 9px 12px; cursor: pointer; }
+button:hover { border-color: var(--red); }
+button.on, button.primary { background: var(--red); border-color: var(--red); color: #fff; }
+button:disabled { opacity: .35; cursor: not-allowed; }
+.view { display: none; } .view.on { display: block; }
+
+/* Levels */
+.level { border-left: 3px solid var(--line); }
+.level.current { border-left-color: var(--red); }
+.level.done { border-left-color: var(--fg); }
+.level.locked { opacity: .5; }
+.lvhead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; cursor: pointer; }
+.lvhead .num { font-family: var(--display); color: var(--dim); font-size: .85rem; }
+.enemy { margin: 8px 0 10px; font-size: .95rem; }
+.enemy b { color: var(--red); font-family: var(--display); font-weight: 400; letter-spacing: .05em; }
+.missions { display: none; } .level.open .missions { display: block; }
+.mission { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px dashed var(--line); }
+.mission .t { font-weight: 600; }
+.mission .m { font-size: .8rem; color: var(--dim); }
+.mission.done .t { color: var(--dim); text-decoration: line-through; text-decoration-color: var(--red); }
+.mission .mbar { height: 4px; margin-top: 6px; }
+.reward { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.reward input { flex: 1 1 200px; }
+input, textarea { font-family: var(--body); font-size: 1rem; color: var(--fg); background: rgba(0,0,0,.6); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; width: 100%; }
+input:focus, textarea:focus { outline: none; border-color: var(--red); }
+
+/* Daily oath */
+.daily { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px dashed var(--line); cursor: pointer; user-select: none; }
+.daily:first-of-type { border-top: 0; }
+.box { width: 24px; height: 24px; flex: 0 0 24px; border: 2px solid var(--fg); border-radius: 3px; display: grid; place-items: center; font-family: var(--display); color: #fff; }
+.daily.on .box { background: var(--red); border-color: var(--red); }
+.daily.on .t { color: var(--dim); }
+.daily .p { margin-left: auto; font-family: var(--display); color: var(--red); }
+
+/* Achievements */
+.ach { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.badge { border: 1px solid var(--line); border-radius: 6px; padding: 12px 10px; text-align: center; background: rgba(0,0,0,.6); }
+.badge .i { font-size: 1.8rem; filter: grayscale(1); opacity: .35; }
+.badge .n { font-family: var(--display); font-size: .9rem; color: var(--dim); margin-top: 6px; }
+.badge .d { font-size: .78rem; color: var(--dim); margin-top: 4px; }
+.badge.got { border-color: var(--red); }
+.badge.got .i { filter: none; opacity: 1; }
+.badge.got .n { color: var(--red); }
+
+/* Reports */
+.log { margin-top: 12px; }
+.log div { padding: 8px 0; border-top: 1px dashed var(--line); }
+.log small { color: var(--red); font-family: var(--display); margin-right: 8px; }
+
+/* Toast + modal */
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%) translateY(120px); background: #000; border: 1px solid var(--red); color: var(--fg); padding: 12px 18px; border-radius: 6px; z-index: 50; transition: transform .3s; max-width: calc(100vw - 32px); text-align: center; }
+.toast.show { transform: translateX(-50%) translateY(0); }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.88); z-index: 40; display: none; place-items: center; padding: 16px; }
+.modal.show { display: grid; }
+.modal .in { max-width: 460px; text-align: center; }
+.modal h1 { font-size: clamp(2rem, 10vw, 3.2rem); }
+.modal p { font-size: 1.1rem; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+footer { text-align: center; color: var(--dim); font-size: .85rem; margin-top: 30px; }
+</style>
+</head>
+<body>
+<div class="father" aria-hidden="true"></div>
+
+<main>
+  <div class="top"><a href="../">← Life Game</a><span id="today"></span></div>
+
+  <section class="hero">
+    <h1>IN HIS NAME</h1>
+    <div class="sub">Every mission is for him</div>
+    <div class="oath">"I will become the man he would be proud of."</div>
+  </section>
+
+  <section class="card red">
+    <div class="stats">
+      <div class="stat"><div class="n" id="sPts">0</div><div class="l">Points</div></div>
+      <div class="stat"><div class="n" id="sLvl">1</div><div class="l">Level</div></div>
+      <div class="stat"><div class="n" id="sStreak">0</div><div class="l">Day streak</div></div>
+    </div>
+    <div class="rank">
+      <div class="hint">CURRENT RANK</div>
+      <div class="title" id="rankTitle">Recruit</div>
+      <div class="bar"><i id="lvBar"></i></div>
+      <div class="hint" id="lvHint"></div>
+    </div>
+  </section>
+
+  <nav class="tabs">
+    <button data-v="levels" class="on">Missions</button>
+    <button data-v="daily">Daily Oath</button>
+    <button data-v="ach">Achievements</button>
+    <button data-v="report">Report</button>
+  </nav>
+
+  <section class="view on" id="v-levels">
+    <p class="hint">Each rank is guarded by an enemy that lives inside you. Beat every mission to defeat it and rise. Missions counted in days take one tap per day.</p>
+    <div id="levels"></div>
+  </section>
+
+  <section class="view" id="v-daily">
+    <div class="card">
+      <h2>Daily Oath</h2>
+      <p class="hint">Resets every midnight. Finish all six to keep the streak alive.</p>
+      <div id="dailyList"></div>
+    </div>
+  </section>
+
+  <section class="view" id="v-ach">
+    <div class="card">
+      <h2>Achievements</h2>
+      <div class="ach" id="achList"></div>
+    </div>
+  </section>
+
+  <section class="view" id="v-report">
+    <div class="card">
+      <h2>Report to Father</h2>
+      <p class="hint">One honest line a day. What did you do today that he would be proud of? +10 points, once a day.</p>
+      <textarea id="repText" rows="3" placeholder="Today I..."></textarea>
+      <div class="row" style="margin-top:8px"><button class="primary" id="repSave">Report</button></div>
+      <div class="log" id="repLog"></div>
+    </div>
+    <div class="card">
+      <h2>Backup</h2>
+      <p class="hint">Progress lives only in this browser. Export it now and then.</p>
+      <div class="row">
+        <button id="exp">Export</button>
+        <button id="imp">Import</button>
+        <button id="reset">Reset all</button>
+      </div>
+      <input type="file" id="impFile" accept="application/json" hidden>
+    </div>
+  </section>
+
+  <footer>For my father. For his name.</footer>
+</main>
+
+<div class="modal" id="modal"><div class="in card red">
+  <div class="hint" id="mKicker">ENEMY DEFEATED</div>
+  <h1 id="mTitle"></h1>
+  <p id="mText"></p>
+  <button class="primary" id="mClose">Continue</button>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- Content ----------
+// Ranks follow the police ladder he walked. Each rank has an inner enemy.
+const LEVELS = [
+  { rank: "Recruit", enemy: "THE SLEEPER", lore: "The voice that says five more minutes.", bonus: 100,
+    reward: "Your favourite meal, eaten slowly",
+    missions: [
+      { t: "Wake up before 6:00 AM", n: 7, p: 15, day: true },
+      { t: "Make your bed the moment you rise", n: 7, p: 5, day: true },
+      { t: "No phone for the first 30 minutes of the day", n: 7, p: 10, day: true },
+    ]},
+  { rank: "Constable", enemy: "THE SCROLLER", lore: "It steals hours and gives back nothing.", bonus: 150,
+    reward: "A book you have wanted for a long time",
+    missions: [
+      { t: "Delete your worst time-wasting app", n: 1, p: 40 },
+      { t: "Screen time under 2 hours", n: 10, p: 15, day: true },
+      { t: "Read 20 pages of a real book", n: 10, p: 10, day: true },
+    ]},
+  { rank: "Senior Constable", enemy: "THE WEAK BODY", lore: "He wore the uniform. Your body is your uniform now.", bonus: 200,
+    reward: "New training shoes or gym gear",
+    missions: [
+      { t: "Train hard (gym, run, or bodyweight) 45 min", n: 20, p: 15, day: true },
+      { t: "Do 100 push-ups in one day", n: 1, p: 60 },
+      { t: "Run or walk 5 km without stopping", n: 1, p: 60 },
+      { t: "Sleep 7+ hours", n: 14, p: 5, day: true },
+    ]},
+  { rank: "Head Constable", enemy: "THE CRAVING", lore: "Cheap pleasure that costs your strength.", bonus: 250,
+    reward: "A day trip somewhere you have never been",
+    missions: [
+      { t: "No junk food or sugar", n: 21, p: 10, day: true },
+      { t: "Clean from your worst habit (porn, smoking, drink, whatever owns you)", n: 30, p: 15, day: true },
+      { t: "Cold shower", n: 14, p: 5, day: true },
+    ]},
+  { rank: "Assistant Sub-Inspector", enemy: "THE COWARD", lore: "Fear wearing the mask of comfort.", bonus: 300,
+    reward: "Something you have been afraid to try (class, trek, trip)",
+    missions: [
+      { t: "Do the one task you have been avoiding for weeks", n: 1, p: 60 },
+      { t: "Speak up first in a room: ask, disagree, or lead", n: 5, p: 20 },
+      { t: "Start a conversation with someone new", n: 5, p: 15 },
+      { t: "Hear honest criticism of yourself and write down what is true", n: 1, p: 50 },
+    ]},
+  { rank: "Sub-Inspector", enemy: "THE SHARP TONGUE", lore: "Anger that wounds the people who stay.", bonus: 350,
+    reward: "A new watch, bag or something lasting",
+    missions: [
+      { t: "No swearing, no shouting", n: 14, p: 10, day: true },
+      { t: "No complaining, not even once", n: 7, p: 15, day: true },
+      { t: "Apologise properly to someone you hurt", n: 1, p: 80 },
+      { t: "Forgive someone, in your heart or out loud", n: 1, p: 60 },
+    ]},
+  { rank: "Inspector", enemy: "THE ABSENT SON", lore: "He cannot be there. You must be.", bonus: 400,
+    reward: "A gift for your mother, from your own earnings",
+    missions: [
+      { t: "Call or sit with your mother or family, phone away", n: 20, p: 10, day: true },
+      { t: "Take over one household duty he would have done", n: 1, p: 80 },
+      { t: "Take your family out, your plan, your money", n: 1, p: 80 },
+      { t: "Ask an elder a story about your father and write it down", n: 3, p: 40 },
+    ]},
+  { rank: "Circle Inspector", enemy: "THE SELFISH HEART", lore: "He served people. Serve someone.", bonus: 450,
+    reward: "A weekend fully off, guilt-free",
+    missions: [
+      { t: "Help a stranger without being asked", n: 10, p: 15 },
+      { t: "Donate blood", n: 1, p: 100 },
+      { t: "Give a day of volunteer work", n: 1, p: 100 },
+      { t: "Save and give 5% of your income to someone in need", n: 1, p: 80 },
+    ]},
+  { rank: "Deputy Superintendent", enemy: "THE QUITTER", lore: "It waits for day 20, when the fire fades.", bonus: 500,
+    reward: "A real upgrade for your work (laptop, course, tools)",
+    missions: [
+      { t: "Deep work or study 2 hours, no phone", n: 30, p: 15, day: true },
+      { t: "Finish a course, exam or project you started", n: 1, p: 150 },
+      { t: "Save money every week", n: 8, p: 20 },
+    ]},
+  { rank: "Pride of His Name", enemy: "THE FORGOTTEN", lore: "The final enemy: letting his name fade.", bonus: 1000,
+    reward: "Restore and frame his photo, hang it where you see it daily",
+    missions: [
+      { t: "Write a full letter to your father: who you were, who you became", n: 1, p: 150 },
+      { t: "Teach or mentor someone younger, the way he would have", n: 5, p: 40 },
+      { t: "Win one big goal he would have bragged about (job, exam, medal, business)", n: 1, p: 300 },
+      { t: "Do something good in his name (donation, plaque, act of service)", n: 1, p: 200 },
+    ]},
+];
+
+const DAILY = [
+  { id: "wake", t: "Rise before 6 AM", p: 5 },
+  { id: "train", t: "Train the body", p: 5 },
+  { id: "learn", t: "Learn for 1 hour", p: 5 },
+  { id: "clean", t: "Stayed clean, no relapse", p: 5 },
+  { id: "kind", t: "One act of kindness", p: 5 },
+  { id: "think", t: "Remember him for a minute", p: 5 },
+];
+
+const ACH = [
+  { id: "first", i: "🩸", n: "First Step", d: "Complete your first mission", ok: s => s.missionsDone >= 1 },
+  { id: "pts500", i: "⚔️", n: "500 Points", d: "Earn 500 points", ok: s => s.points >= 500 },
+  { id: "pts2k", i: "🛡️", n: "2,000 Points", d: "Earn 2,000 points", ok: s => s.points >= 2000 },
+  { id: "pts5k", i: "👑", n: "5,000 Points", d: "Earn 5,000 points", ok: s => s.points >= 5000 },
+  { id: "oath1", i: "🔥", n: "Oath Kept", d: "Finish the full daily oath once", ok: s => s.oathDays >= 1 },
+  { id: "str7", i: "📅", n: "Seven Days", d: "7-day oath streak", ok: s => s.best >= 7 },
+  { id: "str30", i: "🗡️", n: "Thirty Days", d: "30-day oath streak", ok: s => s.best >= 30 },
+  { id: "str100", i: "⭐", n: "Hundred Days", d: "100-day oath streak", ok: s => s.best >= 100 },
+  { id: "rep10", i: "✉️", n: "Ten Reports", d: "Report to father 10 times", ok: s => s.reports >= 10 },
+  ...LEVELS.map((L, k) => ({ id: "lv" + k, i: k === LEVELS.length - 1 ? "🏅" : "🎖️", n: "Beat " + L.enemy.replace("THE ", ""), d: "Reach " + (LEVELS[k + 1] ? LEVELS[k + 1].rank : "the end"), ok: s => s.levelsDone > k })),
+];
+
+// ---------- State ----------
+const KEY = "inHisName.v1";
+const blank = () => ({ points: 0, prog: {}, lastTap: {}, rewards: {}, claimed: {}, daily: {}, streak: 0, best: 0, lastOath: "", oathDays: 0, reports: [], ach: {} });
+let S;
+try { S = Object.assign(blank(), JSON.parse(localStorage.getItem(KEY)) || {}); } catch { S = blank(); }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
+
+const dayKey = (d = new Date()) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const yesterday = () => { const d = new Date(); d.setDate(d.getDate() - 1); return dayKey(d); };
+const mk = (l, m) => l + "." + m;
+const isDone = (l, m) => (S.prog[mk(l, m)] || 0) >= LEVELS[l].missions[m].n;
+const levelDone = l => LEVELS[l].missions.every((_, m) => isDone(l, m));
+const curLevel = () => { for (let l = 0; l < LEVELS.length; l++) if (!levelDone(l)) return l; return LEVELS.length; };
+
+function summary() {
+  let missionsDone = 0;
+  LEVELS.forEach((L, l) => L.missions.forEach((_, m) => { if (isDone(l, m)) missionsDone++; }));
+  return { points: S.points, missionsDone, levelsDone: curLevel(), best: S.best, oathDays: S.oathDays, reports: S.reports.length };
+}
+
+// ---------- UI helpers ----------
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+let tt;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(tt); tt = setTimeout(() => t.classList.remove("show"), 2200); }
+function modal(kicker, title, text) { $("#mKicker").textContent = kicker; $("#mTitle").textContent = title; $("#mText").textContent = text; $("#modal").classList.add("show"); }
+$("#mClose").onclick = () => $("#modal").classList.remove("show");
+
+function checkAch() {
+  const s = summary();
+  ACH.forEach(a => { if (!S.ach[a.id] && a.ok(s)) { S.ach[a.id] = dayKey(); toast("🏆 Achievement: " + a.n); } });
+}
+
+// ---------- Render ----------
+let openLv = null;
+function render() {
+  const cl = curLevel();
+  if (openLv === null) openLv = Math.min(cl, LEVELS.length - 1);
+  $("#sPts").textContent = S.points.toLocaleString();
+  $("#sLvl").textContent = Math.min(cl + 1, LEVELS.length);
+  $("#sStreak").textContent = S.lastOath === dayKey() || S.lastOath === yesterday() ? S.streak : 0;
+  $("#today").textContent = new Date().toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+
+  if (cl >= LEVELS.length) {
+    $("#rankTitle").textContent = "Pride of His Name";
+    $("#lvBar").style.width = "100%";
+    $("#lvHint").textContent = "Every enemy beaten. He would be proud.";
+  } else {
+    const L = LEVELS[cl];
+    const tot = L.missions.reduce((a, m) => a + m.n, 0);
+    const got = L.missions.reduce((a, m, i) => a + Math.min(S.prog[mk(cl, i)] || 0, m.n), 0);
+    $("#rankTitle").textContent = L.rank;
+    $("#lvBar").style.width = (got / tot * 100) + "%";
+    $("#lvHint").textContent = "Defeat " + L.enemy + " to rise: " + got + " / " + tot;
+  }
+
+  // Levels
+  $("#levels").innerHTML = LEVELS.map((L, l) => {
+    const state = l < cl ? "done" : l === cl ? "current" : "locked";
+    const ms = L.missions.map((M, m) => {
+      const v = Math.min(S.prog[mk(l, m)] || 0, M.n), done = v >= M.n;
+      const tapped = M.day && S.lastTap[mk(l, m)] === dayKey();
+      const label = done ? "✓" : M.n === 1 ? "Done" : tapped ? "Tomorrow" : "+1";
+      return `<div class="mission ${done ? "done" : ""}">
+        <div><div class="t">${esc(M.t)}</div>
+        <div class="m">${M.n > 1 ? v + " / " + M.n + (M.day ? " days" : " times") + " · " : ""}${M.p} pts each${M.n > 1 ? "" : ""}</div>
+        ${M.n > 1 ? `<div class="bar mbar"><i style="width:${v / M.n * 100}%"></i></div>` : ""}</div>
+        <div class="row">
+          ${M.n > 1 && v > 0 && !done && state === "current" ? `<button data-undo="${l}.${m}" title="Undo one">−</button>` : ""}
+          <button data-tap="${l}.${m}" ${state !== "current" || done || tapped ? "disabled" : ""} class="${done ? "" : "primary"}">${label}</button>
+        </div></div>`;
+    }).join("");
+    const rv = S.rewards[l] ?? L.reward;
+    return `<div class="card level ${state} ${openLv === l ? "open" : ""}">
+      <div class="lvhead" data-open="${l}"><h3>${esc(L.rank)}</h3><span class="num">LV ${l + 1} ${state === "done" ? "· BEATEN" : state === "locked" ? "· LOCKED" : ""}</span></div>
+      <div class="enemy">Enemy: <b>${L.enemy}</b> · <span class="hint">${esc(L.lore)}</span></div>
+      <div class="missions">${ms}
+        <div class="reward"><span class="hint">🎁 Reward (+${L.bonus} bonus):</span>
+          <input data-rw="${l}" value="${esc(rv)}" ${S.claimed[l] ? "disabled" : ""}>
+          <button data-claim="${l}" ${state !== "done" || S.claimed[l] ? "disabled" : ""} class="${state === "done" && !S.claimed[l] ? "primary" : ""}">${S.claimed[l] ? "Claimed" : "Claim"}</button>
+        </div>
+      </div></div>`;
+  }).join("");
+
+  // Daily
+  const today = S.daily[dayKey()] || {};
+  $("#dailyList").innerHTML = DAILY.map(d => `<div class="daily ${today[d.id] ? "on" : ""}" data-d="${d.id}">
+      <div class="box">${today[d.id] ? "✓" : ""}</div><div class="t">${esc(d.t)}</div><div class="p">+${d.p}</div></div>`).join("");
+
+  // Achievements
+  $("#achList").innerHTML = ACH.map(a => `<div class="badge ${S.ach[a.id] ? "got" : ""}"><div class="i">${a.i}</div><div class="n">${esc(a.n)}</div><div class="d">${S.ach[a.id] ? "Earned " + S.ach[a.id] : esc(a.d)}</div></div>`).join("");
+
+  // Reports
+  $("#repLog").innerHTML = S.reports.slice().reverse().map(r => `<div><small>${r.d}</small>${esc(r.t)}</div>`).join("") || `<div class="hint">No reports yet.</div>`;
+}
+
+// ---------- Actions ----------
+document.addEventListener("click", e => {
+  const b = e.target.closest("button, [data-open], [data-d]");
+  if (!b) return;
+
+  if (b.dataset.v) {
+    document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
+    document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === "v-" + b.dataset.v));
+    return;
+  }
+  if (b.dataset.open !== undefined) { const l = +b.dataset.open; openLv = openLv === l ? -1 : l; render(); return; }
+
+  if (b.dataset.tap) {
+    const [l, m] = b.dataset.tap.split(".").map(Number), M = LEVELS[l].missions[m], k = mk(l, m);
+    if (l !== curLevel() || isDone(l, m)) return;
+    if (M.day && S.lastTap[k] === dayKey()) return;
+    S.prog[k] = (S.prog[k] || 0) + 1; S.lastTap[k] = dayKey(); S.points += M.p;
+    toast("+" + M.p + " points");
+    if (levelDone(l)) {
+      S.points += LEVELS[l].bonus;
+      const next = LEVELS[l + 1];
+      modal(LEVELS[l].enemy + " DEFEATED", next ? next.rank.toUpperCase() : "PRIDE OF HIS NAME",
+        next ? "+" + LEVELS[l].bonus + " bonus. You rose a rank. Claim your reward, you earned it. He would be proud." :
+               "Every enemy beaten. You carried his name all the way. Claim your final reward.");
+      openLv = l;
+    }
+    checkAch(); save(); render(); return;
+  }
+  if (b.dataset.undo) {
+    const [l, m] = b.dataset.undo.split(".").map(Number), k = mk(l, m);
+    if (!S.prog[k]) return;
+    S.prog[k]--; S.points = Math.max(0, S.points - LEVELS[l].missions[m].p); delete S.lastTap[k];
+    save(); render(); return;
+  }
+  if (b.dataset.claim) {
+    const l = +b.dataset.claim;
+    if (!levelDone(l) || S.claimed[l]) return;
+    S.claimed[l] = dayKey();
+    modal("REWARD UNLOCKED", "GO ENJOY IT", S.rewards[l] ?? LEVELS[l].reward);
+    save(); render(); return;
+  }
+  if (b.dataset.d) {
+    const k = dayKey(); S.daily[k] = S.daily[k] || {};
+    const D = DAILY.find(d => d.id === b.dataset.d), was = !!S.daily[k][D.id];
+    const fullBefore = DAILY.every(d => S.daily[k][d.id]);
+    S.daily[k][D.id] = !was; S.points = Math.max(0, S.points + (was ? -D.p : D.p));
+    const fullNow = DAILY.every(d => S.daily[k][d.id]);
+    if (fullNow && !fullBefore && S.lastOath !== k) {
+      S.streak = S.lastOath === yesterday() ? S.streak + 1 : 1;
+      S.best = Math.max(S.best, S.streak); S.lastOath = k; S.oathDays++; S.points += 20;
+      toast("🔥 Oath kept. +20 · streak " + S.streak);
+    }
+    checkAch(); save(); render(); return;
+  }
+});
+
+document.addEventListener("change", e => {
+  const i = e.target.closest("[data-rw]");
+  if (i) { S.rewards[i.dataset.rw] = i.value.trim() || LEVELS[i.dataset.rw].reward; save(); }
+});
+
+$("#repSave").onclick = () => {
+  const t = $("#repText").value.trim();
+  if (!t) return;
+  const k = dayKey(), first = !S.reports.some(r => r.d === k);
+  S.reports.push({ d: k, t });
+  if (first) { S.points += 10; toast("Reported. +10"); } else toast("Reported.");
+  $("#repText").value = "";
+  checkAch(); save(); render();
+};
+
+$("#exp").onclick = () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 1)], { type: "application/json" }));
+  a.download = "in-his-name-" + dayKey() + ".json"; a.click();
+};
+$("#imp").onclick = () => $("#impFile").click();
+$("#impFile").onchange = async e => {
+  try { S = Object.assign(blank(), JSON.parse(await e.target.files[0].text())); save(); render(); toast("Imported"); }
+  catch { toast("Could not read that file"); }
+};
+$("#reset").onclick = () => { if (confirm("Erase all progress?")) { S = blank(); save(); openLv = null; render(); } };
+
+render();
+</script>
+</body>
+</html>
