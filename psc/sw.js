@@ -1,22 +1,11 @@
-// Offline support: cache the app shell, load from network first so updates
-// arrive, fall back to cache when offline. Videos need a connection.
-const CACHE = 'psc-padanam-v3';
-const SHELL = ['./', 'index.html', 'app.js', 'data.js', 'questions.js', 'questions2.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
-
-self.addEventListener('install', e => {
-    e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
-});
-self.addEventListener('activate', e => {
-    e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
-});
-self.addEventListener('fetch', e => {
-    const req = e.request;
-    if (req.method !== 'GET') return;
-    const url = new URL(req.url);
-    const isFont = url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
-    if (url.origin !== location.origin && !isFont) return;
-    e.respondWith(fetch(req).then(res => {
-        if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
-        return res;
-    }).catch(() => caches.match(req, { ignoreSearch: true }).then(hit => hit || caches.match('index.html'))));
-});
+// This app has been taken down. Installed copies pick up this worker the
+// next time they open online: it deletes the app's own offline caches
+// (not the other Life Game apps' caches) and unregisters itself.
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', e => e.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(k => k.startsWith('psc-padanam')).map(k => caches.delete(k)));
+    await self.registration.unregister();
+    const wins = await self.clients.matchAll({ type: 'window' });
+    wins.forEach(w => w.navigate(w.url));
+})()));
