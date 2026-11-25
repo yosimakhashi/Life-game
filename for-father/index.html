@@ -126,6 +126,12 @@ input:focus, textarea:focus { outline: none; border-color: var(--red); }
 .modal h1 { font-size: clamp(2rem, 10vw, 3.2rem); }
 .modal p { font-size: 1.1rem; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.bonus { margin-top: 12px; display: grid; gap: 10px; }
+.chips { display: grid; grid-template-columns: repeat(5, 1fr) 1.4fr; gap: 6px; }
+.chips button { padding: 9px 0; }
+.chips input { text-align: center; padding: 8px 4px; }
+.log .neg { color: var(--dim); }
+.log .x { float: right; background: none; border: 0; color: var(--dim); padding: 0 4px; }
 .tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 4px; }
 .tools a { display: block; text-align: center; text-decoration: none; background: rgba(0,0,0,.6); border: 1px solid var(--line); border-radius: 6px; padding: 12px 6px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: .85rem; }
 .tools a:hover { border-color: var(--red); }
@@ -156,6 +162,22 @@ footer { text-align: center; color: var(--dim); font-size: .85rem; margin-top: 3
       <div class="title" id="rankTitle">Recruit</div>
       <div class="bar"><i id="lvBar"></i></div>
       <div class="hint" id="lvHint"></div>
+    </div>
+    <button class="primary" id="bonusOpen" style="width:100%;margin-top:14px">+ Add points</button>
+    <div id="bonusPanel" hidden>
+      <div class="bonus">
+        <input id="bReason" placeholder="What did you do? e.g. Helped a neighbour, extra workout" maxlength="120">
+        <div class="chips">
+          <button data-amt="5">5</button><button data-amt="10" class="on">10</button><button data-amt="25">25</button><button data-amt="50">50</button><button data-amt="100">100</button>
+          <input id="bAmt" type="number" min="1" max="10000" value="10" aria-label="Points">
+        </div>
+        <div class="row">
+          <button class="primary" id="bAdd" style="flex:1">Add points</button>
+          <button id="bSub" style="flex:1">Deduct</button>
+        </div>
+        <p class="hint">Deduct is for honesty: a relapse, a broken promise, a wasted day.</p>
+        <div class="log" id="bLog"></div>
+      </div>
     </div>
   </section>
 
@@ -343,7 +365,7 @@ const ACH = [
 // ---------- State ----------
 const KEY = "inHisName.v2";
 const EXTRA_KEYS = ["inHisName.streaks.v1", "inHisName.todo.v1", "inHisName.year.v1"];
-const blank = () => ({ points: 0, prog: {}, lastTap: {}, rewards: {}, claimed: {}, daily: {}, streak: 0, best: 0, lastOath: "", oathDays: 0, reports: [], ach: {} });
+const blank = () => ({ points: 0, prog: {}, lastTap: {}, rewards: {}, claimed: {}, daily: {}, streak: 0, best: 0, lastOath: "", oathDays: 0, reports: [], ach: {}, bonus: [] });
 let S;
 try { S = Object.assign(blank(), JSON.parse(localStorage.getItem(KEY)) || {}); } catch { S = blank(); }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
@@ -430,6 +452,8 @@ function render() {
   $("#dailyList").innerHTML = DAILY.map(d => `<div class="daily ${today[d.id] ? "on" : ""}" data-d="${d.id}">
       <div class="box">${today[d.id] ? "✓" : ""}</div><div class="t">${esc(d.t)}</div><div class="p">+${d.p}</div></div>`).join("");
 
+  renderBonus();
+
   // Achievements
   $("#achList").innerHTML = ACH.map(a => `<div class="badge ${S.ach[a.id] ? "got" : ""}"><div class="i">${a.i}</div><div class="n">${esc(a.n)}</div><div class="d">${S.ach[a.id] ? "Earned " + S.ach[a.id] : esc(a.d)}</div></div>`).join("");
 
@@ -496,6 +520,39 @@ document.addEventListener("click", e => {
 document.addEventListener("change", e => {
   const i = e.target.closest("[data-rw]");
   if (i) { S.rewards[i.dataset.rw] = i.value.trim() || LEVELS[i.dataset.rw].reward; save(); }
+});
+
+// ---------- Bonus points ----------
+$("#bonusOpen").onclick = () => { const p = $("#bonusPanel"); p.hidden = !p.hidden; $("#bonusOpen").textContent = p.hidden ? "+ Add points" : "Close"; if (!p.hidden) $("#bReason").focus(); };
+document.querySelectorAll("[data-amt]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("[data-amt]").forEach(x => x.classList.toggle("on", x === b));
+  $("#bAmt").value = b.dataset.amt;
+});
+$("#bAmt").oninput = () => document.querySelectorAll("[data-amt]").forEach(x => x.classList.toggle("on", x.dataset.amt === $("#bAmt").value));
+function addBonus(sign) {
+  const t = $("#bReason").value.trim(), n = Math.round(Number($("#bAmt").value));
+  if (!t) { $("#bReason").focus(); toast("Write what you did first"); return; }
+  if (!(n > 0)) { toast("Enter a number of points"); return; }
+  const p = sign * Math.min(n, 10000);
+  S.bonus.push({ d: dayKey(), t, p });
+  S.points = Math.max(0, S.points + p);
+  $("#bReason").value = "";
+  toast((p > 0 ? "+" : "") + p + " points");
+  checkAch(); save(); render();
+}
+$("#bAdd").onclick = () => addBonus(1);
+$("#bSub").onclick = () => addBonus(-1);
+function renderBonus() {
+  $("#bLog").innerHTML = S.bonus.map((b, i) => ({ ...b, i })).slice(-10).reverse().map(b =>
+    `<div class="${b.p < 0 ? "neg" : ""}"><small>${b.p > 0 ? "+" : ""}${b.p}</small>${esc(b.t)}<button class="x" data-bdel="${b.i}" aria-label="Undo">✕</button></div>`).join("");
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-bdel]");
+  if (!b) return;
+  const x = S.bonus[b.dataset.bdel];
+  if (!confirm("Undo \"" + x.t + "\" (" + x.p + " points)?")) return;
+  S.points = Math.max(0, S.points - x.p); S.bonus.splice(b.dataset.bdel, 1);
+  save(); render();
 });
 
 $("#repSave").onclick = () => {
