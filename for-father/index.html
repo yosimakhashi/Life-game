@@ -369,6 +369,14 @@ const blank = () => ({ points: 0, prog: {}, lastTap: {}, rewards: {}, claimed: {
 let S;
 try { S = Object.assign(blank(), JSON.parse(localStorage.getItem(KEY)) || {}); } catch { S = blank(); }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
+// Streaks and To-Do pages add points to the same store; pick those up when we come back.
+function reload() {
+  try { S = Object.assign(blank(), JSON.parse(localStorage.getItem(KEY)) || {}); } catch {}
+  checkAch(); save(); render();
+}
+window.addEventListener("pageshow", e => { if (e.persisted) reload(); });
+window.addEventListener("storage", e => { if (e.key === KEY) reload(); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden) reload(); });
 
 const dayKey = (d = new Date()) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 const yesterday = () => { const d = new Date(); d.setDate(d.getDate() - 1); return dayKey(d); };
@@ -584,6 +592,7 @@ $("#impFile").onchange = async e => {
 };
 $("#reset").onclick = () => { if (confirm("Erase all progress?")) { S = blank(); save(); openLv = null; render(); } };
 
+checkAch(); save();
 render();
 </script>
 </body>

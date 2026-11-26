@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Rajdhani:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="common.css">
+<script src="points.js"></script>
 <style>
 .opts { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 8px; align-items: center; }
 .opts label { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: .9rem; white-space: nowrap; cursor: pointer; }
@@ -29,7 +30,7 @@
 <body>
 <div class="father" aria-hidden="true"></div>
 <main>
-  <div class="top"><a href="./">← In His Name</a><span id="today"></span></div>
+  <div class="top"><a href="./">← In His Name</a><span><b id="myPoints" class="pts"></b> · <span id="today"></span></span></div>
   <section class="hero">
     <h1>TO-DO</h1>
     <div class="sub">Write it. Do it. Do not postpone.</div>
@@ -51,6 +52,7 @@
       <button data-f="done">Done</button>
       <button data-f="all">All</button>
     </div>
+    <p class="hint" style="margin-bottom:0">Finish a task: <b class="pts">+5</b> · important task: <b class="pts">+10</b>.</p>
   </section>
 
   <section class="card">
@@ -108,7 +110,11 @@ document.addEventListener("click", e => {
   const b = e.target.closest("[data-tog],[data-del],[data-edit],[data-f]");
   if (!b) return;
   if (b.dataset.f) { filter = b.dataset.f; document.querySelectorAll(".filters button").forEach(x => x.classList.toggle("on", x === b)); }
-  if (b.dataset.tog) { const t = S.tasks[b.dataset.tog]; t.done = t.done ? "" : dk(new Date()); }
+  if (b.dataset.tog) {
+    const t = S.tasks[b.dataset.tog];
+    if (t.done) { t.done = ""; if (t.pts) { awardPoints(-t.pts); pointsToast("-" + t.pts + " points"); } t.pts = 0; }
+    else { t.done = dk(new Date()); t.pts = t.imp ? 10 : 5; awardPoints(t.pts); pointsToast("+" + t.pts + " points"); }
+  }
   if (b.dataset.del) S.tasks.splice(b.dataset.del, 1);
   if (b.dataset.edit) {
     const t = S.tasks[b.dataset.edit], v = prompt("Edit task", t.text);
@@ -121,6 +127,7 @@ $("#clear").onclick = () => {
   if (n && confirm("Remove " + n + " finished task(s)?")) { S.tasks = S.tasks.filter(t => !t.done); save(); render(); }
 };
 render();
+showPoints();
 </script>
 </body>
 </html>

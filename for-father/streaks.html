@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Rajdhani:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="common.css">
+<script src="points.js"></script>
 <style>
 .habit .head { display: flex; align-items: center; gap: 12px; }
 .habit .name { font-weight: 700; font-size: 1.1rem; flex: 1; min-width: 0; overflow-wrap: anywhere; }
@@ -37,7 +38,7 @@
 <body>
 <div class="father" aria-hidden="true"></div>
 <main>
-  <div class="top"><a href="./">← In His Name</a><span id="today"></span></div>
+  <div class="top"><a href="./">← In His Name</a><span><b id="myPoints" class="pts"></b> · <span id="today"></span></span></div>
   <section class="hero">
     <h1>MY STREAKS</h1>
     <div class="sub">One day at a time. Do not break the chain.</div>
@@ -50,6 +51,7 @@
       <button class="primary">Add</button>
     </form>
     <p class="hint">Tap the big box each day you do it. Forgot to log? Tap any of the last 14 days to fix it.</p>
+    <p class="hint"><b class="pts">+2</b> per day · <b class="pts">+20</b> at 7 days · <b class="pts">+75</b> at 30 · <b class="pts">+250</b> at 100. Un-ticking takes the points back.</p>
   </section>
 
   <div id="list"></div>
@@ -58,6 +60,7 @@
 
 <script>
 const KEY = "inHisName.streaks.v1";
+const DAY_PTS = 2, MILESTONES = [[7, 20], [30, 75], [100, 250]];
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || { habits: [] }; } catch { S = { habits: [] }; }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
@@ -144,14 +147,26 @@ document.addEventListener("click", e => {
   }
   if (b.dataset.day) {
     const [i, k] = b.dataset.day.split("|"), h = S.habits[i];
-    if (h.days[k]) delete h.days[k]; else h.days[k] = true;
-    save(); render();
+    h.paid = h.paid || {}; h.ms = h.ms || {};
+    let change = 0;
+    if (h.days[k]) { delete h.days[k]; change -= h.paid[k] || 0; delete h.paid[k]; }
+    else { h.days[k] = true; h.paid[k] = DAY_PTS; change += DAY_PTS; }
+    const run = best(h);
+    let note = "";
+    MILESTONES.forEach(([m, p]) => {
+      if (run >= m && !h.ms[m]) { h.ms[m] = p; change += p; note = " · " + m + "-day milestone!"; }
+      else if (run < m && h.ms[m]) { change -= h.ms[m]; delete h.ms[m]; }
+    });
+    save();
+    if (change) { awardPoints(change); pointsToast((change > 0 ? "+" : "") + change + " points" + note); }
+    render();
   }
   if (b.dataset.del && confirm("Delete \"" + S.habits[b.dataset.del].name + "\" and its history?")) {
     S.habits.splice(b.dataset.del, 1); openTips.clear(); save(); render();
   }
 });
 render();
+showPoints();
 </script>
 </body>
 </html>
