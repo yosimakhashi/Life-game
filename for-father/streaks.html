@@ -21,6 +21,16 @@
 .days button.on { background: var(--red); color: #fff; }
 .days button.now { border-color: var(--fg); }
 .meta { display: flex; justify-content: space-between; margin-top: 8px; }
+.tipbtn { background: none; border: 1px solid var(--line); border-radius: 50%; width: 38px; height: 38px; padding: 0; font-size: 1.15rem; letter-spacing: 0; position: relative; flex: 0 0 38px; }
+.tipbtn.open { border-color: var(--red); background: var(--red-dim); }
+.tipbtn sup { position: absolute; top: -6px; right: -6px; background: var(--red); color: #fff; font-family: var(--body); font-size: .68rem; font-weight: 700; min-width: 18px; height: 18px; line-height: 18px; border-radius: 9px; padding: 0 4px; }
+.tips { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.tips h3 { font-size: .95rem; margin: 0 0 8px; }
+.tip { display: flex; gap: 8px; align-items: flex-start; padding: 7px 0; border-top: 1px dashed var(--line); }
+.tip:first-of-type { border-top: 0; }
+.tip span { flex: 1; min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.tip::before { content: "•"; color: var(--red); font-weight: 700; }
+.tips form { margin-top: 8px; }
 .big { width: 40px; height: 40px; flex-basis: 40px; font-size: 1.2rem; }
 </style>
 </head>
@@ -86,14 +96,31 @@ function render() {
       <div class="head">
         <button class="box big ${done ? "on" : ""}" data-day="${i}|${t}" aria-label="Done today">${done ? "✓" : ""}</button>
         <div class="name">${esc(h.name)}</div>
+        <button class="tipbtn ${openTips.has(i) ? "open" : ""}" data-tips="${i}" aria-label="Tips and tricks" title="Tips and tricks">💡${(h.tips || []).length ? `<sup>${h.tips.length}</sup>` : ""}</button>
         <div class="fire"><b>${current(h)}</b><small>day streak</small></div>
       </div>
       <div class="days">${days}</div>
       <div class="meta"><span class="hint">Best ${best(h)} · ${total} days total</span><button class="ghost" data-del="${i}">Delete</button></div>
+      ${openTips.has(i) ? `<div class="tips">
+        <h3>Tips &amp; tricks</h3>
+        ${(h.tips || []).map((t, j) => `<div class="tip"><span>${esc(t)}</span><button class="ghost" data-tipdel="${i}|${j}" aria-label="Delete tip">✕</button></div>`).join("") || `<div class="hint">What helps you keep this going? Write it here for the hard days.</div>`}
+        <form class="add" data-tipadd="${i}"><input placeholder="e.g. Lay out the mat the night before" maxlength="200"><button class="primary">Add</button></form>
+      </div>` : ""}
     </div>`;
   }).join("") || `<div class="card empty">No streaks yet. Add the first thing you will do every day.</div>`;
 }
 
+const openTips = new Set();
+document.addEventListener("submit", e => {
+  const f = e.target.closest("[data-tipadd]");
+  if (!f) return;
+  e.preventDefault();
+  const i = +f.dataset.tipadd, v = f.querySelector("input").value.trim();
+  if (!v) return;
+  (S.habits[i].tips = S.habits[i].tips || []).push(v);
+  save(); render();
+  document.querySelector(`[data-tipadd="${i}"] input`).focus();
+});
 $("#addForm").onsubmit = e => {
   e.preventDefault();
   const n = $("#name").value.trim();
@@ -104,13 +131,24 @@ $("#addForm").onsubmit = e => {
 document.addEventListener("click", e => {
   const b = e.target.closest("button");
   if (!b) return;
+  if (b.dataset.tips) {
+    const i = +b.dataset.tips;
+    openTips.has(i) ? openTips.delete(i) : openTips.add(i);
+    render();
+    if (openTips.has(i)) document.querySelector(`[data-tipadd="${i}"] input`).focus();
+    return;
+  }
+  if (b.dataset.tipdel) {
+    const [i, j] = b.dataset.tipdel.split("|").map(Number);
+    S.habits[i].tips.splice(j, 1); save(); render(); return;
+  }
   if (b.dataset.day) {
     const [i, k] = b.dataset.day.split("|"), h = S.habits[i];
     if (h.days[k]) delete h.days[k]; else h.days[k] = true;
     save(); render();
   }
   if (b.dataset.del && confirm("Delete \"" + S.habits[b.dataset.del].name + "\" and its history?")) {
-    S.habits.splice(b.dataset.del, 1); save(); render();
+    S.habits.splice(b.dataset.del, 1); openTips.clear(); save(); render();
   }
 });
 render();
